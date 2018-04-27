@@ -1,0 +1,26 @@
+workspace:
+  base: /go
+  path: src/github.com/presslabs/dashboard
+
+pipeline:
+  test:
+    image: golang:1.10
+    commands:
+      - make lint
+      - make full-test
+
+  build:
+    image: golang:1.10
+    commands:
+      - make build
+
+#  publish:
+#    image: plugins/gcr
+#    mirror: https://mirror.gcr.io
+#    secrets:
+#      - GOOGLE_CREDENTIALS
+#    repo: pl-infra/presslabs-dashboard
+#    tags: [ "latest" ]
+#    when:
+#      branch: master
+#      event: push
