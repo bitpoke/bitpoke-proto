@@ -28,10 +28,14 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	core "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/leaderelection"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
 
 	dashclientset "github.com/presslabs/dashboard/pkg/client/clientset/versioned"
@@ -76,7 +80,7 @@ func NewControllerManagerCommand(stopCh <-chan struct{}) *cobra.Command {
 // Run Presslabs Controller Manager.  This should never exit.
 func Run(c *options.ControllerManagerOptions, stopCh <-chan struct{}) error {
 	glog.Infof("Starting Presslabs Dashboard Controller (%s)...", version.Get())
-	ctx, err := buildControllerContext(c)
+	ctx, kubeCfg, err := buildControllerContext(c)
 
 	if err != nil {
 		return err
@@ -87,32 +91,54 @@ func Run(c *options.ControllerManagerOptions, stopCh <-chan struct{}) error {
 		glog.V(4).Infof("Starting shared informer factories")
 		ctx.KubeSharedInformerFactory.Start(stopCh)
 		ctx.DashboardSharedInformerFactory.Start(stopCh)
+		// TODO: Start controller loops here
+
+		// The code bellow just waits forever
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			glog.Infof("Starting dummy loop and waiting until CTRL+C")
+			<-stopCh
+		}()
+
 		wg.Wait()
 		glog.Fatalf("Control loops exited")
 	}
 
-	run(stopCh)
-	return nil
+	if !c.LeaderElect {
+		run(stopCh)
+		return nil
+	}
 
+	leaderElectionClient, err := kubernetes.NewForConfig(rest.AddUserAgent(kubeCfg, "leader-election"))
+
+	if err != nil {
+		glog.Fatalf("error creating leader election client: %s", err.Error())
+	}
+
+	startLeaderElection(c, leaderElectionClient, ctx.Recorder, run)
 	panic("unreachable")
 }
 
-func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Context, error) {
+func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Context, *rest.Config, error) {
 	// Create a Kubernetes api client
-	kubeCfg, err := clientcmd.BuildConfigFromContext(c.Kubeconfig, "")
+	kubeCfg, err := clientcmd.BuildConfigFromContext(c.Kubeconfig, c.KubeconfigContext)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error creating kubernetes rest api client: %s", err.Error())
+	}
 
 	// Create a Kubernetes api client
 	cl, err := kubernetes.NewForConfig(kubeCfg)
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating kubernetes client: %s", err.Error())
+		return nil, nil, fmt.Errorf("error creating kubernetes client: %s", err.Error())
 	}
 
 	// Create a Navigator api client
 	intcl, err := dashclientset.NewForConfig(kubeCfg)
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating internal group client: %s", err.Error())
+		return nil, nil, fmt.Errorf("error creating internal group client: %s", err.Error())
 	}
 
 	// Create event broadcaster
@@ -133,5 +159,40 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 		Recorder:                       recorder,
 		DashboardClient:                intcl,
 		DashboardSharedInformerFactory: dashboardInformerFactory,
-	}, nil
+	}, kubeCfg, nil
+}
+
+func startLeaderElection(c *options.ControllerManagerOptions, leaderElectionClient kubernetes.Interface, recorder record.EventRecorder, run func(<-chan struct{})) {
+	// Identity used to distinguish between multiple controller manager instances
+	id, err := os.Hostname()
+	if err != nil {
+		glog.Fatalf("error getting hostname: %s", err.Error())
+	}
+
+	// Lock required for leader election
+	rl := resourcelock.EndpointsLock{
+		EndpointsMeta: meta.ObjectMeta{
+			Namespace: c.LeaderElectionNamespace,
+			Name:      controllerAgentName,
+		},
+		Client: leaderElectionClient.CoreV1(),
+		LockConfig: resourcelock.ResourceLockConfig{
+			Identity:      id + "-external-" + controllerAgentName,
+			EventRecorder: recorder,
+		},
+	}
+
+	// Try and become the leader and start controller manager loops
+	leaderelection.RunOrDie(leaderelection.LeaderElectionConfig{
+		Lock:          &rl,
+		LeaseDuration: c.LeaderElectionLeaseDuration,
+		RenewDeadline: c.LeaderElectionRenewDeadline,
+		RetryPeriod:   c.LeaderElectionRetryPeriod,
+		Callbacks: leaderelection.LeaderCallbacks{
+			OnStartedLeading: run,
+			OnStoppedLeading: func() {
+				glog.Fatalf("leaderelection lost")
+			},
+		},
+	})
 }
