@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"bytes"
+	"fmt"
+
 	"github.com/appscode/kutil"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -11,6 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
 )
 
 func CreateOrPatchPod(c kubernetes.Interface, meta metav1.ObjectMeta, transform func(*core.Pod) *core.Pod) (*core.Pod, kutil.VerbType, error) {
@@ -165,11 +171,51 @@ func WaitUntilPodDeletedBySelector(kubeClient kubernetes.Interface, namespace st
 
 // WaitUntillPodTerminatedByLabel waits until all pods with the label are terminated. Timeout is 5 minutes.
 func WaitUntillPodTerminatedByLabel(kubeClient kubernetes.Interface, namespace string, label string) error {
-	return wait.PollImmediate(kutil.RetryInterval, kutil.PodTerminationTimeout, func() (bool, error) {
+	return wait.PollImmediate(kutil.RetryInterval, kutil.GCTimeout, func() (bool, error) {
 		podList, err := kubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: label})
 		if err != nil {
 			return false, nil
 		}
 		return len(podList.Items) == 0, nil
 	})
+}
+
+func ExecIntoPod(config *rest.Config, pod *core.Pod, command ...string) (string, error) {
+	var (
+		execOut bytes.Buffer
+		execErr bytes.Buffer
+	)
+	kc := kubernetes.NewForConfigOrDie(config)
+
+	req := kc.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(pod.Name).
+		Namespace(pod.Namespace).
+		SubResource("exec")
+	req.VersionedParams(&core.PodExecOptions{
+		Container: pod.Spec.Containers[0].Name,
+		Command:   command,
+		Stdout:    true,
+		Stderr:    true,
+	}, scheme.ParameterCodec)
+
+	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+	if err != nil {
+		return "", fmt.Errorf("failed to init executor: %v", err)
+	}
+
+	err = exec.Stream(remotecommand.StreamOptions{
+		Stdout: &execOut,
+		Stderr: &execErr,
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("could not execute: %v", err)
+	}
+
+	if execErr.Len() > 0 {
+		return "", fmt.Errorf("stderr: %v", execErr.String())
+	}
+
+	return execOut.String(), nil
 }

@@ -20,6 +20,7 @@ const (
 type ControllerManagerOptions struct {
 	Kubeconfig        string
 	KubeconfigContext string
+	InstallCRDs       bool
 
 	LeaderElect                 bool
 	LeaderElectionNamespace     string

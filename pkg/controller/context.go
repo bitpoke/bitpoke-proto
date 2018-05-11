@@ -1,8 +1,10 @@
 package controller
 
 import (
+	apiextenstions_clientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
 	dashclientset "github.com/presslabs/dashboard/pkg/client/clientset/versioned"
@@ -14,6 +16,9 @@ import (
 // a reference to a SharedInformerFactory so that controllers can choose
 // themselves which listers are required.
 type Context struct {
+	// RESTConfig is the configuration for the REST client
+	RESTConfig *rest.Config
+
 	// KubeClient is a Kubernetes clientset
 	KubeClient kubernetes.Interface
 	// Recorder to record events to
@@ -24,8 +29,12 @@ type Context struct {
 
 	// DashboardClient is a Presslabs Dashboard clientset
 	DashboardClient dashclientset.Interface
-
 	// DashboardSharedInformerFactory can be used to obtain shared
 	// SharedIndexInformer instances for Presslabs Dashboard types
 	DashboardSharedInformerFactory dashinformers.SharedInformerFactory
+
+	// InstallCRDs signals the controller whenever the install Worpdress CRDs
+	InstallCRDs bool
+	// CRDClient is the clientset for Custom Resource Definitions
+	CRDClient apiextenstions_clientset.ApiextensionsV1beta1Interface
 }
