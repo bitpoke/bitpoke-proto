@@ -20,22 +20,22 @@ import (
 	"fmt"
 	"os"
 
-	kutil "github.com/appscode/kutil/apiextensions/v1beta1"
+	kutilv1 "github.com/appscode/kutil/apiextensions/v1beta1"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	"github.com/presslabs/dashboard/pkg/apis/projects"
-	projectsApi "github.com/presslabs/dashboard/pkg/apis/projects/v1alpha1"
-	dashboardVersion "github.com/presslabs/dashboard/pkg/version"
+	projectsv1 "github.com/presslabs/dashboard/pkg/apis/projects/v1alpha1"
+	dashboardversion "github.com/presslabs/dashboard/pkg/version"
 )
 
 var (
 	group       = projects.GroupName
-	version     = projectsApi.SchemeGroupVersion.Version
+	version     = projectsv1.SchemeGroupVersion.Version
 	resourceCRD = ""
 )
 
-func initFlags(resourceCRD *string, output *string, cfg *kutil.Config, fs *pflag.FlagSet) *pflag.FlagSet {
+func initFlags(resourceCRD *string, output *string, cfg *kutilv1.Config, fs *pflag.FlagSet) *pflag.FlagSet {
 	fs.Var(&cfg.Labels, "labels", "Lables")
 	fs.Var(&cfg.Annotations, "annotations", "Annotations")
 	fs.StringVar(resourceCRD, "crd", "plural.example.com", "Custom resource definition")
@@ -44,22 +44,22 @@ func initFlags(resourceCRD *string, output *string, cfg *kutil.Config, fs *pflag
 }
 
 func main() {
-	cfg := &kutil.Config{}
+	cfg := &kutilv1.Config{}
 	resourceCRD := ""
 	output := ""
 
 	cmd := &cobra.Command{
 		Use:   "dashboard-gen-crd",
-		Short: fmt.Sprintf("Generate Dashboard CRDs (%s)", dashboardVersion.Get()),
+		Short: fmt.Sprintf("Generate Dashboard CRDs (%s)", dashboardversion.Get()),
 		Run: func(cmd *cobra.Command, args []string) {
-			if CRDcfg, exists := projectsApi.CRDs[resourceCRD]; !exists {
+			if CRDcfg, exists := projectsv1.CRDs[resourceCRD]; !exists {
 				fmt.Fprintf(os.Stderr, "%s CRD does not exist\n", resourceCRD)
 				os.Exit(1)
 			} else {
 				CRDcfg.Labels = cfg.Labels
 				CRDcfg.Annotations = cfg.Annotations
-				crd := kutil.NewCustomResourceDefinition(CRDcfg)
-				kutil.MarshallCrd(os.Stdout, crd, output)
+				crd := kutilv1.NewCustomResourceDefinition(CRDcfg)
+				kutilv1.MarshallCrd(os.Stdout, crd, output)
 			}
 		},
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/golang/glog"
 	"k8s.io/client-go/tools/cache"
 
-	projectsApi "github.com/presslabs/dashboard/pkg/apis/projects/v1alpha1"
+	projects "github.com/presslabs/dashboard/pkg/apis/projects/v1alpha1"
 	projectslister "github.com/presslabs/dashboard/pkg/client/listers/projects/v1alpha1"
 )
 
@@ -43,7 +43,7 @@ func (c *Controller) reconcileProjects(key string) error {
 	}
 	if exists {
 		glog.Infof("Sync/Add/Update for Projects %s", key)
-		project := obj.(*projectsApi.Project).DeepCopy()
+		project := obj.(*projects.Project).DeepCopy()
 
 		err = c.syncNamespaces(project)
 		return err

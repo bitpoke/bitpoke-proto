@@ -1,7 +1,7 @@
 package controller
 
 import (
-	apiextenstions_clientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	apiextensions_clientsetv1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -36,5 +36,5 @@ type Context struct {
 	// InstallCRDs signals the controller whenever the install Worpdress CRDs
 	InstallCRDs bool
 	// CRDClient is the clientset for Custom Resource Definitions
-	CRDClient apiextenstions_clientset.ApiextensionsV1beta1Interface
+	CRDClient apiextensions_clientsetv1.ApiextensionsV1beta1Interface
 }

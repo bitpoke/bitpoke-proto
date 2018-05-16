@@ -8,7 +8,7 @@ which is part of this source code package.
 package v1alpha1
 
 import (
-	apiv1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,7 +46,7 @@ type ProjectCondition struct {
 	// type of cluster condition, values in (\"Ready\")
 	Type ProjectConditionType `json:"type"`
 	// Status of the condition, one of (\"True\", \"False\", \"Unknown\")
-	Status apiv1.ConditionStatus `json:"status"`
+	Status corev1.ConditionStatus `json:"status"`
 
 	// LastTransitionTime
 	LastTransitionTime metav1.Time `json:"lastTransitionTime"`

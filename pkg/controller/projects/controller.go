@@ -8,11 +8,11 @@ which is part of this source code package.
 package projects
 
 import (
-	apiextenstions_util "github.com/appscode/kutil/apiextensions/v1beta1"
+	kutilv1 "github.com/appscode/kutil/apiextensions/v1beta1"
 	"github.com/golang/glog"
-	apiextenstions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 
-	projectsApi "github.com/presslabs/dashboard/pkg/apis/projects/v1alpha1"
+	projectsv1 "github.com/presslabs/dashboard/pkg/apis/projects/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/controller"
 )
 
@@ -38,8 +38,8 @@ func NewController(ctx *controller.Context) (c *Controller, err error) {
 
 // Run starts the control loop for the Projects Controller
 func (c *Controller) Run(stopCh <-chan struct{}) {
-	crds := []*apiextenstions.CustomResourceDefinition{
-		projectsApi.ResourceProjectCRD,
+	crds := []*apiextensionsv1.CustomResourceDefinition{
+		projectsv1.ResourceProjectCRD,
 	}
 
 	if c.InstallCRDs {
@@ -79,17 +79,17 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 	glog.Infof("Stopping %s control loops", controllerName)
 }
 
-func (c *Controller) installCRDs(crds []*apiextenstions.CustomResourceDefinition) error {
+func (c *Controller) installCRDs(crds []*apiextensionsv1.CustomResourceDefinition) error {
 	glog.Info("Registering Custom Resource Definitions")
 
-	if err := apiextenstions_util.RegisterCRDs(c.CRDClient, crds); err != nil {
+	if err := kutilv1.RegisterCRDs(c.CRDClient, crds); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *Controller) waitForCRDs(crds []*apiextenstions.CustomResourceDefinition) error {
+func (c *Controller) waitForCRDs(crds []*apiextensionsv1.CustomResourceDefinition) error {
 	glog.Info("Waiting for Custom Resource Definitions to become available")
-	return apiextenstions_util.WaitForCRDReady(c.CRDClient.RESTClient(), crds)
+	return kutilv1.WaitForCRDReady(c.CRDClient.RESTClient(), crds)
 }
