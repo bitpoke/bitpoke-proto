@@ -19,20 +19,40 @@
   version = "v9.10.0"
 
 [[projects]]
+  name = "github.com/PuerkitoBio/purell"
+  packages = ["."]
+  revision = "0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4"
+  version = "v1.1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/PuerkitoBio/urlesc"
+  packages = ["."]
+  revision = "de5bf2ad457846296e2031421a34e2568e304e35"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/appscode/go"
+  packages = ["types"]
+  revision = "230e0e4622c682b5d117db8c28a66404ed874ed5"
+
+[[projects]]
   branch = "master"
   name = "github.com/appscode/jsonpatch"
   packages = ["."]
   revision = "1359b374de83fa14fd58ab10aa8ea4935f84d249"
 
 [[projects]]
-  branch = "release-7.0"
+  branch = "master"
   name = "github.com/appscode/kutil"
   packages = [
     ".",
+    "apiextensions/v1beta1",
     "meta",
-    "tools/clientcmd"
+    "tools/clientcmd",
+    "tools/queue"
   ]
-  revision = "15c18f816dee0a8f1ebe255292cfe320d0046fd7"
+  revision = "7c06d378914d77d52a1e2eda9c61560a38950794"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -47,6 +67,15 @@
   version = "v3.2.0"
 
 [[projects]]
+  name = "github.com/emicklei/go-restful"
+  packages = [
+    ".",
+    "log"
+  ]
+  revision = "2810ccc68e0ca445fa81ebfa03fbf70aca5c41ae"
+  version = "v2.7.0"
+
+[[projects]]
   name = "github.com/evanphx/json-patch"
   packages = ["."]
   revision = "afac545df32f2287a079e2dfb7ba2745a643747e"
@@ -57,6 +86,30 @@
   packages = ["."]
   revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/go-openapi/jsonpointer"
+  packages = ["."]
+  revision = "3a0015ad55fa9873f41605d3e8f28cd279c32ab2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/go-openapi/jsonreference"
+  packages = ["."]
+  revision = "3fb327e6747da3043567ee86abd02bb6376b6be2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/go-openapi/spec"
+  packages = ["."]
+  revision = "bcff419492eeeb01f76e77d2ebc714dc97b607f5"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/go-openapi/swag"
+  packages = ["."]
+  revision = "811b1089cde9dad18d4d0c2d09fbdbf28dbd27a5"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -88,8 +141,8 @@
     "ptypes/duration",
     "ptypes/timestamp"
   ]
-  revision = "925541529c1fa6821df4e44ce2723319eb2be768"
-  version = "v1.0.0"
+  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
@@ -130,7 +183,7 @@
     "openstack/utils",
     "pagination"
   ]
-  revision = "fc1122caa2de7bcd7d189719873fe5f2b9156a75"
+  revision = "0f9158f99b4108aed6e0ca4bcb2223964334db86"
 
 [[projects]]
   branch = "master"
@@ -164,6 +217,16 @@
   packages = ["."]
   revision = "ca39e5af3ece67bbcda3d0f4f56a8e24d9f2dad4"
   version = "1.1.3"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mailru/easyjson"
+  packages = [
+    "buffer",
+    "jlexer",
+    "jwriter"
+  ]
+  revision = "8b799c424f57fa123fc63a99d6383bc6e4c02578"
 
 [[projects]]
   name = "github.com/modern-go/concurrent"
@@ -208,7 +271,7 @@
     ".",
     "formatter"
   ]
-  revision = "e21612694bdd50975f93cd5eaccb457477128e28"
+  revision = "0525c875b75ca60b9e67ddc44496aa16f21066b0"
 
 [[projects]]
   branch = "master"
@@ -220,7 +283,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "b49d69b5da943f7ef3c9cf91c8777c1f78a0cc3c"
+  revision = "21052ae46654ecf18dfdba0f7c12701a1e2b3164"
 
 [[projects]]
   branch = "master"
@@ -231,10 +294,9 @@
     "http/httpguts",
     "http2",
     "http2/hpack",
-    "idna",
-    "lex/httplex"
+    "idna"
   ]
-  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
+  revision = "f73e4c9ed3b7ebdd5f699a16a880c2b1994e50dd"
 
 [[projects]]
   branch = "master"
@@ -246,7 +308,7 @@
     "jws",
     "jwt"
   ]
-  revision = "6881fee410a5daf86371371f9ad451b95e168b71"
+  revision = "cdc340f7c179dbbfa4afd43b7614e8fcadde4269"
 
 [[projects]]
   branch = "master"
@@ -255,7 +317,7 @@
     "unix",
     "windows"
   ]
-  revision = "cbbc999da32df943dac6cd71eb3ee39e1d7838b9"
+  revision = "7db1c3b1a98089d0071c84f646ff5c96aad43682"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -273,7 +335,8 @@
     "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
-    "unicode/rangetable"
+    "unicode/rangetable",
+    "width"
   ]
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
@@ -292,7 +355,7 @@
     "imports",
     "internal/fastwalk"
   ]
-  revision = "0b5ca0b0400f3828340b1302bc811fa777cb5958"
+  revision = "48418e5732e1b1e2a10207c8007a5f959e422f20"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -324,7 +387,6 @@
   version = "v2.2.1"
 
 [[projects]]
-  branch = "master"
   name = "k8s.io/api"
   packages = [
     "admissionregistration/v1alpha1",
@@ -356,7 +418,19 @@
     "storage/v1alpha1",
     "storage/v1beta1"
   ]
-  revision = "e8df68e6b4a0eb60c21b9ba3a0b3e049bc041a31"
+  revision = "73d903622b7391f3312dcbac6483fed484e185f8"
+  version = "kubernetes-1.10.0"
+
+[[projects]]
+  name = "k8s.io/apiextensions-apiserver"
+  packages = [
+    "pkg/apis/apiextensions",
+    "pkg/apis/apiextensions/v1beta1",
+    "pkg/client/clientset/clientset/scheme",
+    "pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+  ]
+  revision = "4347b330d0ff094db860f2f75fa725b4f4b53618"
+  version = "kubernetes-1.10.1"
 
 [[projects]]
   name = "k8s.io/apimachinery"
@@ -410,6 +484,7 @@
   name = "k8s.io/client-go"
   packages = [
     "discovery",
+    "discovery/fake",
     "informers",
     "informers/admissionregistration",
     "informers/admissionregistration/v1alpha1",
@@ -515,6 +590,7 @@
     "plugin/pkg/client/auth/openstack",
     "rest",
     "rest/watch",
+    "testing",
     "third_party/forked/golang/template",
     "tools/auth",
     "tools/cache",
@@ -522,6 +598,8 @@
     "tools/clientcmd/api",
     "tools/clientcmd/api/latest",
     "tools/clientcmd/api/v1",
+    "tools/leaderelection",
+    "tools/leaderelection/resourcelock",
     "tools/metrics",
     "tools/pager",
     "tools/record",
@@ -533,7 +611,8 @@
     "util/homedir",
     "util/integer",
     "util/jsonpath",
-    "util/retry"
+    "util/retry",
+    "util/workqueue"
   ]
   revision = "989be4278f353e42f26c416c53757d16fcff77db"
   version = "kubernetes-1.10.1"
@@ -584,12 +663,15 @@
 [[projects]]
   branch = "master"
   name = "k8s.io/kube-openapi"
-  packages = ["pkg/util/proto"]
-  revision = "3a0c53868c9444e4224c3dd5dc2caa9b5107ff7b"
+  packages = [
+    "pkg/common",
+    "pkg/util/proto"
+  ]
+  revision = "61db125d227fc9d4e373819a059516f32f7f23c7"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0519c5fc4460d559b6fe7504e350b8fef612aef75e697ad8203cbd95c2d8c306"
+  inputs-digest = "27a288a17b399a34f509a958bed84fb41d784fd8b41e1c469e659c925ef3290d"
   solver-name = "gps-cdcl"
   solver-version = 1

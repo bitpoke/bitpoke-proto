@@ -15,3 +15,7 @@ import (
 func RootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello from Presslabs Dashboard API Server!\npath: %s\n", r.URL.Path)
 }
+
+func ProjectsHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hello from Presslabs Dashboard API Server!\npath: %s\n", r.URL.Path)
+}

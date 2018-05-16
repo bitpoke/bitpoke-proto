@@ -6,9 +6,6 @@ GOPATH ?= $HOME/go
 HACK_DIR ?= hack
 BUILD_TAG := build
 
-# Get a list of all binaries to be built
-CMDS := $(shell find ./cmd/ -maxdepth 1 -type d -exec basename {} \; | grep -v cmd)
-
 ifeq ($(APP_VERSION),)
 APP_VERSION := $(shell git describe --abbrev=4 --dirty --tags --always)
 endif
@@ -25,6 +22,9 @@ endif
 GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH ?= amd64
 GOLDFLAGS := -ldflags "-X $(PACKAGE_NAME)/pkg/version.AppGitState=${GIT_STATE} -X $(PACKAGE_NAME)/pkg/version.AppGitCommit=${GIT_COMMIT} -X $(PACKAGE_NAME)/pkg/version.AppVersion=${APP_VERSION}"
+
+# APIS source files
+SRC_APIS := $(shell find ./pkg/apis -type f -name '*.go' | grep -v '_test')
 
 # Get a list of all binaries to be built
 CMDS := $(shell find ./cmd/ -maxdepth 1 -type d -exec basename {} \; | grep -v cmd)
@@ -82,18 +82,6 @@ bin/dashboard-%_linux_amd64: cmd/%
 		$(GOLDFLAGS) \
 		./$<
 
-
-# Code generation targets
-#########################
-
-.PHONY: generate generate_verify
-generate:
-	$(HACK_DIR)/update-codegen.sh
-
-generate_verify:
-	$(HACK_DIR)/verify-codegen.sh
-
-
 # Docker image targets
 ######################
 images: bin/dashboard-controller_linux_amd64
@@ -111,3 +99,22 @@ publish: images
 		for tag in $(IMAGE_TAGS); do \
 		gcloud docker -- push $(REGISTRY)/$(APP_NAME):$${tag}; \
 	done
+
+# Code generation targets
+#########################
+
+.PHONY: gen-crds gen-crds-verify
+gen-crds: bin/dashboard-gen-openapi_$(GOOS)_$(GOARCH) deploy/projects.yaml
+
+gen-crds-verify: SHELL := /bin/bash
+gen-crds-verify: bin/dashboard-gen-openapi_$(GOOS)_$(GOARCH)
+	@echo "Verifying generated CRDs"
+	diff -Naupr deploy/projects.yaml <(bin/dashboard-gen-openapi_$(GOOS)_$(GOARCH) --crd projects.dashboard.presslabs.com)
+
+deploy/projects.yaml: $(SRC_APIS)
+	bin/dashboard-gen-openapi_$(GOOS)_$(GOARCH) --crd projects.dashboard.presslabs.com > deploy/projects.yaml
+
+CODEGEN_APIS_VERSIONS := projects:v1alpha1
+CODEGEN_TOOLS := deepcopy client lister informer openapi
+CODEGEN_OPENAPI_EXTAPKGS ?= k8s.io/apimachinery/pkg/apis/meta/v1 k8s.io/api/core/v1
+include hack/codegen.mk

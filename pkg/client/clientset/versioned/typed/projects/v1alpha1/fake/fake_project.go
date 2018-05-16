@@ -22,7 +22,6 @@ import (
 // FakeProjects implements ProjectInterface
 type FakeProjects struct {
 	Fake *FakeDashboardV1alpha1
-	ns   string
 }
 
 var projectsResource = schema.GroupVersionResource{Group: "dashboard.presslabs.com", Version: "v1alpha1", Resource: "projects"}
@@ -32,8 +31,7 @@ var projectsKind = schema.GroupVersionKind{Group: "dashboard.presslabs.com", Ver
 // Get takes name of the project, and returns the corresponding project object, and an error if there is any.
 func (c *FakeProjects) Get(name string, options v1.GetOptions) (result *v1alpha1.Project, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(projectsResource, c.ns, name), &v1alpha1.Project{})
-
+		Invokes(testing.NewRootGetAction(projectsResource, name), &v1alpha1.Project{})
 	if obj == nil {
 		return nil, err
 	}
@@ -43,8 +41,7 @@ func (c *FakeProjects) Get(name string, options v1.GetOptions) (result *v1alpha1
 // List takes label and field selectors, and returns the list of Projects that match those selectors.
 func (c *FakeProjects) List(opts v1.ListOptions) (result *v1alpha1.ProjectList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(projectsResource, projectsKind, c.ns, opts), &v1alpha1.ProjectList{})
-
+		Invokes(testing.NewRootListAction(projectsResource, projectsKind, opts), &v1alpha1.ProjectList{})
 	if obj == nil {
 		return nil, err
 	}
@@ -65,15 +62,13 @@ func (c *FakeProjects) List(opts v1.ListOptions) (result *v1alpha1.ProjectList, 
 // Watch returns a watch.Interface that watches the requested projects.
 func (c *FakeProjects) Watch(opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(projectsResource, c.ns, opts))
-
+		InvokesWatch(testing.NewRootWatchAction(projectsResource, opts))
 }
 
 // Create takes the representation of a project and creates it.  Returns the server's representation of the project, and an error, if there is any.
 func (c *FakeProjects) Create(project *v1alpha1.Project) (result *v1alpha1.Project, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(projectsResource, c.ns, project), &v1alpha1.Project{})
-
+		Invokes(testing.NewRootCreateAction(projectsResource, project), &v1alpha1.Project{})
 	if obj == nil {
 		return nil, err
 	}
@@ -83,8 +78,18 @@ func (c *FakeProjects) Create(project *v1alpha1.Project) (result *v1alpha1.Proje
 // Update takes the representation of a project and updates it. Returns the server's representation of the project, and an error, if there is any.
 func (c *FakeProjects) Update(project *v1alpha1.Project) (result *v1alpha1.Project, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(projectsResource, c.ns, project), &v1alpha1.Project{})
+		Invokes(testing.NewRootUpdateAction(projectsResource, project), &v1alpha1.Project{})
+	if obj == nil {
+		return nil, err
+	}
+	return obj.(*v1alpha1.Project), err
+}
 
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *FakeProjects) UpdateStatus(project *v1alpha1.Project) (*v1alpha1.Project, error) {
+	obj, err := c.Fake.
+		Invokes(testing.NewRootUpdateSubresourceAction(projectsResource, "status", project), &v1alpha1.Project{})
 	if obj == nil {
 		return nil, err
 	}
@@ -94,14 +99,13 @@ func (c *FakeProjects) Update(project *v1alpha1.Project) (result *v1alpha1.Proje
 // Delete takes name of the project and deletes it. Returns an error if one occurs.
 func (c *FakeProjects) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(projectsResource, c.ns, name), &v1alpha1.Project{})
-
+		Invokes(testing.NewRootDeleteAction(projectsResource, name), &v1alpha1.Project{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeProjects) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(projectsResource, c.ns, listOptions)
+	action := testing.NewRootDeleteCollectionAction(projectsResource, listOptions)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.ProjectList{})
 	return err
@@ -110,8 +114,7 @@ func (c *FakeProjects) DeleteCollection(options *v1.DeleteOptions, listOptions v
 // Patch applies the patch and returns the patched project.
 func (c *FakeProjects) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Project, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(projectsResource, c.ns, name, data, subresources...), &v1alpha1.Project{})
-
+		Invokes(testing.NewRootPatchSubresourceAction(projectsResource, name, data, subresources...), &v1alpha1.Project{})
 	if obj == nil {
 		return nil, err
 	}

@@ -2329,10 +2329,11 @@ here's a skeleton implementation of a playground transport.
         }
 */
 
-function HTTPTransport() {
+// HTTPTransport is the default transport.
+// enableVet enables running vet if a program was compiled and ran successfully.
+// If vet returned any errors, display them before the output of a program.
+function HTTPTransport(enableVet) {
 	'use strict';
-
-	// TODO(adg): support stderr
 
 	function playback(output, events) {
 		var timeout;
@@ -2344,12 +2345,12 @@ function HTTPTransport() {
 			}
 			var e = events.shift();
 			if (e.Delay === 0) {
-				output({Kind: 'stdout', Body: e.Message});
+				output({Kind: e.Kind, Body: e.Message});
 				next();
 				return;
 			}
 			timeout = setTimeout(function() {
-				output({Kind: 'stdout', Body: e.Message});
+				output({Kind: e.Kind, Body: e.Message});
 				next();
 			}, e.Delay / 1000000);
 		}
@@ -2358,7 +2359,7 @@ function HTTPTransport() {
 			Stop: function() {
 				clearTimeout(timeout);
 			}
-		}
+		};
 	}
 
 	function error(output, msg) {
@@ -2385,7 +2386,28 @@ function HTTPTransport() {
 						error(output, data.Errors);
 						return;
 					}
-					playing = playback(output, data.Events);
+
+					if (!enableVet) {
+						playing = playback(output, data.Events);
+						return;
+					}
+
+					$.ajax("/vet", {
+						data: {"body": body},
+						type: "POST",
+						dataType: "json",
+						success: function(dataVet) {
+							if (dataVet.Errors) {
+								// inject errors from the vet as the first event in the output
+								data.Events.unshift({Message: 'Go vet exited.\n\n', Kind: 'system', Delay: 0});
+								data.Events.unshift({Message: dataVet.Errors, Kind: 'stderr', Delay: 0});
+							}
+							playing = playback(output, data.Events);
+						},
+						error: function() {
+							playing = playback(output, data.Events);
+						}
+					});
 				},
 				error: function() {
 					error(output, 'Error communicating with remote server.');
@@ -2416,7 +2438,7 @@ function SocketTransport() {
 
 	websocket.onclose = function() {
 		console.log('websocket connection closed');
-	}
+	};
 
 	websocket.onmessage = function(e) {
 		var m = JSON.parse(e.data);
@@ -2428,7 +2450,7 @@ function SocketTransport() {
 			started[m.Id] = true;
 		}
 		output({Kind: m.Kind, Body: m.Body});
-	}
+	};
 
 	function send(m) {
 		websocket.send(JSON.stringify(m));
@@ -2496,7 +2518,7 @@ function PlaygroundOutput(el) {
 
 		if (needScroll)
 			el.scrollTop = el.scrollHeight - el.offsetHeight;
-	}
+	};
 }
 
 (function() {
@@ -2512,7 +2534,7 @@ function PlaygroundOutput(el) {
     return function(write) {
       if (write.Body) lineHighlight(write.Body);
       wrappedOutput(write);
-    }
+    };
   }
   function lineClear() {
     $(".lineerror").removeClass("lineerror");
@@ -2527,14 +2549,14 @@ function PlaygroundOutput(el) {
   //  shareEl - share button element (optional)
   //  shareURLEl - share URL text input element (optional)
   //  shareRedirect - base URL to redirect to on share (optional)
-  //  vetEl - vet button element (optional)
   //  toysEl - toys select element (optional)
   //  enableHistory - enable using HTML5 history API (optional)
   //  transport - playground transport to use (default is HTTPTransport)
   //  enableShortcuts - whether to enable shortcuts (Ctrl+S/Cmd+S to save) (default is false)
+  //  enableVet - enable running vet and displaying its errors
   function playground(opts) {
     var code = $(opts.codeEl);
-    var transport = opts['transport'] || new HTTPTransport();
+    var transport = opts['transport'] || new HTTPTransport(opts['enableVet']);
     var running;
 
     // autoindent helpers.
@@ -2658,11 +2680,6 @@ function PlaygroundOutput(el) {
       if (running) running.Kill();
       output.removeClass("error").text('Waiting for remote server...');
     }
-    function noError() {
-      lineClear();
-      if (running) running.Kill();
-      output.removeClass("error").text('No errors.');
-    }
     function run() {
       loading();
       running = transport.Run(body(), highlightOutput(PlaygroundOutput(output[0])));
@@ -2685,26 +2702,6 @@ function PlaygroundOutput(el) {
             setBody(data.Body);
             setError("");
           }
-        }
-      });
-    }
-
-    function vet() {
-      loading();
-      var data = {"body": body()};
-      $.ajax("/vet", {
-        data: data,
-        type: "POST",
-        dataType: "json",
-        success: function(data) {
-          if (data.Errors) {
-            setError(data.Errors);
-          } else {
-            noError();
-          }
-        },
-        error: function() {
-          setError('Error communicating with remote server.');
         }
       });
     }
@@ -2756,7 +2753,6 @@ function PlaygroundOutput(el) {
 
     $(opts.runEl).click(run);
     $(opts.fmtEl).click(fmt);
-    $(opts.vetEl).click(vet);
 
     if (opts.shareEl !== null && (opts.shareURLEl !== null || opts.shareRedirect !== null)) {
       if (opts.shareURLEl) {
@@ -3078,9 +3074,6 @@ ol {
 pre {
 	background: #EFEFEF;
 	padding: 0.625rem;
-
-	-webkit-border-radius: 0.3125rem;
-	-moz-border-radius: 0.3125rem;
 	border-radius: 0.3125rem;
 }
 
@@ -3215,9 +3208,6 @@ div#blog .read a,
 
 	text-decoration: none;
 	font-size: 1rem;
-
-	-webkit-border-radius: 0.3125rem;
-	-moz-border-radius: 0.3125rem;
 	border-radius: 0.3125rem;
 }
 div#playground .buttons a,
@@ -3366,9 +3356,6 @@ a#start {
 
 	text-align: center;
 	text-decoration: none;
-
-	-webkit-border-radius: 0.3125rem;
-	-moz-border-radius: 0.3125rem;
 	border-radius: 0.3125rem;
 }
 a#start .big {
@@ -3404,10 +3391,6 @@ div#learn .input {
 	margin-top: 0.625rem;
 	height: 9.375rem;
 
-	-webkit-border-top-left-radius: 0.3125rem;
-	-webkit-border-top-right-radius: 0.3125rem;
-	-moz-border-radius-topleft: 0.3125rem;
-	-moz-border-radius-topright: 0.3125rem;
 	border-top-left-radius: 0.3125rem;
 	border-top-right-radius: 0.3125rem;
 }
@@ -3425,18 +3408,11 @@ div#learn .output {
 	height: 3.688rem;
 	overflow: auto;
 
-	-webkit-border-bottom-right-radius: 0.3125rem;
-	-webkit-border-bottom-left-radius: 0.3125rem;
-	-moz-border-radius-bottomright: 0.3125rem;
-	-moz-border-radius-bottomleft: 0.3125rem;
 	border-bottom-right-radius: 0.3125rem;
 	border-bottom-left-radius: 0.3125rem;
 }
 div#learn .output pre {
 	padding: 0;
-
-	-webkit-border-radius: 0;
-	-moz-border-radius: 0;
 	border-radius: 0;
 }
 div#learn .input,
@@ -3499,6 +3475,22 @@ div#blog .read {
 	text-align: right;
 }
 
+@supports (--c: 0) {
+	[style*="--aspect-ratio-padding:"] {
+		position: relative;
+		overflow: hidden;
+		padding-top: var(--aspect-ratio-padding);
+	}
+
+	[style*="--aspect-ratio-padding:"]>* {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+}
+
 .toggleButton { cursor: pointer; }
 .toggle > .collapsed { display: block; }
 .toggle > .expanded { display: none; }
@@ -3533,10 +3525,6 @@ div.play .input {
 	padding: 0.625rem;
 	margin-top: 0.625rem;
 
-	-webkit-border-top-left-radius: 0.3125rem;
-	-webkit-border-top-right-radius: 0.3125rem;
-	-moz-border-radius-topleft: 0.3125rem;
-	-moz-border-radius-topright: 0.3125rem;
 	border-top-left-radius: 0.3125rem;
 	border-top-right-radius: 0.3125rem;
 
@@ -3562,18 +3550,11 @@ div.play .output {
 	max-height: 12.5rem;
 	overflow: auto;
 
-	-webkit-border-bottom-right-radius: 0.3125rem;
-	-webkit-border-bottom-left-radius: 0.3125rem;
-	-moz-border-radius-bottomright: 0.3125rem;
-	-moz-border-radius-bottomleft: 0.3125rem;
 	border-bottom-right-radius: 0.3125rem;
 	border-bottom-left-radius: 0.3125rem;
 }
 div.play .output pre {
 	padding: 0;
-
-	-webkit-border-radius: 0;
-	-moz-border-radius: 0;
 	border-radius: 0;
 }
 div.play .input,
@@ -3622,10 +3603,6 @@ div#playground {
 	border: 0.0625rem solid #B0BBC5;
 	border-top: none;
 
-	-webkit-border-bottom-left-radius: 0.3125rem;
-	-webkit-border-bottom-right-radius: 0.3125rem;
-	-moz-border-radius-bottomleft: 0.3125rem;
-	-moz-border-radius-bottomright: 0.3125rem;
 	border-bottom-left-radius: 0.3125rem;
 	border-bottom-right-radius: 0.3125rem;
 }
@@ -3653,8 +3630,6 @@ div#playground .output {
 	width: auto;
         margin: 1.25rem;
         padding: 0.625rem;
-        -webkit-border-radius: 0.3125rem;
-        -moz-border-radius: 0.3125rem;
         border-radius: 0.3125rem;
 }
 #content .code, #content .playground {

@@ -12,7 +12,3 @@ package v1alpha1
 // ProjectListerExpansion allows custom methods to be added to
 // ProjectLister.
 type ProjectListerExpansion interface{}
-
-// ProjectNamespaceListerExpansion allows custom methods to be added to
-// ProjectNamespaceLister.
-type ProjectNamespaceListerExpansion interface{}

@@ -19,8 +19,8 @@ type FakeDashboardV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeDashboardV1alpha1) Projects(namespace string) v1alpha1.ProjectInterface {
-	return &FakeProjects{c, namespace}
+func (c *FakeDashboardV1alpha1) Projects() v1alpha1.ProjectInterface {
+	return &FakeProjects{c}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

@@ -1,3 +1,9 @@
+/*
+Copyright 2018 Pressinfra SRL
+
+This file is subject to the terms and conditions defined in file LICENSE,
+which is part of this source code package.
+*/
 package options
 
 import (
@@ -20,6 +26,7 @@ const (
 type ControllerManagerOptions struct {
 	Kubeconfig        string
 	KubeconfigContext string
+	InstallCRDs       bool
 
 	LeaderElect                 bool
 	LeaderElectionNamespace     string
@@ -48,6 +55,10 @@ func (o *ControllerManagerOptions) Validate() error {
 func (o *ControllerManagerOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.Kubeconfig, "kubeconfig", defaultKubeconfig, "Path for kubeconfig file")
 	fs.StringVar(&o.KubeconfigContext, "context", defaultKubeconfigContext, "Name of the kubeconfig context to use")
+	fs.BoolVar(&o.InstallCRDs, "install-crds", true, "If true, the "+
+		"dashboard-controller will install the Custom Resource Definitions "+
+		"for Dashboard. The controller needs the appropriate permissions in "+
+		"order to do so.")
 
 	fs.BoolVar(&o.LeaderElect, "leader-elect", true, ""+
 		"If true, dashboard-controller will perform leader election between instances to ensure no more "+

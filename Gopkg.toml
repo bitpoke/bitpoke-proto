@@ -34,7 +34,7 @@ required = [
   name = "k8s.io/gengo"
   revision = "01a732e01d00cb9a81bb0ca050d3e6d2b947927b"
 
-[[constraint]]
+[[override]]
   name = "github.com/appscode/kutil"
   branch = "release-7.0"
 

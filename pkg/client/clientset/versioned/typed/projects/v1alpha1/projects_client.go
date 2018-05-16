@@ -26,8 +26,8 @@ type DashboardV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *DashboardV1alpha1Client) Projects(namespace string) ProjectInterface {
-	return newProjects(c, namespace)
+func (c *DashboardV1alpha1Client) Projects() ProjectInterface {
+	return newProjects(c)
 }
 
 // NewForConfig creates a new DashboardV1alpha1Client for the given config.

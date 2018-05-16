@@ -27,12 +27,13 @@ import (
 	"github.com/appscode/kutil/tools/clientcmd"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"k8s.io/api/core/v1"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	apiextensions_clientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
-	core "k8s.io/client-go/kubernetes/typed/core/v1"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -41,6 +42,7 @@ import (
 	dashclientset "github.com/presslabs/dashboard/pkg/client/clientset/versioned"
 	dashintscheme "github.com/presslabs/dashboard/pkg/client/clientset/versioned/scheme"
 	dashinformers "github.com/presslabs/dashboard/pkg/client/informers/externalversions"
+	projectscontroller "github.com/presslabs/dashboard/pkg/controller/projects"
 
 	"github.com/presslabs/dashboard/cmd/controller/app/options"
 	"github.com/presslabs/dashboard/pkg/controller"
@@ -79,25 +81,28 @@ func NewControllerManagerCommand(stopCh <-chan struct{}) *cobra.Command {
 
 // Run Presslabs Controller Manager.  This should never exit.
 func Run(c *options.ControllerManagerOptions, stopCh <-chan struct{}) error {
-	glog.Infof("Starting Presslabs Dashboard Controller (%s)...", version.Get())
-	ctx, kubeCfg, err := buildControllerContext(c)
-
-	if err != nil {
-		return err
-	}
+	glog.Infof("Starting Dashboard Operator Controller (%s)...", version.Get())
 
 	run := func(_ <-chan struct{}) {
 		var wg sync.WaitGroup
-		glog.V(4).Infof("Starting shared informer factories")
-		ctx.KubeSharedInformerFactory.Start(stopCh)
-		ctx.DashboardSharedInformerFactory.Start(stopCh)
-		// TODO: Start controller loops here
-
-		// The code bellow just waits forever
+		// Start the Project Controller
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			glog.Infof("Starting dummy loop and waiting until CTRL+C")
+
+			ctx, err := buildControllerContext(c)
+
+			if err != nil {
+				glog.Fatalf(err.Error())
+				return
+			}
+
+			ctrl, err := projectscontroller.NewController(ctx)
+			if err != nil {
+				glog.Fatalf(err.Error())
+				return
+			}
+			ctrl.Run(stopCh)
 			<-stopCh
 		}()
 
@@ -110,7 +115,13 @@ func Run(c *options.ControllerManagerOptions, stopCh <-chan struct{}) error {
 		return nil
 	}
 
-	leaderElectionClient, err := kubernetes.NewForConfig(rest.AddUserAgent(kubeCfg, "leader-election"))
+	ctx, err := buildControllerContext(c)
+
+	if err != nil {
+		return err
+	}
+
+	leaderElectionClient, err := kubernetes.NewForConfig(rest.AddUserAgent(ctx.RESTConfig, "leader-election"))
 
 	if err != nil {
 		glog.Fatalf("error creating leader election client: %s", err.Error())
@@ -120,46 +131,55 @@ func Run(c *options.ControllerManagerOptions, stopCh <-chan struct{}) error {
 	panic("unreachable")
 }
 
-func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Context, *rest.Config, error) {
+func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Context, error) {
 	// Create a Kubernetes api client
 	kubeCfg, err := clientcmd.BuildConfigFromContext(c.Kubeconfig, c.KubeconfigContext)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error creating kubernetes rest api client: %s", err.Error())
+		return nil, fmt.Errorf("error creating kubernetes rest api client: %s", err.Error())
 	}
+	glog.Infof("Kubernetes API server: %s", kubeCfg.Host)
 
 	// Create a Kubernetes api client
 	cl, err := kubernetes.NewForConfig(kubeCfg)
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("error creating kubernetes client: %s", err.Error())
+		return nil, fmt.Errorf("error creating kubernetes client: %s", err.Error())
+	}
+
+	// Create the CRD client
+	crdcl, err := apiextensions_clientset.NewForConfig(kubeCfg)
+	if err != nil {
+		return nil, fmt.Errorf("error creating kubernetes CRD client: %s", err.Error())
 	}
 
 	// Create a Navigator api client
 	intcl, err := dashclientset.NewForConfig(kubeCfg)
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("error creating internal group client: %s", err.Error())
+		return nil, fmt.Errorf("error creating internal group client: %s", err.Error())
 	}
 
 	// Create event broadcaster
-	// Add oxygen types to the default Kubernetes Scheme so Events can be
-	// logged properly
+	// Add oxygen types to the default Kubernetes Scheme so Events can be logged properly
 	dashintscheme.AddToScheme(scheme.Scheme)
 	glog.V(4).Info("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.V(4).Infof)
-	eventBroadcaster.StartRecordingToSink(&core.EventSinkImpl{Interface: cl.CoreV1().Events("")})
-	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: controllerAgentName})
+	eventBroadcaster.StartRecordingToSink(&corev1client.EventSinkImpl{Interface: cl.CoreV1().Events("")})
+	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	kubeSharedInformerFactory := informers.NewFilteredSharedInformerFactory(cl, time.Second*30, "", nil)
 	dashboardInformerFactory := dashinformers.NewFilteredSharedInformerFactory(intcl, time.Second*30, "", nil)
 	return &controller.Context{
+		RESTConfig:                     kubeCfg,
 		KubeClient:                     cl,
 		KubeSharedInformerFactory:      kubeSharedInformerFactory,
 		Recorder:                       recorder,
 		DashboardClient:                intcl,
 		DashboardSharedInformerFactory: dashboardInformerFactory,
-	}, kubeCfg, nil
+		CRDClient:                      crdcl,
+		InstallCRDs:                    c.InstallCRDs,
+	}, nil
 }
 
 func startLeaderElection(c *options.ControllerManagerOptions, leaderElectionClient kubernetes.Interface, recorder record.EventRecorder, run func(<-chan struct{})) {
@@ -171,7 +191,7 @@ func startLeaderElection(c *options.ControllerManagerOptions, leaderElectionClie
 
 	// Lock required for leader election
 	rl := resourcelock.EndpointsLock{
-		EndpointsMeta: meta.ObjectMeta{
+		EndpointsMeta: metav1.ObjectMeta{
 			Namespace: c.LeaderElectionNamespace,
 			Name:      controllerAgentName,
 		},

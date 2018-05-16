@@ -48,6 +48,7 @@ func Run(c *options.ControllerManagerOptions, stopCh <-chan struct{}) error {
 	glog.Infof("Starting Presslabs Dashboard API Server (%s)...", version.Get())
 
 	http.HandleFunc("/", apiserver.RootHandler)
+	http.HandleFunc("/projects", apiserver.ProjectsHandler)
 
 	run := func(_ <-chan struct{}) {
 

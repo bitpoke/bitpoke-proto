@@ -20,8 +20,8 @@ import (
 type ProjectLister interface {
 	// List lists all Projects in the indexer.
 	List(selector labels.Selector) (ret []*v1alpha1.Project, err error)
-	// Projects returns an object that can list and get Projects.
-	Projects(namespace string) ProjectNamespaceLister
+	// Get retrieves the Project from the index for a given name.
+	Get(name string) (*v1alpha1.Project, error)
 	ProjectListerExpansion
 }
 
@@ -43,38 +43,9 @@ func (s *projectLister) List(selector labels.Selector) (ret []*v1alpha1.Project,
 	return ret, err
 }
 
-// Projects returns an object that can list and get Projects.
-func (s *projectLister) Projects(namespace string) ProjectNamespaceLister {
-	return projectNamespaceLister{indexer: s.indexer, namespace: namespace}
-}
-
-// ProjectNamespaceLister helps list and get Projects.
-type ProjectNamespaceLister interface {
-	// List lists all Projects in the indexer for a given namespace.
-	List(selector labels.Selector) (ret []*v1alpha1.Project, err error)
-	// Get retrieves the Project from the indexer for a given namespace and name.
-	Get(name string) (*v1alpha1.Project, error)
-	ProjectNamespaceListerExpansion
-}
-
-// projectNamespaceLister implements the ProjectNamespaceLister
-// interface.
-type projectNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all Projects in the indexer for a given namespace.
-func (s projectNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.Project, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.Project))
-	})
-	return ret, err
-}
-
-// Get retrieves the Project from the indexer for a given namespace and name.
-func (s projectNamespaceLister) Get(name string) (*v1alpha1.Project, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
+// Get retrieves the Project from the index for a given name.
+func (s *projectLister) Get(name string) (*v1alpha1.Project, error) {
+	obj, exists, err := s.indexer.GetByKey(name)
 	if err != nil {
 		return nil, err
 	}
