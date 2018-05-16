@@ -1,24 +1,13 @@
 /*
 Copyright 2018 Pressinfra SRL
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+This file is subject to the terms and conditions defined in file LICENSE,
+which is part of this source code package.
 */
 
 package projects
 
 import (
-	"fmt"
-
 	apiextenstions_util "github.com/appscode/kutil/apiextensions/v1beta1"
 	"github.com/golang/glog"
 	apiextenstions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -64,7 +53,7 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 		return
 	}
 
-	glog.V(4).Infof("Starting shared informer factories")
+	glog.V(2).Infof("Starting shared informer factories")
 	c.KubeSharedInformerFactory.Start(stopCh)
 	c.DashboardSharedInformerFactory.Start(stopCh)
 	// Wait for all involved caches to be synced, before processing items from the queue is started
@@ -80,7 +69,7 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 			return
 		}
 	}
-	glog.V(4).Infof("Informer cache synced")
+	glog.V(2).Infof("Informer cache synced")
 
 	glog.Infof("Starting %s control loops", controllerName)
 
@@ -101,7 +90,6 @@ func (c *Controller) installCRDs(crds []*apiextenstions.CustomResourceDefinition
 }
 
 func (c *Controller) waitForCRDs(crds []*apiextenstions.CustomResourceDefinition) error {
-	fmt.Printf("%v", c.CRDClient)
 	glog.Info("Waiting for Custom Resource Definitions to become available")
 	return apiextenstions_util.WaitForCRDReady(c.CRDClient.RESTClient(), crds)
 }

@@ -299,6 +299,38 @@ spec:
 
                 Populated by the system. Read-only. More info: http://kubernetes.io/docs/user-guide/identifiers#uids
               type: string
+        status:
+          properties:
+            conditions:
+              description: Conditions contains the list of the cluster conditions
+                fulfilled
+              items:
+                properties:
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  message:
+                    description: Message
+                    type: string
+                  reason:
+                    description: Reason
+                    type: string
+                  status:
+                    description: Status of the condition, one of ("True", "False",
+                      "Unknown")
+                    type: string
+                  type:
+                    description: type of cluster condition, values in ("Ready")
+                    type: string
+                required:
+                - type
+                - status
+                - lastTransitionTime
+                - reason
+                - message
+              type: array
+          required:
+          - conditions
   version: v1alpha1
 status:
   acceptedNames:

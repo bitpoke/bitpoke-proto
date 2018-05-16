@@ -28,12 +28,12 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
-	kext_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiextensions_clientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
-	core "k8s.io/client-go/kubernetes/typed/core/v1"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -42,7 +42,7 @@ import (
 	dashclientset "github.com/presslabs/dashboard/pkg/client/clientset/versioned"
 	dashintscheme "github.com/presslabs/dashboard/pkg/client/clientset/versioned/scheme"
 	dashinformers "github.com/presslabs/dashboard/pkg/client/informers/externalversions"
-	"github.com/presslabs/dashboard/pkg/controller/projects"
+	projectscontroller "github.com/presslabs/dashboard/pkg/controller/projects"
 
 	"github.com/presslabs/dashboard/cmd/controller/app/options"
 	"github.com/presslabs/dashboard/pkg/controller"
@@ -93,10 +93,11 @@ func Run(c *options.ControllerManagerOptions, stopCh <-chan struct{}) error {
 			ctx, err := buildControllerContext(c)
 
 			if err != nil {
+				glog.Fatalf(err.Error())
 				return
 			}
 
-			ctrl, err := projects.NewController(ctx)
+			ctrl, err := projectscontroller.NewController(ctx)
 			if err != nil {
 				glog.Fatalf(err.Error())
 				return
@@ -136,6 +137,7 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 	if err != nil {
 		return nil, fmt.Errorf("error creating kubernetes rest api client: %s", err.Error())
 	}
+	glog.Infof("Kubernetes API server: %s", kubeCfg.Host)
 
 	// Create a Kubernetes api client
 	cl, err := kubernetes.NewForConfig(kubeCfg)
@@ -145,7 +147,7 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 	}
 
 	// Create the CRD client
-	crdcl, err := kext_cs.NewForConfig(kubeCfg)
+	crdcl, err := apiextensions_clientset.NewForConfig(kubeCfg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating kubernetes CRD client: %s", err.Error())
 	}
@@ -158,13 +160,12 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 	}
 
 	// Create event broadcaster
-	// Add oxygen types to the default Kubernetes Scheme so Events can be
-	// logged properly
+	// Add oxygen types to the default Kubernetes Scheme so Events can be logged properly
 	dashintscheme.AddToScheme(scheme.Scheme)
 	glog.V(4).Info("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.V(4).Infof)
-	eventBroadcaster.StartRecordingToSink(&core.EventSinkImpl{Interface: cl.CoreV1().Events("")})
+	eventBroadcaster.StartRecordingToSink(&corev1.EventSinkImpl{Interface: cl.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: controllerAgentName})
 
 	kubeSharedInformerFactory := informers.NewFilteredSharedInformerFactory(cl, time.Second*30, "", nil)
@@ -190,7 +191,7 @@ func startLeaderElection(c *options.ControllerManagerOptions, leaderElectionClie
 
 	// Lock required for leader election
 	rl := resourcelock.EndpointsLock{
-		EndpointsMeta: meta.ObjectMeta{
+		EndpointsMeta: metav1.ObjectMeta{
 			Namespace: c.LeaderElectionNamespace,
 			Name:      controllerAgentName,
 		},

@@ -32,5 +32,5 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 
 // Projects returns a ProjectInformer.
 func (v *version) Projects() ProjectInformer {
-	return &projectInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+	return &projectInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
