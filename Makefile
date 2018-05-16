@@ -107,7 +107,7 @@ publish: images
 gen-crds: bin/dashboard-gen-openapi_$(GOOS)_$(GOARCH) deploy/projects.yaml
 
 gen-crds-verify: SHELL := /bin/bash
-gen-crds-verify:
+gen-crds-verify: bin/dashboard-gen-openapi_$(GOOS)_$(GOARCH)
 	@echo "Verifying generated CRDs"
 	diff -Naupr deploy/projects.yaml <(bin/dashboard-gen-openapi_$(GOOS)_$(GOARCH) --crd projects.dashboard.presslabs.com)
 
