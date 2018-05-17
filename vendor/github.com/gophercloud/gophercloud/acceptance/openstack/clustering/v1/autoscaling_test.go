@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/gophercloud/gophercloud/acceptance/clients"
+	"github.com/gophercloud/gophercloud/acceptance/tools"
 	"github.com/gophercloud/gophercloud/openstack/clustering/v1/clusters"
 	"github.com/gophercloud/gophercloud/openstack/clustering/v1/profiles"
-
-	"github.com/gophercloud/gophercloud/acceptance/tools"
+	"github.com/gophercloud/gophercloud/pagination"
 	th "github.com/gophercloud/gophercloud/testhelper"
 )
 
@@ -19,7 +19,10 @@ var testName string
 func TestAutoScaling(t *testing.T) {
 	testName = tools.RandomString("TESTACC-", 8)
 	profileCreate(t)
+	profileGet(t)
+	profileList(t)
 	clusterCreate(t)
+	clusterGet(t)
 }
 
 func profileCreate(t *testing.T) {
@@ -70,6 +73,54 @@ func profileCreate(t *testing.T) {
 	th.AssertEquals(t, profileName, profile.Name)
 	th.AssertEquals(t, "os.nova.server", profile.Spec.Type)
 	th.AssertEquals(t, "1.0", profile.Spec.Version)
+}
+
+func profileGet(t *testing.T) {
+	client, err := clients.NewClusteringV1Client()
+	if err != nil {
+		t.Fatalf("Unable to create clustering client: %v", err)
+	}
+
+	profileName := testName
+	profile, err := profiles.Get(client, profileName).Extract()
+	th.AssertNoErr(t, err)
+	th.AssertEquals(t, profileName, profile.Name)
+
+	tools.PrintResource(t, profile)
+}
+
+func profileList(t *testing.T) {
+	client, err := clients.NewClusteringV1Client()
+	if err != nil {
+		t.Fatalf("Unable to create clustering client: %v", err)
+	}
+
+	testProfileFound := false
+	profiles.List(client, profiles.ListOpts{}).EachPage(func(page pagination.Page) (bool, error) {
+		allProfiles, err := profiles.ExtractProfiles(page)
+		if err != nil {
+			t.Fatalf("Error extracting page of profiles: %v", err)
+		}
+
+		for _, profile := range allProfiles {
+			tools.PrintResource(t, profile)
+			if profile.Name == testName {
+				testProfileFound = true
+				break
+			}
+		}
+
+		empty, err := page.IsEmpty()
+
+		th.AssertNoErr(t, err)
+
+		// Expect the page IS NOT empty
+		th.AssertEquals(t, false, empty)
+
+		return true, nil
+	})
+
+	th.AssertEquals(t, true, testProfileFound)
 }
 
 func clusterCreate(t *testing.T) {
@@ -130,4 +181,18 @@ func clusterCreate(t *testing.T) {
 	th.AssertEquals(t, optsCluster.Timeout, cluster.Timeout)
 	th.CheckDeepEquals(t, optsCluster.Metadata, cluster.Metadata)
 	th.CheckDeepEquals(t, optsCluster.Config, cluster.Config)
+}
+
+func clusterGet(t *testing.T) {
+	client, err := clients.NewClusteringV1Client()
+	if err != nil {
+		t.Fatalf("Unable to create clustering client: %v", err)
+	}
+
+	clusterName := testName
+	cluster, err := clusters.Get(client, clusterName).Extract()
+	th.AssertNoErr(t, err)
+	th.AssertEquals(t, clusterName, cluster.Name)
+
+	tools.PrintResource(t, cluster)
 }

@@ -3,11 +3,13 @@ package profiles
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"strconv"
+	"strings"
 	"time"
 
-	"reflect"
-
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/pagination"
 )
 
 // commonResult is the response of a base result.
@@ -20,6 +22,11 @@ type CreateResult struct {
 	commonResult
 }
 
+// GetResult is the response of a Get operations.
+type GetResult struct {
+	commonResult
+}
+
 // Extract provides access to Profile returned by the Get and Create functions.
 func (r commonResult) Extract() (*Profile, error) {
 	var s struct {
@@ -27,6 +34,15 @@ func (r commonResult) Extract() (*Profile, error) {
 	}
 	err := r.ExtractInto(&s)
 	return s.Profile, err
+}
+
+// ExtractProfiles provides access to the list of profiles in a page from the List operation.
+func ExtractProfiles(r pagination.Page) ([]Profile, error) {
+	var s struct {
+		Profiles []Profile `json:"profiles"`
+	}
+	err := (r.(ProfilePage)).ExtractInto(&s)
+	return s.Profiles, err
 }
 
 type Spec struct {
@@ -47,6 +63,46 @@ type Profile struct {
 	Type      string                 `json:"type"`
 	UpdatedAt time.Time              `json:"-"`
 	User      string                 `json:"user"`
+}
+
+type ProfilePage struct {
+	pagination.LinkedPageBase
+}
+
+// IsEmpty determines if a ProfilePage contains any results.
+func (page ProfilePage) IsEmpty() (bool, error) {
+	profiles, err := ExtractProfiles(page)
+	return len(profiles) == 0, err
+}
+
+func (r *Spec) UnmarshalJSON(b []byte) error {
+	type tmp Spec
+	var s struct {
+		tmp
+		Version interface{} `json:"version"`
+	}
+
+	err := json.Unmarshal(b, &s)
+	if err != nil {
+		return err
+	}
+	*r = Spec(s.tmp)
+
+	switch s.Version.(type) {
+	case nil:
+		r.Version = ""
+	case float32, float64, int, int32, int64:
+		r.Version = strconv.FormatFloat(s.Version.(float64), 'f', -1, 64)
+		if !strings.Contains(r.Version, ".") {
+			r.Version = strconv.FormatFloat(s.Version.(float64), 'f', 1, 64)
+		}
+	case string:
+		r.Version = s.Version.(string)
+	default:
+		return fmt.Errorf("Invalid type for Spec Version. type=%v", reflect.TypeOf(s.Version))
+	}
+
+	return nil
 }
 
 func (r *Profile) UnmarshalJSON(b []byte) error {

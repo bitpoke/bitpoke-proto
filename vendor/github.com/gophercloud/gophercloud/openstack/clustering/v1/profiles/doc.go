@@ -28,5 +28,30 @@ Example to Create a profile
 	}
 
 	fmt.Println("Profile", profile)
+
+Example to Get profile
+
+	profile, err := profiles.Get(serviceClient, "profile-name").Extract()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Print("profile", profile)
+
+
+Example to List profiles
+
+	profiles.List(serviceClient, profiles.ListOpts{Limit: 2}).EachPage(func(page pagination.Page) (bool, error) {
+		allProfiles, err := profiles.ExtractProfiles(page)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, profile := range allProfiles {
+			fmt.Printf("%+v\n", profile)
+		}
+		return true, nil
+	})
+
 */
 package profiles

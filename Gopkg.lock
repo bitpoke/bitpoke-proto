@@ -4,8 +4,8 @@
 [[projects]]
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
-  revision = "29f476ffa9c4cd4fd14336b6043090ac1ad76733"
-  version = "v0.21.0"
+  revision = "056a55f54a6cc77b440b31a56a5e7c3982d32811"
+  version = "v0.22.0"
 
 [[projects]]
   name = "github.com/Azure/go-autorest"
@@ -52,7 +52,17 @@
     "tools/clientcmd",
     "tools/queue"
   ]
-  revision = "7c06d378914d77d52a1e2eda9c61560a38950794"
+  revision = "c397449684de5caf2de0309e6453eab905901cf8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/coreos/prometheus-operator"
+  packages = [
+    "pkg/client/monitoring",
+    "pkg/client/monitoring/v1",
+    "pkg/client/monitoring/v1alpha1"
+  ]
+  revision = "894695f48f72b20b125996b2e0c0145b1c0345ea"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -130,7 +140,7 @@
   branch = "master"
   name = "github.com/golang/groupcache"
   packages = ["lru"]
-  revision = "66deaeb636dff1ac7d938ce666d090556056a4b0"
+  revision = "24b0969c4cb722950103eed87108c8d291a8df00"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -183,7 +193,7 @@
     "openstack/utils",
     "pagination"
   ]
-  revision = "0f9158f99b4108aed6e0ca4bcb2223964334db86"
+  revision = "282f25e4025de0a42015d2e2b5faef1d920aad3c"
 
 [[projects]]
   branch = "master"
@@ -255,8 +265,8 @@
 [[projects]]
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "a1f051bc3eba734da4772d60e2d677f47cf93ef4"
-  version = "v0.0.2"
+  revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
+  version = "v0.0.3"
 
 [[projects]]
   name = "github.com/spf13/pflag"
@@ -283,7 +293,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "21052ae46654ecf18dfdba0f7c12701a1e2b3164"
+  revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
 
 [[projects]]
   branch = "master"
@@ -296,7 +306,7 @@
     "http2/hpack",
     "idna"
   ]
-  revision = "f73e4c9ed3b7ebdd5f699a16a880c2b1994e50dd"
+  revision = "2491c5de3490fced2f6cff376127c667efeed857"
 
 [[projects]]
   branch = "master"
@@ -317,7 +327,7 @@
     "unix",
     "windows"
   ]
-  revision = "7db1c3b1a98089d0071c84f646ff5c96aad43682"
+  revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -355,7 +365,7 @@
     "imports",
     "internal/fastwalk"
   ]
-  revision = "48418e5732e1b1e2a10207c8007a5f959e422f20"
+  revision = "28aef64757f4d432485ab970b094e1af8b301e84"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -485,6 +495,7 @@
   packages = [
     "discovery",
     "discovery/fake",
+    "dynamic",
     "informers",
     "informers/admissionregistration",
     "informers/admissionregistration/v1alpha1",
@@ -667,11 +678,11 @@
     "pkg/common",
     "pkg/util/proto"
   ]
-  revision = "61db125d227fc9d4e373819a059516f32f7f23c7"
+  revision = "b3f03f55328800731ce03a164b80973014ecd455"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "27a288a17b399a34f509a958bed84fb41d784fd8b41e1c469e659c925ef3290d"
+  inputs-digest = "a09ab0cb6844fb0a4b3911cc1fbf23079494702bf83d69d62b9c795638f1a990"
   solver-name = "gps-cdcl"
   solver-version = 1

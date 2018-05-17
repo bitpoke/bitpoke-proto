@@ -3,6 +3,7 @@ package policies
 import (
 	"encoding/json"
 
+	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/internal"
 	"github.com/gophercloud/gophercloud/pagination"
 )
@@ -56,6 +57,34 @@ func (r *Policy) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+type policyResult struct {
+	gophercloud.Result
+}
+
+// CreateResult is the response from a Create operation. Call its Extract method
+// to interpret it as a Policy
+type CreateResult struct {
+	policyResult
+}
+
+// GetResult is the response from a Get operation. Call its Extract method
+// to interpret it as a Policy.
+type GetResult struct {
+	policyResult
+}
+
+// UpdateResult is the response from an Update operation. Call its Extract
+// method to interpret it as a Policy.
+type UpdateResult struct {
+	policyResult
+}
+
+// DeleteResult is the response from a Delete operation. Call its ExtractErr to
+// determine if the request succeeded or failed.
+type DeleteResult struct {
+	gophercloud.ErrResult
+}
+
 // PolicyPage is a single page of Policy results.
 type PolicyPage struct {
 	pagination.LinkedPageBase
@@ -90,4 +119,13 @@ func ExtractPolicies(r pagination.Page) ([]Policy, error) {
 	}
 	err := (r.(PolicyPage)).ExtractInto(&s)
 	return s.Policies, err
+}
+
+// Extract interprets any policyResults as a Policy.
+func (r policyResult) Extract() (*Policy, error) {
+	var s struct {
+		Policy *Policy `json:"policy"`
+	}
+	err := r.ExtractInto(&s)
+	return s.Policy, err
 }
