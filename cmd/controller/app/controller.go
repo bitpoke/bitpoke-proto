@@ -25,7 +25,13 @@ import (
 	"time"
 
 	"github.com/appscode/kutil/tools/clientcmd"
+	promclientset "github.com/coreos/prometheus-operator/pkg/client/monitoring"
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 	"github.com/golang/glog"
+	dashclientset "github.com/presslabs/dashboard/pkg/client/clientset/versioned"
+	dashintscheme "github.com/presslabs/dashboard/pkg/client/clientset/versioned/scheme"
+	dashinformers "github.com/presslabs/dashboard/pkg/client/informers/externalversions"
+	projectscontroller "github.com/presslabs/dashboard/pkg/controller/projects"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	apiextensions_clientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
@@ -38,11 +44,6 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
-
-	dashclientset "github.com/presslabs/dashboard/pkg/client/clientset/versioned"
-	dashintscheme "github.com/presslabs/dashboard/pkg/client/clientset/versioned/scheme"
-	dashinformers "github.com/presslabs/dashboard/pkg/client/informers/externalversions"
-	projectscontroller "github.com/presslabs/dashboard/pkg/controller/projects"
 
 	"github.com/presslabs/dashboard/cmd/controller/app/options"
 	"github.com/presslabs/dashboard/pkg/controller"
@@ -159,6 +160,17 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 		return nil, fmt.Errorf("error creating internal group client: %s", err.Error())
 	}
 
+	// Create a Prometheus api client
+	promcl, err := promclientset.NewForConfig(
+		&monitoringv1.DefaultCrdKinds,
+		"monitoring.coreos.com",
+		kubeCfg,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating internal group client: %s", err.Error())
+	}
+
 	// Create event broadcaster
 	// Add oxygen types to the default Kubernetes Scheme so Events can be logged properly
 	dashintscheme.AddToScheme(scheme.Scheme)
@@ -179,6 +191,7 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 		DashboardSharedInformerFactory: dashboardInformerFactory,
 		CRDClient:                      crdcl,
 		InstallCRDs:                    c.InstallCRDs,
+		PrometheusClient:               promcl,
 	}, nil
 }
 

@@ -43,9 +43,15 @@ func (c *Controller) reconcileProjects(key string) error {
 	}
 	if exists {
 		glog.Infof("Sync/Add/Update for Projects %s", key)
-		project := obj.(*projects.Project).DeepCopy()
 
-		err = c.syncNamespaces(project)
+		project := obj.(*projects.Project).DeepCopy()
+		namespace, err := c.syncNamespace(project)
+		if err != nil {
+			return err
+		}
+
+		project = obj.(*projects.Project).DeepCopy()
+		_, err = c.syncPrometheus(project, namespace)
 		return err
 	}
 	return nil

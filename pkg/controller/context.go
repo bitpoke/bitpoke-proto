@@ -9,6 +9,8 @@ import (
 
 	dashclientset "github.com/presslabs/dashboard/pkg/client/clientset/versioned"
 	dashinformers "github.com/presslabs/dashboard/pkg/client/informers/externalversions"
+
+	promclientset "github.com/coreos/prometheus-operator/pkg/client/monitoring"
 )
 
 // Context contains various types that are used by controller implementations.
@@ -32,6 +34,9 @@ type Context struct {
 	// DashboardSharedInformerFactory can be used to obtain shared
 	// SharedIndexInformer instances for Presslabs Dashboard types
 	DashboardSharedInformerFactory dashinformers.SharedInformerFactory
+
+	// PrometheusClient is a Prometheus clientset
+	PrometheusClient promclientset.Interface
 
 	// InstallCRDs signals the controller whenever the install Worpdress CRDs
 	InstallCRDs bool
