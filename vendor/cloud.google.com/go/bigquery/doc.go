@@ -20,9 +20,6 @@ Note: This package is in beta.  Some backwards-incompatible changes may occur.
 The following assumes a basic familiarity with BigQuery concepts.
 See https://cloud.google.com/bigquery/docs.
 
-See https://godoc.org/cloud.google.com/go for authentication, timeouts,
-connection pooling and similar aspects of this package.
-
 
 Creating a Client
 
@@ -297,5 +294,10 @@ Extractor, then optionally configure it, and lastly call its Run method.
     extractor.DisableHeader = true
     job, err = extractor.Run(ctx)
     // Poll the job for completion if desired, as above.
+
+Authentication
+
+See examples of authorization and authentication at
+https://godoc.org/cloud.google.com/go#pkg-examples.
 */
 package bigquery // import "cloud.google.com/go/bigquery"

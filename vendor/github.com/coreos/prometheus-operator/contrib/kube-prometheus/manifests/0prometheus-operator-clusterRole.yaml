@@ -4,12 +4,6 @@ metadata:
   name: prometheus-operator
 rules:
 - apiGroups:
-  - extensions
-  resources:
-  - thirdpartyresources
-  verbs:
-  - '*'
-- apiGroups:
   - apiextensions.k8s.io
   resources:
   - customresourcedefinitions
@@ -23,6 +17,7 @@ rules:
   - prometheuses/finalizers
   - alertmanagers/finalizers
   - servicemonitors
+  - prometheusrules
   verbs:
   - '*'
 - apiGroups:
@@ -67,3 +62,4 @@ rules:
   - namespaces
   verbs:
   - list
+  - watch

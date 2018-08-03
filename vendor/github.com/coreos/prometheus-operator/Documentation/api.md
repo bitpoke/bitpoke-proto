@@ -21,16 +21,25 @@ This Document documents the types introduced by the Prometheus Operator to be co
 * [NamespaceSelector](#namespaceselector)
 * [Prometheus](#prometheus)
 * [PrometheusList](#prometheuslist)
+* [PrometheusRule](#prometheusrule)
+* [PrometheusRuleList](#prometheusrulelist)
+* [PrometheusRuleSpec](#prometheusrulespec)
 * [PrometheusSpec](#prometheusspec)
 * [PrometheusStatus](#prometheusstatus)
+* [QueueConfig](#queueconfig)
 * [RelabelConfig](#relabelconfig)
 * [RemoteReadSpec](#remotereadspec)
 * [RemoteWriteSpec](#remotewritespec)
+* [Rule](#rule)
+* [RuleGroup](#rulegroup)
 * [ServiceMonitor](#servicemonitor)
 * [ServiceMonitorList](#servicemonitorlist)
 * [ServiceMonitorSpec](#servicemonitorspec)
 * [StorageSpec](#storagespec)
 * [TLSConfig](#tlsconfig)
+* [ThanosGCSSpec](#thanosgcsspec)
+* [ThanosS3Spec](#thanoss3spec)
+* [ThanosSpec](#thanosspec)
 
 ## AlertingSpec
 
@@ -44,7 +53,7 @@ AlertingSpec defines parameters for alerting configuration of Prometheus servers
 
 ## Alertmanager
 
-Describes an Alertmanager cluster.
+Alertmanager describes an Alertmanager cluster.
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
@@ -152,6 +161,7 @@ Endpoint defines a scrapeable endpoint serving Prometheus metrics.
 | honorLabels | HonorLabels chooses the metric's labels on collisions with target labels. | bool | false |
 | basicAuth | BasicAuth allow an endpoint to authenticate over basic authentication More info: https://prometheus.io/docs/operating/configuration/#endpoints | *[BasicAuth](#basicauth) | false |
 | metricRelabelings | MetricRelabelConfigs to apply to samples before ingestion. | []*[RelabelConfig](#relabelconfig) | false |
+| proxyUrl | ProxyURL eg http://proxyserver:2195 Directs scrapes to proxy through this endpoint. | *string | false |
 
 [Back to TOC](#table-of-contents)
 
@@ -189,6 +199,38 @@ PrometheusList is a list of Prometheuses.
 
 [Back to TOC](#table-of-contents)
 
+## PrometheusRule
+
+PrometheusRule defines alerting rules for a Prometheus instance
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| metadata | Standard object’s metadata. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata | [metav1.ObjectMeta](https://v1-6.docs.kubernetes.io/docs/api-reference/v1.6/#objectmeta-v1-meta) | false |
+| spec | Specification of desired alerting rule definitions for Prometheus. | [PrometheusRuleSpec](#prometheusrulespec) | true |
+
+[Back to TOC](#table-of-contents)
+
+## PrometheusRuleList
+
+A list of PrometheusRules.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| metadata | Standard list metadata More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata | [metav1.ListMeta](https://v1-6.docs.kubernetes.io/docs/api-reference/v1.6/#listmeta-v1-meta) | false |
+| items | List of Rules | []*[PrometheusRule](#prometheusrule) | true |
+
+[Back to TOC](#table-of-contents)
+
+## PrometheusRuleSpec
+
+PrometheusRuleSpec contains specification parameters for a Rule.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| groups | Content of Prometheus rule file | [][RuleGroup](#rulegroup) | false |
+
+[Back to TOC](#table-of-contents)
+
 ## PrometheusSpec
 
 Specification of the desired behavior of the Prometheus cluster. More info: https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#spec-and-status
@@ -211,7 +253,8 @@ Specification of the desired behavior of the Prometheus cluster. More info: http
 | externalUrl | The external URL the Prometheus instances will be available under. This is necessary to generate correct URLs. This is necessary if Prometheus is not served from root of a DNS name. | string | false |
 | routePrefix | The route prefix Prometheus registers HTTP handlers for. This is useful, if using ExternalURL and a proxy is rewriting HTTP routes of a request, and the actual ExternalURL is still true, but the server serves requests under a different route prefix. For example for use with `kubectl proxy`. | string | false |
 | storage | Storage spec to specify how storage shall be used. | *[StorageSpec](#storagespec) | false |
-| ruleSelector | A selector to select which ConfigMaps to mount for loading rule files from. | *[metav1.LabelSelector](https://v1-6.docs.kubernetes.io/docs/api-reference/v1.6/#labelselector-v1-meta) | false |
+| ruleSelector | A selector to select which PrometheusRules to mount for loading alerting rules from. | *[metav1.LabelSelector](https://v1-6.docs.kubernetes.io/docs/api-reference/v1.6/#labelselector-v1-meta) | false |
+| ruleNamespaceSelector | Namespaces to be selected for PrometheusRules discovery. If unspecified, only the same namespace as the Prometheus object is in is used. | *[metav1.LabelSelector](https://v1-6.docs.kubernetes.io/docs/api-reference/v1.6/#labelselector-v1-meta) | false |
 | alerting | Define details regarding alerting. | *[AlertingSpec](#alertingspec) | false |
 | resources | Define resources requests and limits for single Pods. | [v1.ResourceRequirements](https://v1-6.docs.kubernetes.io/docs/api-reference/v1.6/#resourcerequirements-v1-core) | false |
 | nodeSelector | Define which Nodes the Pods are scheduled on. | map[string]string | false |
@@ -226,6 +269,7 @@ Specification of the desired behavior of the Prometheus cluster. More info: http
 | containers | Containers allows injecting additional containers. This is meant to allow adding an authentication proxy to a Prometheus pod. | []v1.Container | false |
 | additionalScrapeConfigs | AdditionalScrapeConfigs allows specifying a key of a Secret containing additional Prometheus scrape configurations. Scrape configurations specified are appended to the configurations generated by the Prometheus Operator. Job configurations specified must have the form as specified in the official Prometheus documentation: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#<scrape_config>. As scrape configs are appended, the user is responsible to make sure it is valid. Note that using this feature may expose the possibility to break upgrades of Prometheus. It is advised to review Prometheus release notes to ensure that no incompatible scrape configs are going to break Prometheus after the upgrade. | *[v1.SecretKeySelector](https://v1-6.docs.kubernetes.io/docs/api-reference/v1.6/#secretkeyselector-v1-core) | false |
 | additionalAlertManagerConfigs | AdditionalAlertManagerConfigs allows specifying a key of a Secret containing additional Prometheus AlertManager configurations. AlertManager configurations specified are appended to the configurations generated by the Prometheus Operator. Job configurations specified must have the form as specified in the official Prometheus documentation: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#<alertmanager_config>. As AlertManager configs are appended, the user is responsible to make sure it is valid. Note that using this feature may expose the possibility to break upgrades of Prometheus. It is advised to review Prometheus release notes to ensure that no incompatible AlertManager configs are going to break Prometheus after the upgrade. | *[v1.SecretKeySelector](https://v1-6.docs.kubernetes.io/docs/api-reference/v1.6/#secretkeyselector-v1-core) | false |
+| thanos | Thanos configuration allows configuring various aspects of a Prometheus server in a Thanos environment.\n\nThis section is experimental, it may change significantly without deprecation notice in any release.\n\nThis is experimental and may change significantly without backward compatibility in any release. | *[ThanosSpec](#thanosspec) | false |
 
 [Back to TOC](#table-of-contents)
 
@@ -240,6 +284,22 @@ Most recent observed status of the Prometheus cluster. Read-only. Not included w
 | updatedReplicas | Total number of non-terminated pods targeted by this Prometheus deployment that have the desired version spec. | int32 | true |
 | availableReplicas | Total number of available pods (ready for at least minReadySeconds) targeted by this Prometheus deployment. | int32 | true |
 | unavailableReplicas | Total number of unavailable pods targeted by this Prometheus deployment. | int32 | true |
+
+[Back to TOC](#table-of-contents)
+
+## QueueConfig
+
+QueueConfig allows the tuning of remote_write queue_config parameters. This object is referenced in the RemoteWriteSpec object.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| capacity | Capacity is the number of samples to buffer per shard before we start dropping them. | int | false |
+| maxShards | MaxShards is the maximum number of shards, i.e. amount of concurrency. | int | false |
+| maxSamplesPerSend | MaxSamplesPerSend is the maximum number of samples per send. | int | false |
+| batchSendDeadline | BatchSendDeadline is the maximum time a sample will wait in buffer. | string | false |
+| maxRetries | MaxRetries is the maximum number of times to retry a batch on recoverable errors. | int | false |
+| minBackoff | MinBackoff is the initial retry delay. Gets doubled for every retry. | string | false |
+| maxBackoff | MaxBackoff is the maximum retry delay. | string | false |
 
 [Back to TOC](#table-of-contents)
 
@@ -291,6 +351,34 @@ RemoteWriteSpec defines the remote_write configuration for prometheus.
 | bearerTokenFile | File to read bearer token for remote write. | string | false |
 | tlsConfig | TLS Config to use for remote write. | *[TLSConfig](#tlsconfig) | false |
 | proxyUrl | Optional ProxyURL | string | false |
+| queueConfig | QueueConfig allows tuning of the remote write queue parameters. | *[QueueConfig](#queueconfig) | false |
+
+[Back to TOC](#table-of-contents)
+
+## Rule
+
+Rule describes an alerting or recording rule.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| record |  | string | false |
+| alert |  | string | false |
+| expr |  | string | true |
+| for |  | string | false |
+| labels |  | map[string]string | false |
+| annotations |  | map[string]string | false |
+
+[Back to TOC](#table-of-contents)
+
+## RuleGroup
+
+RuleGroup is a list of sequentially evaluated recording and alerting rules.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| name |  | string | true |
+| interval |  | string | false |
+| rules |  | [][Rule](#rule) | true |
 
 [Back to TOC](#table-of-contents)
 
@@ -355,5 +443,44 @@ TLSConfig specifies TLS configuration parameters.
 | keyFile | The client key file for the targets. | string | false |
 | serverName | Used to verify the hostname for the targets. | string | false |
 | insecureSkipVerify | Disable target certificate validation. | bool | false |
+
+[Back to TOC](#table-of-contents)
+
+## ThanosGCSSpec
+
+ThanosGCSSpec defines parameters for use of Google Cloud Storage (GCS) with Thanos.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| bucket | Google Cloud Storage bucket name for stored blocks. If empty it won't store any block inside Google Cloud Storage. | *string | false |
+
+[Back to TOC](#table-of-contents)
+
+## ThanosS3Spec
+
+ThanosSpec defines parameters for of AWS Simple Storage Service (S3) with Thanos. (S3 compatible services apply as well)
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| bucket | S3-Compatible API bucket name for stored blocks. | *string | false |
+| endpoint | S3-Compatible API endpoint for stored blocks. | *string | false |
+| accessKey | AccessKey for an S3-Compatible API. | *[v1.SecretKeySelector](https://v1-6.docs.kubernetes.io/docs/api-reference/v1.6/#secretkeyselector-v1-core) | false |
+| secretKey | SecretKey for an S3-Compatible API. | *[v1.SecretKeySelector](https://v1-6.docs.kubernetes.io/docs/api-reference/v1.6/#secretkeyselector-v1-core) | false |
+| insecure | Whether to use an insecure connection with an S3-Compatible API. | *bool | false |
+| signatureVersion2 | Whether to use S3 Signature Version 2; otherwise Signature Version 4 will be used. | *bool | false |
+
+[Back to TOC](#table-of-contents)
+
+## ThanosSpec
+
+ThanosSpec defines parameters for a Prometheus server within a Thanos deployment.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| peers | Peers is a DNS name for Thanos to discover peers through. | *string | false |
+| version | Version describes the version of Thanos to use. | *string | false |
+| baseImage | Thanos base image if other than default. | *string | false |
+| gcs | GCS configures use of GCS in Thanos. | *[ThanosGCSSpec](#thanosgcsspec) | true |
+| s3 | S3 configures use of S3 in Thanos. | *[ThanosS3Spec](#thanoss3spec) | true |
 
 [Back to TOC](#table-of-contents)

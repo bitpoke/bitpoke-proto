@@ -54,6 +54,10 @@ service:
   ##
   externalIPs: []
 
+  ## Labels to be added to the Service
+  ##
+  labels: {}
+
   ## External IP address to assign to Alertmanager Service
   ## Only used if service.type is 'LoadBalancer' and supported by cloud provider
   ##
@@ -83,6 +87,16 @@ grafanaWatcher:
   repository: quay.io/coreos/grafana-watcher
   tag: v0.0.8
 
+  ## Resource limits & requests
+  ## Ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  resources: {}
+    #requests:
+    #  memory: "16Mi"
+    #  cpu: "50m"
+    #limits:
+    #  memory: "32Mi"
+    #  cpu: "100m"
+
 storageSpec: {}
 #   class: default
 #   accessMode:
@@ -91,9 +105,15 @@ storageSpec: {}
 #       storage: 2Gi
 #   selector: {}
 
+## Resource limits & requests
+## Ref: https://kubernetes.io/docs/user-guide/compute-resources/
 resources: {}
+  # limits:
+  #   memory: 200Mi
+  #   cpu: 200m
   # requests:
-  #   memory: 400Mi
+  #   memory: 100Mi
+  #   cpu: 100m
 
 ingress:
   ## If true, Grafana Ingress will be created

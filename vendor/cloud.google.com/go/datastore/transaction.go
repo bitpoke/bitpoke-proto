@@ -167,7 +167,7 @@ func (c *Client) RunInTransaction(ctx context.Context, f func(tx *Transaction) e
 			return nil, err
 		}
 		if err := f(tx); err != nil {
-			_ = tx.Rollback()
+			tx.Rollback()
 			return nil, err
 		}
 		if cmt, err := tx.Commit(); err != ErrConcurrentTransaction {

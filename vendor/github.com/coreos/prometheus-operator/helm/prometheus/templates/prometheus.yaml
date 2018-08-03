@@ -16,6 +16,11 @@ metadata:
 {{- end }}
   name: {{ template "prometheus.fullname" . }}
 spec:
+{{- if .Values.labels }}
+  podMetadata:
+    labels:
+{{ toYaml .Values.labels | indent 6 }}
+{{- end }}
 {{- if .Values.alertingEndpoints }}
   alerting:
     alertmanagers:
@@ -63,10 +68,14 @@ spec:
 {{- else if .Values.serviceMonitorsSelector }}
   serviceMonitorSelector:
 {{ toYaml .Values.serviceMonitorsSelector | indent 4 }}
-{{- else if .Values.prometheusLabelValue }}
-   serviceMonitorSelector:
-     matchLabels:
-      prometheus: {{ .Values.prometheusLabelValue }}
+{{- else }}
+  serviceMonitorSelector:
+    matchLabels:
+      prometheus: {{ .Values.prometheusLabelValue | default .Release.Name | quote }}
+{{- end }}
+{{- if .Values.serviceMonitorNamespaceSelector }}
+  serviceMonitorNamespaceSelector:
+{{ toYaml .Values.serviceMonitorNamespaceSelector | indent 4 }}
 {{- end }}
 {{- if .Values.remoteRead }}
   remoteRead:
@@ -75,6 +84,9 @@ spec:
 {{- if .Values.remoteWrite }}
   remoteWrite:
 {{ toYaml .Values.remoteWrite | indent 4 }}
+{{- end }}
+{{- if .Values.ruleNamespaceSelector }}
+{{ toYaml .Values.ruleNamespaceSelector | indent 4 }}
 {{- end }}
 {{- if .Values.rulesSelector }}
   ruleSelector:
@@ -119,5 +131,14 @@ spec:
   additionalScrapeConfigs:
     name: prometheus-{{ .Release.Name }}-additional-scrape-configs
     key: additional-scrape-configs.yaml
+{{- end }}
+{{- if .Values.additionalScrapeConfigs }}
+  additionalAlertManagerConfigs:
+    name: prometheus-{{ .Release.Name }}-additional-alertmanager-configs
+    key: additional-alertmanager-configs.yaml
+{{- end }}
+{{- if .Values.sidecarsSpec }}
+  containers:
+{{ toYaml .Values.sidecarsSpec | indent 4 }}
 {{- end }}
 

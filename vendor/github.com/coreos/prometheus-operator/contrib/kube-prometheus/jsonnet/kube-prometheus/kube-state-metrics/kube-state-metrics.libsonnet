@@ -5,8 +5,8 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
     namespace: 'default',
 
     versions+:: {
-      kubeStateMetrics: 'v1.3.0',
-      kubeRbacProxy: 'v0.3.0',
+      kubeStateMetrics: 'v1.3.1',
+      kubeRbacProxy: 'v0.3.1',
       addonResizer: '1.0',
     },
 
@@ -253,11 +253,6 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
             matchLabels: {
               'k8s-app': 'kube-state-metrics',
             },
-          },
-          namespaceSelector: {
-            matchNames: [
-              'monitoring',
-            ],
           },
           endpoints: [
             {

@@ -1,17 +1,63 @@
-image:
-	docker build -f ../../scripts/jsonnet/Dockerfile -t po-jsonnet ../../
+JSONNET_FMT := jsonnet fmt -n 2 --max-blank-lines 2 --string-style s --comment-style s
 
-generate: image
+JB_BINARY:=$(GOPATH)/bin/jb
+EMBEDMD_BINARY:=$(GOPATH)/bin/embedmd
+
+# edit 1
+
+all: generate fmt test
+
+../../hack/jsonnet-docker-image: ../../scripts/jsonnet/Dockerfile
+# Create empty target file, for the sole purpose of recording when this target
+# was last executed via the last-modification timestamp on the file. See
+# https://www.gnu.org/software/make/manual/make.html#Empty-Targets
+	docker build -f - -t po-jsonnet . < ../../scripts/jsonnet/Dockerfile
+	touch $@
+
+generate-in-docker: ../../hack/jsonnet-docker-image
 	@echo ">> Compiling assets and generating Kubernetes manifests"
-	docker run --rm -u=$(shell id -u $(USER)):$(shell id -g $(USER)) -v $(shell dirname $(dir $(abspath $(dir $$PWD)))):/go/src/github.com/coreos/prometheus-operator/ --workdir /go/src/github.com/coreos/prometheus-operator/contrib/kube-prometheus po-jsonnet make crdtojsonnet generate-raw
+	docker run \
+	--rm \
+	-u=$(shell id -u $(USER)):$(shell id -g $(USER)) \
+	-v $(shell dirname $(dir $(abspath $(dir $$PWD)))):/go/src/github.com/coreos/prometheus-operator/ \
+	--workdir /go/src/github.com/coreos/prometheus-operator/contrib/kube-prometheus \
+	po-jsonnet make generate
 
-crdtojsonnet:
-	cat ../../example/prometheus-operator-crd/alertmanager.crd.yaml | gojsontoyaml -yamltojson > jsonnet/kube-prometheus/prometheus-operator/alertmanager-crd.libsonnet
-	cat ../../example/prometheus-operator-crd/prometheus.crd.yaml | gojsontoyaml -yamltojson > jsonnet/kube-prometheus/prometheus-operator/prometheus-crd.libsonnet
-	cat ../../example/prometheus-operator-crd/servicemonitor.crd.yaml | gojsontoyaml -yamltojson > jsonnet/kube-prometheus/prometheus-operator/servicemonitor-crd.libsonnet
+generate: manifests **.md
 
-generate-raw:
-	jb install
+**.md: $(EMBEDMD_BINARY) $(shell find examples) build.sh example.jsonnet
+	echo '>>> inside **.md'
+	$(EMBEDMD_BINARY) -w `find . -name "*.md" | grep -v vendor`
+
+manifests: vendor example.jsonnet
+	rm -rf manifests
 	./build.sh
 
-.PHONY: image generate crdtojsonnet generate-raw
+vendor: $(JB_BINARY) jsonnetfile.json
+	rm -rf vendor
+	$(JB_BINARY) install
+
+fmt:
+	find . -name 'vendor' -prune -o -name '*.libsonnet' -o -name '*.jsonnet' -print | \
+		xargs -n 1 -- $(JSONNET_FMT) -i
+
+test: $(JB_BINARY)
+	$(JB_BINARY) install
+	./test.sh
+
+test-in-docker: ../../hack/jsonnet-docker-image
+	@echo ">> Compiling assets and generating Kubernetes manifests"
+	docker run \
+	--rm \
+	-u=$(shell id -u $(USER)):$(shell id -g $(USER)) \
+	-v $(shell dirname $(dir $(abspath $(dir $$PWD)))):/go/src/github.com/coreos/prometheus-operator/ \
+	--workdir /go/src/github.com/coreos/prometheus-operator/contrib/kube-prometheus \
+	po-jsonnet make test
+
+$(JB_BINARY):
+	go get -u github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb
+
+$(EMBEDMD_BINARY):
+	go get github.com/campoy/embedmd
+
+.PHONY: generate generate-in-docker test test-in-docker fmt

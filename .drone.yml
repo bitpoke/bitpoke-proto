@@ -3,16 +3,17 @@ workspace:
   path: src/github.com/presslabs/dashboard
 
 pipeline:
+  lint:
+    image: golang:1.10
+    commands:
+      - make dependencies
+      - make lint
+
   test:
     image: golang:1.10
     commands:
-      - make lint
-      - make full-test
-
-  build:
-    image: golang:1.10
-    commands:
-      - make build
+      - make dependencies
+      - make test
 
 #  publish:
 #    image: plugins/gcr

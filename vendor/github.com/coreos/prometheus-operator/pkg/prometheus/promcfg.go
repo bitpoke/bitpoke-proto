@@ -36,10 +36,6 @@ func sanitizeLabelName(name string) string {
 	return invalidLabelCharRE.ReplaceAllString(name, "_")
 }
 
-func configMapRuleFileFolder(configMapNumber int) string {
-	return fmt.Sprintf("/etc/prometheus/config_out/rules/rules-%d/", configMapNumber)
-}
-
 func stringMapToMapSlice(m map[string]string) yaml.MapSlice {
 	res := yaml.MapSlice{}
 	ks := make([]string, 0)
@@ -90,10 +86,10 @@ func buildExternalLabels(p *v1.Prometheus) yaml.MapSlice {
 	return stringMapToMapSlice(m)
 }
 
-func generateConfig(p *v1.Prometheus, mons map[string]*v1.ServiceMonitor, ruleConfigMaps int, basicAuthSecrets map[string]BasicAuthCredentials, additionalScrapeConfigs []byte, additionalAlertManagerConfigs []byte) ([]byte, error) {
+func generateConfig(p *v1.Prometheus, mons map[string]*v1.ServiceMonitor, basicAuthSecrets map[string]BasicAuthCredentials, additionalScrapeConfigs []byte, additionalAlertManagerConfigs []byte) ([]byte, error) {
 	versionStr := p.Spec.Version
 	if versionStr == "" {
-		versionStr = DefaultVersion
+		versionStr = DefaultPrometheusVersion
 	}
 
 	version, err := semver.Parse(strings.TrimLeft(versionStr, "v"))
@@ -122,16 +118,10 @@ func generateConfig(p *v1.Prometheus, mons map[string]*v1.ServiceMonitor, ruleCo
 		},
 	})
 
-	if ruleConfigMaps > 0 {
-		configMaps := make([]string, ruleConfigMaps)
-		for i := 0; i < ruleConfigMaps; i++ {
-			configMaps[i] = configMapRuleFileFolder(i) + "*"
-		}
-		cfg = append(cfg, yaml.MapItem{
-			Key:   "rule_files",
-			Value: configMaps,
-		})
-	}
+	cfg = append(cfg, yaml.MapItem{
+		Key:   "rule_files",
+		Value: []string{"/etc/prometheus/rules/*.yaml"},
+	})
 
 	identifiers := make([]string, len(mons))
 	i := 0
@@ -159,7 +149,7 @@ func generateConfig(p *v1.Prometheus, mons map[string]*v1.ServiceMonitor, ruleCo
 	var additionalScrapeConfigsYaml []yaml.MapSlice
 	err = yaml.Unmarshal([]byte(additionalScrapeConfigs), &additionalScrapeConfigsYaml)
 	if err != nil {
-		errors.Wrap(err, "unmarshalling additional scrape configs failed")
+		return nil, errors.Wrap(err, "unmarshalling additional scrape configs failed")
 	}
 
 	cfg = append(cfg, yaml.MapItem{
@@ -170,7 +160,7 @@ func generateConfig(p *v1.Prometheus, mons map[string]*v1.ServiceMonitor, ruleCo
 	var additionalAlertManagerConfigsYaml []yaml.MapSlice
 	err = yaml.Unmarshal([]byte(additionalAlertManagerConfigs), &additionalAlertManagerConfigsYaml)
 	if err != nil {
-		errors.Wrap(err, "unmarshalling additional alert manager configs failed")
+		return nil, errors.Wrap(err, "unmarshalling additional alert manager configs failed")
 	}
 
 	alertmanagerConfigs = append(alertmanagerConfigs, additionalAlertManagerConfigsYaml...)
@@ -242,6 +232,9 @@ func generateServiceMonitorConfig(version semver.Version, m *v1.ServiceMonitor, 
 	}
 	if ep.Path != "" {
 		cfg = append(cfg, yaml.MapItem{Key: "metrics_path", Value: ep.Path})
+	}
+	if ep.ProxyURL != nil {
+		cfg = append(cfg, yaml.MapItem{Key: "proxy_url", Value: ep.ProxyURL})
 	}
 	if ep.Params != nil {
 		cfg = append(cfg, yaml.MapItem{Key: "params", Value: ep.Params})
@@ -715,6 +708,40 @@ func generateRemoteWriteConfig(version semver.Version, specs []v1.RemoteWriteSpe
 
 		if spec.ProxyURL != "" {
 			cfg = append(cfg, yaml.MapItem{Key: "proxy_url", Value: spec.ProxyURL})
+		}
+
+		if spec.QueueConfig != nil {
+			queueConfig := yaml.MapSlice{}
+
+			if spec.QueueConfig.Capacity != int(0) {
+				queueConfig = append(queueConfig, yaml.MapItem{Key: "capacity", Value: spec.QueueConfig.Capacity})
+			}
+
+			if spec.QueueConfig.MaxShards != int(0) {
+				queueConfig = append(queueConfig, yaml.MapItem{Key: "max_shards", Value: spec.QueueConfig.MaxShards})
+			}
+
+			if spec.QueueConfig.MaxSamplesPerSend != int(0) {
+				queueConfig = append(queueConfig, yaml.MapItem{Key: "max_samples_per_send", Value: spec.QueueConfig.MaxSamplesPerSend})
+			}
+
+			if spec.QueueConfig.BatchSendDeadline != "" {
+				queueConfig = append(queueConfig, yaml.MapItem{Key: "batch_send_deadline", Value: spec.QueueConfig.BatchSendDeadline})
+			}
+
+			if spec.QueueConfig.MaxRetries != int(0) {
+				queueConfig = append(queueConfig, yaml.MapItem{Key: "max_retries", Value: spec.QueueConfig.MaxRetries})
+			}
+
+			if spec.QueueConfig.MinBackoff != "" {
+				queueConfig = append(queueConfig, yaml.MapItem{Key: "min_backoff", Value: spec.QueueConfig.MinBackoff})
+			}
+
+			if spec.QueueConfig.MaxBackoff != "" {
+				queueConfig = append(queueConfig, yaml.MapItem{Key: "max_backoff", Value: spec.QueueConfig.MaxBackoff})
+			}
+
+			cfg = append(cfg, yaml.MapItem{Key: "queue_config", Value: queueConfig})
 		}
 
 		cfgs = append(cfgs, cfg)

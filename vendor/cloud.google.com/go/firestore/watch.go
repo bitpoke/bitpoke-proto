@@ -62,8 +62,7 @@ type DocumentChange struct {
 // https://github.com/googleapis/nodejs-firestore/blob/master/src/watch.js.
 
 // The sole target ID for all streams from this client.
-// Variable for testing.
-var watchTargetID int32 = 'g' + 'o'
+const watchTargetID int32 = 'g' + 'o'
 
 var defaultBackoff = gax.Backoff{
 	// Values from https://github.com/googleapis/nodejs-firestore/blob/master/src/backoff.js.

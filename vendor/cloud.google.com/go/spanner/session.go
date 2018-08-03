@@ -310,8 +310,6 @@ type SessionPoolConfig struct {
 	HealthCheckInterval time.Duration
 	// healthCheckSampleInterval is how often the health checker samples live session (for use in maintaining session pool size). Defaults to 1 min.
 	healthCheckSampleInterval time.Duration
-	// sessionLabels for the sessions created in the session pool.
-	sessionLabels map[string]string
 }
 
 // errNoRPCGetter returns error for SessionPoolConfig missing getRPCClient method.
@@ -320,9 +318,9 @@ func errNoRPCGetter() error {
 }
 
 // errMinOpenedGTMapOpened returns error for SessionPoolConfig.MaxOpened < SessionPoolConfig.MinOpened when SessionPoolConfig.MaxOpened is set.
-func errMinOpenedGTMaxOpened(maxOpened, minOpened uint64) error {
+func errMinOpenedGTMaxOpened(spc *SessionPoolConfig) error {
 	return spannerErrorf(codes.InvalidArgument,
-		"require SessionPoolConfig.MaxOpened >= SessionPoolConfig.MinOpened, got %v and %v", maxOpened, minOpened)
+		"require SessionPoolConfig.MaxOpened >= SessionPoolConfig.MinOpened, got %v and %v", spc.MaxOpened, spc.MinOpened)
 }
 
 // validate verifies that the SessionPoolConfig is good for use.
@@ -331,7 +329,7 @@ func (spc *SessionPoolConfig) validate() error {
 		return errNoRPCGetter()
 	}
 	if spc.MinOpened > spc.MaxOpened && spc.MaxOpened > 0 {
-		return errMinOpenedGTMaxOpened(spc.MaxOpened, spc.MinOpened)
+		return errMinOpenedGTMaxOpened(spc)
 	}
 	return nil
 }
@@ -465,10 +463,7 @@ func (p *sessionPool) createSession(ctx context.Context) (*session, error) {
 	}
 	var s *session
 	err = runRetryable(ctx, func(ctx context.Context) error {
-		sid, e := sc.CreateSession(ctx, &sppb.CreateSessionRequest{
-			Database: p.db,
-			Session:  &sppb.Session{Labels: p.sessionLabels},
-		})
+		sid, e := sc.CreateSession(ctx, &sppb.CreateSessionRequest{Database: p.db})
 		if e != nil {
 			return e
 		}
