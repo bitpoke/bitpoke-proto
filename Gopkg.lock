@@ -34,13 +34,19 @@
   revision = "df3c57fca2bef0e5b7fd085507deb20f18c790df"
 
 [[projects]]
-  branch = "fix-upsert-volume-mount"
-  digest = "1:0a8174f544355929ef676709ec156c67f6fd48dca20c1259510869dbd6c21318"
+  branch = "release-7.0"
   name = "github.com/appscode/kutil"
-  packages = ["apiextensions/v1beta1"]
-  pruneopts = "T"
-  revision = "09131d6361b87aaee652afb3fde5413030ecfb75"
-  source = "https://github.com/presslabs/kutil"
+  packages = [
+    ".",
+    "core/v1"
+  ]
+  revision = "a2c0ee076fe416eb4a35107fc8b64f9be1f2aebc"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/appscode/mergo"
+  packages = ["."]
+  revision = "e3000cb3d28c72b837601cac94debd91032d19fe"
 
 [[projects]]
   digest = "1:645969bc6c7a729f17fce58ef8dfa03f82115fe846b3fdc74fc118e037b73030"
@@ -97,7 +103,7 @@
   packages = ["."]
   pruneopts = "T"
   revision = "3a0015ad55fa9873f41605d3e8f28cd279c32ab2"
-  version = "0.15.0"
+  version = "0.16.0"
 
 [[projects]]
   digest = "1:0bd8659f287cdfc954f1c14ee547f87b427fc1836663a5d7f4e6415fdddb8d33"
@@ -105,7 +111,7 @@
   packages = ["."]
   pruneopts = "T"
   revision = "3fb327e6747da3043567ee86abd02bb6376b6be2"
-  version = "0.15.0"
+  version = "0.16.0"
 
 [[projects]]
   branch = "master"
@@ -119,9 +125,8 @@
   digest = "1:210fd8b9e2311567de4291053c8d31df7d4cfedf51069e7d171ea28a9bc07254"
   name = "github.com/go-openapi/swag"
   packages = ["."]
-  pruneopts = "T"
-  revision = "2b0bd4f193d011c203529df626a65d63cb8a79e8"
-  version = "0.15.0"
+  revision = "becd2f08beafcca035645a8a101e0e3e18140458"
+  version = "0.16.0"
 
 [[projects]]
   digest = "1:37f1fc11c4cc72c037dff8f34f452384647105e81d3832fc901d6389af9afe0d"
@@ -248,9 +253,8 @@
   digest = "1:885e8b24b7ab9bcca3fa833102998e84dc0240dfc3c70f379a6c47ae0f31b3c0"
   name = "github.com/json-iterator/go"
   packages = ["."]
-  pruneopts = "T"
-  revision = "ab8a2e0c74be9d3be70b3184d9acc634935ded82"
-  version = "1.1.4"
+  revision = "1624edc4454b8682399def8740d46db5e4362ba4"
+  version = "1.1.5"
 
 [[projects]]
   branch = "master"
@@ -348,15 +352,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:bed20563d5c371abdec41ae4d71efd2c76e5e34e172113f1872f2daf1ea2151f"
   name = "github.com/presslabs/wordpress-operator"
-  packages = [
-    "pkg/apis/wordpress",
-    "pkg/apis/wordpress/v1alpha1",
-    "pkg/openapi",
-  ]
-  pruneopts = "T"
-  revision = "ed8da43502a47d19503013f7c7ead3ec4cb9a1f9"
+  packages = ["pkg/apis/wordpress/v1alpha1"]
+  revision = "9b10e5d212508749d705a0b8691020859a517148"
 
 [[projects]]
   digest = "1:8be8b3743fc9795ec21bbd3e0fc28ff6234018e1a269b0a7064184be95ac13e0"
@@ -370,9 +368,8 @@
   digest = "1:6de2f73eb31e80d74f84ce1c861e4c0c8f00ca5fb41a25901f987e63a0647c28"
   name = "github.com/spf13/pflag"
   packages = ["."]
-  pruneopts = "T"
-  revision = "583c0c0531f06d5278b7d917446061adc344b5cd"
-  version = "v1.0.1"
+  revision = "9a97c102cda95a86cec2345a6f09f55a939babf5"
+  version = "v1.0.2"
 
 [[projects]]
   digest = "1:365b8ecb35a5faf5aa0ee8d798548fc9cd4200cb95d77a5b0b285ac881bae499"
@@ -401,9 +398,8 @@
     "internal/exit",
     "zapcore",
   ]
-  pruneopts = "T"
-  revision = "4d45f9617f7d90f7a663ff21c7a4321dbe78098b"
-  version = "v1.9.0"
+  revision = "ff33455a0e382e8a81d14dd7c922020b6b5e7982"
+  version = "v1.9.1"
 
 [[projects]]
   digest = "1:de07ac8b688161274a5b8a3c8f5226e6bf3a17681f9aadb7d382dfa565cf5f14"
@@ -591,7 +587,6 @@
     "storage/v1alpha1",
     "storage/v1beta1",
   ]
-  pruneopts = "T"
   revision = "0f11257a8a25954878633ebdc9841c67d8f83bdb"
   version = "kubernetes-1.10.6"
 
@@ -605,7 +600,6 @@
     "pkg/client/clientset/clientset/scheme",
     "pkg/client/clientset/clientset/typed/apiextensions/v1beta1",
   ]
-  pruneopts = "T"
   revision = "93388cb0d0453a627cbfddabd1b800e60b47753d"
   version = "kubernetes-1.10.6"
 
@@ -655,7 +649,6 @@
     "third_party/forked/golang/json",
     "third_party/forked/golang/reflect",
   ]
-  pruneopts = "T"
   revision = "e386b2658ed20923da8cc9250e552f082899a1ee"
   version = "kubernetes-1.10.6"
 
@@ -723,7 +716,6 @@
     "util/retry",
     "util/workqueue",
   ]
-  pruneopts = "T"
   revision = "483aada58add12af1546a0f55e7a50493e8026f3"
   version = "kubernetes-1.10.6"
 
@@ -764,7 +756,6 @@
   revision = "f08db293d3ef80052d6513ece19792642a289fea"
 
 [[projects]]
-  digest = "1:679917f38bd90acd29b9ac825011af0ad448ba096403114154a6eafc3f2deac1"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/cache",
@@ -790,7 +781,6 @@
     "pkg/source",
     "pkg/source/internal",
   ]
-  pruneopts = "T"
   revision = "4855d31"
   source = "github.com/presslabs/controller-runtime"
 
@@ -807,8 +797,7 @@
     "pkg/internal/codegen/parse",
     "pkg/util",
   ]
-  pruneopts = "T"
-  revision = "4642040bdc8d31340218c0b36ae6c3779caad0b4"
+  revision = "63bce213bf6d471eb840145d460eb951bb1ad452"
 
 [[projects]]
   digest = "1:a2a1732136cc0d306a6b1a6999f71fbe0d16e9c1d2234b34d67e0ebb952e5982"
@@ -823,40 +812,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = [
-    "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1",
-    "github.com/emicklei/go-restful",
-    "github.com/onsi/ginkgo",
-    "github.com/onsi/gomega",
-    "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1",
-    "golang.org/x/net/context",
-    "k8s.io/api/apps/v1",
-    "k8s.io/api/core/v1",
-    "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
-    "k8s.io/apimachinery/pkg/api/errors",
-    "k8s.io/apimachinery/pkg/apis/meta/v1",
-    "k8s.io/apimachinery/pkg/labels",
-    "k8s.io/apimachinery/pkg/runtime",
-    "k8s.io/apimachinery/pkg/runtime/schema",
-    "k8s.io/apimachinery/pkg/types",
-    "k8s.io/client-go/kubernetes/scheme",
-    "k8s.io/client-go/plugin/pkg/client/auth/gcp",
-    "k8s.io/client-go/rest",
-    "k8s.io/client-go/tools/record",
-    "k8s.io/code-generator/cmd/deepcopy-gen",
-    "sigs.k8s.io/controller-runtime/pkg/client",
-    "sigs.k8s.io/controller-runtime/pkg/client/config",
-    "sigs.k8s.io/controller-runtime/pkg/controller",
-    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil",
-    "sigs.k8s.io/controller-runtime/pkg/envtest",
-    "sigs.k8s.io/controller-runtime/pkg/handler",
-    "sigs.k8s.io/controller-runtime/pkg/manager",
-    "sigs.k8s.io/controller-runtime/pkg/reconcile",
-    "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",
-    "sigs.k8s.io/controller-runtime/pkg/runtime/signals",
-    "sigs.k8s.io/controller-runtime/pkg/source",
-    "sigs.k8s.io/controller-tools/cmd/controller-gen",
-    "sigs.k8s.io/testing_frameworks/integration",
-  ]
+  inputs-digest = "862ea5e977af6064873575637c7476ab2f3535726520e682cbb4edf8acf1f957"
   solver-name = "gps-cdcl"
   solver-version = 1
