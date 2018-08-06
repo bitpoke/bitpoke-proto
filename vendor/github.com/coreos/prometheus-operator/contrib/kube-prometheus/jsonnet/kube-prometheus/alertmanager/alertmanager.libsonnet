@@ -1,13 +1,11 @@
 local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
 
-local alertmanagerConfig = "\nglobal:\n  resolve_timeout: 5m\nroute:\n  group_by: ['job']\n  group_wait: 30s\n  group_interval: 5m\n  repeat_interval: 12h\n  receiver: 'null'\n  routes:\n  - match:\n      alertname: DeadMansSwitch\n    receiver: 'null'\nreceivers:\n- name: 'null'\n";
-
 {
   _config+:: {
     namespace: 'default',
 
     versions+:: {
-      alertmanager: 'v0.14.0',
+      alertmanager: 'v0.15.0',
     },
 
     imageRepos+:: {
@@ -15,7 +13,23 @@ local alertmanagerConfig = "\nglobal:\n  resolve_timeout: 5m\nroute:\n  group_by
     },
 
     alertmanager+:: {
-      config: alertmanagerConfig,
+      name: $._config.alertmanager.name,
+      config: |||
+        global:
+          resolve_timeout: 5m
+        route:
+          group_by: ['job']
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 12h
+          receiver: 'null'
+          routes:
+          - match:
+              alertname: DeadMansSwitch
+            receiver: 'null'
+        receivers:
+        - name: 'null'
+      |||,
       replicas: 3,
     },
   },
@@ -24,13 +38,13 @@ local alertmanagerConfig = "\nglobal:\n  resolve_timeout: 5m\nroute:\n  group_by
     secret:
       local secret = k.core.v1.secret;
 
-      secret.new('alertmanager-main', { 'alertmanager.yaml': std.base64($._config.alertmanager.config) }) +
+      secret.new('alertmanager-' + $._config.alertmanager.name, { 'alertmanager.yaml': std.base64($._config.alertmanager.config) }) +
       secret.mixin.metadata.withNamespace($._config.namespace),
 
     serviceAccount:
       local serviceAccount = k.core.v1.serviceAccount;
 
-      serviceAccount.new('alertmanager-main') +
+      serviceAccount.new('alertmanager-' + $._config.alertmanager.name) +
       serviceAccount.mixin.metadata.withNamespace($._config.namespace),
 
     service:
@@ -39,9 +53,9 @@ local alertmanagerConfig = "\nglobal:\n  resolve_timeout: 5m\nroute:\n  group_by
 
       local alertmanagerPort = servicePort.newNamed('web', 9093, 'web');
 
-      service.new('alertmanager-main', { app: 'alertmanager', alertmanager: 'main' }, alertmanagerPort) +
+      service.new('alertmanager-' + $._config.alertmanager.name, { app: 'alertmanager', alertmanager: $._config.alertmanager.name }, alertmanagerPort) +
       service.mixin.metadata.withNamespace($._config.namespace) +
-      service.mixin.metadata.withLabels({ alertmanager: 'main' }),
+      service.mixin.metadata.withLabels({ alertmanager: $._config.alertmanager.name }),
 
     serviceMonitor:
       {
@@ -57,13 +71,8 @@ local alertmanagerConfig = "\nglobal:\n  resolve_timeout: 5m\nroute:\n  group_by
         spec: {
           selector: {
             matchLabels: {
-              alertmanager: 'main',
+              alertmanager: $._config.alertmanager.name,
             },
-          },
-          namespaceSelector: {
-            matchNames: [
-              'monitoring',
-            ],
           },
           endpoints: [
             {
@@ -79,10 +88,10 @@ local alertmanagerConfig = "\nglobal:\n  resolve_timeout: 5m\nroute:\n  group_by
         apiVersion: 'monitoring.coreos.com/v1',
         kind: 'Alertmanager',
         metadata: {
-          name: 'main',
+          name: $._config.alertmanager.name,
           namespace: $._config.namespace,
           labels: {
-            alertmanager: 'main',
+            alertmanager: $._config.alertmanager.name,
           },
         },
         spec: {
@@ -90,7 +99,7 @@ local alertmanagerConfig = "\nglobal:\n  resolve_timeout: 5m\nroute:\n  group_by
           version: $._config.versions.alertmanager,
           baseImage: $._config.imageRepos.alertmanager,
           nodeSelector: { 'beta.kubernetes.io/os': 'linux' },
-          serviceAccountName: 'alertmanager-main',
+          serviceAccountName: 'alertmanager-' + $._config.alertmanager.name,
         },
       },
   },

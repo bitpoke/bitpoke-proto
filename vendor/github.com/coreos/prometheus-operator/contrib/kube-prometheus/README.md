@@ -17,9 +17,30 @@ Components included in this package:
 
 This stack is meant for cluster monitoring, so it is pre-configured to collect metrics from all Kubernetes components. In addition to that it delivers a default set of dashboards and alerting rules. Many of the useful dashboards and alerts come from the [kubernetes-mixin project](https://github.com/kubernetes-monitoring/kubernetes-mixin), similar to this project it provides composable jsonnet as a library for users to customize to their needs.
 
+## Table of contents
+
+* [Prerequisites](#prerequisites)
+    * [minikube](#minikube)
+* [Quickstart](#quickstart)
+* [Usage](#usage)
+    * [Compiling](#compiling)
+* [Configuration](#configuration)
+* [Customization](#customization)
+    * [Alertmanager configuration](#alertmanager-configuration)
+    * [Customizing Prometheus alerting/recording rules and Grafana dashboards](#customizing-prometheus-alertingrecording-rules-and-grafana-dashboards)
+    * [Exposing Prometheus/Alermanager/Grafana via Ingress](#exposing-prometheusalermanagergrafana-via-ingress)
+* [Minikube Example](#minikube-example)
+* [Troubleshooting](#troubleshooting)
+    * [Error retrieving kubelet metrics](#error-retrieving-kubelet-metrics)
+
 ## Prerequisites
 
 You will need a Kubernetes cluster, that's it! By default it is assumed, that the kubelet uses token authN and authZ, as otherwise Prometheus needs a client certificate, which gives it full access to the kubelet, rather than just the metrics. Token authN and authZ allows more fine grained and easier access control.
+
+This means the kubelet configuration must contain these flags:
+
+* `--authentication-token-webhook=true` This flag enables, that a `ServiceAccount` token can be used to authenticate against the kubelet(s).
+* `--authorization-mode=Webhook` This flag enables, that the kubelet will perform an RBAC request with the API to determine, whether the requesting entity (Prometheus in this case) is allow to access a resource, in specific for this project the `/metrics` endpoint.
 
 ### minikube
 
@@ -86,8 +107,12 @@ set -x
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
+# Make sure to start with a clean 'manifests' dir
+rm -rf manifests
+mkdir manifests
+
                                                # optional, but we would like to generate yaml, not json
-jsonnet -J vendor -m manifests example.jsonnet | xargs -I{} sh -c 'cat $1 | gojsontoyaml > $1.yaml; rm -f $1' -- {}
+jsonnet -J vendor -m manifests ${1-example.jsonnet} | xargs -I{} sh -c 'cat $1 | gojsontoyaml > $1.yaml; rm -f $1' -- {}
 
 ```
 
@@ -137,6 +162,19 @@ A hidden `_config` field is located at the top level of the object this library 
 }
 ```
 
+The grafana definition is located in a different project (https://github.com/brancz/kubernetes-grafana), but needed configuration can be customized from the same file. F.e. to allow anonymous access to grafana, add the `_config` section:
+
+```
+      grafana+:: {
+        config: {
+          sections: {
+            "auth.anonymous": {enabled: true},
+          },
+        },
+      },
+```
+
+
 ## Customization
 
 Jsonnet is a turing complete language, any logic can be reflected in it. It also has powerful merge functionalities, allowing sophisticated customizations of any kind simply by merging it into the object the library provides.
@@ -145,59 +183,118 @@ A common example is that not all Kubernetes clusters are created exactly the sam
 
 kubeadm:
 
-[embedmd]:# (examples/kubeadm.jsonnet)
+[embedmd]:# (examples/jsonnet-snippets/kubeadm.jsonnet)
 ```jsonnet
-(import "kube-prometheus/kube-prometheus.libsonnet") +
-(import "kube-prometheus/kube-prometheus-kubeadm.libsonnet")
+(import 'kube-prometheus/kube-prometheus.libsonnet') +
+(import 'kube-prometheus/kube-prometheus-kubeadm.libsonnet')
 ```
 
 bootkube:
 
-[embedmd]:# (examples/bootkube.jsonnet)
+[embedmd]:# (examples/jsonnet-snippets/bootkube.jsonnet)
 ```jsonnet
-(import "kube-prometheus/kube-prometheus.libsonnet") +
-(import "kube-prometheus/kube-prometheus-bootkube.libsonnet")
+(import 'kube-prometheus/kube-prometheus.libsonnet') +
+(import 'kube-prometheus/kube-prometheus-bootkube.libsonnet')
+```
+
+kops:
+
+[embedmd]:# (examples/jsonnet-snippets/kops.jsonnet)
+```jsonnet
+(import 'kube-prometheus/kube-prometheus.libsonnet') +
+(import 'kube-prometheus/kube-prometheus-kops.libsonnet')
 ```
 
 Another mixin that may be useful for exploring the stack is to expose the UIs of Prometheus, Alertmanager and Grafana on NodePorts:
 
-[embedmd]:# (examples/node-ports.jsonnet)
+[embedmd]:# (examples/jsonnet-snippets/node-ports.jsonnet)
 ```jsonnet
-(import "kube-prometheus/kube-prometheus.libsonnet") +
-(import "kube-prometheus/kube-prometheus-node-ports.libsonnet")
+(import 'kube-prometheus/kube-prometheus.libsonnet') +
+(import 'kube-prometheus/kube-prometheus-node-ports.libsonnet')
 ```
 
 For example the name of the `Prometheus` object provided by this library can be overridden:
 
 [embedmd]:# (examples/prometheus-name-override.jsonnet)
 ```jsonnet
-((import "kube-prometheus/kube-prometheus.libsonnet") + {
-	prometheus+: {
-		prometheus+: {
-			metadata+: {
-				name: "my-name",
-			}
-		}
-	}
-}).prometheus.prometheus
+((import 'kube-prometheus/kube-prometheus.libsonnet') + {
+   prometheus+: {
+     prometheus+: {
+       metadata+: {
+         name: 'my-name',
+       },
+     },
+   },
+ }).prometheus.prometheus
 ```
 
 Standard Kubernetes manifests are all written using [ksonnet-lib](https://github.com/ksonnet/ksonnet-lib/), so they can be modified with the mixins supplied by ksonnet-lib. For example to override the namespace of the node-exporter DaemonSet:
 
 [embedmd]:# (examples/ksonnet-example.jsonnet)
 ```jsonnet
-local k = import "ksonnet/ksonnet.beta.3/k.libsonnet";
+local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
 local daemonset = k.apps.v1beta2.daemonSet;
 
-((import "kube-prometheus/kube-prometheus.libsonnet") + {
-	nodeExporter+: {
-		daemonset+:
-            daemonset.mixin.metadata.withNamespace("my-custom-namespace")
-    }
-}).nodeExporter.daemonset
+((import 'kube-prometheus/kube-prometheus.libsonnet') + {
+   nodeExporter+: {
+     daemonset+:
+       daemonset.mixin.metadata.withNamespace('my-custom-namespace'),
+   },
+ }).nodeExporter.daemonset
 ```
 
-## Example
+### Alertmanager configuration
+
+The Alertmanager configuration is located in the `_config.alertmanager.config` configuration field. In order to set a custom Alertmanager configuration simply set this field.
+
+[embedmd]:# (examples/alertmanager-config.jsonnet)
+```jsonnet
+((import 'kube-prometheus/kube-prometheus.libsonnet') + {
+   _config+:: {
+     alertmanager+: {
+       config: |||
+         global:
+           resolve_timeout: 10m
+         route:
+           group_by: ['job']
+           group_wait: 30s
+           group_interval: 5m
+           repeat_interval: 12h
+           receiver: 'null'
+           routes:
+           - match:
+               alertname: DeadMansSwitch
+             receiver: 'null'
+         receivers:
+         - name: 'null'
+       |||,
+     },
+   },
+ }).alertmanager.secret
+```
+
+In the above example the configuration has been inlined, but can just as well be an external file imported in jsonnet via the `importstr` function.
+
+[embedmd]:# (examples/alertmanager-config-external.jsonnet)
+```jsonnet
+((import 'kube-prometheus/kube-prometheus.libsonnet') + {
+   _config+:: {
+     alertmanager+: {
+       config: importstr 'alertmanager-config.yaml',
+     },
+   },
+ }).alertmanager.secret
+```
+
+### Customizing Prometheus alerting/recording rules and Grafana dashboards
+
+See [developing Prometheus rules and Grafana dashboards](docs/developing-prometheus-rules-and-grafana-dashboards.md) guide.
+
+### Exposing Prometheus/Alermanager/Grafana via Ingress
+
+See [exposing Prometheus/Alertmanager/Grafana](docs/exposing-prometheus-alertmanager-grafana-ingress.md) guide.
+
+## Minikube Example
 
 To use an easy to reproduce example, let's take the minikube setup as demonstrated in [prerequisites](#Prerequisites). It is a kubeadm cluster (as we use the kubeadm bootstrapper) and because we would like easy access to our Prometheus, Alertmanager and Grafana UI we want the services to be exposed as NodePort type services:
 
@@ -223,3 +320,19 @@ local kp =
 { ['prometheus-' + name]: kp.prometheus[name] for name in std.objectFields(kp.prometheus) } +
 { ['grafana-' + name]: kp.grafana[name] for name in std.objectFields(kp.grafana) }
 ```
+
+## Troubleshooting
+
+### Error retrieving kubelet metrics
+
+Should the Prometheus `/targets` page show kubelet targets, but not able to successfully scrape the metrics, then most likely it is a problem with the authentication and authorization setup of the kubelets.
+
+As described in the [prerequisites](#prerequisites) section, in order to retrieve metrics from the kubelet token authentication and authorization must be enabled. Some Kubernetes setup tools do not enable this by default.
+
+#### Authentication problem
+
+The Prometheus `/targets` page will show the kubelet job with the error `403 Unauthorized`, when token authentication is not enabled. Ensure, that the `--authentication-token-webhook=true` flag is enabled on all kubelet configurations.
+
+#### Authorization problem
+
+The Prometheus `/targets` page will show the kubelet job with the error `401 Unauthorized`, when token authorization is not enabled. Ensure that the `--authorization-mode=Webhook` flag is enabled on all kubelet configurations.

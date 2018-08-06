@@ -32,7 +32,6 @@ const (
 	DatastoreBackup DataFormat = "DATASTORE_BACKUP"
 	GoogleSheets    DataFormat = "GOOGLE_SHEETS"
 	Bigtable        DataFormat = "BIGTABLE"
-	Parquet         DataFormat = "PARQUET"
 )
 
 // ExternalData is a table which is stored outside of BigQuery. It is implemented by

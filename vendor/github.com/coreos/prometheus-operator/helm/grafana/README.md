@@ -54,11 +54,13 @@ Parameter | Description | Default
 `service.annotations` | Annotations to be added to the Grafana Service | `{}`
 `service.clusterIP` | Cluster-internal IP address for Grafana Service | `""`
 `service.externalIPs` | List of external IP addresses at which the Grafana Service will be available | `[]`
+`service.labels` | Labels for Grafana Service | `{}`
 `service.loadBalancerIP` | External IP address to assign to Grafana Service | `""`
 `service.loadBalancerSourceRanges` | List of client IPs allowed to access Grafana Service | `[]`
 `service.nodePort` | Port to expose Grafana Service on each node | `30902`
 `service.type` | Grafana Service type | `ClusterIP`
 `storageSpec` | Grafana StorageSpec for persistent data | `{}`
+`resources` | Pod resource requests & limits | `{}`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 $ helm install coreos/grafana --name my-release --set adminUser=bob
@@ -73,3 +75,48 @@ $ helm install coreos/grafana --name my-release -f values.yaml
 > **Tip**: You can use the default [values.yaml](values.yaml)
 
 > **Tip**: On GCE If you want to  use  `Ingress.enabled=true`, you must put `service.type=NodePort`
+
+## Adding Grafana Dashboards
+
+You can either add new dashboards via `serverDashboardConfigmaps` in `values.yaml`. These can then be
+picked up by Grafana Watcher.
+
+```yaml
+serverDashboardConfigmaps:
+  - example-dashboards
+```
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-dashboards
+data:
+{{ (.Files.Glob "custom-dashboards/*.json").AsConfig | indent 2 }}
+
+# Or
+#
+# data:
+#   custom-dashboard.json: |-
+# {{ (.Files.Get "custom.json") | indent 4 }}
+#
+# The filename (and consequently the key under data) must be in the format `xxx-dashboard.json` or `xxx-datasource.json`
+# for them to be picked up.
+```
+
+Another way is to add them through `serverDashboardFiles` directly in `values.yaml`. These are then combined
+into the same ConfigMap for the rest of the default dashboards.
+
+```yaml
+serverDashboardFiles:
+  example-dashboard.json: |-
+    {
+      "dashboard": {
+        "annotations:[]
+        ...
+      }
+    }
+```
+
+In both cases, if you're exporting the jsons directly from Grafana, you'll want to wrap it in `{"dashboard": {}}`
+as stated in [Grafana Watcher's README](https://github.com/coreos/prometheus-operator/tree/master/contrib/grafana-watcher).

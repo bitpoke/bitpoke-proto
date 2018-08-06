@@ -98,8 +98,12 @@ type PrometheusSpec struct {
 	RoutePrefix string `json:"routePrefix,omitempty"`
 	// Storage spec to specify how storage shall be used.
 	Storage *StorageSpec `json:"storage,omitempty"`
-	// A selector to select which ConfigMaps to mount for loading rule files from.
+	// A selector to select which PrometheusRules to mount for loading alerting
+	// rules from.
 	RuleSelector *metav1.LabelSelector `json:"ruleSelector,omitempty"`
+	// Namespaces to be selected for PrometheusRules discovery. If unspecified, only
+	// the same namespace as the Prometheus object is in is used.
+	RuleNamespaceSelector *metav1.LabelSelector `json:"ruleNamespaceSelector,omitempty"`
 	// Define details regarding alerting.
 	Alerting *AlertingSpec `json:"alerting,omitempty"`
 	// Define resources requests and limits for single Pods.
@@ -159,6 +163,15 @@ type PrometheusSpec struct {
 	// notes to ensure that no incompatible AlertManager configs are going to break
 	// Prometheus after the upgrade.
 	AdditionalAlertManagerConfigs *v1.SecretKeySelector `json:"additionalAlertManagerConfigs,omitempty"`
+	// Thanos configuration allows configuring various aspects of a Prometheus
+	// server in a Thanos environment.
+	//
+	// This section is experimental, it may change significantly without
+	// deprecation notice in any release.
+	//
+	// This is experimental and may change significantly without backward
+	// compatibility in any release.
+	Thanos *ThanosSpec `json:"thanos,omitempty"`
 }
 
 // Most recent observed status of the Prometheus cluster. Read-only. Not
@@ -211,6 +224,48 @@ type StorageSpec struct {
 	VolumeClaimTemplate v1.PersistentVolumeClaim `json:"volumeClaimTemplate,omitempty"`
 }
 
+// ThanosSpec defines parameters for a Prometheus server within a Thanos deployment.
+// +k8s:openapi-gen=true
+type ThanosSpec struct {
+	// Peers is a DNS name for Thanos to discover peers through.
+	Peers *string `json:"peers,omitempty"`
+	// Version describes the version of Thanos to use.
+	Version *string `json:"version,omitempty"`
+	// Thanos base image if other than default.
+	BaseImage *string `json:"baseImage,omitempty"`
+	// GCS configures use of GCS in Thanos.
+	GCS *ThanosGCSSpec `json:"gcs,omitempty"`
+	// S3 configures use of S3 in Thanos.
+	S3 *ThanosS3Spec `json:"s3,omitempty"`
+}
+
+// ThanosGCSSpec defines parameters for use of Google Cloud Storage (GCS) with
+// Thanos.
+// +k8s:openapi-gen=true
+type ThanosGCSSpec struct {
+	// Google Cloud Storage bucket name for stored blocks. If empty it won't
+	// store any block inside Google Cloud Storage.
+	Bucket *string `json:"bucket,omitempty"`
+}
+
+// ThanosSpec defines parameters for of AWS Simple Storage Service (S3) with
+// Thanos. (S3 compatible services apply as well)
+// +k8s:openapi-gen=true
+type ThanosS3Spec struct {
+	// S3-Compatible API bucket name for stored blocks.
+	Bucket *string `json:"bucket,omitempty"`
+	// S3-Compatible API endpoint for stored blocks.
+	Endpoint *string `json:"endpoint,omitempty"`
+	// AccessKey for an S3-Compatible API.
+	AccessKey *v1.SecretKeySelector `json:"accessKey,omitempty"`
+	// SecretKey for an S3-Compatible API.
+	SecretKey *v1.SecretKeySelector `json:"secretKey,omitempty"`
+	// Whether to use an insecure connection with an S3-Compatible API.
+	Insecure *bool `json:"insecure,omitempty"`
+	// Whether to use S3 Signature Version 2; otherwise Signature Version 4 will be used.
+	SignatureVersion2 *bool `json:"signatureVersion2,omitempty"`
+}
+
 // RemoteWriteSpec defines the remote_write configuration for prometheus.
 // +k8s:openapi-gen=true
 type RemoteWriteSpec struct {
@@ -230,6 +285,28 @@ type RemoteWriteSpec struct {
 	TLSConfig *TLSConfig `json:"tlsConfig,omitempty"`
 	//Optional ProxyURL
 	ProxyURL string `json:"proxyUrl,omitempty"`
+	// QueueConfig allows tuning of the remote write queue parameters.
+	QueueConfig *QueueConfig `json:"queueConfig,omitempty"`
+}
+
+// QueueConfig allows the tuning of remote_write queue_config parameters. This object
+// is referenced in the RemoteWriteSpec object.
+// +k8s:openapi-gen=true
+type QueueConfig struct {
+	// Capacity is the number of samples to buffer per shard before we start dropping them.
+	Capacity int `json:"capacity,omitempty"`
+	// MaxShards is the maximum number of shards, i.e. amount of concurrency.
+	MaxShards int `json:"maxShards,omitempty"`
+	// MaxSamplesPerSend is the maximum number of samples per send.
+	MaxSamplesPerSend int `json:"maxSamplesPerSend,omitempty"`
+	// BatchSendDeadline is the maximum time a sample will wait in buffer.
+	BatchSendDeadline string `json:"batchSendDeadline,omitempty"`
+	// MaxRetries is the maximum number of times to retry a batch on recoverable errors.
+	MaxRetries int `json:"maxRetries,omitempty"`
+	// MinBackoff is the initial retry delay. Gets doubled for every retry.
+	MinBackoff string `json:"minBackoff,omitempty"`
+	// MaxBackoff is the maximum retry delay.
+	MaxBackoff string `json:"maxBackoff,omitempty"`
 }
 
 // RemoteReadSpec defines the remote_read configuration for prometheus.
@@ -359,6 +436,8 @@ type Endpoint struct {
 	BasicAuth *BasicAuth `json:"basicAuth,omitempty"`
 	// MetricRelabelConfigs to apply to samples before ingestion.
 	MetricRelabelConfigs []*RelabelConfig `json:"metricRelabelings,omitempty"`
+	// ProxyURL eg http://proxyserver:2195 Directs scrapes to proxy through this endpoint.
+	ProxyURL *string `json:"proxyUrl,omitempty"`
 }
 
 // BasicAuth allow an endpoint to authenticate over basic authentication
@@ -397,7 +476,58 @@ type ServiceMonitorList struct {
 	Items []*ServiceMonitor `json:"items"`
 }
 
-// Describes an Alertmanager cluster.
+// A list of PrometheusRules.
+// +k8s:openapi-gen=true
+type PrometheusRuleList struct {
+	metav1.TypeMeta `json:",inline"`
+	// Standard list metadata
+	// More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata
+	metav1.ListMeta `json:"metadata,omitempty"`
+	// List of Rules
+	Items []*PrometheusRule `json:"items"`
+}
+
+// PrometheusRule defines alerting rules for a Prometheus instance
+// +k8s:openapi-gen=true
+type PrometheusRule struct {
+	metav1.TypeMeta `json:",inline"`
+	// Standard object’s metadata. More info:
+	// http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	// Specification of desired alerting rule definitions for Prometheus.
+	Spec PrometheusRuleSpec `json:"spec"`
+}
+
+// PrometheusRuleSpec contains specification parameters for a Rule.
+// +k8s:openapi-gen=true
+type PrometheusRuleSpec struct {
+	// Content of Prometheus rule file
+	Groups []RuleGroup `json:"groups,omitempty"`
+}
+
+// RuleGroup and Rule are copied instead of vendored because the
+// upstream Prometheus struct definitions don't have json struct tags.
+
+// RuleGroup is a list of sequentially evaluated recording and alerting rules.
+// +k8s:openapi-gen=true
+type RuleGroup struct {
+	Name     string `json:"name"`
+	Interval string `json:"interval,omitempty"`
+	Rules    []Rule `json:"rules"`
+}
+
+// Rule describes an alerting or recording rule.
+// +k8s:openapi-gen=true
+type Rule struct {
+	Record      string            `json:"record,omitempty"`
+	Alert       string            `json:"alert,omitempty"`
+	Expr        string            `json:"expr"`
+	For         string            `json:"for,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// Alertmanager describes an Alertmanager cluster.
 // +k8s:openapi-gen=true
 type Alertmanager struct {
 	metav1.TypeMeta `json:",inline"`
@@ -548,5 +678,13 @@ func (l *ServiceMonitor) DeepCopyObject() runtime.Object {
 }
 
 func (l *ServiceMonitorList) DeepCopyObject() runtime.Object {
+	return l.DeepCopy()
+}
+
+func (f *PrometheusRule) DeepCopyObject() runtime.Object {
+	return f.DeepCopy()
+}
+
+func (l *PrometheusRuleList) DeepCopyObject() runtime.Object {
 	return l.DeepCopy()
 }

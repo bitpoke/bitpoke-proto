@@ -19,9 +19,6 @@ Google Cloud Storage stores data in named objects, which are grouped into bucket
 More information about Google Cloud Storage is available at
 https://cloud.google.com/storage/docs.
 
-See https://godoc.org/cloud.google.com/go for authentication, timeouts,
-connection pooling and similar aspects of this package.
-
 All of the methods of this package use exponential backoff to retry calls
 that fail with certain errors, as described in
 https://cloud.google.com/storage/docs/exponential-backoff.
@@ -161,5 +158,10 @@ SignedURL for details.
         // TODO: Handle error.
     }
     fmt.Println(url)
+
+Authentication
+
+See examples of authorization and authentication at
+https://godoc.org/cloud.google.com/go#pkg-examples.
 */
 package storage // import "cloud.google.com/go/storage"

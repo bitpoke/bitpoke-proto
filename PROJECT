@@ -1,0 +1,3 @@
+version: "1"
+domain: presslabs.com
+repo: github.com/presslabs/dashboard

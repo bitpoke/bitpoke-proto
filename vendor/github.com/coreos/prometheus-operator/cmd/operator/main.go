@@ -35,6 +35,7 @@ import (
 	"github.com/coreos/prometheus-operator/pkg/api"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 	prometheuscontroller "github.com/coreos/prometheus-operator/pkg/prometheus"
+	"github.com/coreos/prometheus-operator/pkg/version"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 )
@@ -69,10 +70,15 @@ func init() {
 	flagset.StringVar(&cfg.TLSConfig.CAFile, "ca-file", "", "- NOT RECOMMENDED FOR PRODUCTION - Path to TLS CA file.")
 	flagset.StringVar(&cfg.KubeletObject, "kubelet-service", "", "Service/Endpoints object to write kubelets into in format \"namespace/name\"")
 	flagset.BoolVar(&cfg.TLSInsecure, "tls-insecure", false, "- NOT RECOMMENDED FOR PRODUCTION - Don't verify API server's CA certificate.")
-	flagset.StringVar(&cfg.PrometheusConfigReloader, "prometheus-config-reloader", "quay.io/coreos/prometheus-config-reloader:v0.0.4", "Config and rule reload image")
+	// The Prometheus config reloader image is released along with the
+	// Prometheus Operator image, tagged with the same semver version. Default to
+	// the Prometheus Operator version if no Prometheus config reloader image is
+	// specified.
+	flagset.StringVar(&cfg.PrometheusConfigReloader, "prometheus-config-reloader", fmt.Sprintf("quay.io/coreos/prometheus-config-reloader:v%v", version.Version), "Prometheus config reloader image")
 	flagset.StringVar(&cfg.ConfigReloaderImage, "config-reloader-image", "quay.io/coreos/configmap-reload:v0.0.1", "Reload Image")
 	flagset.StringVar(&cfg.AlertmanagerDefaultBaseImage, "alertmanager-default-base-image", "quay.io/prometheus/alertmanager", "Alertmanager default base image")
 	flagset.StringVar(&cfg.PrometheusDefaultBaseImage, "prometheus-default-base-image", "quay.io/prometheus/prometheus", "Prometheus default base image")
+	flagset.StringVar(&cfg.ThanosDefaultBaseImage, "thanos-default-base-image", "improbable/thanos", "Thanos default base image")
 	flagset.StringVar(&cfg.Namespace, "namespace", v1.NamespaceAll, "Namespace to scope the interaction of the Prometheus Operator and the apiserver.")
 	flagset.Var(&cfg.Labels, "labels", "Labels to be add to all resources created by the operator")
 	flagset.StringVar(&cfg.CrdGroup, "crd-apigroup", monitoringv1.Group, "prometheus CRD  API group name")
@@ -105,6 +111,8 @@ func Main() int {
 	}
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 	logger = log.With(logger, "caller", log.DefaultCaller)
+
+	logger.Log("msg", fmt.Sprintf("Starting Prometheus Operator version '%v'.", version.Version))
 
 	r := prometheus.NewRegistry()
 	r.MustRegister(prometheus.NewGoCollector())

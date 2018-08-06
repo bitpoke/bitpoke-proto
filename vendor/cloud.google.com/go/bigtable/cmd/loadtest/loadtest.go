@@ -123,7 +123,7 @@ func main() {
 	go func() {
 		s := <-c
 		log.Printf("Caught %v, cleaning scratch table.", s)
-		_ = adminClient.DeleteTable(context.Background(), *scratchTable)
+		adminClient.DeleteTable(context.Background(), *scratchTable)
 		os.Exit(1)
 	}()
 

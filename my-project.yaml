@@ -1,6 +1,0 @@
-apiVersion: dashboard.presslabs.com/v1alpha1
-kind: Project
-metadata:
-  name: itsy-bitsy-tiny-miny-project
-spec:
-  name: "whoops"

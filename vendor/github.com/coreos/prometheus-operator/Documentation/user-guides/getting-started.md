@@ -16,7 +16,7 @@ To follow this getting started you will need a Kubernetes cluster you have acces
 
 [embedmd]:# (../../bundle.yaml)
 ```yaml
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: prometheus-operator
@@ -29,23 +29,17 @@ subjects:
   name: prometheus-operator
   namespace: default
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: prometheus-operator
 rules:
 - apiGroups:
-  - extensions
-  resources:
-  - thirdpartyresources
-  verbs:
-  - "*"
-- apiGroups:
   - apiextensions.k8s.io
   resources:
   - customresourcedefinitions
   verbs:
-  - "*"
+  - '*'
 - apiGroups:
   - monitoring.coreos.com
   resources:
@@ -54,37 +48,52 @@ rules:
   - prometheuses/finalizers
   - alertmanagers/finalizers
   - servicemonitors
+  - prometheusrules
   verbs:
-  - "*"
+  - '*'
 - apiGroups:
   - apps
   resources:
   - statefulsets
-  verbs: ["*"]
-- apiGroups: [""]
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
   resources:
   - configmaps
   - secrets
-  verbs: ["*"]
-- apiGroups: [""]
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
   resources:
   - pods
-  verbs: ["list", "delete"]
-- apiGroups: [""]
+  verbs:
+  - list
+  - delete
+- apiGroups:
+  - ""
   resources:
   - services
   - endpoints
-  verbs: ["get", "create", "update"]
-- apiGroups: [""]
+  verbs:
+  - get
+  - create
+  - update
+- apiGroups:
+  - ""
   resources:
   - nodes
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - namespaces
-  verbs: ["list", "watch"]
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: prometheus-operator
+  verbs:
+  - list
+  - watch
 ---
 apiVersion: apps/v1beta2
 kind: Deployment
@@ -92,6 +101,7 @@ metadata:
   labels:
     k8s-app: prometheus-operator
   name: prometheus-operator
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -106,7 +116,8 @@ spec:
       - args:
         - --kubelet-service=kube-system/kubelet
         - --config-reloader-image=quay.io/coreos/configmap-reload:v0.0.1
-        image: quay.io/coreos/prometheus-operator:v0.19.0
+        - --prometheus-config-reloader=quay.io/coreos/prometheus-config-reloader:v0.20.0
+        image: quay.io/coreos/prometheus-operator:v0.20.0
         name: prometheus-operator
         ports:
         - containerPort: 8080
@@ -118,10 +129,18 @@ spec:
           requests:
             cpu: 100m
             memory: 50Mi
+      nodeSelector:
+        beta.kubernetes.io/os: linux
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
       serviceAccountName: prometheus-operator
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-operator
+  namespace: default
 ```
 
 ## Related resources
@@ -138,7 +157,7 @@ The Prometheus resource declaratively describes the desired state of a Prometheu
 
 ![Prometheus Operator Architecture](images/architecture.png "Prometheus Operator Architecture")
 
-The Prometheus resource includes a field called `serviceMonitorSelector`, which defines a selection of ServiceMonitors to be used.
+The Prometheus resource includes a field called `serviceMonitorSelector`, which defines a selection of ServiceMonitors to be used. By default and before the version `v0.19.0`, ServiceMonitors must be installed in the same namespace as the Prometheus instance. With the Prometheus Operator `v0.19.0` and above, ServiceMonitors can be selected outside the Prometheus namespace via the `serviceMonitorNamespaceSelector` field of the Prometheus resource.
 
 First, deploy three instances of a simple example application, which listens and exposes metrics on port `8080`.
 
