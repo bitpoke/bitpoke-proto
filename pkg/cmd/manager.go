@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/presslabs/dashboard/pkg/apis"
+	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
 	"github.com/presslabs/dashboard/pkg/controller"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -66,4 +67,5 @@ var runControllerManager = func(cmd *cobra.Command, args []string) {
 
 func init() {
 	rootCmd.AddCommand(controllerManagerCmd)
+	options.AddToFlagSet(apiserverCmd.Flags())
 }

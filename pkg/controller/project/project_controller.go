@@ -133,6 +133,11 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 	syncers := []sync.Interface{
 		sync.NewNamespaceSyncer(instance, r.scheme),
 		sync.NewResourceQuotaSyncer(instance, r.scheme),
+		sync.NewGiteaSecretSyncer(instance, r.scheme),
+		sync.NewGiteaPVCSyncer(instance, r.scheme),
+		sync.NewGiteaDeploymentSyncer(instance, r.scheme),
+		sync.NewGiteaServiceSyncer(instance, r.scheme),
+		sync.NewGiteaIngressSyncer(instance, r.scheme),
 		sync.NewPrometheusSyncer(instance, r.scheme),
 	}
 
@@ -147,6 +152,7 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 		log.Info(string(op), "key", key.String(), "kind", existing.GetObjectKind().GroupVersionKind().Kind)
 
 		if err != nil {
+			log.Error(err, "unable to run syncer")
 			r.recorder.Eventf(instance, eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)
 			return reconcile.Result{}, err
 		}

@@ -19,7 +19,10 @@ package sync
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var log = logf.Log.WithName("project-controller")
 
 // EventReason is a type for storing kubernetes event reasons
 type EventReason string
