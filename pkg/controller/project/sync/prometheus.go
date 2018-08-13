@@ -23,19 +23,23 @@ const (
 )
 
 const (
-	EventReasonPrometheusFailed  EventReason = "PrometheusFailed"
+	// EventReasonPrometheusFailed is the event reason for a failed Prometheus reconcile
+	EventReasonPrometheusFailed EventReason = "PrometheusFailed"
+	// EventReasonPrometheusUpdated is the event reason for a successful Prometheus reconcile
 	EventReasonPrometheusUpdated EventReason = "PrometheusUpdated"
 )
 
-type PrometheusSyncer struct {
+// prometheusSyncer defines the Syncer for Prometheus
+type prometheusSyncer struct {
 	scheme   *runtime.Scheme
 	p        *dashboardv1alpha1.Project
 	key      types.NamespacedName
 	existing *monitoringv1.Prometheus
 }
 
-func NewPrometheusSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) *PrometheusSyncer {
-	return &PrometheusSyncer{
+// NewPrometheusSyncer returns a new sync.Interface for reconciling Prometheus
+func NewPrometheusSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) Interface {
+	return &prometheusSyncer{
 		scheme:   r,
 		existing: &monitoringv1.Prometheus{},
 		p:        p,
@@ -43,10 +47,14 @@ func NewPrometheusSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) *Prome
 	}
 }
 
-func (s *PrometheusSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *PrometheusSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+// GetKey returns the prometheusSyncer key through which an existing object may be identified
+func (s *prometheusSyncer) GetKey() types.NamespacedName { return s.key }
 
-func (s *PrometheusSyncer) T(in runtime.Object) (runtime.Object, error) {
+// GetExistingObjectPlaceholder returns a Placeholder object if an existing one is not found
+func (s *prometheusSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+
+// T is the transform function used to reconcile the Prometheus object
+func (s *prometheusSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*monitoringv1.Prometheus)
 	out.Labels = s.p.GetPrometheusLabels()
 
@@ -61,10 +69,10 @@ func (s *PrometheusSyncer) T(in runtime.Object) (runtime.Object, error) {
 	return out, nil
 }
 
-func (s *PrometheusSyncer) GetErrorEventReason(err error) EventReason {
-	if err == nil {
-		return EventReasonPrometheusUpdated
-	} else {
+// GetErrorEventReason returns a reason for changes in the object state
+func (s *prometheusSyncer) GetErrorEventReason(err error) EventReason {
+	if err != nil {
 		return EventReasonPrometheusFailed
 	}
+	return EventReasonPrometheusUpdated
 }

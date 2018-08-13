@@ -39,6 +39,7 @@ type ProjectStatus struct {
 	Conditions []ProjectCondition `json:"conditions,omitempty"`
 }
 
+// ProjectCondition defines the condition of Project
 type ProjectCondition struct {
 	// type of cluster condition, values in (\"Ready\")
 	Type ProjectConditionType `json:"type"`
@@ -53,9 +54,11 @@ type ProjectCondition struct {
 	Message string `json:"message"`
 }
 
+// ProjectConditionType defines the ProjectCondition Type
 type ProjectConditionType string
 
 const (
+	// ProjectConditionReady is the ProjectCondition type for project readiness
 	ProjectConditionReady ProjectConditionType = "Ready"
 )
 

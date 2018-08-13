@@ -24,10 +24,10 @@ import (
 )
 
 var (
-	// SchemeGroupVersion is group version used to register these objects
+	// PrometheusSchemeGroupVersion is group version used to register Prometheus related objects
 	PrometheusSchemeGroupVersion = schema.GroupVersion{Group: "monitoring.coreos.com", Version: "v1"}
 
-	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
+	// PrometheusSchemeBuilder is used to add go types to the GroupVersionKind scheme
 	PrometheusSchemeBuilder = &scheme.Builder{GroupVersion: PrometheusSchemeGroupVersion}
 )
 

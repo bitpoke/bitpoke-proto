@@ -17,19 +17,23 @@ import (
 )
 
 const (
-	EventReasonNamespaceFailed  EventReason = "NamespaceFailed"
+	// EventReasonNamespaceFailed is the event reason for a failed Namespace reconcile
+	EventReasonNamespaceFailed EventReason = "NamespaceFailed"
+	// EventReasonNamespaceUpdated is the event reason for a successful Namespace reconcile
 	EventReasonNamespaceUpdated EventReason = "NamespaceUpdated"
 )
 
-type NamespaceSyncer struct {
+// namespaceSyncer defines the Syncer for Namespace
+type namespaceSyncer struct {
 	scheme   *runtime.Scheme
 	p        *dashboardv1alpha1.Project
 	key      types.NamespacedName
 	existing *corev1.Namespace
 }
 
-func NewNamespaceSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) *NamespaceSyncer {
-	return &NamespaceSyncer{
+// NewNamespaceSyncer returns a new sync.Interface for reconciling Namespace
+func NewNamespaceSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) Interface {
+	return &namespaceSyncer{
 		scheme:   r,
 		p:        p,
 		existing: &corev1.Namespace{},
@@ -37,23 +41,30 @@ func NewNamespaceSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) *Namesp
 	}
 }
 
-func (s *NamespaceSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *NamespaceSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+// GetKey returns the namespaceSyncer key through which an existing object may be identified
+func (s *namespaceSyncer) GetKey() types.NamespacedName { return s.key }
 
-func (s *NamespaceSyncer) T(in runtime.Object) (runtime.Object, error) {
+// GetExistingObjectPlaceholder returns a Placeholder object if an existing one is not found
+func (s *namespaceSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+
+// T is the transform function used to reconcile the Namespace object
+func (s *namespaceSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.Namespace)
 
 	out.Labels = s.p.GetDefaultLabels()
 
-	controllerutil.SetControllerReference(s.p, out, s.scheme)
+	err := controllerutil.SetControllerReference(s.p, out, s.scheme)
+	if err != nil {
+		return nil, err
+	}
 
 	return out, nil
 }
 
-func (s *NamespaceSyncer) GetErrorEventReason(err error) EventReason {
-	if err == nil {
-		return EventReasonNamespaceUpdated
-	} else {
+// GetErrorEventReason returns a reason for changes in the object state
+func (s *namespaceSyncer) GetErrorEventReason(err error) EventReason {
+	if err != nil {
 		return EventReasonNamespaceFailed
 	}
+	return EventReasonNamespaceUpdated
 }

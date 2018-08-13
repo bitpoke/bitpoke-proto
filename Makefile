@@ -52,11 +52,34 @@ docker-build: test
 docker-push:
 	docker push ${IMG}
 
-lint: fmt vet
-	gometalinter.v2 --install --disable-all --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst .
+lint: vet
+	gometalinter.v2 --disable-all --deadline 5m \
+	--enable=vetshadow \
+	--enable=misspell \
+	--enable=structcheck \
+	--enable=golint \
+	--enable=deadcode \
+	--enable=goimports \
+	--enable=errcheck \
+	--enable=varcheck \
+	--enable=goconst \
+	--enable=gas \
+	--enable=unparam \
+	--enable=ineffassign \
+	--enable=nakedret \
+	--enable=interfacer \
+	--enable=misspell \
+	--enable=gocyclo \
+	--line-length=170 \
+	--enable=lll \
+	--dupl-threshold=400 \
+	--enable=dupl \
+	--enable=maligned \
+	./pkg/... ./cmd/...
 
 dependencies:
 	go get -u gopkg.in/alecthomas/gometalinter.v2
+	gometalinter.v2 --install
 
 	# install Kubebuilder
 	curl -L -O https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${KUBEBUILDER_VERSION}/kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz

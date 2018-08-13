@@ -129,7 +129,8 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 		key := s.GetKey()
 		existing := s.GetExistingObjectPlaceholder()
 
-		op, err := controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
+		var op controllerutil.OperationType
+		op, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
 		reason := string(s.GetErrorEventReason(err))
 
 		log.Printf("%T %s/%s %s", existing, key.Namespace, key.Name, op)
