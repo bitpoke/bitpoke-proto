@@ -109,12 +109,8 @@ const (
 
 // Reconcile reads that state of the cluster for a Project object and makes changes based on the state read
 // and what is in the Project.Spec
-// TODO(user): Modify this Reconcile function to implement your Controller logic.  The scaffolding writes
-// a Deployment as an example
-// Automatically generate RBAC rules to allow the Controller to read and write Deployments
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=dashboard.presslabs.com,resources=projects,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Project instance
 	instance := &dashboardv1alpha1.Project{}

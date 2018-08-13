@@ -11,7 +11,6 @@ import (
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -34,23 +33,19 @@ func NewNamespaceSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) *Namesp
 		scheme:   r,
 		p:        p,
 		existing: &corev1.Namespace{},
-		key: types.NamespacedName{
-			Name: p.GetNamespaceName(),
-		},
+		key:      p.GetNamespaceKey(),
 	}
 }
 
-func (n *NamespaceSyncer) GetKey() types.NamespacedName                 { return n.key }
+func (s *NamespaceSyncer) GetKey() types.NamespacedName                 { return s.key }
 func (s *NamespaceSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
 
-func (n *NamespaceSyncer) T(in runtime.Object) (runtime.Object, error) {
+func (s *NamespaceSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.Namespace)
 
-	out.Labels = labels.Set{
-		"dashboard.presslabs.com/project": n.p.ObjectMeta.Name,
-	}
+	out.Labels = s.p.GetDefaultLabels()
 
-	controllerutil.SetControllerReference(n.p, out, n.scheme)
+	controllerutil.SetControllerReference(s.p, out, s.scheme)
 
 	return out, nil
 }

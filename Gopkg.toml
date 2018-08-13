@@ -18,6 +18,27 @@ required = [
 [prune]
   go-tests = true
 
+[[override]]
+name="sigs.k8s.io/controller-runtime"
+source="github.com/presslabs/controller-runtime"
+revision="4855d31"
+
+[[override]]
+name="k8s.io/api"
+version="kubernetes-1.10.6"
+
+[[override]]
+name="k8s.io/apiextensions-apiserver"
+version="kubernetes-1.10.6"
+
+[[override]]
+name="k8s.io/apimachinery"
+version="kubernetes-1.10.6"
+
+[[override]]
+name="k8s.io/client-go"
+version="kubernetes-1.10.6"
+
 # STANZAS BELOW ARE GENERATED AND MAY BE WRITTEN - DO NOT MODIFY BELOW THIS LINE.
 
 [[override]]
@@ -189,22 +210,6 @@ name="gopkg.in/yaml.v2"
 version="v2.2.1"
 
 [[override]]
-name="k8s.io/api"
-version="kubernetes-1.11.1"
-
-[[override]]
-name="k8s.io/apiextensions-apiserver"
-version="kubernetes-1.11.1"
-
-[[override]]
-name="k8s.io/apimachinery"
-version="kubernetes-1.11.1"
-
-[[override]]
-name="k8s.io/client-go"
-version="kubernetes-1.11.1"
-
-[[override]]
 name="k8s.io/code-generator"
 revision="7b3961072db196a1068e97f76c74ca6bc6b65350"
 
@@ -215,11 +220,6 @@ revision="906d99f89cd644eecf75ab547b29bf9f876f0b59"
 [[override]]
 name="k8s.io/kube-openapi"
 revision="f08db293d3ef80052d6513ece19792642a289fea"
-
-[[override]]
-name="sigs.k8s.io/controller-runtime"
-source="github.com/presslabs/controller-runtime"
-branch="create-or-update"
 
 [[override]]
 name="sigs.k8s.io/controller-tools"
