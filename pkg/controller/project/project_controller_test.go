@@ -68,8 +68,6 @@ var _ = Describe("Project controller", func() {
 
 	Describe("when creating a new Project object", func() {
 		var expectedRequest reconcile.Request
-		var nsKey types.NamespacedName
-		var promKey types.NamespacedName
 		var instance *dashboardv1alpha1.Project
 
 		BeforeEach(func() {
@@ -82,8 +80,6 @@ var _ = Describe("Project controller", func() {
 					Namespace: "default",
 				},
 			}
-			nsKey = types.NamespacedName{Name: name}
-			promKey = types.NamespacedName{Name: name, Namespace: instance.GetNamespaceName()}
 		})
 
 		It("reconciles the namespace", func() {
@@ -94,7 +90,7 @@ var _ = Describe("Project controller", func() {
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 			ns := &corev1.Namespace{}
-			Eventually(func() error { return c.Get(context.TODO(), nsKey, ns) }, timeout).Should(Succeed())
+			Eventually(func() error { return c.Get(context.TODO(), instance.GetNamespaceKey(), ns) }, timeout).Should(Succeed())
 		})
 
 		It("reconciles the Prometheus", func() {
@@ -104,7 +100,7 @@ var _ = Describe("Project controller", func() {
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 			prom := &monitoringv1.Prometheus{}
-			Eventually(func() error { return c.Get(context.TODO(), promKey, prom) }, timeout).Should(Succeed())
+			Eventually(func() error { return c.Get(context.TODO(), instance.GetPrometheusKey(), prom) }, timeout).Should(Succeed())
 		})
 	})
 })

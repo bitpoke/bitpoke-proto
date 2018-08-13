@@ -9,13 +9,17 @@ package sync
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+)
+
+const (
+	defaultScrapeInterval     = "10s"
+	defaultEvaluationInterval = "30s"
 )
 
 const (
@@ -35,10 +39,7 @@ func NewPrometheusSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) *Prome
 		scheme:   r,
 		existing: &monitoringv1.Prometheus{},
 		p:        p,
-		key: types.NamespacedName{
-			Namespace: p.GetNamespaceName(),
-			Name:      p.Name,
-		},
+		key:      p.GetPrometheusKey(),
 	}
 }
 
@@ -47,17 +48,13 @@ func (s *PrometheusSyncer) GetExistingObjectPlaceholder() runtime.Object { retur
 
 func (s *PrometheusSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*monitoringv1.Prometheus)
-	out.Labels = labels.Set{
-		"dashboard.presslabs.com/project": s.p.Name,
-	}
+	out.Labels = s.p.GetPrometheusLabels()
 
 	out.Spec = monitoringv1.PrometheusSpec{
-		ScrapeInterval:     "10s",
-		EvaluationInterval: "30s",
+		ScrapeInterval:     defaultScrapeInterval,
+		EvaluationInterval: defaultEvaluationInterval,
 		ServiceMonitorSelector: &metav1.LabelSelector{
-			MatchLabels: labels.Set{
-				"dashboard.presslabs.com/project": s.p.Name,
-			},
+			MatchLabels: s.p.GetProjectLabel(),
 		},
 	}
 
