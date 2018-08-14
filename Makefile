@@ -10,6 +10,9 @@ GOARCH ?= amd64
 PATH := $(BINDIR):$(PATH)
 SHELL := env 'PATH=$(PATH)' /bin/sh
 
+NODE_MODULES ?= $(PWD)/app/node_modules
+REACT        := $(NODE_MODULES)/.bin/react-scripts-ts
+
 all: test dashboard
 
 # Run tests
@@ -26,6 +29,14 @@ dashboard: generate fmt vet
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
 	go run ./cmd/dashboard/main.go
+
+# Run the development server for the frontend
+run-app:
+	cd app && NODE_ENV=development BROWSER=none $(REACT) start
+
+# Install CRDs into a cluster
+install: manifests
+	kubectl apply -f config/crds
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests chart
@@ -67,6 +78,11 @@ vet:
 # Generate code
 generate:
 	go generate ./pkg/... ./cmd/...
+	mkdir -p ./app/src/proto
+	protoc -I proto proto/projects/v1/project.proto \
+	--go_out=plugins=grpc:pkg/apiserver \
+	--ts_out=service=true:./app/src/proto \
+	--js_out=import_style=commonjs,binary:./app/src/proto
 
 # Build the docker image
 images: test

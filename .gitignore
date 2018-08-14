@@ -18,3 +18,4 @@
 bin/*
 
 chart/dashboard
+.gometalinter-*

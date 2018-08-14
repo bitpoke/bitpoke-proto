@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+message Project {
+  string name = 1;
+}
+
+message ListProjectsRequest {
+}
+
+service Projects {
+  rpc ListProjects(ListProjectsRequest) returns (stream Project) {}
+}

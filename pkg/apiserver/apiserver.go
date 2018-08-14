@@ -17,13 +17,17 @@ limitations under the License.
 package apiserver
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	project "github.com/presslabs/dashboard/pkg/apiserver/projects/v1"
+	"google.golang.org/grpc"
 )
 
 type grpcRunner struct {
@@ -31,10 +35,41 @@ type grpcRunner struct {
 }
 
 func (s *grpcRunner) Start(stop <-chan struct{}) error {
-	return http.ListenAndServe(fmt.Sprintf(":%d", options.GRPCPort), nil)
+	var (
+		httpServer http.Server
+		opts       []grpc.ServerOption
+		port       = 9090
+	)
+
+	grpcServer := grpc.NewServer(opts...)
+	project.RegisterProjectsServer(grpcServer, project.NewProjectServer(s.client))
+
+	wrappedServer := grpcweb.WrapServer(grpcServer)
+
+	handler := func(resp http.ResponseWriter, req *http.Request) {
+		wrappedServer.ServeHTTP(resp, req)
+	}
+
+	resources := grpcweb.ListGRPCResources(grpcServer)
+
+	httpServer = http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: http.HandlerFunc(handler),
+		// Handler: c.Handler(http.HandlerFunc(handler)),
+	}
+
+	go func() {
+		<-stop
+		httpServer.Shutdown(context.TODO())
+	}()
+
+	log.Printf("Server started on http://0.0.0.0:%d", port)
+	log.Printf("Available resources: %v", resources)
+
+	return httpServer.ListenAndServe()
 }
 
-// AddToManager adds the API server to the controller manager instance
 func AddToManager(m manager.Manager) error {
-	return m.Add(&grpcRunner{client: m.GetClient()})
+	m.Add(&grpcRunner{client: m.GetClient()})
+	return nil
 }
