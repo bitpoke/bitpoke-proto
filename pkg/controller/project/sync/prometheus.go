@@ -9,6 +9,7 @@ package sync
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -18,6 +19,9 @@ import (
 )
 
 const (
+	prometheusName            = "prometheus"
+	prometheusBaseImage       = "quay.io/prometheus/prometheus"
+	prometheusVersion         = "v2.3.2"
 	defaultScrapeInterval     = "10s"
 	defaultEvaluationInterval = "30s"
 )
@@ -35,6 +39,24 @@ type prometheusSyncer struct {
 	p        *dashboardv1alpha1.Project
 	key      types.NamespacedName
 	existing *monitoringv1.Prometheus
+}
+
+// GetPrometheusSelector returns a set of labels that can be used to identify Prometheus
+// related resources
+func GetPrometheusSelector(project *dashboardv1alpha1.Project) labels.Set {
+	prometheusLabels := labels.Set{
+		"app.kubernetes.io/name": prometheusName,
+	}
+	return labels.Merge(project.GetDefaultLabels(), prometheusLabels)
+}
+
+// GetPrometheusLabels returns a set of labels that should be applied on Prometheus
+// related objects that are managed by the project controller
+func GetPrometheusLabels(project *dashboardv1alpha1.Project) labels.Set {
+	prometheusLabels := labels.Set{
+		"app.kubernetes.io/version": prometheusVersion,
+	}
+	return labels.Merge(GetPrometheusSelector(project), prometheusLabels)
 }
 
 // NewPrometheusSyncer returns a new sync.Interface for reconciling Prometheus
@@ -56,7 +78,7 @@ func (s *prometheusSyncer) GetExistingObjectPlaceholder() runtime.Object { retur
 // T is the transform function used to reconcile the Prometheus object
 func (s *prometheusSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*monitoringv1.Prometheus)
-	out.Labels = s.p.GetPrometheusLabels()
+	out.Labels = GetPrometheusLabels(s.p)
 
 	out.Spec = monitoringv1.PrometheusSpec{
 		ScrapeInterval:     defaultScrapeInterval,
@@ -64,6 +86,8 @@ func (s *prometheusSyncer) T(in runtime.Object) (runtime.Object, error) {
 		ServiceMonitorSelector: &metav1.LabelSelector{
 			MatchLabels: s.p.GetProjectLabel(),
 		},
+		Version:   prometheusVersion,
+		BaseImage: prometheusBaseImage,
 	}
 
 	return out, nil

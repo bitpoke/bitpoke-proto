@@ -39,21 +39,12 @@ func (p *Project) GetDefaultLabels() labels.Set {
 	return labels.Merge(p.GetProjectLabel(), p.GetDeployManagerLabel())
 }
 
-// GetPrometheusLabels returns a set of labels that should be applied on Prometheus
-// related objects that are managed by the project controller
-func (p *Project) GetPrometheusLabels() labels.Set {
-	labels := p.GetDefaultLabels()
-	labels["app.kubernetes.io/name"] = "prometheus"
-
-	return labels
-}
-
 // GetPrometheusName returns the name of the Prometheus resource
 func (p *Project) GetPrometheusName() string {
 	return "prometheus"
 }
 
-// GetPrometheusKey returns the project's key through which the project may be identified
+// GetPrometheusKey returns the project's key through which the Prometheus may be identified
 func (p *Project) GetPrometheusKey() types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: p.GetNamespaceName(),
