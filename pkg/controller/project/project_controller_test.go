@@ -91,6 +91,10 @@ var _ = Describe("Project controller", func() {
 
 			ns := &corev1.Namespace{}
 			Eventually(func() error { return c.Get(context.TODO(), instance.GetNamespaceKey(), ns) }, timeout).Should(Succeed())
+			Expect(ns.Labels).To(Equal(map[string]string{
+				"project.dashboard.presslabs.com/project": instance.Name,
+				"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
+			}))
 		})
 
 		It("reconciles the Prometheus", func() {
@@ -101,6 +105,12 @@ var _ = Describe("Project controller", func() {
 
 			prom := &monitoringv1.Prometheus{}
 			Eventually(func() error { return c.Get(context.TODO(), instance.GetPrometheusKey(), prom) }, timeout).Should(Succeed())
+			Expect(prom.Labels).To(Equal(map[string]string{
+				"project.dashboard.presslabs.com/project": instance.Name,
+				"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
+				"app.kubernetes.io/name":                  "prometheus",
+				"app.kubernetes.io/version":               "v2.3.2",
+			}))
 		})
 	})
 })
