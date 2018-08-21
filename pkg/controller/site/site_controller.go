@@ -18,7 +18,7 @@ package site
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -31,20 +31,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/presslabs/dashboard/pkg/controller/site/sync"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
+var log = logf.Log.WithName("site-controller")
 
 // Add creates a new Site Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-// USER ACTION REQUIRED: update cmd/manager/main.go to call this dashboard.Add(mgr) to install this Controller
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
@@ -142,7 +139,7 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 		op, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
 		reason := string(s.GetErrorEventReason(err))
 
-		log.Printf("%T %s/%s %s", existing, key.Namespace, key.Name, op)
+		log.Info(fmt.Sprintf("%T %s/%s %s", existing, key.Namespace, key.Name, op))
 
 		if err != nil {
 			r.recorder.Eventf(instance, eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)

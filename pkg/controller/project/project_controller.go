@@ -18,7 +18,7 @@ package project
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
@@ -34,17 +34,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
+var log = logf.Log.WithName("project-controller")
 
 // Add creates a new Project Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-// USER ACTION REQUIRED: update cmd/manager/main.go to call this dashboard.Add(mgr) to install this Controller
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
@@ -124,7 +121,6 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
-	log.Printf("SCHEME %T", r.scheme)
 
 	syncers := []sync.Interface{
 		sync.NewNamespaceSyncer(instance, r.scheme),
@@ -139,7 +135,7 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 		op, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
 		reason := string(s.GetErrorEventReason(err))
 
-		log.Printf("%T %s/%s %s", existing, key.Namespace, key.Name, op)
+		log.Info(fmt.Sprintf("%T %s/%s %s", existing, key.Namespace, key.Name, op))
 
 		if err != nil {
 			r.recorder.Eventf(instance, eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)

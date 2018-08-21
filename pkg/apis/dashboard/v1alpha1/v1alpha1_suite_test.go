@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -26,7 +25,10 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var log = logf.Log.WithName("dashboard")
 
 var cfg *rest.Config
 var c client.Client
@@ -38,15 +40,18 @@ func TestMain(m *testing.M) {
 
 	err := SchemeBuilder.AddToScheme(scheme.Scheme)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err, "unable to add scheme to scheme builder")
+		os.Exit(1)
 	}
 
 	if cfg, err = t.Start(); err != nil {
-		log.Fatal(err)
+		log.Error(err, "unable to start test environment")
+		os.Exit(1)
 	}
 
 	if c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme}); err != nil {
-		log.Fatal(err)
+		log.Error(err, "unable to create a new client")
+		os.Exit(1)
 	}
 
 	code := m.Run()
