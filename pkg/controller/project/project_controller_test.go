@@ -112,5 +112,15 @@ var _ = Describe("Project controller", func() {
 				"app.kubernetes.io/version":               "v2.3.2",
 			}))
 		})
+
+		It("reconciles the ResourceQuota", func() {
+			Expect(c.Create(context.TODO(), instance)).To(Succeed())
+			defer c.Delete(context.TODO(), instance)
+
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+
+			rq := &corev1.ResourceQuota{}
+			Eventually(func() error { return c.Get(context.TODO(), instance.GetResourceQuotaKey(), rq) }, timeout).Should(Succeed())
+		})
 	})
 })

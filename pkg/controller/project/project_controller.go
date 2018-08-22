@@ -86,6 +86,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	// Watch the ResourceQuota created by Project
+	err = c.Watch(&source.Kind{Type: &monitoringv1.Prometheus{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &dashboardv1alpha1.Project{},
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -123,6 +132,7 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	syncers := []sync.Interface{
 		sync.NewNamespaceSyncer(instance, r.scheme),
+		sync.NewResourceQuotaSyncer(instance, r.scheme),
 		sync.NewPrometheusSyncer(instance, r.scheme),
 	}
 

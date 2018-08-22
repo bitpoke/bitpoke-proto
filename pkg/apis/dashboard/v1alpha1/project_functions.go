@@ -51,3 +51,16 @@ func (p *Project) GetPrometheusKey() types.NamespacedName {
 		Name:      p.GetPrometheusName(),
 	}
 }
+
+// GetResourceQuotaName returns the name of the Prometheus resource
+func (p *Project) GetResourceQuotaName() string {
+	return p.Name
+}
+
+// GetResourceQuotaKey returns the project's key through which the Prometheus may be identified
+func (p *Project) GetResourceQuotaKey() types.NamespacedName {
+	return types.NamespacedName{
+		Namespace: p.GetNamespaceName(),
+		Name:      p.GetResourceQuotaName(),
+	}
+}
