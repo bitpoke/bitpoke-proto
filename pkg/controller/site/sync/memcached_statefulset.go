@@ -24,11 +24,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -103,28 +103,17 @@ func (s *memcachedStatefulSetSyncer) T(in runtime.Object) (runtime.Object, error
 	memcachedMemoryArg := intVal / 1024 / 1024
 
 	out.ObjectMeta = metav1.ObjectMeta{
-		Name: fmt.Sprintf(memcachedStatefulSetNameFmt, s.wp.ObjectMeta.Name),
-		Labels: labels.Set{
-			"dashboard.presslabs.com/site": s.wp.ObjectMeta.Name,
-			"app": fmt.Sprintf(memcachedStatefulSetNameFmt, s.wp.ObjectMeta.Name),
-		},
+		Name:      fmt.Sprintf(memcachedStatefulSetNameFmt, s.wp.ObjectMeta.Name),
+		Labels:    dashboardv1alpha1.GetSiteLabels(s.wp, "memcached"),
 		Namespace: s.wp.ObjectMeta.Namespace,
 	}
 
 	out.Spec.ServiceName = fmt.Sprintf(memcachedServiceNameFmt, s.wp.ObjectMeta.Name)
 	out.Spec.Replicas = &replicas
-	out.Spec.Selector = &metav1.LabelSelector{
-		MatchLabels: labels.Set{
-			"dashboard.presslabs.com/site": s.wp.ObjectMeta.Name,
-			"app": fmt.Sprintf(memcachedStatefulSetNameFmt, s.wp.ObjectMeta.Name),
-		},
-	}
+	out.Spec.Selector = metav1.SetAsLabelSelector(dashboardv1alpha1.GetMemcachedSelector(s.wp))
 	out.Spec.Template = corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: labels.Set{
-				"dashboard.presslabs.com/site": s.wp.ObjectMeta.Name,
-				"app": fmt.Sprintf(memcachedStatefulSetNameFmt, s.wp.ObjectMeta.Name),
-			},
+			Labels: dashboardv1alpha1.GetSiteLabels(s.wp, "memcached"),
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{

@@ -21,11 +21,11 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -69,10 +69,8 @@ func (s *memcachedServiceSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.Service)
 
 	out.ObjectMeta = metav1.ObjectMeta{
-		Name: fmt.Sprintf(memcachedServiceNameFmt, s.wp.ObjectMeta.Name),
-		Labels: labels.Set{
-			"dashboard.presslabs.com/site": s.wp.ObjectMeta.Name,
-		},
+		Name:      fmt.Sprintf(memcachedServiceNameFmt, s.wp.ObjectMeta.Name),
+		Labels:    dashboardv1alpha1.GetSiteLabels(s.wp, "memcached"),
 		Namespace: s.wp.ObjectMeta.Namespace,
 	}
 
@@ -84,10 +82,7 @@ func (s *memcachedServiceSyncer) T(in runtime.Object) (runtime.Object, error) {
 			TargetPort: intstr.FromInt(memcachedPort),
 		},
 	}
-	out.Spec.Selector = labels.Set{
-		"dashboard.presslabs.com/site": s.wp.ObjectMeta.Name,
-		"app": fmt.Sprintf(memcachedServiceNameFmt, s.wp.ObjectMeta.Name),
-	}
+	out.Spec.Selector = dashboardv1alpha1.GetMemcachedSelector(s.wp)
 
 	return out, nil
 }
