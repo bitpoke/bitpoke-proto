@@ -18,7 +18,6 @@ package project
 
 import (
 	"context"
-	"fmt"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
@@ -135,7 +134,7 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 		op, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
 		reason := string(s.GetErrorEventReason(err))
 
-		log.Info(fmt.Sprintf("%T %s/%s %s", existing, key.Namespace, key.Name, op))
+		log.Info(string(op), "key", key.String(), "kind", existing.GetObjectKind().GroupVersionKind().Kind)
 
 		if err != nil {
 			r.recorder.Eventf(instance, eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)

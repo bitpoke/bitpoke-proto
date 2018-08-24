@@ -18,7 +18,6 @@ package site
 
 import (
 	"context"
-	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -139,7 +138,7 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 		op, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
 		reason := string(s.GetErrorEventReason(err))
 
-		log.Info(fmt.Sprintf("%T %s/%s %s", existing, key.Namespace, key.Name, op))
+		log.Info(string(op), "key", key.String(), "kind", existing.GetObjectKind().GroupVersionKind().Kind)
 
 		if err != nil {
 			r.recorder.Eventf(instance, eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)
