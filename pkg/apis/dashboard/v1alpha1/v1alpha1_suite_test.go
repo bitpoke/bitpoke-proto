@@ -17,44 +17,44 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-var log = logf.Log.WithName("dashboard")
-
+var t *envtest.Environment
 var cfg *rest.Config
 var c client.Client
 
-func TestMain(m *testing.M) {
-	t := &envtest.Environment{
+func TestV1alpha1(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecsWithDefaultAndCustomReporters(t, "API v1 Suite", []Reporter{envtest.NewlineReporter{}})
+}
+
+var _ = BeforeSuite(func() {
+	var err error
+
+	t = &envtest.Environment{
 		CRDDirectoryPaths: []string{filepath.Join("..", "..", "..", "..", "config", "crds")},
 	}
 
-	err := SchemeBuilder.AddToScheme(scheme.Scheme)
-	if err != nil {
-		log.Error(err, "unable to add scheme to scheme builder")
-		os.Exit(1)
-	}
+	err = SchemeBuilder.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
 
-	if cfg, err = t.Start(); err != nil {
-		log.Error(err, "unable to start test environment")
-		os.Exit(1)
-	}
+	cfg, err = t.Start()
+	Expect(err).NotTo(HaveOccurred())
 
-	if c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme}); err != nil {
-		log.Error(err, "unable to create a new client")
-		os.Exit(1)
-	}
+	c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	Expect(err).NotTo(HaveOccurred())
+})
 
-	code := m.Run()
+var _ = AfterSuite(func() {
 	t.Stop()
-	os.Exit(code)
-}
+})
