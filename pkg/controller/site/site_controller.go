@@ -20,9 +20,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/presslabs/dashboard/pkg/controller/site/sync"
-	wpapiv1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -33,6 +32,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"github.com/presslabs/dashboard/pkg/controller/site/sync"
+	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 /**
@@ -65,16 +67,24 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to Wordpress
-	err = c.Watch(&source.Kind{Type: &wpapiv1.Wordpress{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &wordpressv1alpha1.Wordpress{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
 
-	// TODO(user): Modify this to be the types you create
-	// Uncomment watch a Deployment created by Site - change this for objects you create
-	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
+	// Watch the Memcached StatefulSet created by Site
+	err = c.Watch(&source.Kind{Type: &appsv1.StatefulSet{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &wpapiv1.Wordpress{},
+		OwnerType:    &wordpressv1alpha1.Wordpress{},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Watch the Memcached Service created by Site
+	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &wordpressv1alpha1.Wordpress{},
 	})
 	if err != nil {
 		return err
@@ -97,11 +107,6 @@ const (
 	eventWarning = "Warning"
 )
 
-type syncer struct {
-	objType runtime.Object
-	sync    sync.Interface
-}
-
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
 // and what is in the Wordpress.Spec
 // TODO(user): Modify this Reconcile function to implement your Controller logic.  The scaffolding writes
@@ -111,7 +116,7 @@ type syncer struct {
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpress,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Site instance
-	instance := &wpapiv1.Wordpress{}
+	instance := &wordpressv1alpha1.Wordpress{}
 	err := r.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -123,7 +128,11 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 		return reconcile.Result{}, err
 	}
 
-	syncers := []sync.Interface{}
+	syncers := []sync.Interface{
+		sync.NewMemcachedStatefulSetSyncer(instance, r.scheme),
+		sync.NewMemcachedServiceSyncer(instance, r.scheme),
+		sync.NewWordpressSyncer(instance, r.scheme),
+	}
 
 	for _, s := range syncers {
 		key := s.GetKey()

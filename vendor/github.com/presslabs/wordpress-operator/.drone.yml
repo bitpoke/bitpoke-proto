@@ -6,13 +6,9 @@ pipeline:
   test:
     image: golang:1.10
     commands:
+      - make dependencies
       - make lint
-      - make full-test
-
-  build:
-    image: golang:1.10
-    commands:
-      - make build
+      - make test
 
 #  publish:
 #    image: plugins/docker
