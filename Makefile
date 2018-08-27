@@ -3,19 +3,19 @@
 IMG ?= controller:latest
 KUBEBUILDER_VERSION ?= 1.0.0
 
-all: test manager
+all: test dashboard
 
 # Run tests
 test: generate manifests
 	go test ./pkg/... ./cmd/... -coverprofile cover.out
 
-# Build manager binary
-manager: generate fmt vet
-	go build -o bin/manager github.com/presslabs/dashboard/cmd/manager
+# Build dashboard binary
+dashboard: generate fmt vet
+	go build -o bin/dashboard github.com/presslabs/dashboard/cmd/dashboard
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	go run ./cmd/manager/main.go
+	go run ./cmd/dashboard/main.go
 
 # Install CRDs into a cluster
 install: manifests

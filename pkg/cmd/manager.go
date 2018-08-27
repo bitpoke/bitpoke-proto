@@ -14,46 +14,57 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package cmd
 
 import (
-	"log"
+	"fmt"
+	"os"
 
 	"github.com/presslabs/dashboard/pkg/apis"
 	"github.com/presslabs/dashboard/pkg/controller"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
-func main() {
-	// Get a config to talk to the apiserver
-	cfg, err := config.GetConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
+// controllerManagerCmd represents the controllerManager command
+var controllerManagerCmd = &cobra.Command{
+	Use:   "controller-manager",
+	Short: "Start the Presslabs Dashboard Kubernetes controllers",
+	Run:   runControllerManager,
+}
+
+var runControllerManager = func(cmd *cobra.Command, args []string) {
+	log = logf.Log.WithName("controller-manager")
+	fmt.Fprintln(os.Stderr, "Starting Presslabs Dashboard controller-manager...")
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{})
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err, "unable to create a new manager")
+		os.Exit(1)
 	}
-
-	log.Printf("Registering Components.")
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-		log.Fatal(err)
+		log.Error(err, "unable to register types to scheme")
+		os.Exit(1)
 	}
 
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr); err != nil {
-		log.Fatal(err)
+		log.Error(err, "unable to setup controllers")
+		os.Exit(1)
 	}
 
-	log.Printf("Starting the Cmd.")
-
 	// Start the Cmd
-	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
+	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+		log.Error(err, "unable to start the manager")
+		os.Exit(1)
+	}
+}
+
+func init() {
+	rootCmd.AddCommand(controllerManagerCmd)
 }
