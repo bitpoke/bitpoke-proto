@@ -24,10 +24,8 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	"github.com/spf13/afero"
 	extensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/gengo/args"
-	"k8s.io/gengo/types"
 	crdutil "sigs.k8s.io/controller-tools/pkg/crd/util"
 	"sigs.k8s.io/controller-tools/pkg/internal/codegen"
 	"sigs.k8s.io/controller-tools/pkg/internal/codegen/parse"
@@ -41,22 +39,11 @@ type Generator struct {
 	Domain            string
 	Namespace         string
 	SkipMapValidation bool
-
-	// OutFs is filesystem to be used for writing out the result
-	OutFs afero.Fs
-
-	// apisPkg is the absolute Go pkg name for current project's 'pkg/apis' pkg.
-	// This is needed to determine if a Type belongs to the project or it is a referred Type.
-	apisPkg string
 }
 
 // ValidateAndInitFields validate and init generator fields.
 func (c *Generator) ValidateAndInitFields() error {
 	var err error
-
-	if c.OutFs == nil {
-		c.OutFs = afero.NewOsFs()
-	}
 
 	if len(c.RootPath) == 0 {
 		// Take current path as root path if not specified.
@@ -74,9 +61,18 @@ func (c *Generator) ValidateAndInitFields() error {
 	// If Domain is not explicitly specified,
 	// try to search for PROJECT file as a basis.
 	if len(c.Domain) == 0 {
-		if !crdutil.PathHasProjectFile(c.RootPath) {
-			return fmt.Errorf("PROJECT file missing in dir %s", c.RootPath)
+		for {
+			if crdutil.PathHasProjectFile(c.RootPath) {
+				break
+			}
+
+			if crdutil.IsGoSrcPath(c.RootPath) {
+				return fmt.Errorf("failed to find working directory that contains %s", "PROJECT")
+			}
+
+			c.RootPath = path.Dir(c.RootPath)
 		}
+
 		c.Domain = crdutil.GetDomainFromProject(c.RootPath)
 	}
 
@@ -84,11 +80,6 @@ func (c *Generator) ValidateAndInitFields() error {
 	apisPath := path.Join(c.RootPath, "pkg/apis")
 	if _, err := os.Stat(apisPath); err != nil {
 		return fmt.Errorf("error validating apis path %s: %v", apisPath, err)
-	}
-
-	c.apisPkg, err = crdutil.DirToGoPkg(apisPath)
-	if err != nil {
-		return err
 	}
 
 	// Init output directory
@@ -123,24 +114,22 @@ func (c *Generator) Do() error {
 	arguments.CustomArgs = &parse.Options{SkipMapValidation: c.SkipMapValidation}
 
 	// TODO: find an elegant way to fulfill the domain in APIs.
-	p := parse.NewAPIs(ctx, arguments, c.Domain, c.apisPkg)
+	p := parse.NewAPIs(ctx, arguments, c.Domain)
+
 	crds := c.getCrds(p)
 
-	return c.writeCRDs(crds)
-}
-
-func (c *Generator) writeCRDs(crds map[string][]byte) error {
 	// Ensure output dir exists.
-	if err := c.OutFs.MkdirAll(c.OutputDir, os.FileMode(0700)); err != nil {
+	if err := os.MkdirAll(c.OutputDir, os.FileMode(0700)); err != nil {
 		return err
 	}
 
 	for file, crd := range crds {
 		outFile := path.Join(c.OutputDir, file)
-		if err := (&util.FileWriter{Fs: c.OutFs}).WriteFile(outFile, crd); err != nil {
+		if err := util.WriteFile(outFile, crd); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -149,16 +138,12 @@ func getCRDFileName(resource *codegen.APIResource) string {
 	return strings.Join(elems, "_") + ".yaml"
 }
 
-func (c *Generator) getCrds(p *parse.APIs) map[string][]byte {
+func (c *Generator) getCrds(p *parse.APIs) map[string]string {
 	crds := map[string]extensionsv1beta1.CustomResourceDefinition{}
 	for _, g := range p.APIs.Groups {
 		for _, v := range g.Versions {
 			for _, r := range v.Resources {
 				crd := r.CRD
-				// ignore types which do not belong to this project
-				if !c.belongsToAPIsPkg(r.Type) {
-					continue
-				}
 				if len(c.Namespace) > 0 {
 					crd.Namespace = c.Namespace
 				}
@@ -168,20 +153,14 @@ func (c *Generator) getCrds(p *parse.APIs) map[string][]byte {
 		}
 	}
 
-	result := map[string][]byte{}
+	result := map[string]string{}
 	for file, crd := range crds {
-		b, err := yaml.Marshal(crd)
+		s, err := yaml.Marshal(crd)
 		if err != nil {
 			log.Fatalf("Error: %v", err)
 		}
-		result[file] = b
+		result[file] = string(s)
 	}
 
 	return result
-}
-
-// belongsToAPIsPkg returns true if type t is defined under pkg/apis pkg of
-// current project.
-func (c *Generator) belongsToAPIsPkg(t *types.Type) bool {
-	return strings.HasPrefix(t.Name.Package, c.apisPkg)
 }

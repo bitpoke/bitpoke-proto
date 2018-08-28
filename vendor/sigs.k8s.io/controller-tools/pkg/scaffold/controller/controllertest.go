@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -58,8 +59,11 @@ func (a *Test) GetInput() (input.Input, error) {
 		"rbac.authorization":    "k8s.io",
 		"storage":               "k8s.io",
 	}
-
-	a.ResourcePackage, _ = getResourceInfo(coreGroups, a.Resource, a.Input)
+	if _, found := coreGroups[a.Resource.Group]; found {
+		a.ResourcePackage = path.Join("k8s.io", "api")
+	} else {
+		a.ResourcePackage = path.Join(a.Repo, "pkg", "apis")
+	}
 
 	a.TemplateBody = controllerTestTemplate
 	a.Input.IfExistsAction = input.Error

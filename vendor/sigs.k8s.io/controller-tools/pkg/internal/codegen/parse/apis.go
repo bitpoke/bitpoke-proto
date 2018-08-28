@@ -78,9 +78,7 @@ func (b *APIs) parseAPIs() {
 				apiVersion.Pkg = b.context.Universe[resource.Type.Name.Package]
 				// Set the package for the api group
 				apiGroup.Pkg = b.context.Universe[filepath.Dir(resource.Type.Name.Package)]
-				if apiGroup.Pkg != nil {
-					apiGroup.PkgPath = apiGroup.Pkg.Path
-				}
+				apiGroup.PkgPath = apiGroup.Pkg.Path
 
 				apiGroup.UnversionedResources[kind] = apiResource
 			}

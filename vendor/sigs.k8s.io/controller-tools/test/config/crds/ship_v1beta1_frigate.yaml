@@ -4,9 +4,9 @@ metadata:
   creationTimestamp: null
   labels:
     controller-tools.k8s.io: "1.0"
-  name: frigates.ship.testproject.org
+  name: frigates.ship.k8s.io
 spec:
-  group: ship.testproject.org
+  group: ship.k8s.io
   names:
     kind: Frigate
     plural: frigates

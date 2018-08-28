@@ -34,21 +34,23 @@
   revision = "df3c57fca2bef0e5b7fd085507deb20f18c790df"
 
 [[projects]]
-  branch = "fix-upsert-volume-mount"
-  digest = "1:0a8174f544355929ef676709ec156c67f6fd48dca20c1259510869dbd6c21318"
+  branch = "release-7.0"
+  digest = "1:b379bdba91a5feb5c138bfc327ce3fdebc2c297fc4e331a641ca397cbadf2696"
   name = "github.com/appscode/kutil"
-  packages = ["apiextensions/v1beta1"]
+  packages = [
+    ".",
+    "core/v1",
+  ]
   pruneopts = "T"
-  revision = "09131d6361b87aaee652afb3fde5413030ecfb75"
-  source = "https://github.com/presslabs/kutil"
+  revision = "a2c0ee076fe416eb4a35107fc8b64f9be1f2aebc"
 
 [[projects]]
-  digest = "1:6923a73f6f4e30d95793081881a8374bd1ba12d2cbf325d3bb5b2f8361575aef"
-  name = "github.com/auth0-community/auth0"
+  branch = "master"
+  digest = "1:eec6fc4022df49ec8f756b6aa167e2b4ccab3dcf82053dce18cb4ea2d40fb74a"
+  name = "github.com/appscode/mergo"
   packages = ["."]
   pruneopts = "T"
-  revision = "ddfdc88aaa5909a3d4e3ad0543a27f4a63a691e6"
-  version = "v1.0.0"
+  revision = "e3000cb3d28c72b837601cac94debd91032d19fe"
 
 [[projects]]
   digest = "1:645969bc6c7a729f17fce58ef8dfa03f82115fe846b3fdc74fc118e037b73030"
@@ -384,15 +386,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:bed20563d5c371abdec41ae4d71efd2c76e5e34e172113f1872f2daf1ea2151f"
+  digest = "1:7545dc7157b4949df66ca2bef1c01265195943e44da766d2e187a286a3e87ff0"
   name = "github.com/presslabs/wordpress-operator"
-  packages = [
-    "pkg/apis/wordpress",
-    "pkg/apis/wordpress/v1alpha1",
-    "pkg/openapi",
-  ]
+  packages = ["pkg/apis/wordpress/v1alpha1"]
   pruneopts = "T"
-  revision = "ed8da43502a47d19503013f7c7ead3ec4cb9a1f9"
+  revision = "f12f59de90f5956f75870b168991d70dae170d52"
 
 [[projects]]
   digest = "1:6cae6970d70fc5fe75bf83c48ee33e9c4c561a62d0b033254bee8dd5942b815a"
@@ -417,6 +415,22 @@
   pruneopts = "T"
   revision = "583c0c0531f06d5278b7d917446061adc344b5cd"
   version = "v1.0.1"
+
+[[projects]]
+  digest = "1:0e2f5bcb5e3c9a1e889fa84b49571df48c67b7047da64343cc88c078f77ea538"
+  name = "github.com/square/go-jose"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "8254d6c783765f38c8675fae4427a1fe73fbd09d"
+  version = "v2.1.8"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c5a541f45f8a98232dde31093b348dedeb30d64b59a41154a88506c5940b52d7"
+  name = "github.com/upgear/go-jwks"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "fb68bb04c440a41060e15e60db1f537ae7df804c"
 
 [[projects]]
   digest = "1:365b8ecb35a5faf5aa0ee8d798548fc9cd4200cb95d77a5b0b285ac881bae499"
@@ -931,27 +945,34 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/auth0-community/auth0",
     "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1",
     "github.com/emicklei/go-restful",
+    "github.com/go-logr/logr",
     "github.com/golang/protobuf/proto",
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",
     "github.com/improbable-eng/grpc-web/go/grpcweb",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
     "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1",
+    "github.com/spf13/cobra",
+    "github.com/spf13/pflag",
+    "github.com/upgear/go-jwks",
     "golang.org/x/net/context",
     "google.golang.org/grpc",
-    "google.golang.org/grpc/metadata",
+    "google.golang.org/grpc/codes",
+    "gopkg.in/square/go-jose.v2",
+    "gopkg.in/square/go-jose.v2/jwt",
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
     "k8s.io/apimachinery/pkg/api/errors",
+    "k8s.io/apimachinery/pkg/api/resource",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/labels",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/types",
+    "k8s.io/apimachinery/pkg/util/intstr",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/rest",
@@ -965,6 +986,7 @@
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
+    "sigs.k8s.io/controller-runtime/pkg/runtime/log",
     "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",
     "sigs.k8s.io/controller-runtime/pkg/runtime/signals",
     "sigs.k8s.io/controller-runtime/pkg/source",

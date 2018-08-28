@@ -4,9 +4,9 @@ metadata:
   creationTimestamp: null
   labels:
     controller-tools.k8s.io: "1.0"
-  name: firstmates.crew.testproject.org
+  name: firstmates.crew.k8s.io
 spec:
-  group: crew.testproject.org
+  group: crew.k8s.io
   names:
     kind: FirstMate
     plural: firstmates

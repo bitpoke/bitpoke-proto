@@ -118,7 +118,7 @@ const provider = new auth0.WebAuth({
     redirectUri  : process.env.REACT_APP_AUTH0_CALLBACK_URL || 'http://localhost:3000/',
     audience     : `https://${process.env.REACT_APP_AUTH0_DOMAIN}/userinfo`,
     responseType : 'token id_token',
-    scope        : 'openid'
+    scope        : 'openid email profile'
 })
 
 function hasAuthenticationPayload(path: string) {

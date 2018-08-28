@@ -25,5 +25,5 @@ var GRPCPort int
 
 // AddToFlagSet add options to a FlagSet
 func AddToFlagSet(flag *pflag.FlagSet) {
-	flag.IntVar(&GRPCPort, "grpc-port", 9000, "gRPC port to use")
+	flag.IntVar(&GRPCPort, "grpc-port", 9090, "gRPC port to use")
 }

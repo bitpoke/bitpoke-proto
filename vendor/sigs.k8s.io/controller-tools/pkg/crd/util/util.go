@@ -18,7 +18,6 @@ package util
 
 import (
 	"bufio"
-	"fmt"
 	gobuild "go/build"
 	"log"
 	"os"
@@ -51,31 +50,12 @@ func IsUnderGoSrcPath(filePath string) bool {
 	return false
 }
 
-// DirToGoPkg returns the Gopkg for the given directory if it exists
-// under a GOPATH otherwise returns error. For example,
-// /Users/x/go/src/github.com/y/z ==> github.com/y/z
-func DirToGoPkg(dir string) (pkg string, err error) {
-	goPaths := getGoPaths()
-	for _, gopath := range goPaths {
-		goSrc := path.Join(gopath, "src")
-		if !strings.HasPrefix(dir, goSrc) {
-			continue
-		}
-		pkg, err := filepath.Rel(goSrc, dir)
-		if err == nil {
-			return pkg, err
-		}
-	}
-
-	return "", fmt.Errorf("dir '%s' does not exist under any GOPATH %v", dir, goPaths)
-}
-
 func getGoPaths() []string {
 	gopaths := os.Getenv("GOPATH")
 	if len(gopaths) == 0 {
 		gopaths = gobuild.Default.GOPATH
 	}
-	return filepath.SplitList(gopaths)
+	return strings.Split(gopaths, ":")
 }
 
 // PathHasProjectFile validate if PROJECT file exists under the path.

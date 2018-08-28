@@ -18,11 +18,14 @@ package apiserver
 
 import (
 	"context"
-	// "encoding/base64"
+	"time"
 	"fmt"
-	"log"
+
 	"net/http"
-	// "os"
+	"errors"
+	"os"
+
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -30,23 +33,23 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
-	// "github.com/auth0-community/auth0"
 	project "github.com/presslabs/dashboard/pkg/apiserver/projects/v1"
-	// "gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
+	jose "github.com/square/go-jose"
+	"github.com/square/go-jose/jwt"
+
+  "github.com/presslabs/dashboard/pkg/apiserver/jwks"
 )
 
 type grpcRunner struct {
 	client client.Client
 }
 
-func (s *grpcRunner) Start(stop <-chan struct{}) error {
-	var (
-		httpServer http.Server
-		port       = 9090
-	)
+var log = logf.Log.WithName("apiserver")
 
+func (s *grpcRunner) Start(stop <-chan struct{}) error {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(handleAuthentication)),
 		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(handleAuthentication)),
@@ -59,9 +62,8 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 		wrappedServer.ServeHTTP(resp, req)
 	}
 
-	resources := grpcweb.ListGRPCResources(grpcServer)
-
-	httpServer = http.Server{
+	port := options.GRPCPort
+	httpServer := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: http.HandlerFunc(handler),
 	}
@@ -71,8 +73,7 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 		httpServer.Shutdown(context.TODO())
 	}()
 
-	log.Printf("Server started on http://0.0.0.0:%d", port)
-	log.Printf("Available resources: %v", resources)
+	log.Info("Server listening", "port", port)
 
 	return httpServer.ListenAndServe()
 }
@@ -86,91 +87,54 @@ func AddToManager(m manager.Manager) error {
 func handleAuthentication(ctx context.Context) (context.Context, error) {
 	token, err := grpc_auth.AuthFromMD(ctx, "bearer")
 	if err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.Unauthenticated, "Invalid Auth Token: %v", err)
 	}
-
-	log.Println("string token>>>> %v", token)
 
 	parsedToken, err := jwt.ParseSigned(token)
 	if err != nil {
+		return nil, grpc.Errorf(codes.Unauthenticated, "Invalid Auth Token: %v", err)
+	}
+
+	validatedToken, err := validateToken(parsedToken)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Unauthenticated, "Invalid Auth Token: %v", err)
+	}
+
+	newCtx := context.WithValue(ctx, "token", validatedToken)
+	return newCtx, nil
+}
+
+func validateToken(token *jwt.JSONWebToken) (*jwt.JSONWebToken, error) {
+	audience := os.Getenv("AUTH0_CLIENT_ID")
+	issuer := fmt.Sprintf("https://%s/", os.Getenv("AUTH0_DOMAIN"))
+
+	alg := jose.RS256
+
+	expectedClaims := jwt.Expected{Issuer: issuer, Audience: []string{audience}}
+
+	if len(token.Headers) < 1 {
+		return nil, errors.New("No headers in the token")
+	}
+
+	header := token.Headers[0]
+
+	if header.Algorithm != string(alg) {
+		return nil, errors.New("Invalid algorithm")
+	}
+
+  jwksClient, _ := jwks.NewClient(fmt.Sprintf("%s.well-known/jwks.json", issuer))
+  key, err := jwksClient.GetKey(header.KeyID)
+  if err != nil {
+    log.Error(err, "Cannot get key")
+  }
+
+	claims := jwt.Claims{}
+	if err := token.Claims(key, &claims); err != nil {
+    log.Error(err, "cannot get claims from token")
 		return nil, err
 	}
 
-	log.Println("TOKKEEENN>>>> %v", parsedToken)
-
-	// secret, _ := base64.URLEncoding.DecodeString(os.Getenv("AUTH0_CLIENT_SECRET"))
-	// secretProvider := auth0.NewKeyProvider(secret)
-	// audience := os.Getenv("AUTH0_CLIENT_ID")
-
-	// configuration := auth0.NewConfiguration(secretProvider, []string{audience}, os.Getenv("AUTH0_DOMAIN"), jose.HS256)
-	// validator := auth0.NewValidator(configuration, nil)
-
-	// token, err := validator.ValidateRequest(r)
-
-	// if err != nil {
-	// 	fmt.Println("Token is not valid:", token)
-	// }
-
-	// tokenInfo, err := parseToken(token)
-	// if err != nil {
-	// 	return nil, grpc.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
-	// }
-	// grpc_ctxtags.Extract(ctx).Set("auth.sub", userClaimFromToken(tokenInfo))
-	// newCtx := context.WithValue(ctx, "tokenInfo", tokenInfo)
-	return ctx, nil
+	expected := expectedClaims.WithTime(time.Now())
+	err = claims.Validate(expected)
+	return token, err
 }
-
-// func validateToken
-
-// // NewValidator creates a new
-// // validator with the provided configuration.
-// func NewValidator(config Configuration, extractor RequestTokenExtractor) *JWTValidator {
-// 	if extractor == nil {
-// 		extractor = RequestTokenExtractorFunc(FromHeader)
-// 	}
-// 	return &JWTValidator{config, extractor}
-// }
-
-// // ValidateRequest validates the token within
-// // the http request.
-// func (v *JWTValidator) ValidateRequest(r *http.Request) (*jwt.JSONWebToken, error) {
-// 	token, err := v.extractor.Extract(r)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if len(token.Headers) < 1 {
-// 		return nil, ErrNoJWTHeaders
-// 	}
-
-// 	// trust secret provider when sig alg not configured and skip check
-// 	if v.config.signIn != "" {
-// 		header := token.Headers[0]
-// 		if header.Algorithm != string(v.config.signIn) {
-// 			return nil, ErrInvalidAlgorithm
-// 		}
-// 	}
-
-// 	claims := jwt.Claims{}
-// 	key, err := v.config.secretProvider.GetSecret(r)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if err = token.Claims(key, &claims); err != nil {
-// 		return nil, err
-// 	}
-
-// 	expected := v.config.expectedClaims.WithTime(time.Now())
-// 	err = claims.Validate(expected)
-// 	return token, err
-// }
-
-// // Claims unmarshall the claims of the provided token
-// func (v *JWTValidator) Claims(r *http.Request, token *jwt.JSONWebToken, values ...interface{}) error {
-// 	key, err := v.config.secretProvider.GetSecret(r)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return token.Claims(key, values...)
-// }
