@@ -74,6 +74,9 @@ func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.S
 	}
 }
 
+// GetInstance returns the memcachedStatefulSetSyncer instance (memcachedStatefulSetSyncer.wp)
+func (s *memcachedStatefulSetSyncer) GetInstance() runtime.Object { return s.wp }
+
 // GetKey returns the memcachedStatefulSetSyncer key through which an existing object may be identified
 func (s *memcachedStatefulSetSyncer) GetKey() types.NamespacedName { return s.key }
 

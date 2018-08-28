@@ -18,57 +18,47 @@ package sync_test
 
 import (
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/presslabs/dashboard/pkg/controller/site/sync"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 var _ = Describe("MemcachedStatefulSetSyncer", func() {
-	When("Wordpress has no memory annotation", func() {
-		It("uses a default value", func() {
-			wp := &wordpressv1alpha1.Wordpress{}
-			statefulSet := &appsv1.StatefulSet{}
-			syncer := sync.NewMemcachedStatefulSetSyncer(wp, rts)
-			newStatefulSet, err := syncer.T(statefulSet)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(newStatefulSet.(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].Resources.Requests["memory"]).To(Equal(resource.MustParse(sync.DefaultMemcachedMemory)))
-		})
+	var (
+		wp        *wordpressv1alpha1.Wordpress
+		memcached *appsv1.StatefulSet
+		syncer    sync.Interface
+	)
+
+	BeforeEach(func() {
+		wp = &wordpressv1alpha1.Wordpress{}
+		memcached = &appsv1.StatefulSet{}
+		syncer = sync.NewMemcachedStatefulSetSyncer(wp, scheme.Scheme)
 	})
-	When("Wordpress has a valid annotation", func() {
-		It("successfully sets allocated resources", func() {
-			memcachedMemory := "64Mi"
-			m := make(map[string]string)
-			m["memcached.provisioner.presslabs.com/memory"] = memcachedMemory
-			wp := &wordpressv1alpha1.Wordpress{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: m,
-				},
+
+	DescribeTable("when Wordpress memcached.provisioner.presslabs.com/memory annotation",
+		func(annotationValue, expectedValue string, shouldErr bool) {
+			if len(annotationValue) > 0 {
+				wp.ObjectMeta.Annotations = map[string]string{"memcached.provisioner.presslabs.com/memory": annotationValue}
 			}
-			statefulSet := &appsv1.StatefulSet{}
-			syncer := sync.NewMemcachedStatefulSetSyncer(wp, rts)
-			newStatefulSet, err := syncer.T(statefulSet)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(newStatefulSet.(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].Resources.Requests["memory"]).To(Equal(resource.MustParse(memcachedMemory)))
-		})
-	})
-	When("Wordpress has an invalid annotation", func() {
-		It("returns error and doesn't change the statefullset", func() {
-			m := make(map[string]string)
-			m["memcached.provisioner.presslabs.com/memory"] = "invalid"
-			wp := &wordpressv1alpha1.Wordpress{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: m,
-				},
+			_, err := syncer.T(memcached)
+			if shouldErr {
+				Expect(err).To(HaveOccurred())
+			} else {
+				Expect(err).NotTo(HaveOccurred())
+				actual := memcached.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceMemory]
+				Expect(actual).To(Equal(resource.MustParse(expectedValue)))
 			}
-			statefulSet := &appsv1.StatefulSet{}
-			syncer := sync.NewMemcachedStatefulSetSyncer(wp, rts)
-			_, err := syncer.T(statefulSet)
-			Expect(err).Should(HaveOccurred())
-		})
-	})
+		},
+		Entry("is missing uses default value", "", sync.DefaultMemcachedMemory, false),
+		Entry("is valid uses provided value", "10Gi", "10Gi", false),
+		Entry("is not set uses default value", "invalid", "", true),
+	)
 })

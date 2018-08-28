@@ -21,8 +21,9 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/presslabs/dashboard/pkg/controller/site/sync"
+	"k8s.io/client-go/kubernetes/scheme"
 
+	"github.com/presslabs/dashboard/pkg/controller/site/sync"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -31,7 +32,7 @@ var _ = Describe("WordpressSyncer", func() {
 		It("successfully sets an envvar named MEMCACHED_DISCOVERY_SERVICE", func() {
 			wp := &wordpressv1alpha1.Wordpress{}
 			wpRes := &wordpressv1alpha1.Wordpress{}
-			syncer := sync.NewWordpressSyncer(wp, rts)
+			syncer := sync.NewWordpressSyncer(wp, scheme.Scheme)
 			newWpRes, err := syncer.T(wpRes)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(newWpRes.(*wordpressv1alpha1.Wordpress).Spec.Env[0].Name).To(Equal("MEMCACHED_DISCOVERY_SERVICE"))

@@ -1,0 +1,14 @@
+apiVersion: mysql.presslabs.org/v1alpha1
+kind: MysqlCluster
+metadata:
+  name: foob2
+spec:
+  replicas: 2
+  secretName: the-secret
+
+  backupSchedule: "1 1 * * *"
+  backupUri: gs://bucket_name/path/
+  backupSecretName: backup-secret
+
+  initBucketUri: gs://bucket_name/path/to/backup.xbackup.gz
+  initBucketSecretName: backup-secret

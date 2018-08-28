@@ -17,22 +17,25 @@ limitations under the License.
 package site
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"golang.org/x/net/context"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -62,21 +65,19 @@ var _ = Describe("Site controller", func() {
 	})
 
 	AfterEach(func() {
-		time.Sleep(1 * time.Second)
 		close(stop)
 	})
 
-	Describe("when creating a new Wordpress resource", func() {
-		var expectedRequest reconcile.Request
-		var wp *wordpressv1alpha1.Wordpress
-		var ssKey types.NamespacedName
-		var wpKey types.NamespacedName
+	When("creating a new Wordpress resource", func() {
+		var (
+			wp              *wordpressv1alpha1.Wordpress
+			expectedRequest reconcile.Request
+		)
 
 		BeforeEach(func() {
 			name := fmt.Sprintf("wp-%d", rand.Int31())
 			namespace := "default"
 
-			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: name, Namespace: namespace}}
 			wp = &wordpressv1alpha1.Wordpress{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      name,
@@ -89,47 +90,31 @@ var _ = Describe("Site controller", func() {
 					},
 				},
 			}
-			ssKey = types.NamespacedName{
-				Name:      fmt.Sprintf("%s-memcached", name),
-				Namespace: namespace,
-			}
-			wpKey = types.NamespacedName{
-				Name:      name,
-				Namespace: namespace,
-			}
-		})
 
-		It("reconciles the memcached statefulset", func() {
-			// Create the Wordpress object and expect the Reconcile and StatefulSet to be created
+			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: name, Namespace: namespace}}
+
+			// create Wordpress resource
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			defer c.Delete(context.TODO(), wp)
-
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
-			statefulSet := &appsv1.StatefulSet{}
-			Eventually(func() error { return c.Get(context.TODO(), ssKey, statefulSet) }, timeout).Should(Succeed())
 		})
 
-		It("reconciles the memcached service", func() {
-			// Create the Wordpress object and expect the Reconcile and Service to be created
-			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			defer c.Delete(context.TODO(), wp)
-
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-
-			service := &corev1.Service{}
-			Eventually(func() error { return c.Get(context.TODO(), ssKey, service) }, timeout).Should(Succeed())
+		AfterEach(func() {
+			// cleanup Wordpress resource
+			c.Delete(context.TODO(), wp)
 		})
 
-		It("reconciles the wordpress resource", func() {
-			// Create the Wordpress object and expcet the Reconcile to be created
-			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			defer c.Delete(context.TODO(), wp)
-
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-
-			wordpress := &wordpressv1alpha1.Wordpress{}
-			Eventually(func() error { return c.Get(context.TODO(), wpKey, wordpress) }, timeout).Should(Succeed())
-		})
+		DescribeTable("the reconciler",
+			func(nameFmt string, obj runtime.Object) {
+				key := types.NamespacedName{
+					Name:      fmt.Sprintf(nameFmt, wp.Name),
+					Namespace: wp.Namespace,
+				}
+				Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
+			},
+			Entry("reconciles memcached statefulset", "%s-memcached", &appsv1.StatefulSet{}),
+			Entry("reconciles memcached service", "%s-memcached", &corev1.Service{}),
+			Entry("reconciles mysql cluster", "%s-mysql", &mysqlv1alpha1.MysqlCluster{}),
+		)
 	})
 })

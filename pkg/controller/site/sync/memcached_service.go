@@ -58,6 +58,9 @@ func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Schem
 	}
 }
 
+// GetInstance returns the memcachedServiceSyncer instance (memcachedServiceSyncer.wp)
+func (s *memcachedServiceSyncer) GetInstance() runtime.Object { return s.wp }
+
 // GetKey returns the memcachedServiceSyncer key through which an existing object may be identified
 func (s *memcachedServiceSyncer) GetKey() types.NamespacedName { return s.key }
 

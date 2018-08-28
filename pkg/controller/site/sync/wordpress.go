@@ -54,6 +54,9 @@ func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Scheme) Inte
 	}
 }
 
+// GetInstance returns the wordpressSyncer instance (wordpressSyncer.wp)
+func (s *wordpressSyncer) GetInstance() runtime.Object { return s.wp }
+
 // GetKey returns the wordpressSyncer key through which an existing object may be identified
 func (s *wordpressSyncer) GetKey() types.NamespacedName { return s.key }
 

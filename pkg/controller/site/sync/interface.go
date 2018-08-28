@@ -26,6 +26,8 @@ type EventReason string
 
 // Interface is the Dashboard syncer interface
 type Interface interface {
+	// GetInstance returns the syncer instance
+	GetInstance() runtime.Object
 	// GetKey returns the client.ObjectKey for looking up the dependant object
 	GetKey() types.NamespacedName
 	// GetExistingObjectPlaceholder returns a placeholder for existing object

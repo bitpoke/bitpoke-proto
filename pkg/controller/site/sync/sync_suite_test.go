@@ -28,8 +28,6 @@ import (
 	"github.com/presslabs/dashboard/pkg/apis"
 )
 
-var rts = scheme.Scheme
-
 func TestSiteMemcached(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Site Syncers Suite", []Reporter{envtest.NewlineReporter{}})

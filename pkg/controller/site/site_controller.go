@@ -34,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/presslabs/dashboard/pkg/controller/site/sync"
+	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -64,6 +65,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// Watch for changes to Wordpress
 	err = c.Watch(&source.Kind{Type: &wordpressv1alpha1.Wordpress{}}, &handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
+	// Watch for changes to MysqlCluster
+	err = c.Watch(&source.Kind{Type: &mysqlv1alpha1.MysqlCluster{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &wordpressv1alpha1.Wordpress{},
+	})
 	if err != nil {
 		return err
 	}
@@ -105,15 +115,15 @@ const (
 
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
 // and what is in the Wordpress.Spec
-// TODO(user): Modify this Reconcile function to implement your Controller logic.  The scaffolding writes
-// a Deployment as an example
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpress,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=mysql.presslabs.org,resources=mysqlcluster,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Site instance
-	instance := &wordpressv1alpha1.Wordpress{}
-	err := r.Get(context.TODO(), request.NamespacedName, instance)
+	wp := &wordpressv1alpha1.Wordpress{}
+
+	err := r.Get(context.TODO(), request.NamespacedName, wp)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
@@ -125,9 +135,10 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 	}
 
 	syncers := []sync.Interface{
-		sync.NewMemcachedStatefulSetSyncer(instance, r.scheme),
-		sync.NewMemcachedServiceSyncer(instance, r.scheme),
-		sync.NewWordpressSyncer(instance, r.scheme),
+		sync.NewMemcachedStatefulSetSyncer(wp, r.scheme),
+		sync.NewMemcachedServiceSyncer(wp, r.scheme),
+		sync.NewWordpressSyncer(wp, r.scheme),
+		sync.NewMysqlClusterSyncer(wp, r.scheme),
 	}
 
 	for _, s := range syncers {
@@ -141,11 +152,11 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 		log.Info(string(op), "key", key.String(), "kind", existing.GetObjectKind().GroupVersionKind().Kind)
 
 		if err != nil {
-			r.recorder.Eventf(instance, eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)
+			r.recorder.Eventf(s.GetInstance(), eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)
 			return reconcile.Result{}, err
 		}
 		if op != controllerutil.OperationNoop {
-			r.recorder.Eventf(instance, eventNormal, reason, "%T %s/%s %s successfully", existing, key.Namespace, key.Name, op)
+			r.recorder.Eventf(s.GetInstance(), eventNormal, reason, "%T %s/%s %s successfully", existing, key.Namespace, key.Name, op)
 		}
 	}
 
