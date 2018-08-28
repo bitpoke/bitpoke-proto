@@ -20,7 +20,12 @@ const reducers = reduce(reduxModules, (acc, module, key) => {
     }
 }, {})
 
-const rootReducer = combineReducers(reducers)
+const rootReducer = persistReducer({
+    key       : 'root',
+    whitelist : ['auth'],
+    storage   : localForage
+}, combineReducers(reducers))
+
 const initialState = rootReducer(undefined, {} as any)
 const sagas = compact(map(reduxModules, 'saga'))
 

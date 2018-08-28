@@ -1,12 +1,29 @@
 import * as React from 'react'
+import { Dispatch } from 'redux'
+import { connect } from 'react-redux'
+
+import { RootState, app, auth } from '../redux'
+
 import Router from '../containers/Router'
 
-const App: React.SFC = () => (
-    <div>
-        <h3>PressLabs Dashboard</h3>
-        <Router />
-    </div>
-)
+type Props = {
+    dispatch: Dispatch
+}
 
+class App extends React.Component<Props> {
+    componentDidMount() {
+        const { dispatch } = this.props
+        dispatch(app.initialize())
+    }
 
-export default App
+    render() {
+        return (
+            <div>
+                <h3>PressLabs Dashboard</h3>
+                <Router />
+            </div>
+        )
+    }
+}
+
+export default connect()(App)

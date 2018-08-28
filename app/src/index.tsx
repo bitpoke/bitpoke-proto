@@ -14,9 +14,11 @@ import './index.css'
 const { store, persistor } = createStore()
 
 ReactDOM.render(
-    <Provider store={ store }>
-        <App />
-    </Provider>,
+    <PersistGate persistor={ persistor } loading={ <div /> }>
+        <Provider store={ store }>
+            <App />
+        </Provider>
+    </PersistGate>,
     document.getElementById('root') as HTMLElement
 )
 

@@ -17,12 +17,14 @@ import { RootState } from '../redux'
 //
 //  TYPES
 
-export type State = Route
+export type State = Route | null
 export type Actions = ActionType<typeof actions>
 
 export type Route = {
-    key: string
-} | null
+    path: string,
+    key?: string,
+    url?: string
+}
 
 
 //
@@ -50,12 +52,14 @@ const actions = {
 //
 //  REDUCER
 
-export const initialState: State = null
+const initialState: State = null
 
 export function reducer(state: State = initialState, action: Actions) {
     switch (action.type) {
         case ROUTE_CHANGED: {
-            return matchRoute(action.payload) || {}
+            return matchRoute(action.payload) || {
+                path: action.payload
+            }
         }
 
         default:
@@ -86,7 +90,7 @@ export function routeFor(key: string, params = {}) {
     return url.toString()
 }
 
-function matchRoute(pathname: string) {
+function matchRoute(pathname: string): Route | null {
     const matched = filter(
         map(ROUTES, ({ path }, key) => ({
             key,
@@ -95,7 +99,11 @@ function matchRoute(pathname: string) {
         'isExact'
     )
 
-    return head(matched)
+    if (isEmpty(matched)) {
+        return null
+    }
+
+    return head(matched) as Route
 }
 
 export const withRouter = (component: React.ComponentType) => connect(getState)(component)
@@ -104,4 +112,5 @@ export const withRouter = (component: React.ComponentType) => connect(getState)(
 //
 //  SELECTORS
 
-export const getState = (state: RootState) => (state.routing)
+export const getState = (state: RootState) => state.routing
+export const getCurrentRoute = getState

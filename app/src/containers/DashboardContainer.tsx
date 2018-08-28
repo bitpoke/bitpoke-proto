@@ -12,7 +12,7 @@ const DashboardContainer: React.SFC<Props> = ({ dispatch }) => {
     return (
         <div>
             <h4>Projects</h4>
-            <button onClick={ () => dispatch(projects.list.request()) }>
+            <button onClick={ () => dispatch(projects.list()) }>
                 List Projects
             </button>
         </div>

@@ -5,7 +5,7 @@ import { Router as ReactRouter, Switch, Route, Redirect } from 'react-router-dom
 
 import { map } from 'lodash'
 
-import { RootState, routing } from '../redux'
+import { RootState, auth, routing } from '../redux'
 
 import * as containers from '../containers'
 
@@ -13,7 +13,11 @@ type Props = {
     dispatch: Dispatch
 }
 
-class Router extends React.Component<Props> {
+type ReduxProps = {
+    isAuthenticated: boolean
+}
+
+class Router extends React.Component<Props & ReduxProps> {
     componentDidMount() {
         const { dispatch } = this.props
         const { history, updateRoute } = routing
@@ -22,6 +26,11 @@ class Router extends React.Component<Props> {
     }
 
     render() {
+        const { isAuthenticated } = this.props
+        if (!isAuthenticated) {
+            return null
+        }
+
         return (
             <ReactRouter history={ routing.history }>
                 <Switch>
@@ -39,4 +48,10 @@ class Router extends React.Component<Props> {
     }
 }
 
-export default connect()(Router)
+const mapStateToProps = (state: RootState): ReduxProps => {
+    return {
+        isAuthenticated: auth.isAuthenticated(state)
+    }
+}
+
+export default connect(mapStateToProps)(Router)

@@ -6,6 +6,7 @@ insert_final_newline = true
 
 [*.go]
 indent_style = tab
+tab_width = 4
 
 [*.{js,ts,tsx}]
 indent_style = space

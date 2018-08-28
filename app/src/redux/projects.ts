@@ -3,7 +3,7 @@ import { takeEvery, put, select, take, call } from 'redux-saga/effects'
 import { grpc } from 'grpc-web-client'
 import { createSelector } from 'reselect'
 
-import { RootState } from '../redux'
+import { RootState, auth } from '../redux'
 
 import { ListProjectsRequest, Project } from '../proto/projects/v1/project_pb'
 import { Projects } from '../proto/projects/v1/project_pb_service'
@@ -27,11 +27,7 @@ export const LIST_REQUESTED = '@ projects / LIST_REQUESTED'
 export const LIST_SUCCEEDED = '@ projects / LIST_SUCCEEDED'
 export const LIST_FAILED    = '@ projects / LIST_FAILED'
 
-export const list = createAsyncAction(
-  LIST_REQUESTED,
-  LIST_SUCCEEDED,
-  LIST_FAILED
-)<void, Project[], Error>()
+export const list = () => createAction(LIST_REQUESTED)
 
 const listRequest = {
     service: Projects.ListProjects,
@@ -46,7 +42,7 @@ const actions = {
 //
 //  REDUCER
 
-export const initialState: State = {
+const initialState: State = {
     entries: []
 }
 
@@ -62,10 +58,12 @@ export function* saga() {
     yield takeEvery(LIST_REQUESTED, performRequest)
 }
 
-function performRequest(action: ActionType<typeof list.request>) {
+function* performRequest(action: ActionType<typeof list>) {
+    const authorization = yield select(auth.getAuthorizationHeader)
     grpc.invoke(listRequest.service, {
         host,
         request: listRequest.request,
+        metadata: { authorization },
         onMessage: (response: Project) =>
             console.log(response.toObject()),
         onEnd: () =>
