@@ -1,0 +1,11 @@
+.userCard_container {
+    display: flex;
+    align-items: center;
+}
+
+.userCard_avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    margin: 10px;
+}
