@@ -4,6 +4,7 @@ import { createHashHistory, createMemoryHistory } from 'history'
 import pathToRegexp, { Key, compile } from 'path-to-regexp'
 import { matchPath } from 'react-router'
 import { takeEvery, put, select, take, call } from 'redux-saga/effects'
+import { channel as createChannel } from 'redux-saga'
 import { createSelector } from 'reselect'
 import { ActionType, action as createAction } from 'typesafe-actions'
 
@@ -11,7 +12,8 @@ import URI from 'urijs'
 
 import { map, filter, omit, head, has, isEmpty, startCase } from 'lodash'
 
-import { RootState } from '../redux'
+import { RootState, app } from '../redux'
+import { watchChannel } from '../utils'
 
 
 //
@@ -67,6 +69,21 @@ export function reducer(state: State = initialState, action: Actions) {
     }
 }
 
+
+//
+//   SAGA
+
+const channel = createChannel()
+
+export function* saga() {
+    yield takeEvery(app.INITIALIZED, bootstrap)
+    yield watchChannel(channel)
+}
+
+function* bootstrap() {
+    yield put(updateRoute(history.location.pathname))
+    history.listen(({ pathname }) => channel.put((updateRoute(pathname))))
+}
 
 //
 //   HELPERS and UTILITIES

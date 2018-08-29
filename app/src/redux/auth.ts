@@ -1,12 +1,13 @@
 import { ActionType, action as createAction } from 'typesafe-actions'
 import { takeEvery, fork, put, select, take, call } from 'redux-saga/effects'
-import { Channel, SagaIterator, channel as createChannel } from 'redux-saga'
+import { SagaIterator, channel as createChannel } from 'redux-saga'
 import auth0 from 'auth0-js'
 import { createSelector } from 'reselect'
 
-import { get, join } from 'lodash'
+import { get, join, pick } from 'lodash'
 
 import { AnyAction, RootState, app, routing } from '../redux'
+import { watchChannel } from '../utils'
 
 //
 //  TYPES
@@ -16,6 +17,15 @@ export type Actions = ActionType<typeof actions>
 
 type TokenPayload = {
     exp: number
+}
+
+export type User = {
+    id: string,
+    name: string,
+    email: string,
+    isEmailVerified: boolean,
+    nickname: string,
+    avatar: string
 }
 
 //
@@ -74,7 +84,7 @@ function* ensureAuthentication(action: ActionType<typeof app.initialize>) {
     const userIsAuthenticated = yield select(isAuthenticated)
     const route = yield select(routing.getCurrentRoute)
 
-    if (hasAuthenticationPayload(route.path)) {
+    if (route && hasAuthenticationPayload(route.path)) {
         return
     }
 
@@ -103,11 +113,6 @@ function redirectToDashboard() {
     routing.push(routing.routeFor('dashboard'))
 }
 
-function* watchChannel(actionChannel: Channel<{}>) {
-    while (true) {
-        yield put(yield take(actionChannel))
-    }
-}
 
 //
 //   HELPERS and UTILITIES
@@ -141,6 +146,14 @@ export const getTokenPayload = createSelector(
 export const getAuthorizationHeader = createSelector(
     getState,
     (state) => state ? join([state.tokenType, state.idToken], ' ') : null
+)
+export const getCurrentUser = createSelector(
+    getTokenPayload,
+    (token) => ({
+        id: token.sub,
+        isEmailVerified: token.email_verified,
+        ...pick(token, ['email', 'name', 'nickname', 'avatar'])
+    })
 )
 export const isAuthenticated = createSelector(
     getTokenPayload,

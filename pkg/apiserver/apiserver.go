@@ -18,11 +18,11 @@ package apiserver
 
 import (
 	"context"
-	"time"
 	"fmt"
+	"time"
 
-	"net/http"
 	"errors"
+	"net/http"
 	"os"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -40,7 +40,7 @@ import (
 	jose "github.com/square/go-jose"
 	"github.com/square/go-jose/jwt"
 
-  "github.com/presslabs/dashboard/pkg/apiserver/jwks"
+	"github.com/presslabs/dashboard/pkg/apiserver/jwks"
 )
 
 type grpcRunner struct {
@@ -107,9 +107,7 @@ func handleAuthentication(ctx context.Context) (context.Context, error) {
 func validateToken(token *jwt.JSONWebToken) (*jwt.JSONWebToken, error) {
 	audience := os.Getenv("AUTH0_CLIENT_ID")
 	issuer := fmt.Sprintf("https://%s/", os.Getenv("AUTH0_DOMAIN"))
-
 	alg := jose.RS256
-
 	expectedClaims := jwt.Expected{Issuer: issuer, Audience: []string{audience}}
 
 	if len(token.Headers) < 1 {
@@ -122,15 +120,15 @@ func validateToken(token *jwt.JSONWebToken) (*jwt.JSONWebToken, error) {
 		return nil, errors.New("Invalid algorithm")
 	}
 
-  jwksClient, _ := jwks.NewClient(fmt.Sprintf("%s.well-known/jwks.json", issuer))
-  key, err := jwksClient.GetKey(header.KeyID)
-  if err != nil {
-    log.Error(err, "Cannot get key")
-  }
+	jwksClient, _ := jwks.NewClient(fmt.Sprintf("%s.well-known/jwks.json", issuer))
+	key, err := jwksClient.GetKey(header.KeyID)
+	if err != nil {
+		log.Error(err, "Cannot get key")
+	}
 
 	claims := jwt.Claims{}
-	if err := token.Claims(key, &claims); err != nil {
-    log.Error(err, "cannot get claims from token")
+	if err = token.Claims(key, &claims); err != nil {
+		log.Error(err, "cannot get claims from token")
 		return nil, err
 	}
 

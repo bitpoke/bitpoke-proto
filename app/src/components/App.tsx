@@ -5,25 +5,41 @@ import { connect } from 'react-redux'
 import { RootState, app, auth } from '../redux'
 
 import Router from '../containers/Router'
+import NavBar from '../components/NavBar'
 
 type Props = {
     dispatch: Dispatch
 }
 
-class App extends React.Component<Props> {
+type ReduxProps = {
+    isAuthenticated: boolean
+}
+
+class App extends React.Component<Props & ReduxProps> {
     componentDidMount() {
         const { dispatch } = this.props
         dispatch(app.initialize())
     }
 
     render() {
+        const { isAuthenticated } = this.props
+        if (!isAuthenticated) {
+            return null
+        }
+
         return (
             <div>
-                <h3>PressLabs Dashboard</h3>
+                <NavBar />
                 <Router />
             </div>
         )
     }
 }
 
-export default connect()(App)
+const mapStateToProps = (state: RootState): ReduxProps => {
+    return {
+        isAuthenticated: auth.isAuthenticated(state)
+    }
+}
+
+export default connect(mapStateToProps)(App)

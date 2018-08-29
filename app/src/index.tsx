@@ -23,9 +23,3 @@ ReactDOM.render(
 )
 
 registerServiceWorker()
-
-    // <PersistGate persistor={ persistor } loading={ <div /> }>
-    //     <Provider store={ store }>
-    //         <App />
-    //     </Provider>
-    // </PersistGate>,
