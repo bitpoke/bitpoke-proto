@@ -25,24 +25,27 @@ export type User = {
     email: string,
     isEmailVerified: boolean,
     nickname: string,
-    avatar: string
+    avatarURL: string
 }
 
 //
 //  ACTIONS
 
-export const LOGIN_SUCCEEDED  = '@ auth / LOGIN_SUCCEEDED'
-export const LOGIN_FAILED     = '@ auth / LOGIN_FAILED'
-export const LOGOUT_REQUESTED = '@ auth / LOGOUT_REQUESTED'
+export const LOGIN_SUCCEEDED         = '@ auth / LOGIN_SUCCEEDED'
+export const LOGIN_FAILED            = '@ auth / LOGIN_FAILED'
+export const LOGOUT_REQUESTED        = '@ auth / LOGOUT_REQUESTED'
+export const TOKEN_REFRESH_REQUESTED = '@ auth / TOKEN_REFRESH_REQUESTED'
 
 export const loginSuccess = (hash: auth0.Auth0DecodedHash) => createAction(LOGIN_SUCCEEDED, hash)
 export const loginFailure = (error: auth0.Auth0Error) => createAction(LOGIN_FAILED, error)
 export const logout = () => createAction(LOGOUT_REQUESTED)
+export const refreshToken = () => createAction(TOKEN_REFRESH_REQUESTED)
 
 const actions = {
     logout,
     loginSuccess,
-    loginFailure
+    loginFailure,
+    refreshToken
 }
 
 
@@ -76,7 +79,8 @@ const channel = createChannel()
 export function* saga() {
     yield takeEvery(routing.ROUTE_CHANGED, handleAuthenticationIfRequired)
     yield takeEvery(app.INITIALIZED, ensureAuthentication)
-    yield takeEvery([LOGIN_SUCCEEDED, LOGIN_FAILED], redirectToDashboard)
+    yield takeEvery([LOGIN_SUCCEEDED, LOGIN_FAILED, LOGOUT_REQUESTED], redirectToDashboard)
+    yield takeEvery(TOKEN_REFRESH_REQUESTED, handleTokenRefresh)
     yield watchChannel(channel)
 }
 
@@ -99,6 +103,10 @@ function handleAuthenticationIfRequired(action: ActionType<typeof routing.update
     if (hasAuthenticationPayload(action.payload)) {
         provider.parseHash(handleTokenResponse)
     }
+}
+
+function handleTokenRefresh(action: ActionType<typeof refreshToken>) {
+    provider.checkSession({}, handleTokenResponse)
 }
 
 function handleTokenResponse(err: auth0.Auth0Error | null, authResult: auth0.Auth0DecodedHash) {
@@ -149,10 +157,11 @@ export const getAuthorizationHeader = createSelector(
 )
 export const getCurrentUser = createSelector(
     getTokenPayload,
-    (token) => ({
+    (token): User => ({
         id: token.sub,
         isEmailVerified: token.email_verified,
-        ...pick(token, ['email', 'name', 'nickname', 'avatar'])
+        avatarURL: token.picture,
+        ...pick(token, ['email', 'name', 'nickname'])
     })
 )
 export const isAuthenticated = createSelector(
