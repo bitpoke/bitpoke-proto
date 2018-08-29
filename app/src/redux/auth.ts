@@ -78,7 +78,7 @@ const channel = createChannel()
 
 export function* saga() {
     yield takeEvery(routing.ROUTE_CHANGED, handleAuthenticationIfRequired)
-    yield takeEvery(app.INITIALIZED, ensureAuthentication)
+    yield takeEvery(routing.ROUTE_CHANGED, ensureAuthentication)
     yield takeEvery([LOGIN_SUCCEEDED, LOGIN_FAILED, LOGOUT_REQUESTED], redirectToDashboard)
     yield takeEvery(TOKEN_REFRESH_REQUESTED, handleTokenRefresh)
     yield watchChannel(channel)
@@ -87,6 +87,10 @@ export function* saga() {
 function* ensureAuthentication(action: ActionType<typeof app.initialize>) {
     const userIsAuthenticated = yield select(isAuthenticated)
     const route = yield select(routing.getCurrentRoute)
+
+    if (userIsAuthenticated) {
+        return
+    }
 
     if (route && hasAuthenticationPayload(route.path)) {
         return
