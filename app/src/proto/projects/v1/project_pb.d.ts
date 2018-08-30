@@ -4,6 +4,9 @@
 import * as jspb from "google-protobuf";
 
 export class Project extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getName(): string;
   setName(value: string): void;
 
@@ -19,6 +22,7 @@ export class Project extends jspb.Message {
 
 export namespace Project {
   export type AsObject = {
+    id: string,
     name: string,
   }
 }

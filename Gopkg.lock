@@ -401,6 +401,14 @@
   version = "v1.5.0"
 
 [[projects]]
+  digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:8be8b3743fc9795ec21bbd3e0fc28ff6234018e1a269b0a7064184be95ac13e0"
   name = "github.com/spf13/cobra"
   packages = ["."]
@@ -419,18 +427,13 @@
 [[projects]]
   digest = "1:0e2f5bcb5e3c9a1e889fa84b49571df48c67b7047da64343cc88c078f77ea538"
   name = "github.com/square/go-jose"
-  packages = ["."]
+  packages = [
+    ".",
+    "jwt",
+  ]
   pruneopts = "T"
   revision = "8254d6c783765f38c8675fae4427a1fe73fbd09d"
   version = "v2.1.8"
-
-[[projects]]
-  branch = "master"
-  digest = "1:c5a541f45f8a98232dde31093b348dedeb30d64b59a41154a88506c5940b52d7"
-  name = "github.com/upgear/go-jwks"
-  packages = ["."]
-  pruneopts = "T"
-  revision = "fb68bb04c440a41060e15e60db1f537ae7df804c"
 
 [[projects]]
   digest = "1:365b8ecb35a5faf5aa0ee8d798548fc9cd4200cb95d77a5b0b285ac881bae499"
@@ -658,7 +661,6 @@
     ".",
     "cipher",
     "json",
-    "jwt",
   ]
   pruneopts = "T"
   revision = "8254d6c783765f38c8675fae4427a1fe73fbd09d"
@@ -954,14 +956,14 @@
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
     "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1",
+    "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
-    "github.com/upgear/go-jwks",
+    "github.com/square/go-jose",
+    "github.com/square/go-jose/jwt",
     "golang.org/x/net/context",
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",
-    "gopkg.in/square/go-jose.v2",
-    "gopkg.in/square/go-jose.v2/jwt",
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",

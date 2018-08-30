@@ -6,6 +6,7 @@ package project
 import (
 	"context"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/satori/go.uuid"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -35,5 +36,5 @@ func NewProjectServer(client client.Client) ProjectsServer {
 }
 
 func NewFromK8s(p *dashboardv1alpha1.Project) *Project {
-	return &Project{Name: p.Name}
+	return &Project{Id: uuid.NewV5(uuid.NamespaceDNS, p.Name).String(), Name: p.Name}
 }
