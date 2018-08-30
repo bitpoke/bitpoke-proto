@@ -70,6 +70,8 @@ func init() {
 	// add goflag flags
 	rootCmd.PersistentFlags().AddGoFlagSet(goflag.CommandLine)
 	// remove glog inserted flags
+	// nolint: gosec
+	// we really don't care about these errors
 	_ = rootCmd.PersistentFlags().MarkHidden("alsologtostderr")
 	_ = rootCmd.PersistentFlags().MarkHidden("log_backtrace_at")
 	_ = rootCmd.PersistentFlags().MarkHidden("log_dir")

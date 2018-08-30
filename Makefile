@@ -2,24 +2,19 @@
 APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
 IMG ?= quay.io/presslabs/dashboard:$(APP_VERSION)
 KUBEBUILDER_VERSION ?= 1.0.0
+BINDIR ?= $(PWD)/bin
 
-ifneq ("$(wildcard $(shell which yq))","")
-yq := yq
-else
-yq := yq.v2
-endif
+GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
+GOARCH ?= amd64
 
-ifneq ("$(wildcard $(shell which gometalinter))","")
-gometalinter := gometalinter
-else
-gometalinter := gometalinter.v2
-endif
+PATH := $(BINDIR):$(PATH)
+SHELL := env PATH=$(PATH) /bin/sh
 
 all: test dashboard
 
 # Run tests
 test: generate manifests
-	go test ./pkg/... ./cmd/... -coverprofile cover.out
+	KUBEBUILDER_ASSETS=$(BINDIR) go test ./pkg/... ./cmd/... -coverprofile cover.out
 
 # Build dashboard binary
 dashboard: generate fmt vet
@@ -41,18 +36,18 @@ manifests:
 chart:
 	rm -rf chart/dashboard
 	cp -r chart/dashboard-src chart/dashboard
-	$(yq) w -i chart/dashboard/Chart.yaml version "$(APP_VERSION)"
-	$(yq) w -i chart/dashboard/Chart.yaml appVersion "$(APP_VERSION)"
-	$(yq) w -i chart/dashboard/values.yaml image "$(IMG)"
+	yq w -i chart/dashboard/Chart.yaml version "$(APP_VERSION)"
+	yq w -i chart/dashboard/Chart.yaml appVersion "$(APP_VERSION)"
+	yq w -i chart/dashboard/values.yaml image "$(IMG)"
 	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > chart/dashboard/templates/crds.yaml
-	$(yq) m -d'*' -i chart/dashboard/templates/crds.yaml hack/chart-metadata.yaml
-	$(yq) w -d'*' -i chart/dashboard/templates/crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
-	$(yq) d -d'*' -i chart/dashboard/templates/crds.yaml metadata.creationTimestamp
-	$(yq) d -d'*' -i chart/dashboard/templates/crds.yaml status metadata.creationTimestamp
+	yq m -d'*' -i chart/dashboard/templates/crds.yaml hack/chart-metadata.yaml
+	yq w -d'*' -i chart/dashboard/templates/crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	yq d -d'*' -i chart/dashboard/templates/crds.yaml metadata.creationTimestamp
+	yq d -d'*' -i chart/dashboard/templates/crds.yaml status metadata.creationTimestamp
 	cp config/rbac/rbac_role.yaml chart/dashboard/templates/rbac.yaml
-	$(yq) m -d'*' -i chart/dashboard/templates/rbac.yaml hack/chart-metadata.yaml
-	$(yq) d -d'*' -i chart/dashboard/templates/rbac.yaml metadata.creationTimestamp
-	$(yq) w -d'*' -i chart/dashboard/templates/rbac.yaml metadata.name '{{ template "dashboard.fullname" . }}-controller'
+	yq m -d'*' -i chart/dashboard/templates/rbac.yaml hack/chart-metadata.yaml
+	yq d -d'*' -i chart/dashboard/templates/rbac.yaml metadata.creationTimestamp
+	yq w -d'*' -i chart/dashboard/templates/rbac.yaml metadata.name '{{ template "dashboard.fullname" . }}-controller'
 	echo '{{- if .Values.rbac.create }}' > chart/dashboard/templates/controller-clusterrole.yaml
 	cat chart/dashboard/templates/rbac.yaml >> chart/dashboard/templates/controller-clusterrole.yaml
 	echo '{{- end }}' >> chart/dashboard/templates/controller-clusterrole.yaml
@@ -79,7 +74,7 @@ publish:
 	docker push ${IMG}
 
 lint: vet
-	$(gometalinter) --disable-all --deadline 5m \
+	gometalinter --vendor --disable-all --deadline 5m \
 	--enable=vetshadow \
 	--enable=misspell \
 	--enable=structcheck \
@@ -104,12 +99,17 @@ lint: vet
 	./pkg/... ./cmd/...
 
 dependencies:
-	go get -u gopkg.in/mikefarah/yq.v2
-	go get -u gopkg.in/alecthomas/gometalinter.v2
-	gometalinter.v2 --install
+	test -d $(BINDIR) || mkdir $(BINDIR)
+	GOBIN=$(BINDIR) go get -u gopkg.in/mikefarah/yq.v2 && mv $(BINDIR)/yq.v2 $(BINDIR)/yq
 
-	# install Kubebuilder
-	curl -L -O https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${KUBEBUILDER_VERSION}/kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz
-	tar -zxvf kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz
-	mv kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64 -T /usr/local/kubebuilder
-	export PATH=$PATH:/usr/local/kubebuilder/bin
+	# there is a clusterfuck with the renaming of gas to gosec
+	# https://github.com/alecthomas/gometalinter/issues/522
+	# https://github.com/alecthomas/gometalinter/issues/521
+	# https://github.com/alecthomas/gometalinter/issues/511
+	# https://github.com/alecthomas/gometalinter/issues/508
+	GOBIN=$(BINDIR) go get -u gopkg.in/alecthomas/gometalinter.v2 && mv $(BINDIR)/gometalinter.v2 $(BINDIR)/gometalinter
+	GOBIN=$(BINDIR) gometalinter --install --force || true
+	GOBIN=$(BINDIR) go get -u github.com/securego/gosec/cmd/gosec/...
+
+	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH).tar.gz | \
+		tar -zx -C $(BINDIR) --strip-components=2

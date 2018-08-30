@@ -17,7 +17,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/presslabs/dashboard/pkg/apis"
@@ -37,7 +36,7 @@ var controllerManagerCmd = &cobra.Command{
 
 var runControllerManager = func(cmd *cobra.Command, args []string) {
 	log = logf.Log.WithName("controller-manager")
-	fmt.Fprintln(os.Stderr, "Starting Presslabs Dashboard controller-manager...")
+	log.Info("Starting Presslabs Dashboard controller-manager...")
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{})
