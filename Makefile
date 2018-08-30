@@ -14,7 +14,10 @@ all: test dashboard
 
 # Run tests
 test: generate manifests
-	KUBEBUILDER_ASSETS=$(BINDIR) go test ./pkg/... ./cmd/... -coverprofile cover.out
+	KUBEBUILDER_ASSETS=$(BINDIR) go run ./vendor/github.com/onsi/ginkgo/ginkgo \
+		--randomizeAllSpecs --randomizeSuites --failOnPending \
+		--cover --coverprofile cover.out --trace --race \
+		./pkg/... ./cmd/...
 
 # Build dashboard binary
 dashboard: generate fmt vet

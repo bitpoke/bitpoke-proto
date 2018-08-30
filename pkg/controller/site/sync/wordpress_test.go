@@ -18,26 +18,15 @@ package sync_test
 
 import (
 	"fmt"
-	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/presslabs/dashboard/pkg/controller/site/sync"
-	appsv1 "k8s.io/api/apps/v1"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-func TestSiteWordpress(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Site Memcached Suite", []Reporter{envtest.NewlineReporter{}})
-}
-
 var _ = Describe("WordpressSyncer", func() {
-	BeforeEach(func() {
-		appsv1.AddToScheme(rts)
-	})
 	When("Wordpress has no MEMCACHED_DISCOVERY_SERVICE envvar", func() {
 		It("successfully sets an envvar named MEMCACHED_DISCOVERY_SERVICE", func() {
 			wp := &wordpressv1alpha1.Wordpress{}

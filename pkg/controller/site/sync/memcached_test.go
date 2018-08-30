@@ -17,32 +17,18 @@ limitations under the License.
 package sync_test
 
 import (
-	"testing"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/presslabs/dashboard/pkg/controller/site/sync"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-func TestSiteMemcached(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Site Memcached Suite", []Reporter{envtest.NewlineReporter{}})
-}
-
-var rts = scheme.Scheme
-
 var _ = Describe("MemcachedStatefulSetSyncer", func() {
-	BeforeEach(func() {
-		appsv1.AddToScheme(rts)
-	})
 	When("Wordpress has no memory annotation", func() {
 		It("uses a default value", func() {
 			wp := &wordpressv1alpha1.Wordpress{}
