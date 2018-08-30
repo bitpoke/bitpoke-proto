@@ -7,6 +7,8 @@ import { RootState, app, auth } from '../redux'
 import Router from '../containers/Router'
 import NavBar from '../components/NavBar'
 
+import './App.css'
+
 type Props = {
     dispatch: Dispatch
 }
@@ -28,7 +30,7 @@ class App extends React.Component<Props & ReduxProps> {
         }
 
         return (
-            <div>
+            <div className="App_container">
                 <NavBar />
                 <Router />
             </div>
