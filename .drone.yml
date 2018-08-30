@@ -2,26 +2,75 @@ workspace:
   base: /go
   path: src/github.com/presslabs/dashboard
 
+clone:
+  git:
+    image: plugins/git
+    tags: true
+
 pipeline:
-  lint:
+  dependencies:
     image: golang:1.10
     commands:
       - make dependencies
+
+  lint:
+    image: golang:1.10
+    commands:
       - make lint
 
   test:
     image: golang:1.10
     commands:
-      - make dependencies
       - make test
 
-#  publish:
-#    image: plugins/gcr
-#    mirror: https://mirror.gcr.io
-#    secrets:
-#      - GOOGLE_CREDENTIALS
-#    repo: pl-infra/presslabs-dashboard
-#    tags: [ "latest" ]
-#    when:
-#      branch: master
-#      event: push
+  build:
+    image: golang:1.10
+    environment:
+      - APP_VERSION=${DRONE_TAG}
+    commands:
+      - make chart
+    when:
+      event: tag
+
+  publish:
+    group: publish
+    image: plugins/docker
+    registry: quay.io
+    repo: quay.io/presslabs/dashboard
+    tags: [ "latest" ]
+    username: presslabs+drone
+    secrets:
+      - source: QUAY_TOKEN
+        target: DOCKER_PASSWORD
+    when:
+      branch: master
+      event: push
+
+  publish:
+    group: publish
+    image: plugins/docker
+    registry: quay.io
+    repo: quay.io/presslabs/dashboard
+    tags: [ "${DRONE_TAG}" ]
+    username: presslabs+drone
+    secrets:
+      - source: QUAY_TOKEN
+        target: DOCKER_PASSWORD
+    when:
+      event: tag
+
+  helm-chart:
+    group: publish
+    image: quay.io/presslabs/kluster-toolbox
+    pull: true
+    environment:
+      - GH_USER=presslabs-bot
+    commands:
+      - cd chart
+      - helm package dashboard
+      - CHART="$(basename *.tgz)" ; MESSAGE="Publish $(basename $CHART .tgz)"
+      - /usr/local/bin/gh put --skip-existing -m "$MESSAGE" "$CHART" "presslabs/charts/docs/"
+    secrets:
+      - GH_PASSWORD
+    when:
+      event: tag

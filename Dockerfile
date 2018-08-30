@@ -1,4 +1,4 @@
-# Build the manager binary
+# Build the dashboard binary
 FROM golang:1.10.3 as builder
 
 # Copy in the go src
@@ -8,10 +8,11 @@ COPY cmd/    cmd/
 COPY vendor/ vendor/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager github.com/presslabs/dashboard/cmd/manager
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o dashboard github.com/presslabs/dashboard/cmd/dashboard
 
-# Copy the controller-manager into a thin image
-FROM ubuntu:latest
-WORKDIR /root/
-COPY --from=builder /go/src/github.com/presslabs/dashboard/manager .
-ENTRYPOINT ["./manager"]
+# Copy the dashboard binary into a thin image
+FROM scratch
+COPY --from=builder /etc/ssl/certs /etc/ssl/certs
+COPY --from=builder /go/src/github.com/presslabs/dashboard/dashboard /
+ENTRYPOINT ["/dashboard"]
+CMD ["help"]

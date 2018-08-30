@@ -1,7 +1,19 @@
-
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
+IMG ?= quay.io/presslabs/dashboard:$(APP_VERSION)
 KUBEBUILDER_VERSION ?= 1.0.0
+
+ifneq ("$(wildcard $(shell which yq))","")
+yq := yq
+else
+yq := yq.v2
+endif
+
+ifneq ("$(wildcard $(shell which gometalinter))","")
+gometalinter := gometalinter
+else
+gometalinter := gometalinter.v2
+endif
 
 all: test dashboard
 
@@ -17,18 +29,34 @@ dashboard: generate fmt vet
 run: generate fmt vet
 	go run ./cmd/dashboard/main.go
 
-# Install CRDs into a cluster
-install: manifests
-	kubectl apply -f config/crds
-
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests
-	kubectl apply -f config/crds
-	kustomize build config/default | kubectl apply -f -
+install: manifests chart
+	helm upgrade --install --namespace=presslabs-sys dashboard chart/dashboard --set image=$(IMG)
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
+
+.PHONY: chart
+chart:
+	rm -rf chart/dashboard
+	cp -r chart/dashboard-src chart/dashboard
+	$(yq) w -i chart/dashboard/Chart.yaml version "$(APP_VERSION)"
+	$(yq) w -i chart/dashboard/Chart.yaml appVersion "$(APP_VERSION)"
+	$(yq) w -i chart/dashboard/values.yaml image "$(IMG)"
+	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > chart/dashboard/templates/crds.yaml
+	$(yq) m -d'*' -i chart/dashboard/templates/crds.yaml hack/chart-metadata.yaml
+	$(yq) w -d'*' -i chart/dashboard/templates/crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	$(yq) d -d'*' -i chart/dashboard/templates/crds.yaml metadata.creationTimestamp
+	$(yq) d -d'*' -i chart/dashboard/templates/crds.yaml status metadata.creationTimestamp
+	cp config/rbac/rbac_role.yaml chart/dashboard/templates/rbac.yaml
+	$(yq) m -d'*' -i chart/dashboard/templates/rbac.yaml hack/chart-metadata.yaml
+	$(yq) d -d'*' -i chart/dashboard/templates/rbac.yaml metadata.creationTimestamp
+	$(yq) w -d'*' -i chart/dashboard/templates/rbac.yaml metadata.name '{{ template "dashboard.fullname" . }}-controller'
+	echo '{{- if .Values.rbac.create }}' > chart/dashboard/templates/controller-clusterrole.yaml
+	cat chart/dashboard/templates/rbac.yaml >> chart/dashboard/templates/controller-clusterrole.yaml
+	echo '{{- end }}' >> chart/dashboard/templates/controller-clusterrole.yaml
+	rm chart/dashboard/templates/rbac.yaml
 
 # Run go fmt against code
 fmt:
@@ -43,17 +71,15 @@ generate:
 	go generate ./pkg/... ./cmd/...
 
 # Build the docker image
-docker-build: test
+images: test
 	docker build . -t ${IMG}
-	@echo "updating kustomize image patch file for manager resource"
-	sed -i 's@image: .*@image: '"${IMG}"'@' ./config/default/manager_image_patch.yaml
 
 # Push the docker image
-docker-push:
+publish:
 	docker push ${IMG}
 
 lint: vet
-	gometalinter.v2 --disable-all --deadline 5m \
+	$(gometalinter) --disable-all --deadline 5m \
 	--enable=vetshadow \
 	--enable=misspell \
 	--enable=structcheck \
@@ -63,7 +89,7 @@ lint: vet
 	--enable=errcheck \
 	--enable=varcheck \
 	--enable=goconst \
-	--enable=gas \
+	--enable=gosec \
 	--enable=unparam \
 	--enable=ineffassign \
 	--enable=nakedret \
@@ -78,6 +104,7 @@ lint: vet
 	./pkg/... ./cmd/...
 
 dependencies:
+	go get -u gopkg.in/mikefarah/yq.v2
 	go get -u gopkg.in/alecthomas/gometalinter.v2
 	gometalinter.v2 --install
 
