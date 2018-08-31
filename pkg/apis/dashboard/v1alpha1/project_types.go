@@ -64,7 +64,6 @@ const (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +genclient:nonNamespaced
 
 // Project is the Schema for the projects API
 // +k8s:openapi-gen=true
@@ -77,7 +76,6 @@ type Project struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +genclient:nonNamespaced
 
 // ProjectList contains a list of Project
 type ProjectList struct {
