@@ -14,7 +14,7 @@ all: test dashboard
 
 # Run tests
 test: generate manifests
-	KUBEBUILDER_ASSETS=$(BINDIR) go run ./vendor/github.com/onsi/ginkgo/ginkgo \
+	KUBEBUILDER_ASSETS=$(BINDIR) ginkgo \
 		--randomizeAllSpecs --randomizeSuites --failOnPending \
 		--cover --coverprofile cover.out --trace --race \
 		./pkg/... ./cmd/...
@@ -103,6 +103,7 @@ lint: vet
 
 dependencies:
 	test -d $(BINDIR) || mkdir $(BINDIR)
+	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
 	GOBIN=$(BINDIR) go get -u gopkg.in/mikefarah/yq.v2 && mv $(BINDIR)/yq.v2 $(BINDIR)/yq
 
 	# there is a clusterfuck with the renaming of gas to gosec
