@@ -105,15 +105,7 @@ dependencies:
 	test -d $(BINDIR) || mkdir $(BINDIR)
 	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
 	GOBIN=$(BINDIR) go get -u gopkg.in/mikefarah/yq.v2 && mv $(BINDIR)/yq.v2 $(BINDIR)/yq
-
-	# there is a clusterfuck with the renaming of gas to gosec
-	# https://github.com/alecthomas/gometalinter/issues/522
-	# https://github.com/alecthomas/gometalinter/issues/521
-	# https://github.com/alecthomas/gometalinter/issues/511
-	# https://github.com/alecthomas/gometalinter/issues/508
 	GOBIN=$(BINDIR) go get -u gopkg.in/alecthomas/gometalinter.v2 && mv $(BINDIR)/gometalinter.v2 $(BINDIR)/gometalinter
-	GOBIN=$(BINDIR) gometalinter --install --force || true
-	GOBIN=$(BINDIR) go get -u github.com/securego/gosec/cmd/gosec/...
-
+	GOBIN=$(BINDIR) gometalinter --install
 	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH).tar.gz | \
 		tar -zx -C $(BINDIR) --strip-components=2
