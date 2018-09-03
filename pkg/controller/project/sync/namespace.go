@@ -26,7 +26,7 @@ const (
 // namespaceSyncer defines the Syncer for Namespace
 type namespaceSyncer struct {
 	scheme   *runtime.Scheme
-	p        *dashboardv1alpha1.Project
+	proj     *dashboardv1alpha1.Project
 	key      types.NamespacedName
 	existing *corev1.Namespace
 }
@@ -35,7 +35,7 @@ type namespaceSyncer struct {
 func NewNamespaceSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) Interface {
 	return &namespaceSyncer{
 		scheme:   r,
-		p:        p,
+		proj:     p,
 		existing: &corev1.Namespace{},
 		key:      p.GetNamespaceKey(),
 	}
@@ -51,9 +51,9 @@ func (s *namespaceSyncer) GetExistingObjectPlaceholder() runtime.Object { return
 func (s *namespaceSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.Namespace)
 
-	out.Labels = s.p.GetDefaultLabels()
+	out.Labels = s.proj.GetDefaultLabels()
 
-	err := controllerutil.SetControllerReference(s.p, out, s.scheme)
+	err := controllerutil.SetControllerReference(s.proj, out, s.scheme)
 	if err != nil {
 		return nil, err
 	}

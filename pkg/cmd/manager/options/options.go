@@ -17,14 +17,24 @@ limitations under the License.
 package options
 
 import (
-	"github.com/spf13/pflag"
+	"net/url"
 
-	"github.com/presslabs/dashboard/pkg/cmd/manager/types"
+	"github.com/spf13/pflag"
 )
 
-var GitBaseDomainURL = types.MustParseURLValue("git.presslabs.net")
+// GitBaseDomainURL is the the base domain used to obtain the git repo domain for projects
+var GitBaseDomainURL = "git.presslabs.net"
 
 // AddToFlagSet add options to a FlagSet
 func AddToFlagSet(flag *pflag.FlagSet) {
-	flag.Var(GitBaseDomainURL, "git-base-domain", "The base git domain")
+	flag.StringVar(&GitBaseDomainURL, "git-base-domain", GitBaseDomainURL, "The base git domain")
+}
+
+// Validate validates the arguments
+func Validate() error {
+	_, err := url.Parse(GitBaseDomainURL)
+	if err != nil {
+		return err
+	}
+	return nil
 }

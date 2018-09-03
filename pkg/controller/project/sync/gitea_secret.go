@@ -20,51 +20,58 @@ import (
 )
 
 const (
-	GiteaSecretFailed  EventReason = "GiteaSecretFailed"
+	// GiteaSecretFailed is the event reason for a failed Gitea Secret reconcile
+	GiteaSecretFailed EventReason = "GiteaSecretFailed"
+	// GiteaSecretUpdated is the event reason for a successful Gitea Secret reconcile
 	GiteaSecretUpdated EventReason = "GiteaSecretUpdated"
 )
 
-type GiteaSecretSyncer struct {
+type giteaSecretSyncer struct {
 	scheme   *runtime.Scheme
-	p        *dashboardv1alpha1.Project
+	proj     *dashboardv1alpha1.Project
 	key      types.NamespacedName
 	existing *corev1.Secret
 }
 
-func NewGiteaSecretSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) *GiteaSecretSyncer {
-	return &GiteaSecretSyncer{
+// NewGiteaSecretSyncer returns a new sync.Interface for reconciling Gitea PVC
+func NewGiteaSecretSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) Interface {
+	return &giteaSecretSyncer{
 		scheme:   r,
 		existing: &corev1.Secret{},
-		p:        p,
+		proj:     p,
 		key:      p.GetGiteaSecretKey(),
 	}
 }
 
-func (s *GiteaSecretSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *GiteaSecretSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+// GetKey returns the giteaSecretSyncer key through which an existing object may be identified
+func (s *giteaSecretSyncer) GetKey() types.NamespacedName { return s.key }
 
-func (s *GiteaSecretSyncer) T(in runtime.Object) (runtime.Object, error) {
+// GetExistingObjectPlaceholder returns a Placeholder object if an existing one is not found
+func (s *giteaSecretSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+
+// T is the transform function used to reconcile the Gitea Secret
+func (s *giteaSecretSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.Secret)
-	out.Labels = GetGiteaPodLabels(s.p)
+	out.Labels = GetGiteaPodLabels(s.proj)
 
-	secret_key_bytes, ok := out.Data["SECRET_KEY"]
+	secretKeyBytes, ok := out.Data["SECRET_KEY"]
 	if !ok {
-		secret_key_bytes = rand.GenerateRandomBytes(32)
+		secretKeyBytes = rand.GenerateRandomBytes(32)
 	}
 
-	internal_token_bytes, ok := out.Data["INTERNAL_TOKEN"]
+	internalTokenBytes, ok := out.Data["INTERNAL_TOKEN"]
 	if !ok {
-		internal_token_bytes = rand.GenerateRandomBytes(64)
+		internalTokenBytes = rand.GenerateRandomBytes(64)
 	}
 
-	secret_key := base64.URLEncoding.EncodeToString(secret_key_bytes)
-	internal_token := base64.URLEncoding.EncodeToString(internal_token_bytes)
+	secretKey := base64.URLEncoding.EncodeToString(secretKeyBytes)
+	internalToken := base64.URLEncoding.EncodeToString(internalTokenBytes)
 
 	secrets := map[string]string{
-		"SECRET_KEY":     secret_key,
-		"INTERNAL_TOKEN": internal_token,
+		"SECRET_KEY":     secretKey,
+		"INTERNAL_TOKEN": internalToken,
 	}
-	cfg, err := createGiteaConfig(s.p, secrets)
+	cfg, err := createGiteaConfig(s.proj, secrets)
 
 	if err != nil {
 		return nil, err
@@ -72,7 +79,7 @@ func (s *GiteaSecretSyncer) T(in runtime.Object) (runtime.Object, error) {
 
 	var buf bytes.Buffer
 	if _, err := cfg.WriteTo(&buf); err != nil {
-		log.Error(err, "unable to load existing Gitea settings", "project", s.p.Name)
+		log.Error(err, "unable to load existing Gitea settings", "project", s.proj.Name)
 	}
 
 	secrets["app.ini"] = buf.String()
@@ -81,10 +88,9 @@ func (s *GiteaSecretSyncer) T(in runtime.Object) (runtime.Object, error) {
 	return out, nil
 }
 
-func (s *GiteaSecretSyncer) GetErrorEventReason(err error) EventReason {
+func (s *giteaSecretSyncer) GetErrorEventReason(err error) EventReason {
 	if err == nil {
 		return GiteaSecretUpdated
-	} else {
-		return GiteaSecretFailed
 	}
+	return GiteaSecretFailed
 }

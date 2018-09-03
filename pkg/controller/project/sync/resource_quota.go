@@ -37,7 +37,7 @@ var (
 // resourceQuotaSyncer defines the Syncer for ResourceQuota
 type resourceQuotaSyncer struct {
 	scheme   *runtime.Scheme
-	p        *dashboardv1alpha1.Project
+	proj     *dashboardv1alpha1.Project
 	key      types.NamespacedName
 	existing *corev1.ResourceQuota
 }
@@ -47,7 +47,7 @@ func NewResourceQuotaSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) Int
 	return &resourceQuotaSyncer{
 		scheme:   r,
 		existing: &corev1.ResourceQuota{},
-		p:        p,
+		proj:     p,
 		key:      p.GetResourceQuotaKey(),
 	}
 }
@@ -74,7 +74,7 @@ func defaultOrMaxValue(rl corev1.ResourceList, resource corev1.ResourceName) res
 func (s *resourceQuotaSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.ResourceQuota)
 
-	out.Labels = s.p.GetDefaultLabels()
+	out.Labels = s.proj.GetDefaultLabels()
 
 	out.Spec = corev1.ResourceQuotaSpec{
 		Hard: corev1.ResourceList{
@@ -86,7 +86,7 @@ func (s *resourceQuotaSyncer) T(in runtime.Object) (runtime.Object, error) {
 		},
 	}
 
-	err := controllerutil.SetControllerReference(s.p, out, s.scheme)
+	err := controllerutil.SetControllerReference(s.proj, out, s.scheme)
 	if err != nil {
 		return nil, err
 	}

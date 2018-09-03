@@ -20,10 +20,7 @@ import (
 	"context"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/presslabs/dashboard/pkg/controller/project/sync"
 	corev1 "k8s.io/api/core/v1"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -35,6 +32,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/controller/project/sync"
 )
 
 var log = logf.Log.WithName("project-controller")
@@ -118,8 +118,8 @@ const (
 // +kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Project instance
-	instance := &dashboardv1alpha1.Project{}
-	err := r.Get(context.TODO(), request.NamespacedName, instance)
+	project := &dashboardv1alpha1.Project{}
+	err := r.Get(context.TODO(), request.NamespacedName, project)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
@@ -131,14 +131,14 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	syncers := []sync.Interface{
-		sync.NewNamespaceSyncer(instance, r.scheme),
-		sync.NewResourceQuotaSyncer(instance, r.scheme),
-		sync.NewGiteaSecretSyncer(instance, r.scheme),
-		sync.NewGiteaPVCSyncer(instance, r.scheme),
-		sync.NewGiteaDeploymentSyncer(instance, r.scheme),
-		sync.NewGiteaServiceSyncer(instance, r.scheme),
-		sync.NewGiteaIngressSyncer(instance, r.scheme),
-		sync.NewPrometheusSyncer(instance, r.scheme),
+		sync.NewNamespaceSyncer(project, r.scheme),
+		sync.NewResourceQuotaSyncer(project, r.scheme),
+		sync.NewGiteaSecretSyncer(project, r.scheme),
+		sync.NewGiteaPVCSyncer(project, r.scheme),
+		sync.NewGiteaDeploymentSyncer(project, r.scheme),
+		sync.NewGiteaServiceSyncer(project, r.scheme),
+		sync.NewGiteaIngressSyncer(project, r.scheme),
+		sync.NewPrometheusSyncer(project, r.scheme),
 	}
 
 	for _, s := range syncers {
@@ -149,15 +149,15 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 		op, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
 		reason := string(s.GetErrorEventReason(err))
 
-		log.Info(string(op), "key", key.String(), "kind", existing.GetObjectKind().GroupVersionKind().Kind)
+		log.Info(string(op), "key", key, "kind", existing.GetObjectKind().GroupVersionKind().Kind)
 
 		if err != nil {
 			log.Error(err, "unable to run syncer")
-			r.recorder.Eventf(instance, eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)
+			r.recorder.Eventf(project, eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)
 			return reconcile.Result{}, err
 		}
 		if op != controllerutil.OperationNoop {
-			r.recorder.Eventf(instance, eventNormal, reason, "%T %s/%s %s successfully", existing, key.Namespace, key.Name, op)
+			r.recorder.Eventf(project, eventNormal, reason, "%T %s/%s %s successfully", existing, key.Namespace, key.Name, op)
 		}
 	}
 

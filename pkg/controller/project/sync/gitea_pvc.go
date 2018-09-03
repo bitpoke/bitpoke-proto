@@ -18,52 +18,58 @@ import (
 )
 
 const (
-	GiteaPVCFailed  EventReason = "GiteaPVCFailed"
+	// GiteaPVCFailed is the event reason for a failed Gitea PVC reconcile
+	GiteaPVCFailed EventReason = "GiteaPVCFailed"
+	// GiteaPVCUpdated is the event reason for a successful Gitea PVC reconcile
 	GiteaPVCUpdated EventReason = "GiteaPVCUpdated"
 )
 
-type GiteaPVCSyncer struct {
+type giteaPVCSyncer struct {
 	scheme   *runtime.Scheme
-	p        *dashboardv1alpha1.Project
+	proj     *dashboardv1alpha1.Project
 	key      types.NamespacedName
 	existing *corev1.PersistentVolumeClaim
 }
 
-func NewGiteaPVCSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) *GiteaPVCSyncer {
-	return &GiteaPVCSyncer{
+// NewGiteaPVCSyncer returns a new sync.Interface for reconciling Gitea PVC
+func NewGiteaPVCSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) Interface {
+	return &giteaPVCSyncer{
 		scheme:   r,
 		existing: &corev1.PersistentVolumeClaim{},
-		p:        p,
+		proj:     p,
 		key:      p.GetGiteaPVCKey(),
 	}
 }
 
-func (s *GiteaPVCSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *GiteaPVCSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+// GetKey returns the giteaPVCSyncer key through which an existing object may be identified
+func (s *giteaPVCSyncer) GetKey() types.NamespacedName { return s.key }
 
-func (s *GiteaPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
+// GetExistingObjectPlaceholder returns a Placeholder object if an existing one is not found
+func (s *giteaPVCSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+
+// T is the transform function used to reconcile the Gitea PVC
+func (s *giteaPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.PersistentVolumeClaim)
-	out.Labels = GetGiteaPodLabels(s.p)
+	out.Labels = GetGiteaPodLabels(s.proj)
 
 	out.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
 		corev1.ReadWriteOnce,
 	}
 	out.Spec.Selector = &metav1.LabelSelector{
-		MatchLabels: GetGiteaLabels(s.p),
+		MatchLabels: GetGiteaLabels(s.proj),
 	}
 	out.Spec.Resources = corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{
-			"storage": resource.MustParse("2Gi"),
+			"storage": resource.MustParse(giteaRequestsStorage),
 		},
 	}
 
 	return out, nil
 }
 
-func (s *GiteaPVCSyncer) GetErrorEventReason(err error) EventReason {
+func (s *giteaPVCSyncer) GetErrorEventReason(err error) EventReason {
 	if err == nil {
 		return GiteaPVCUpdated
-	} else {
-		return GiteaPVCFailed
 	}
+	return GiteaPVCFailed
 }

@@ -14,30 +14,14 @@ limitations under the License.
 package sync_test
 
 import (
-	"testing"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
-	"github.com/presslabs/dashboard/pkg/apis"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/controller/project/sync"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/client-go/kubernetes/scheme"
 )
-
-func TestProjectResourceQuota(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Project ResourceQuota Suite", []Reporter{envtest.NewlineReporter{}})
-}
-
-var rts = scheme.Scheme
-
-var _ = BeforeSuite(func() {
-	apis.AddToScheme(rts)
-})
 
 var defaultQuotaValues = corev1.ResourceList{
 	corev1.ResourceRequestsCPU:    resource.MustParse("4"),

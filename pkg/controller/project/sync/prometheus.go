@@ -36,7 +36,7 @@ const (
 // prometheusSyncer defines the Syncer for Prometheus
 type prometheusSyncer struct {
 	scheme   *runtime.Scheme
-	p        *dashboardv1alpha1.Project
+	proj     *dashboardv1alpha1.Project
 	key      types.NamespacedName
 	existing *monitoringv1.Prometheus
 }
@@ -64,7 +64,7 @@ func NewPrometheusSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) Interf
 	return &prometheusSyncer{
 		scheme:   r,
 		existing: &monitoringv1.Prometheus{},
-		p:        p,
+		proj:     p,
 		key:      p.GetPrometheusKey(),
 	}
 }
@@ -78,13 +78,13 @@ func (s *prometheusSyncer) GetExistingObjectPlaceholder() runtime.Object { retur
 // T is the transform function used to reconcile the Prometheus object
 func (s *prometheusSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*monitoringv1.Prometheus)
-	out.Labels = GetPrometheusLabels(s.p)
+	out.Labels = GetPrometheusLabels(s.proj)
 
 	out.Spec = monitoringv1.PrometheusSpec{
 		ScrapeInterval:     defaultScrapeInterval,
 		EvaluationInterval: defaultEvaluationInterval,
 		ServiceMonitorSelector: &metav1.LabelSelector{
-			MatchLabels: s.p.GetProjectLabel(),
+			MatchLabels: s.proj.GetProjectLabel(),
 		},
 		Version:   prometheusVersion,
 		BaseImage: prometheusBaseImage,

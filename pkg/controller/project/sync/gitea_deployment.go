@@ -20,53 +20,48 @@ import (
 )
 
 const (
-	GiteaFailed  EventReason = "GiteaFailed"
-	GiteaUpdated EventReason = "GiteaUpdated"
+	// GiteaDeploymentFailed is the event reason for a failed Gitea Deployment reconcile
+	GiteaDeploymentFailed EventReason = "GiteaDeploymentFailed"
+	// GiteaDeploymentUpdated is the event reason for a successful Gitea Deployment reconcile
+	GiteaDeploymentUpdated EventReason = "GiteaDeploymentUpdated"
 )
 
-type GiteaDeploymentSyncer struct {
+type giteaDeploymentSyncer struct {
 	scheme   *runtime.Scheme
-	p        *dashboardv1alpha1.Project
+	proj     *dashboardv1alpha1.Project
 	key      types.NamespacedName
 	existing *appsv1.Deployment
 }
 
-func NewGiteaDeploymentSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) *GiteaDeploymentSyncer {
-	return &GiteaDeploymentSyncer{
+// NewGiteaDeploymentSyncer returns a new sync.Interface for reconciling Gitea Deployment
+func NewGiteaDeploymentSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) Interface {
+	return &giteaDeploymentSyncer{
 		scheme:   r,
 		existing: &appsv1.Deployment{},
-		p:        p,
+		proj:     p,
 		key:      p.GetGiteaDeploymentKey(),
 	}
 }
 
-func (s *GiteaDeploymentSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *GiteaDeploymentSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+// GetKey returns the giteaDeploymentSyncer key through which an existing object may be identified
+func (s *giteaDeploymentSyncer) GetKey() types.NamespacedName { return s.key }
 
-func (s *GiteaDeploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
+// GetExistingObjectPlaceholder returns a Placeholder object if an existing one is not found
+func (s *giteaDeploymentSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+
+// T is the transform function used to reconcile the Gitea Deployment
+func (s *giteaDeploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*appsv1.Deployment)
 
-	out.Labels = GetGiteaPodLabels(s.p)
+	out.Labels = GetGiteaPodLabels(s.proj)
 
-	replicas := int32(giteaReplicas)
-	maxUnavailable := intstr.FromInt(giteaMaxUnavailable)
-	maxSurge := intstr.FromInt(giteaMaxSurge)
-
-	out.Spec.Replicas = &replicas
-	out.Spec.Strategy = appsv1.DeploymentStrategy{
-		Type: "RollingUpdate",
-		RollingUpdate: &appsv1.RollingUpdateDeployment{
-			MaxUnavailable: &maxUnavailable,
-			MaxSurge:       &maxSurge,
-		},
-	}
 	out.Spec.Selector = &metav1.LabelSelector{
-		MatchLabels: GetGiteaLabels(s.p),
+		MatchLabels: GetGiteaLabels(s.proj),
 	}
 
 	out.Spec.Template = corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: GetGiteaPodLabels(s.p),
+			Labels: GetGiteaPodLabels(s.proj),
 		},
 		Spec: corev1.PodSpec{
 			Volumes: []corev1.Volume{
@@ -74,7 +69,7 @@ func (s *GiteaDeploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
 					Name: "config",
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
-							SecretName: s.p.GetGiteaSecretName(),
+							SecretName: s.proj.GetGiteaSecretName(),
 						},
 					},
 				},
@@ -82,7 +77,7 @@ func (s *GiteaDeploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
 					Name: "data",
 					VolumeSource: corev1.VolumeSource{
 						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: s.p.GetGiteaPVCName(),
+							ClaimName: s.proj.GetGiteaPVCName(),
 						},
 					},
 				},
@@ -95,18 +90,18 @@ func (s *GiteaDeploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
 					Ports: []corev1.ContainerPort{
 						{
 							Name:          "http",
-							ContainerPort: int32(giteaHTTPInternalPort),
+							ContainerPort: int32(giteaHTTPPort),
 						},
 						{
 							Name:          "ssh",
-							ContainerPort: 22,
+							ContainerPort: giteaSSHPort,
 						},
 					},
 					LivenessProbe: &corev1.Probe{
 						Handler: corev1.Handler{
 							HTTPGet: &corev1.HTTPGetAction{
 								Path: "/",
-								Port: intstr.FromInt(giteaHTTPInternalPort),
+								Port: intstr.FromInt(giteaHTTPPort),
 							},
 						},
 						InitialDelaySeconds: 30,
@@ -115,15 +110,15 @@ func (s *GiteaDeploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
 						Handler: corev1.Handler{
 							HTTPGet: &corev1.HTTPGetAction{
 								Path: "/",
-								Port: intstr.FromInt(giteaHTTPInternalPort),
+								Port: intstr.FromInt(giteaHTTPPort),
 							},
 						},
 						InitialDelaySeconds: 30,
 					},
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{
-							"memory": resource.MustParse("512Mi"),
-							"cpu":    resource.MustParse("100m"),
+							"memory": resource.MustParse(giteaRequestsMemory),
+							"cpu":    resource.MustParse(giteaRequestsCPU),
 						},
 					},
 					VolumeMounts: []corev1.VolumeMount{
@@ -145,10 +140,9 @@ func (s *GiteaDeploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
 	return out, nil
 }
 
-func (s *GiteaDeploymentSyncer) GetErrorEventReason(err error) EventReason {
+func (s *giteaDeploymentSyncer) GetErrorEventReason(err error) EventReason {
 	if err == nil {
-		return GiteaUpdated
-	} else {
-		return GiteaFailed
+		return GiteaDeploymentUpdated
 	}
+	return GiteaDeploymentFailed
 }

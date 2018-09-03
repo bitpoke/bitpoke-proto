@@ -17,49 +17,55 @@ import (
 )
 
 const (
-	GiteaServiceFailed  EventReason = "GiteaServiceFailed"
+	// GiteaServiceFailed is the event reason for a failed Gitea Service reconcile
+	GiteaServiceFailed EventReason = "GiteaServiceFailed"
+	// GiteaServiceUpdated is the event reason for a successful Gitea Service reconcile
 	GiteaServiceUpdated EventReason = "GiteaServiceUpdated"
 )
 
-type GiteaServiceSyncer struct {
+type giteaServiceSyncer struct {
 	scheme   *runtime.Scheme
-	p        *dashboardv1alpha1.Project
+	proj     *dashboardv1alpha1.Project
 	key      types.NamespacedName
 	existing *corev1.Service
 }
 
-func NewGiteaServiceSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) *GiteaServiceSyncer {
-	return &GiteaServiceSyncer{
+// NewGiteaServiceSyncer returns a new sync.Interface for reconciling Gitea Service
+func NewGiteaServiceSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) Interface {
+	return &giteaServiceSyncer{
 		scheme:   r,
 		existing: &corev1.Service{},
-		p:        p,
+		proj:     p,
 		key:      p.GetGiteaServiceKey(),
 	}
 }
 
-func (s *GiteaServiceSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *GiteaServiceSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+// GetKey returns the giteaServiceSyncer key through which an existing object may be identified
+func (s *giteaServiceSyncer) GetKey() types.NamespacedName { return s.key }
 
-func (s *GiteaServiceSyncer) T(in runtime.Object) (runtime.Object, error) {
+// GetExistingObjectPlaceholder returns a Placeholder object if an existing one is not found
+func (s *giteaServiceSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+
+// T is the transform function used to reconcile the Gitea Service
+func (s *giteaServiceSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.Service)
-	out.Labels = GetGiteaPodLabels(s.p)
+	out.Labels = GetGiteaPodLabels(s.proj)
 
 	out.Spec.Ports = []corev1.ServicePort{
 		{
 			Name:       "http",
 			Port:       int32(80),
-			TargetPort: intstr.FromInt(giteaHTTPInternalPort),
+			TargetPort: intstr.FromInt(giteaHTTPPort),
 		},
 	}
-	out.Spec.Selector = GetGiteaLabels(s.p)
+	out.Spec.Selector = GetGiteaLabels(s.proj)
 
 	return out, nil
 }
 
-func (s *GiteaServiceSyncer) GetErrorEventReason(err error) EventReason {
+func (s *giteaServiceSyncer) GetErrorEventReason(err error) EventReason {
 	if err == nil {
 		return GiteaServiceUpdated
-	} else {
-		return GiteaServiceFailed
 	}
+	return GiteaServiceFailed
 }

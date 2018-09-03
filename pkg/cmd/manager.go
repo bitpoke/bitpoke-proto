@@ -30,9 +30,10 @@ import (
 
 // controllerManagerCmd represents the controllerManager command
 var controllerManagerCmd = &cobra.Command{
-	Use:   "controller-manager",
-	Short: "Start the Presslabs Dashboard Kubernetes controllers",
-	Run:   runControllerManager,
+	Use:     "controller-manager",
+	Short:   "Start the Presslabs Dashboard Kubernetes controllers",
+	Run:     runControllerManager,
+	PreRunE: func(cmd *cobra.Command, args []string) error { return options.Validate() },
 }
 
 var runControllerManager = func(cmd *cobra.Command, args []string) {
@@ -67,5 +68,5 @@ var runControllerManager = func(cmd *cobra.Command, args []string) {
 
 func init() {
 	rootCmd.AddCommand(controllerManagerCmd)
-	options.AddToFlagSet(apiserverCmd.Flags())
+	options.AddToFlagSet(controllerManagerCmd.Flags())
 }

@@ -5,6 +5,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
 )
 
 // GetNamespaceName returns the name of the project's namespace
@@ -19,13 +21,14 @@ func (p *Project) GetNamespaceKey() types.NamespacedName {
 	}
 }
 
+// GetOrganizationName returns the name of the organization which the project belongs too
 func (p *Project) GetOrganizationName() string {
 	return p.Namespace
 }
 
-// GetNamespaceName returns the name of the project's namespace
-func (p *Project) GetProjectNamespacedName() string {
-	return fmt.Sprintf("%s.%s", p.Name, p.GetOrganizationName())
+// GetProjectDomainName returns the DNS domain name for a project
+func (p *Project) GetProjectDomainName() string {
+	return fmt.Sprintf("%s-%s", p.Name, p.Namespace)
 }
 
 // GetProjectLabel returns a label that should be applied on objects belonging to a
@@ -88,7 +91,7 @@ func (p *Project) GetGiteaSecretKey() types.NamespacedName {
 
 // GetGiteaPVCName returns the name of the Gitea PVC
 func (p *Project) GetGiteaPVCName() string {
-	return "gitea"
+	return "gitea" // nolint
 }
 
 // GetGiteaPVCKey returns the key through which the Gitea Secret may be identified
@@ -98,17 +101,17 @@ func (p *Project) GetGiteaPVCKey() types.NamespacedName {
 
 // GetGiteaDeploymentName returns the name of the Gitea Deployment
 func (p *Project) GetGiteaDeploymentName() string {
-	return "gitea"
+	return "gitea" // nolint
 }
 
-// GetGiteaDeploymentName returns the key through which the Gitea Deployment may be identified
+// GetGiteaDeploymentKey returns the key through which the Gitea Deployment may be identified
 func (p *Project) GetGiteaDeploymentKey() types.NamespacedName {
 	return types.NamespacedName{Name: p.GetGiteaDeploymentName(), Namespace: p.GetNamespaceName()}
 }
 
 // GetGiteaServiceName returns the name of the Gitea Service
 func (p *Project) GetGiteaServiceName() string {
-	return "gitea"
+	return "gitea" // nolint
 }
 
 // GetGiteaServiceKey returns the key through which the Gitea Service may be identified
@@ -116,12 +119,17 @@ func (p *Project) GetGiteaServiceKey() types.NamespacedName {
 	return types.NamespacedName{Name: p.GetGiteaServiceName(), Namespace: p.GetNamespaceName()}
 }
 
-// GetGiteaServiceName returns the name of the Gitea Service
+// GetGiteaIngressName returns the name of the Gitea Service
 func (p *Project) GetGiteaIngressName() string {
-	return "gitea"
+	return "gitea" // nolint
 }
 
-// GetGiteaServiceKey returns the key through which the Gitea Service may be identified
+// GetGiteaIngressKey returns the key through which the Gitea Service may be identified
 func (p *Project) GetGiteaIngressKey() types.NamespacedName {
 	return types.NamespacedName{Name: p.GetGiteaIngressName(), Namespace: p.GetNamespaceName()}
+}
+
+// GetGiteaDomain returns the project Git Repository URL Path
+func (p *Project) GetGiteaDomain() string {
+	return fmt.Sprintf("%s.%s", p.GetProjectDomainName(), options.GitBaseDomainURL)
 }

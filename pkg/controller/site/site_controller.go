@@ -160,7 +160,7 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 		op, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
 		reason := string(s.GetErrorEventReason(err))
 
-		log.Info(string(op), "key", key.String(), "kind", existing.GetObjectKind().GroupVersionKind().Kind)
+		log.Info(string(op), "key", key, "kind", existing.GetObjectKind().GroupVersionKind().Kind)
 
 		if err != nil {
 			r.recorder.Eventf(s.GetInstance(), eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)
