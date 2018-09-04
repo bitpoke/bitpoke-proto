@@ -42,7 +42,7 @@ func NewClient(endpoint string) (*Client, error) {
 	return c, c.updateCache()
 }
 
-// Client fetchs and maintains a cache of keys from a public endpoint.
+// Client fetches and maintains a cache of keys from a public endpoint.
 type Client struct {
 	endpoint string
 	keys     cache
