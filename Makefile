@@ -10,9 +10,6 @@ GOARCH ?= amd64
 PATH := $(BINDIR):$(PATH)
 SHELL := env 'PATH=$(PATH)' /bin/sh
 
-NODE_MODULES ?= $(PWD)/app/node_modules
-REACT        := $(NODE_MODULES)/.bin/react-scripts-ts
-
 all: test dashboard
 
 # Run tests
@@ -23,20 +20,12 @@ test: generate manifests
 		./pkg/... ./cmd/...
 
 # Build dashboard binary
-dashboard: generate fmt vet
+build: generate fmt vet
 	go build -o bin/dashboard github.com/presslabs/dashboard/cmd/dashboard
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
 	go run ./cmd/dashboard/main.go
-
-# Run the development server for the frontend
-run-app:
-	cd app && NODE_ENV=development BROWSER=none $(REACT) start
-
-# Install CRDs into a cluster
-install: manifests
-	kubectl apply -f config/crds
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests chart
