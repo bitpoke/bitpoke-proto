@@ -8,7 +8,7 @@ GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH ?= amd64
 
 PATH := $(BINDIR):$(PATH)
-SHELL := env PATH=$(PATH) /bin/sh
+SHELL := env 'PATH=$(PATH)' /bin/sh
 
 all: test dashboard
 
