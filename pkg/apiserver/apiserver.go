@@ -18,9 +18,8 @@ package apiserver
 
 import (
 	"context"
-	"fmt"
+	"net"
 	"net/http"
-
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
@@ -52,20 +51,37 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 		wrappedServer.ServeHTTP(resp, req)
 	}
 
-	port := options.GRPCPort
 	httpServer := http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
+		Addr:    options.HTTPAddr,
 		Handler: http.HandlerFunc(handler),
 	}
+
+	errChan := make(chan error)
+
+	lis, err := net.Listen("tcp", options.GRPCAddr)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		log.Info("gRPC Server listening", "address", options.GRPCAddr)
+		err := grpcServer.Serve(lis)
+		errChan <- err
+	}()
+
+	go func() {
+		log.Info("gRPC Web Server listening", "address", options.HTTPAddr)
+		err := httpServer.ListenAndServe()
+		errChan <- err
+	}()
 
 	go func() {
 		<-stop
 		httpServer.Shutdown(context.TODO())
+		lis.Close()
 	}()
 
-	log.Info("Server listening", "port", port)
-
-	return httpServer.ListenAndServe()
+	return <-errChan
 }
 
 // AddToManager adds all Controllers to the Manager
