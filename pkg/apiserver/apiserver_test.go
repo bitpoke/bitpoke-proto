@@ -18,7 +18,6 @@ package apiserver_test
 
 import (
 	"context"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,8 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
-
-const timeout = time.Second * 5
 
 var _ = Describe("API server", func() {
 	var (
@@ -61,13 +58,12 @@ var _ = Describe("API server", func() {
 	})
 
 	AfterEach(func() {
-		time.Sleep(1 * time.Second)
 		close(stop)
 		conn.Close()
 	})
 
-	Describe("...", func() {
-		It("lists the projects", func() {
+	Describe("Projects Endpoints", func() {
+		It("allows listing", func() {
 			instance := &dashboardv1alpha1.Project{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "proj-x",
