@@ -19,28 +19,18 @@ package apiserver
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"errors"
 	"net/http"
-	"os"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-
+	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	project "github.com/presslabs/dashboard/pkg/apiserver/projects/v1"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
-	jose "github.com/square/go-jose"
-	"github.com/square/go-jose/jwt"
-
-	"github.com/presslabs/dashboard/pkg/apiserver/jwks"
+	"google.golang.org/grpc"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 type grpcRunner struct {
@@ -51,8 +41,8 @@ var log = logf.Log.WithName("apiserver")
 
 func (s *grpcRunner) Start(stop <-chan struct{}) error {
 	grpcServer := grpc.NewServer(
-		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(handleAuthentication)),
-		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(handleAuthentication)),
+		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(middleware.Auth)),
+		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(middleware.Auth)),
 	)
 	project.RegisterProjectsServer(grpcServer, project.NewProjectServer(s.client))
 
@@ -82,57 +72,4 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 func AddToManager(m manager.Manager) error {
 	m.Add(&grpcRunner{client: m.GetClient()})
 	return nil
-}
-
-func handleAuthentication(ctx context.Context) (context.Context, error) {
-	token, err := grpc_auth.AuthFromMD(ctx, "bearer")
-	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "Invalid Auth Token: %v", err)
-	}
-
-	parsedToken, err := jwt.ParseSigned(token)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "Invalid Auth Token: %v", err)
-	}
-
-	validatedToken, err := validateToken(parsedToken)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "Invalid Auth Token: %v", err)
-	}
-
-	newCtx := context.WithValue(ctx, "token", validatedToken)
-	return newCtx, nil
-}
-
-func validateToken(token *jwt.JSONWebToken) (*jwt.JSONWebToken, error) {
-	audience := os.Getenv("AUTH0_CLIENT_ID")
-	issuer := fmt.Sprintf("https://%s/", os.Getenv("AUTH0_DOMAIN"))
-	alg := jose.RS256
-	expectedClaims := jwt.Expected{Issuer: issuer, Audience: []string{audience}}
-
-	if len(token.Headers) < 1 {
-		return nil, errors.New("No headers in the token")
-	}
-
-	header := token.Headers[0]
-
-	if header.Algorithm != string(alg) {
-		return nil, errors.New("Invalid algorithm")
-	}
-
-	jwksClient, _ := jwks.NewClient(fmt.Sprintf("%s.well-known/jwks.json", issuer))
-	key, err := jwksClient.GetKey(header.KeyID)
-	if err != nil {
-		log.Error(err, "Cannot get key")
-	}
-
-	claims := jwt.Claims{}
-	if err = token.Claims(key, &claims); err != nil {
-		log.Error(err, "cannot get claims from token")
-		return nil, err
-	}
-
-	expected := expectedClaims.WithTime(time.Now())
-	err = claims.Validate(expected)
-	return token, err
 }
