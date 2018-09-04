@@ -1,5 +1,9 @@
 syntax = "proto3";
 
+package presslabs.dashboard.v1;
+
+option go_package = "github.com/presslabs/dashboard/pkg/api/core/v1";
+
 message Project {
   string id = 1;
   string name = 2;

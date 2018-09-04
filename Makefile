@@ -67,11 +67,9 @@ vet:
 # Generate code
 generate:
 	go generate ./pkg/... ./cmd/...
-	mkdir -p ./app/src/proto
-	protoc -I proto proto/project/v1/project.proto \
-	--go_out=plugins=grpc:pkg/apiserver \
-	--ts_out=service=true:./app/src/proto \
-	--js_out=import_style=commonjs,binary:./app/src/proto
+	protoc -I ./proto \
+	--go_out=plugins=grpc:$(GOPATH)/src \
+	presslabs/dashboard/core/v1/project.proto
 
 # Build the docker image
 images: test

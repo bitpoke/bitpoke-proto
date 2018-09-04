@@ -9,8 +9,8 @@ import { reduce } from 'lodash'
 import { watchChannel } from '../utils'
 import { RootState, auth } from '../redux'
 
-import { ListRequest, Project } from '../proto/project/v1/project_pb'
-import { Projects } from '../proto/project/v1/project_pb_service'
+import { ListRequest, Project } from '../proto/presslabs/dashboard/core/v1/project_pb'
+import { Projects } from '../proto/presslabs/dashboard/core/v1/project_pb_service'
 
 const host: string = process.env.REACT_API_URL || 'http://localhost:8080'
 

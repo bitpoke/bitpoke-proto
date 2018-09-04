@@ -1,5 +1,5 @@
-// package: 
-// file: project/v1/project.proto
+// package: presslabs.dashboard.v1
+// file: presslabs/dashboard/core/v1/project.proto
 
 import * as jspb from "google-protobuf";
 

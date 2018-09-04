@@ -24,8 +24,8 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	projectv1 "github.com/presslabs/dashboard/pkg/api/core/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
-	project "github.com/presslabs/dashboard/pkg/apiserver/projects/v1"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 	"google.golang.org/grpc"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,7 +43,7 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(middleware.Auth)),
 		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(middleware.Auth)),
 	)
-	project.RegisterProjectsServer(grpcServer, project.NewProjectServer(s.client))
+	projectv1.RegisterProjectsServer(grpcServer, projectv1.NewProjectServer(s.client))
 
 	wrappedServer := grpcweb.WrapServer(grpcServer)
 

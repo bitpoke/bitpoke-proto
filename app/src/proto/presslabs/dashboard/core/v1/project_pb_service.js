@@ -1,12 +1,12 @@
-// package: 
-// file: project/v1/project.proto
+// package: presslabs.dashboard.v1
+// file: presslabs/dashboard/core/v1/project.proto
 
-var project_v1_project_pb = require("../../project/v1/project_pb");
+var presslabs_dashboard_core_v1_project_pb = require("../../../../presslabs/dashboard/core/v1/project_pb");
 var grpc = require("grpc-web-client").grpc;
 
 var Projects = (function () {
   function Projects() {}
-  Projects.serviceName = "Projects";
+  Projects.serviceName = "presslabs.dashboard.v1.Projects";
   return Projects;
 }());
 
@@ -15,8 +15,8 @@ Projects.List = {
   service: Projects,
   requestStream: false,
   responseStream: true,
-  requestType: project_v1_project_pb.ListRequest,
-  responseType: project_v1_project_pb.Project
+  requestType: presslabs_dashboard_core_v1_project_pb.ListRequest,
+  responseType: presslabs_dashboard_core_v1_project_pb.Project
 };
 
 exports.Projects = Projects;
