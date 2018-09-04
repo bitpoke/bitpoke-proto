@@ -17,53 +17,43 @@ limitations under the License.
 package main
 
 import (
-	"os"
+	"log"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 	"sigs.k8s.io/controller-tools/test/pkg/apis"
 	"sigs.k8s.io/controller-tools/test/pkg/controller"
 )
 
-var log = logf.Log.WithName("dashboard")
-
 func main() {
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Error(err, "unable to get configuration")
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{})
 	if err != nil {
-		log.Error(err, "unable to create a new manager")
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
-	log.Info("Registering Components.")
+	log.Printf("Registering Components.")
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-		log.Error(err, "unable to register types to scheme")
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr); err != nil {
-		log.Error(err, "unable to setup controllers")
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
-	log.Info("Starting the Cmd.")
+	log.Printf("Starting the Cmd.")
 
 	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Error(err, "unable to start the manager")
-		os.Exit(1)
-	}
+	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
 }

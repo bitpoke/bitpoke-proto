@@ -1,0 +1,38 @@
+{
+  "extends": ["tslint:recommended", "tslint-react", "tslint-react-recommended", "tslint-config-prettier", "tslint-config-airbnb"],
+  "rules": {
+    "indent": [true, "spaces", 4],
+    "ter-indent": [true, 4, { "SwitchCase": 1 }],
+    "align": [true, "elements", "members", "parameters", "statements"],
+    "no-consecutive-blank-lines": [true, 2],
+
+    "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],
+    "no-unused-variable": false,
+
+    "arrow-parens": [true, "always"],
+    "ter-arrow-parens": [true, "always"],
+
+    "semicolon": [true, "never"],
+    "trailing-comma": [true, {"multiline": "never", "singleline": "never"}],
+    "object-literal-sort-keys": false,
+
+    "ordered-imports": false,
+    "import-name": false,
+    "no-submodule-imports": false,
+
+    "jsx-no-lambda": false,
+
+    "no-console": [true, "warning"],
+    "no-constant-condition": [true, { "checkLoops": false }],
+
+    "interface-over-type-literal": false
+  },
+  "linterOptions": {
+    "exclude": [
+      "src/proto/**/**/*.js",
+      "config/**/*.js",
+      "node_modules/**/*.ts",
+      "coverage/lcov-report/*.js"
+    ]
+  }
+}

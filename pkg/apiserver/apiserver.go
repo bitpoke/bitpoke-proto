@@ -17,12 +17,20 @@ limitations under the License.
 package apiserver
 
 import (
-	"fmt"
+	"context"
+	"net"
 	"net/http"
 
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+
+	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"google.golang.org/grpc"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	projectv1 "github.com/presslabs/dashboard/pkg/api/core/v1"
+	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
@@ -30,11 +38,62 @@ type grpcRunner struct {
 	client client.Client
 }
 
+var log = logf.Log.WithName("apiserver")
+
 func (s *grpcRunner) Start(stop <-chan struct{}) error {
-	return http.ListenAndServe(fmt.Sprintf(":%d", options.GRPCPort), nil)
+	grpcServer := grpc.NewServer(
+		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(middleware.Auth)),
+		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(middleware.Auth)),
+	)
+	projectv1.RegisterProjectsServer(grpcServer, projectv1.NewProjectServer(s.client))
+
+	wrappedServer := grpcweb.WrapServer(grpcServer)
+
+	handler := func(resp http.ResponseWriter, req *http.Request) {
+		wrappedServer.ServeHTTP(resp, req)
+	}
+
+	httpServer := http.Server{
+		Addr:    options.HTTPAddr,
+		Handler: http.HandlerFunc(handler),
+	}
+
+	errChan := make(chan error)
+
+	lis, err := net.Listen("tcp", options.GRPCAddr)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		log.Info("gRPC Server listening", "address", options.GRPCAddr)
+		err := grpcServer.Serve(lis)
+		errChan <- err
+	}()
+
+	go func() {
+		log.Info("gRPC Web Server listening", "address", options.HTTPAddr)
+		err := httpServer.ListenAndServe()
+		errChan <- err
+	}()
+
+	go func() {
+		<-stop
+		err := httpServer.Shutdown(context.TODO())
+		if err != nil {
+			log.Error(err, "unable to shutdown HTTP server properly")
+		}
+
+		err = lis.Close()
+		if err != nil {
+			log.Error(err, "unable to close gRPC server properly")
+		}
+	}()
+
+	return <-errChan
 }
 
-// AddToManager adds the API server to the controller manager instance
+// AddToManager adds all Controllers to the Manager
 func AddToManager(m manager.Manager) error {
 	return m.Add(&grpcRunner{client: m.GetClient()})
 }

@@ -200,6 +200,26 @@
   version = "v0.1.0"
 
 [[projects]]
+  digest = "1:80f394537967d97fcc0da30762843805c8aaea7d208c43c99d1fe988a8888f0d"
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
+  version = "v1.4.0"
+
+[[projects]]
+  digest = "1:462966563db35f9fae6bacf677b75f7c8088220f97fa3f5d1d092918cd164c86"
+  name = "github.com/grpc-ecosystem/go-grpc-middleware"
+  packages = [
+    ".",
+    "auth",
+    "util/metautils",
+  ]
+  pruneopts = "T"
+  revision = "c250d6563d4d4c20252cd865923440e829844f4e"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:cf296baa185baae04a9a7004efee8511d08e2f5f51d4cbe5375da89722d681db"
   name = "github.com/hashicorp/golang-lru"
   packages = [
@@ -237,6 +257,14 @@
   pruneopts = "T"
   revision = "9f23e2d6bd2a77f959b2bf6acdbefd708a83a4a4"
   version = "v0.3.6"
+
+[[projects]]
+  digest = "1:a66bc70321b28c751ba2a0eb46e958004b8a3bfb0bc2ee4aab843ad2198df709"
+  name = "github.com/improbable-eng/grpc-web"
+  packages = ["go/grpcweb"]
+  pruneopts = "T"
+  revision = "72eb701d6f320ca324b3347c7925a720b553eae5"
+  version = "0.6.2"
 
 [[projects]]
   digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
@@ -365,6 +393,14 @@
   revision = "9b10e5d212508749d705a0b8691020859a517148"
 
 [[projects]]
+  digest = "1:6cae6970d70fc5fe75bf83c48ee33e9c4c561a62d0b033254bee8dd5942b815a"
+  name = "github.com/rs/cors"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "3fb1b69b103a84de38a19c3c6ec073dd6caa4d3f"
+  version = "v1.5.0"
+
+[[projects]]
   digest = "1:7e4d5394f3d5d87eff2b1b4d8a8756bbabbe670b28db7cb3c6878d7ace89605f"
   name = "github.com/spf13/afero"
   packages = [
@@ -390,6 +426,17 @@
   pruneopts = "T"
   revision = "9a97c102cda95a86cec2345a6f09f55a939babf5"
   version = "v1.0.2"
+
+[[projects]]
+  digest = "1:0e2f5bcb5e3c9a1e889fa84b49571df48c67b7047da64343cc88c078f77ea538"
+  name = "github.com/square/go-jose"
+  packages = [
+    ".",
+    "jwt",
+  ]
+  pruneopts = "T"
+  revision = "8254d6c783765f38c8675fae4427a1fe73fbd09d"
+  version = "v2.1.8"
 
 [[projects]]
   digest = "1:365b8ecb35a5faf5aa0ee8d798548fc9cd4200cb95d77a5b0b285ac881bae499"
@@ -425,7 +472,12 @@
 [[projects]]
   digest = "1:de07ac8b688161274a5b8a3c8f5226e6bf3a17681f9aadb7d382dfa565cf5f14"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  packages = [
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "pbkdf2",
+    "ssh/terminal",
+  ]
   pruneopts = "T"
   revision = "4ec37c66abab2c7e02ae775328b2ff001c3f025a"
 
@@ -442,7 +494,9 @@
     "http2",
     "http2/hpack",
     "idna",
+    "internal/timeseries",
     "lex/httplex",
+    "trace",
   ]
   pruneopts = "T"
   revision = "640f4622ab692b87c2f3a94265e6f579fe38263d"
@@ -544,6 +598,49 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:e43f1cb3f488a0c2be85939c2a594636f60b442a12a196c778bd2d6c9aca3df7"
+  name = "google.golang.org/genproto"
+  packages = ["googleapis/rpc/status"]
+  pruneopts = "T"
+  revision = "11092d34479b07829b72e10713b159248caf5dad"
+
+[[projects]]
+  digest = "1:a985c4820889930a08c19181d2aeb1c57ab1929bce7a66b781109dd1db8fb433"
+  name = "google.golang.org/grpc"
+  packages = [
+    ".",
+    "balancer",
+    "balancer/base",
+    "balancer/roundrobin",
+    "codes",
+    "connectivity",
+    "credentials",
+    "encoding",
+    "encoding/proto",
+    "grpclog",
+    "internal",
+    "internal/backoff",
+    "internal/channelz",
+    "internal/envconfig",
+    "internal/grpcrand",
+    "internal/transport",
+    "keepalive",
+    "metadata",
+    "naming",
+    "peer",
+    "resolver",
+    "resolver/dns",
+    "resolver/passthrough",
+    "stats",
+    "status",
+    "tap",
+  ]
+  pruneopts = "T"
+  revision = "32fb0ac620c32ba40a4626ddf94d90d12cce3455"
+  version = "v1.14.0"
+
+[[projects]]
   digest = "1:7fc160b460a6fc506b37fcca68332464c3f2cd57b6e3f111f26c5bbfd2d5518e"
   name = "gopkg.in/fsnotify.v1"
   packages = ["."]
@@ -559,6 +656,18 @@
   pruneopts = "T"
   revision = "d2d2541c53f18d2a059457998ce2876cc8e67cbf"
   version = "v0.9.1"
+
+[[projects]]
+  digest = "1:0e2f5bcb5e3c9a1e889fa84b49571df48c67b7047da64343cc88c078f77ea538"
+  name = "gopkg.in/square/go-jose.v2"
+  packages = [
+    ".",
+    "cipher",
+    "json",
+  ]
+  pruneopts = "T"
+  revision = "8254d6c783765f38c8675fae4427a1fe73fbd09d"
+  version = "v2.1.8"
 
 [[projects]]
   digest = "1:0caa92e17bc0b65a98c63e5bc76a9e844cd5e56493f8fdbb28fad101a16254d9"
@@ -844,11 +953,19 @@
     "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1",
     "github.com/emicklei/go-restful",
     "github.com/go-logr/logr",
+    "github.com/golang/protobuf/proto",
+    "github.com/grpc-ecosystem/go-grpc-middleware/auth",
+    "github.com/improbable-eng/grpc-web/go/grpcweb",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
     "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1",
     "github.com/spf13/cobra",
+    "github.com/spf13/pflag",
+    "github.com/square/go-jose",
+    "github.com/square/go-jose/jwt",
     "golang.org/x/net/context",
+    "google.golang.org/grpc",
+    "google.golang.org/grpc/codes",
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",

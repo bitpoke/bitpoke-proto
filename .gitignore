@@ -18,3 +18,5 @@
 bin/*
 
 chart/dashboard
+.gometalinter-*
+protoc.zip
