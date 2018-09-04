@@ -84,7 +84,7 @@ func (s *memcachedStatefulSetSyncer) GetExistingObjectPlaceholder() runtime.Obje
 func (s *memcachedStatefulSetSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*appsv1.StatefulSet)
 
-	replicas := int32(memcachedReplicas)
+	replicas := memcachedReplicas
 
 	memcachedMemory, e := s.wp.ObjectMeta.Annotations["memcached.provisioner.presslabs.com/memory"]
 	if !e {

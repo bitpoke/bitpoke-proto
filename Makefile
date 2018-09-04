@@ -76,36 +76,14 @@ images: test
 publish:
 	docker push ${IMG}
 
-lint: vet
-	gometalinter --vendor --disable-all --deadline 5m \
-	--enable=vetshadow \
-	--enable=misspell \
-	--enable=structcheck \
-	--enable=golint \
-	--enable=deadcode \
-	--enable=goimports \
-	--enable=errcheck \
-	--enable=varcheck \
-	--enable=goconst \
-	--enable=gosec \
-	--enable=unparam \
-	--enable=ineffassign \
-	--enable=nakedret \
-	--enable=interfacer \
-	--enable=misspell \
-	--enable=gocyclo \
-	--line-length=170 \
-	--enable=lll \
-	--dupl-threshold=400 \
-	--enable=dupl \
-	--enable=maligned \
-	./pkg/... ./cmd/...
+lint:
+	$(BINDIR)/golangci-lint run ./pkg/... ./cmd/...
 
 dependencies:
 	test -d $(BINDIR) || mkdir $(BINDIR)
 	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
-	GOBIN=$(BINDIR) go get -u gopkg.in/mikefarah/yq.v2 && mv $(BINDIR)/yq.v2 $(BINDIR)/yq
-	GOBIN=$(BINDIR) go get -u gopkg.in/alecthomas/gometalinter.v2 && mv $(BINDIR)/gometalinter.v2 $(BINDIR)/gometalinter
-	GOBIN=$(BINDIR) gometalinter --install
+	curl -sL https://github.com/mikefarah/yq/releases/download/2.1.1/yq_$(GOOS)_$(GOARCH) -o $(BINDIR)/yq
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
 	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH).tar.gz | \
 		tar -zx -C $(BINDIR) --strip-components=2
+
