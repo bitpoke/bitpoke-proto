@@ -401,14 +401,6 @@
   version = "v1.5.0"
 
 [[projects]]
-  digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
-  name = "github.com/satori/go.uuid"
-  packages = ["."]
-  pruneopts = "T"
-  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
-  version = "v1.2.0"
-
-[[projects]]
   digest = "1:8be8b3743fc9795ec21bbd3e0fc28ff6234018e1a269b0a7064184be95ac13e0"
   name = "github.com/spf13/cobra"
   packages = ["."]
@@ -956,7 +948,6 @@
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
     "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1",
-    "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
     "github.com/square/go-jose",
