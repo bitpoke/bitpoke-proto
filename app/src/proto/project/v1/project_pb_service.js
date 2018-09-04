@@ -1,7 +1,7 @@
 // package: 
-// file: projects/v1/project.proto
+// file: project/v1/project.proto
 
-var projects_v1_project_pb = require("../../projects/v1/project_pb");
+var project_v1_project_pb = require("../../project/v1/project_pb");
 var grpc = require("grpc-web-client").grpc;
 
 var Projects = (function () {
@@ -15,8 +15,8 @@ Projects.List = {
   service: Projects,
   requestStream: false,
   responseStream: true,
-  requestType: projects_v1_project_pb.ListRequest,
-  responseType: projects_v1_project_pb.Project
+  requestType: project_v1_project_pb.ListRequest,
+  responseType: project_v1_project_pb.Project
 };
 
 exports.Projects = Projects;

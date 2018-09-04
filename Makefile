@@ -79,7 +79,7 @@ vet:
 generate:
 	go generate ./pkg/... ./cmd/...
 	mkdir -p ./app/src/proto
-	protoc -I proto proto/projects/v1/project.proto \
+	protoc -I proto proto/project/v1/project.proto \
 	--go_out=plugins=grpc:pkg/apiserver \
 	--ts_out=service=true:./app/src/proto \
 	--js_out=import_style=commonjs,binary:./app/src/proto
