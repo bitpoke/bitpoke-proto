@@ -5,9 +5,9 @@ message Project {
   string name = 2;
 }
 
-message ListProjectsRequest {
+message ListRequest {
 }
 
 service Projects {
-  rpc ListProjects(ListProjectsRequest) returns (stream Project) {}
+  rpc List(ListRequest) returns (stream Project) {}
 }

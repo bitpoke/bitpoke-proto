@@ -4,18 +4,18 @@
 import * as projects_v1_project_pb from "../../projects/v1/project_pb";
 import {grpc} from "grpc-web-client";
 
-type ProjectsListProjects = {
+type ProjectsList = {
   readonly methodName: string;
   readonly service: typeof Projects;
   readonly requestStream: false;
   readonly responseStream: true;
-  readonly requestType: typeof projects_v1_project_pb.ListProjectsRequest;
+  readonly requestType: typeof projects_v1_project_pb.ListRequest;
   readonly responseType: typeof projects_v1_project_pb.Project;
 };
 
 export class Projects {
   static readonly serviceName: string;
-  static readonly ListProjects: ProjectsListProjects;
+  static readonly List: ProjectsList;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -33,6 +33,6 @@ export class ProjectsClient {
   readonly serviceHost: string;
 
   constructor(serviceHost: string, options?: ServiceClientOptions);
-  listProjects(requestMessage: projects_v1_project_pb.ListProjectsRequest, metadata?: grpc.Metadata): ResponseStream<projects_v1_project_pb.Project>;
+  list(requestMessage: projects_v1_project_pb.ListRequest, metadata?: grpc.Metadata): ResponseStream<projects_v1_project_pb.Project>;
 }
 

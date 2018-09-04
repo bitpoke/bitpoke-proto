@@ -9,7 +9,7 @@ import { reduce } from 'lodash'
 import { watchChannel } from '../utils'
 import { RootState, auth } from '../redux'
 
-import { ListProjectsRequest, Project } from '../proto/projects/v1/project_pb'
+import { ListRequest, Project } from '../proto/projects/v1/project_pb'
 import { Projects } from '../proto/projects/v1/project_pb_service'
 
 const host: string = process.env.REACT_API_URL || 'http://localhost:9090'
@@ -40,8 +40,8 @@ export const list = () => createAction(LIST_REQUESTED)
 export const receive = (entry: Project) => createAction(RECEIVED, entry)
 
 const listRequest = {
-    service: Projects.ListProjects,
-    request: new ListProjectsRequest()
+    service: Projects.List,
+    request: new ListRequest()
 }
 
 const actions = {

@@ -13,7 +13,7 @@ type projectsServer struct {
 	client client.Client
 }
 
-func (s *projectsServer) ListProjects(r *ListProjectsRequest, stream Projects_ListProjectsServer) error {
+func (s *projectsServer) List(r *ListRequest, stream Projects_ListServer) error {
 	projects := &dashboardv1alpha1.ProjectList{}
 
 	err := s.client.List(context.TODO(), &client.ListOptions{}, projects)

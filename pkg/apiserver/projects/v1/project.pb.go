@@ -35,7 +35,7 @@ func (m *Project) Reset()         { *m = Project{} }
 func (m *Project) String() string { return proto.CompactTextString(m) }
 func (*Project) ProtoMessage()    {}
 func (*Project) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_a7fa1d7ec84bd639, []int{0}
+	return fileDescriptor_project_e5ab27dd4ab3671b, []int{0}
 }
 func (m *Project) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Project.Unmarshal(m, b)
@@ -69,39 +69,39 @@ func (m *Project) GetName() string {
 	return ""
 }
 
-type ListProjectsRequest struct {
+type ListRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ListProjectsRequest) Reset()         { *m = ListProjectsRequest{} }
-func (m *ListProjectsRequest) String() string { return proto.CompactTextString(m) }
-func (*ListProjectsRequest) ProtoMessage()    {}
-func (*ListProjectsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_a7fa1d7ec84bd639, []int{1}
+func (m *ListRequest) Reset()         { *m = ListRequest{} }
+func (m *ListRequest) String() string { return proto.CompactTextString(m) }
+func (*ListRequest) ProtoMessage()    {}
+func (*ListRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_project_e5ab27dd4ab3671b, []int{1}
 }
-func (m *ListProjectsRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ListProjectsRequest.Unmarshal(m, b)
+func (m *ListRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListRequest.Unmarshal(m, b)
 }
-func (m *ListProjectsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ListProjectsRequest.Marshal(b, m, deterministic)
+func (m *ListRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListRequest.Marshal(b, m, deterministic)
 }
-func (dst *ListProjectsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ListProjectsRequest.Merge(dst, src)
+func (dst *ListRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListRequest.Merge(dst, src)
 }
-func (m *ListProjectsRequest) XXX_Size() int {
-	return xxx_messageInfo_ListProjectsRequest.Size(m)
+func (m *ListRequest) XXX_Size() int {
+	return xxx_messageInfo_ListRequest.Size(m)
 }
-func (m *ListProjectsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_ListProjectsRequest.DiscardUnknown(m)
+func (m *ListRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ListProjectsRequest proto.InternalMessageInfo
+var xxx_messageInfo_ListRequest proto.InternalMessageInfo
 
 func init() {
 	proto.RegisterType((*Project)(nil), "Project")
-	proto.RegisterType((*ListProjectsRequest)(nil), "ListProjectsRequest")
+	proto.RegisterType((*ListRequest)(nil), "ListRequest")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -116,7 +116,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ProjectsClient interface {
-	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (Projects_ListProjectsClient, error)
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (Projects_ListClient, error)
 }
 
 type projectsClient struct {
@@ -127,12 +127,12 @@ func NewProjectsClient(cc *grpc.ClientConn) ProjectsClient {
 	return &projectsClient{cc}
 }
 
-func (c *projectsClient) ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (Projects_ListProjectsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Projects_serviceDesc.Streams[0], "/Projects/ListProjects", opts...)
+func (c *projectsClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (Projects_ListClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Projects_serviceDesc.Streams[0], "/Projects/List", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &projectsListProjectsClient{stream}
+	x := &projectsListClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -142,16 +142,16 @@ func (c *projectsClient) ListProjects(ctx context.Context, in *ListProjectsReque
 	return x, nil
 }
 
-type Projects_ListProjectsClient interface {
+type Projects_ListClient interface {
 	Recv() (*Project, error)
 	grpc.ClientStream
 }
 
-type projectsListProjectsClient struct {
+type projectsListClient struct {
 	grpc.ClientStream
 }
 
-func (x *projectsListProjectsClient) Recv() (*Project, error) {
+func (x *projectsListClient) Recv() (*Project, error) {
 	m := new(Project)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -161,31 +161,31 @@ func (x *projectsListProjectsClient) Recv() (*Project, error) {
 
 // ProjectsServer is the server API for Projects service.
 type ProjectsServer interface {
-	ListProjects(*ListProjectsRequest, Projects_ListProjectsServer) error
+	List(*ListRequest, Projects_ListServer) error
 }
 
 func RegisterProjectsServer(s *grpc.Server, srv ProjectsServer) {
 	s.RegisterService(&_Projects_serviceDesc, srv)
 }
 
-func _Projects_ListProjects_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(ListProjectsRequest)
+func _Projects_List_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ProjectsServer).ListProjects(m, &projectsListProjectsServer{stream})
+	return srv.(ProjectsServer).List(m, &projectsListServer{stream})
 }
 
-type Projects_ListProjectsServer interface {
+type Projects_ListServer interface {
 	Send(*Project) error
 	grpc.ServerStream
 }
 
-type projectsListProjectsServer struct {
+type projectsListServer struct {
 	grpc.ServerStream
 }
 
-func (x *projectsListProjectsServer) Send(m *Project) error {
+func (x *projectsListServer) Send(m *Project) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -195,25 +195,25 @@ var _Projects_serviceDesc = grpc.ServiceDesc{
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "ListProjects",
-			Handler:       _Projects_ListProjects_Handler,
+			StreamName:    "List",
+			Handler:       _Projects_List_Handler,
 			ServerStreams: true,
 		},
 	},
 	Metadata: "projects/v1/project.proto",
 }
 
-func init() { proto.RegisterFile("projects/v1/project.proto", fileDescriptor_project_a7fa1d7ec84bd639) }
+func init() { proto.RegisterFile("projects/v1/project.proto", fileDescriptor_project_e5ab27dd4ab3671b) }
 
-var fileDescriptor_project_a7fa1d7ec84bd639 = []byte{
-	// 132 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_project_e5ab27dd4ab3671b = []byte{
+	// 129 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2c, 0x28, 0xca, 0xcf,
 	0x4a, 0x4d, 0x2e, 0x29, 0xd6, 0x2f, 0x33, 0xd4, 0x87, 0xb2, 0xf5, 0x0a, 0x8a, 0xf2, 0x4b, 0xf2,
 	0x95, 0x74, 0xb9, 0xd8, 0x03, 0x20, 0x02, 0x42, 0x7c, 0x5c, 0x4c, 0x99, 0x29, 0x12, 0x8c, 0x0a,
 	0x8c, 0x1a, 0x9c, 0x41, 0x4c, 0x99, 0x29, 0x42, 0x42, 0x5c, 0x2c, 0x79, 0x89, 0xb9, 0xa9, 0x12,
-	0x4c, 0x60, 0x11, 0x30, 0x5b, 0x49, 0x94, 0x4b, 0xd8, 0x27, 0xb3, 0xb8, 0x04, 0xaa, 0xa5, 0x38,
-	0x28, 0xb5, 0xb0, 0x34, 0xb5, 0xb8, 0xc4, 0xc8, 0x8e, 0x8b, 0x03, 0x26, 0x24, 0x64, 0xc4, 0xc5,
-	0x83, 0xac, 0x44, 0x48, 0x44, 0x0f, 0x8b, 0x0e, 0x29, 0x0e, 0x3d, 0xa8, 0x88, 0x12, 0x83, 0x01,
-	0x63, 0x12, 0x1b, 0xd8, 0x31, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xa8, 0x20, 0x4c, 0x54,
-	0xa9, 0x00, 0x00, 0x00,
+	0x4c, 0x60, 0x11, 0x30, 0x5b, 0x89, 0x97, 0x8b, 0xdb, 0x27, 0xb3, 0xb8, 0x24, 0x28, 0xb5, 0xb0,
+	0x34, 0xb5, 0xb8, 0xc4, 0x48, 0x8f, 0x8b, 0x03, 0xaa, 0xbb, 0x58, 0x48, 0x89, 0x8b, 0x05, 0x24,
+	0x25, 0xc4, 0xa3, 0x87, 0xa4, 0x42, 0x8a, 0x43, 0x0f, 0xaa, 0x40, 0x89, 0xc1, 0x80, 0x31, 0x89,
+	0x0d, 0x6c, 0xa9, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0xae, 0xec, 0x01, 0xc4, 0x91, 0x00, 0x00,
+	0x00,
 }

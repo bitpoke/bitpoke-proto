@@ -10,12 +10,12 @@ var Projects = (function () {
   return Projects;
 }());
 
-Projects.ListProjects = {
-  methodName: "ListProjects",
+Projects.List = {
+  methodName: "List",
   service: Projects,
   requestStream: false,
   responseStream: true,
-  requestType: projects_v1_project_pb.ListProjectsRequest,
+  requestType: projects_v1_project_pb.ListRequest,
   responseType: projects_v1_project_pb.Project
 };
 
@@ -26,13 +26,13 @@ function ProjectsClient(serviceHost, options) {
   this.options = options || {};
 }
 
-ProjectsClient.prototype.listProjects = function listProjects(requestMessage, metadata) {
+ProjectsClient.prototype.list = function list(requestMessage, metadata) {
   var listeners = {
     data: [],
     end: [],
     status: []
   };
-  var client = grpc.invoke(Projects.ListProjects, {
+  var client = grpc.invoke(Projects.List, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,
