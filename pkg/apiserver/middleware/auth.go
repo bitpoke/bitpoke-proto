@@ -24,31 +24,32 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	"github.com/presslabs/dashboard/pkg/apiserver/jwks"
 	jose "github.com/square/go-jose"
 	"github.com/square/go-jose/jwt"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/presslabs/dashboard/pkg/apiserver/jwks"
 )
 
 // Auth verifies the authentication token present in the gRPC request context
 func Auth(ctx context.Context) (context.Context, error) {
 	token, err := grpc_auth.AuthFromMD(ctx, "bearer")
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
+		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
 	parsedToken, err := jwt.ParseSigned(token)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
+		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
 	validatedToken, err := validateToken(parsedToken)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
+		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
-	newCtx := context.WithValue(ctx, "token", validatedToken)
+	newCtx := context.WithValue(ctx, contextKeyAuthtoken, validatedToken)
 	return newCtx, nil
 }
 

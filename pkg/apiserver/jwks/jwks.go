@@ -21,6 +21,7 @@ func init() {
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				// Allow for insecure clients (poc/testing purposes)
+				// nolint: gosec
 				InsecureSkipVerify: strings.ToLower(os.Getenv("HTTP_CLIENT_INSECURE")) == "true",
 			},
 		},
@@ -52,14 +53,14 @@ type Client struct {
 // It first looks in the Client's cache and if it can not find a key it
 // will attempt fetch the key from the endpoint directly.
 func (c *Client) GetKey(kid string) (interface{}, error) {
-	key, ok := c.keys.get(kid)
+	_, ok := c.keys.get(kid)
 	if !ok {
 		if err := c.updateCache(); err != nil {
 			return nil, err
 		}
 	}
 
-	key, ok = c.keys.get(kid)
+	key, ok := c.keys.get(kid)
 	if !ok {
 		return nil, errors.New("unrecognized key id")
 	}
@@ -87,6 +88,7 @@ func fetchJWKs(origin string) ([]jose.JSONWebKey, error) {
 	if err != nil {
 		return nil, err
 	}
+	// nolint: errcheck
 	defer resp.Body.Close()
 
 	if err := json.NewDecoder(resp.Body).Decode(&ks); err != nil {

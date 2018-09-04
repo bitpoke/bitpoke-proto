@@ -2,8 +2,10 @@ package v1
 
 import (
 	"context"
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
 type projectsServer struct {
@@ -19,18 +21,22 @@ func (s *projectsServer) List(r *ListRequest, stream Projects_ListServer) error 
 	}
 
 	for _, project := range projects.Items {
-		stream.Send(NewFromK8s(&project))
+		err = stream.Send(newFromK8s(&project))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
+// NewProjectServer creates a new gRPC server for projects
 func NewProjectServer(client client.Client) ProjectsServer {
 	return &projectsServer{
 		client: client,
 	}
 }
 
-func NewFromK8s(p *dashboardv1alpha1.Project) *Project {
+func newFromK8s(p *dashboardv1alpha1.Project) *Project {
 	return &Project{Id: p.Name, Name: p.Name}
 }

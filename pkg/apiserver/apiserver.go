@@ -20,16 +20,18 @@ import (
 	"context"
 	"net"
 	"net/http"
+
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	projectv1 "github.com/presslabs/dashboard/pkg/api/core/v1"
-	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
-	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 	"google.golang.org/grpc"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	projectv1 "github.com/presslabs/dashboard/pkg/api/core/v1"
+	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
+	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
 type grpcRunner struct {
@@ -77,8 +79,15 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 
 	go func() {
 		<-stop
-		httpServer.Shutdown(context.TODO())
-		lis.Close()
+		err := httpServer.Shutdown(context.TODO())
+		if err != nil {
+			log.Error(err, "unable to shutdown HTTP server properly")
+		}
+
+		err = lis.Close()
+		if err != nil {
+			log.Error(err, "unable to close gRPC server properly")
+		}
 	}()
 
 	return <-errChan
@@ -86,6 +95,5 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 
 // AddToManager adds all Controllers to the Manager
 func AddToManager(m manager.Manager) error {
-	m.Add(&grpcRunner{client: m.GetClient()})
-	return nil
+	return m.Add(&grpcRunner{client: m.GetClient()})
 }
