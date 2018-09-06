@@ -19,6 +19,7 @@ package site
 import (
 	"context"
 
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -87,6 +88,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	// Wathc the serviceMonitor created by Site
+	err = c.Watch(&source.Kind{Type: &monitoringv1.ServiceMonitor{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &wordpressv1alpha1.Wordpress{},
+	})
+	if err != nil {
+		return err
+	}
+
 	// Watch the Memcached Service created by Site
 	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
@@ -139,6 +149,7 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 		sync.NewMemcachedServiceSyncer(wp, r.scheme),
 		sync.NewWordpressSyncer(wp, r.scheme),
 		sync.NewMysqlClusterSyncer(wp, r.scheme),
+		sync.NewMysqlServiceMonitorSyncer(wp, r.scheme),
 	}
 
 	for _, s := range syncers {

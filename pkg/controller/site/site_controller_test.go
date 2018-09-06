@@ -26,6 +26,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -86,7 +87,7 @@ var _ = Describe("Site controller", func() {
 				Spec: wordpressv1alpha1.WordpressSpec{
 					Runtime: "runtime-example",
 					Domains: []wordpressv1alpha1.Domain{
-						"domain-example",
+						"domain.com",
 					},
 				},
 			}
@@ -115,6 +116,7 @@ var _ = Describe("Site controller", func() {
 			Entry("reconciles memcached statefulset", "%s-memcached", &appsv1.StatefulSet{}),
 			Entry("reconciles memcached service", "%s-memcached", &corev1.Service{}),
 			Entry("reconciles mysql cluster", "%s-mysql", &mysqlv1alpha1.MysqlCluster{}),
+			Entry("reconciles mysql service monitor", "%s-mysql", &monitoringv1.ServiceMonitor{}),
 		)
 	})
 })

@@ -18,7 +18,6 @@ package apis
 
 import (
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
-
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
 )
@@ -33,6 +32,7 @@ var (
 
 func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
-	PrometheusSchemeBuilder.Register(&monitoringv1.Prometheus{}, &monitoringv1.PrometheusList{}, &monitoringv1.ServiceMonitor{}, &monitoringv1.Alertmanager{})
+	PrometheusSchemeBuilder.Register(&monitoringv1.Prometheus{}, &monitoringv1.PrometheusList{}, &monitoringv1.ServiceMonitor{}, &monitoringv1.ServiceMonitorList{},
+		&monitoringv1.Alertmanager{})
 	AddToSchemes = append(AddToSchemes, PrometheusSchemeBuilder.AddToScheme)
 }

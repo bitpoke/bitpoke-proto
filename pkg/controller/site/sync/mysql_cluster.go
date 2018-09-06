@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
+	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
@@ -51,7 +52,7 @@ type mysqlClusterSyncer struct {
 	existing *mysqlv1alpha1.MysqlCluster
 }
 
-// NewMysqlClusterSyncer returns a new sync.Interface for reconciling Wordpress
+// NewMysqlClusterSyncer returns a new sync.Interface for reconciling MysqlCluster
 func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Scheme) Interface {
 	return &mysqlClusterSyncer{
 		scheme:   r,
@@ -107,6 +108,7 @@ func (s *mysqlClusterSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out.ObjectMeta = metav1.ObjectMeta{
 		Name:      fmt.Sprintf(mysqlClustereNameFmt, s.wp.ObjectMeta.Name),
 		Namespace: s.wp.ObjectMeta.Namespace,
+		Labels:    dashboardv1alpha1.GetSiteLabels(s.wp, "mysql"),
 	}
 
 	out.Spec.PodSpec.Resources = corev1.ResourceRequirements{
