@@ -40,7 +40,7 @@ import (
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const timeout = time.Second * 5
+const timeout = time.Second * 2
 
 var _ = Describe("Site controller", func() {
 	var (
@@ -98,6 +98,18 @@ var _ = Describe("Site controller", func() {
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
+			// We need to drain the requests queue because syncing a subresource
+			// might trigger reconciliation again and we want to isolate tests
+			// to their own reconciliation requests
+			done := time.After(time.Second)
+			for {
+				select {
+				case <-requests:
+					continue
+				case <-done:
+					return
+				}
+			}
 		})
 
 		AfterEach(func() {
@@ -115,6 +127,7 @@ var _ = Describe("Site controller", func() {
 			},
 			Entry("reconciles memcached statefulset", "%s-memcached", &appsv1.StatefulSet{}),
 			Entry("reconciles memcached service", "%s-memcached", &corev1.Service{}),
+			Entry("reconciles memcached service monitor", "%s-memcached", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles mysql cluster", "%s-mysql", &mysqlv1alpha1.MysqlCluster{}),
 			Entry("reconciles mysql service monitor", "%s-mysql", &monitoringv1.ServiceMonitor{}),
 		)

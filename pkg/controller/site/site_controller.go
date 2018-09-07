@@ -147,6 +147,7 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 	syncers := []sync.Interface{
 		sync.NewMemcachedStatefulSetSyncer(wp, r.scheme),
 		sync.NewMemcachedServiceSyncer(wp, r.scheme),
+		sync.NewMemcachedServiceMonitorSyncer(wp, r.scheme),
 		sync.NewWordpressSyncer(wp, r.scheme),
 		sync.NewMysqlClusterSyncer(wp, r.scheme),
 		sync.NewMysqlServiceMonitorSyncer(wp, r.scheme),
