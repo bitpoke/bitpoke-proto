@@ -27,12 +27,13 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"github.com/presslabs/controller-util/syncer"
 
 	"github.com/presslabs/dashboard/pkg/controller/site/sync"
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
@@ -144,33 +145,24 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 		return reconcile.Result{}, err
 	}
 
-	syncers := []sync.Interface{
-		sync.NewMemcachedStatefulSetSyncer(wp, r.scheme),
-		sync.NewMemcachedServiceSyncer(wp, r.scheme),
-		sync.NewMemcachedServiceMonitorSyncer(wp, r.scheme),
-		sync.NewWordpressSyncer(wp, r.scheme),
-		sync.NewMysqlClusterSyncer(wp, r.scheme),
-		sync.NewMysqlServiceMonitorSyncer(wp, r.scheme),
+	syncers := []syncer.Interface{
+		sync.NewMemcachedStatefulSetSyncer(wp),
+		sync.NewMemcachedServiceSyncer(wp),
+		sync.NewMemcachedServiceMonitorSyncer(wp),
+		sync.NewWordpressSyncer(wp),
+		sync.NewMysqlClusterSyncer(wp),
+		sync.NewMysqlServiceMonitorSyncer(wp),
 	}
 
+	return reconcile.Result{}, r.sync(syncers)
+}
+
+func (r *ReconcileSite) sync(syncers []syncer.Interface) error {
 	for _, s := range syncers {
-		key := s.GetKey()
-		existing := s.GetExistingObjectPlaceholder()
-
-		var op controllerutil.OperationType
-		op, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
-		reason := string(s.GetErrorEventReason(err))
-
-		log.Info(string(op), "key", key, "kind", existing.GetObjectKind().GroupVersionKind().Kind)
-
-		if err != nil {
-			r.recorder.Eventf(s.GetInstance(), eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)
-			return reconcile.Result{}, err
-		}
-		if op != controllerutil.OperationNoop {
-			r.recorder.Eventf(s.GetInstance(), eventNormal, reason, "%T %s/%s %s successfully", existing, key.Namespace, key.Name, op)
+		if err := syncer.Sync(context.TODO(), s, r.Client, r.scheme, r.recorder); err != nil {
+			log.Error(err, "unable to sync")
+			return err
 		}
 	}
-
-	return reconcile.Result{}, err
+	return nil
 }

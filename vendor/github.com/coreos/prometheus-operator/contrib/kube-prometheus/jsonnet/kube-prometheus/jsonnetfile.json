@@ -38,6 +38,16 @@
                     "subdir": "jsonnet/prometheus-operator"
                 }
             },
+            "version": "v0.23.0"
+        },
+        {
+            "name": "etcd-mixin",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/coreos/etcd",
+                    "subdir": "Documentation/etcd-mixin"
+                }
+            },
             "version": "master"
         }
     ]

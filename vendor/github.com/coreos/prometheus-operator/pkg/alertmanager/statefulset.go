@@ -33,7 +33,8 @@ import (
 
 const (
 	governingServiceName   = "alertmanager-operated"
-	defaultVersion         = "v0.15.0"
+	defaultVersion         = "v0.15.1"
+	defaultRetention       = "120h"
 	secretsDir             = "/etc/alertmanager/secrets/"
 	alertmanagerConfDir    = "/etc/alertmanager/config"
 	alertmanagerConfFile   = alertmanagerConfDir + "/alertmanager.yaml"
@@ -62,6 +63,9 @@ func makeStatefulSet(am *monitoringv1.Alertmanager, old *appsv1.StatefulSet, con
 	intZero := int32(0)
 	if am.Spec.Replicas != nil && *am.Spec.Replicas < 0 {
 		am.Spec.Replicas = &intZero
+	}
+	if am.Spec.Retention == "" {
+		am.Spec.Retention = defaultRetention
 	}
 	if am.Spec.Resources.Requests == nil {
 		am.Spec.Resources.Requests = v1.ResourceList{}
@@ -117,7 +121,9 @@ func makeStatefulSet(am *monitoringv1.Alertmanager, old *appsv1.StatefulSet, con
 		})
 	} else {
 		pvcTemplate := storageSpec.VolumeClaimTemplate
-		pvcTemplate.Name = volumeName(am.Name)
+		if pvcTemplate.Name == "" {
+			pvcTemplate.Name = volumeName(am.Name)
+		}
 		pvcTemplate.Spec.AccessModes = []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce}
 		pvcTemplate.Spec.Resources = storageSpec.VolumeClaimTemplate.Spec.Resources
 		pvcTemplate.Spec.Selector = storageSpec.VolumeClaimTemplate.Spec.Selector
@@ -164,7 +170,15 @@ func makeStatefulSetService(p *monitoringv1.Alertmanager, config Config) *v1.Ser
 }
 
 func makeStatefulSetSpec(a *monitoringv1.Alertmanager, config Config) (*appsv1.StatefulSetSpec, error) {
-	image := fmt.Sprintf("%s:%s", a.Spec.BaseImage, a.Spec.Version)
+	// Before editing 'a' create deep copy, to prevent side effects. For more
+	// details see https://github.com/coreos/prometheus-operator/issues/1659
+	a = a.DeepCopy()
+
+	tag := a.Spec.Version
+	if a.Spec.Tag != "" {
+		tag = a.Spec.Tag
+	}
+	image := fmt.Sprintf("%s:%s", a.Spec.BaseImage, tag)
 	versionStr := strings.TrimLeft(a.Spec.Version, "v")
 
 	version, err := semver.Parse(versionStr)
@@ -176,6 +190,7 @@ func makeStatefulSetSpec(a *monitoringv1.Alertmanager, config Config) (*appsv1.S
 		fmt.Sprintf("--config.file=%s", alertmanagerConfFile),
 		fmt.Sprintf("--cluster.listen-address=$(POD_IP):%d", 6783),
 		fmt.Sprintf("--storage.path=%s", alertmanagerStorageDir),
+		fmt.Sprintf("--data.retention=%s", a.Spec.Retention),
 	}
 
 	if a.Spec.ListenLocal {
@@ -200,7 +215,7 @@ func makeStatefulSetSpec(a *monitoringv1.Alertmanager, config Config) (*appsv1.S
 
 	localReloadURL := &url.URL{
 		Scheme: "http",
-		Host:   "localhost:9093",
+		Host:   config.LocalHost + ":9093",
 		Path:   path.Clean(webRoutePrefix + "/-/reload"),
 	}
 
@@ -321,13 +336,21 @@ func makeStatefulSetSpec(a *monitoringv1.Alertmanager, config Config) (*appsv1.S
 			},
 		},
 	}
+
+	volName := volumeName(a.Name)
+	if a.Spec.Storage != nil {
+		if a.Spec.Storage.VolumeClaimTemplate.Name != "" {
+			volName = a.Spec.Storage.VolumeClaimTemplate.Name
+		}
+	}
+
 	amVolumeMounts := []v1.VolumeMount{
 		{
 			Name:      "config-volume",
 			MountPath: alertmanagerConfDir,
 		},
 		{
-			Name:      volumeName(a.Name),
+			Name:      volName,
 			MountPath: alertmanagerStorageDir,
 			SubPath:   subPathForStorage(a.Spec.Storage),
 		},

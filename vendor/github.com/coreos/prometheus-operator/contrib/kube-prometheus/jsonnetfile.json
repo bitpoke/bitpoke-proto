@@ -9,16 +9,6 @@
                 }
             },
             "version": "."
-        },
-        {
-            "name": "prometheus-operator",
-            "source": {
-                "git": {
-                    "remote": "../../",
-                    "subdir": "jsonnet/prometheus-operator"
-                }
-            },
-            "version": "."
         }
     ]
 }

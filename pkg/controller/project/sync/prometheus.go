@@ -8,12 +8,12 @@ which is part of this source code package.
 package sync
 
 import (
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
+	"github.com/presslabs/controller-util/syncer"
 
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
@@ -25,21 +25,6 @@ const (
 	defaultScrapeInterval     = "10s"
 	defaultEvaluationInterval = "30s"
 )
-
-const (
-	// EventReasonPrometheusFailed is the event reason for a failed Prometheus reconcile
-	EventReasonPrometheusFailed EventReason = "PrometheusFailed"
-	// EventReasonPrometheusUpdated is the event reason for a successful Prometheus reconcile
-	EventReasonPrometheusUpdated EventReason = "PrometheusUpdated"
-)
-
-// prometheusSyncer defines the Syncer for Prometheus
-type prometheusSyncer struct {
-	scheme   *runtime.Scheme
-	proj     *dashboardv1alpha1.Project
-	key      types.NamespacedName
-	existing *monitoringv1.Prometheus
-}
 
 // GetPrometheusSelector returns a set of labels that can be used to identify Prometheus
 // related resources
@@ -59,44 +44,29 @@ func GetPrometheusLabels(project *dashboardv1alpha1.Project) labels.Set {
 	return labels.Merge(GetPrometheusSelector(project), prometheusLabels)
 }
 
-// NewPrometheusSyncer returns a new sync.Interface for reconciling Prometheus
-func NewPrometheusSyncer(p *dashboardv1alpha1.Project, r *runtime.Scheme) Interface {
-	return &prometheusSyncer{
-		scheme:   r,
-		existing: &monitoringv1.Prometheus{},
-		proj:     p,
-		key:      p.GetPrometheusKey(),
-	}
-}
-
-// GetKey returns the prometheusSyncer key through which an existing object may be identified
-func (s *prometheusSyncer) GetKey() types.NamespacedName { return s.key }
-
-// GetExistingObjectPlaceholder returns a Placeholder object if an existing one is not found
-func (s *prometheusSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
-
-// T is the transform function used to reconcile the Prometheus object
-func (s *prometheusSyncer) T(in runtime.Object) (runtime.Object, error) {
-	out := in.(*monitoringv1.Prometheus)
-	out.Labels = GetPrometheusLabels(s.proj)
-
-	out.Spec = monitoringv1.PrometheusSpec{
-		ScrapeInterval:     defaultScrapeInterval,
-		EvaluationInterval: defaultEvaluationInterval,
-		ServiceMonitorSelector: &metav1.LabelSelector{
-			MatchLabels: s.proj.GetProjectLabel(),
+// NewPrometheusSyncer returns a new syncer.Interface for reconciling Prometheus
+func NewPrometheusSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
+	obj := &monitoringv1.Prometheus{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      proj.GetPrometheusName(),
+			Namespace: proj.GetNamespaceName(),
 		},
-		Version:   prometheusVersion,
-		BaseImage: prometheusBaseImage,
 	}
 
-	return out, nil
-}
+	return syncer.New("Prometheus", proj, obj, func(existing runtime.Object) error {
+		out := existing.(*monitoringv1.Prometheus)
+		out.Labels = GetPrometheusLabels(proj)
 
-// GetErrorEventReason returns a reason for changes in the object state
-func (s *prometheusSyncer) GetErrorEventReason(err error) EventReason {
-	if err != nil {
-		return EventReasonPrometheusFailed
-	}
-	return EventReasonPrometheusUpdated
+		out.Spec = monitoringv1.PrometheusSpec{
+			ScrapeInterval:     defaultScrapeInterval,
+			EvaluationInterval: defaultEvaluationInterval,
+			ServiceMonitorSelector: &metav1.LabelSelector{
+				MatchLabels: proj.GetProjectLabel(),
+			},
+			Version:   prometheusVersion,
+			BaseImage: prometheusBaseImage,
+		}
+
+		return nil
+	})
 }

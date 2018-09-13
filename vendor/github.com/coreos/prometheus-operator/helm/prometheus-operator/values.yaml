@@ -48,6 +48,13 @@ rbacEnable: true
 ## If true, create Pod Security Policy resources
 pspEnable: true
 
+# Reference to one or more secrets to be used when pulling images
+imagePullSecrets: []
+#  - name: "image-pull-secret"
+
+# Use logfmt (default) or json-formatted logging
+# logFormat: logfmt
+
 ## Prometheus-operator resource limits & requests
 ## Ref: https://kubernetes.io/docs/user-guide/compute-resources/
 ##

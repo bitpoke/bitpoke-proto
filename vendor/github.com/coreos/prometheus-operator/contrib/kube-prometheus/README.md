@@ -32,6 +32,7 @@ This stack is meant for cluster monitoring, so it is pre-configured to collect m
 * [Minikube Example](#minikube-example)
 * [Troubleshooting](#troubleshooting)
     * [Error retrieving kubelet metrics](#error-retrieving-kubelet-metrics)
+* [Contributing](#contributing)
 
 ## Prerequisites
 
@@ -112,13 +113,15 @@ rm -rf manifests
 mkdir manifests
 
                                                # optional, but we would like to generate yaml, not json
-jsonnet -J vendor -m manifests ${1-example.jsonnet} | xargs -I{} sh -c 'cat $1 | gojsontoyaml > $1.yaml; rm -f $1' -- {}
+jsonnet -J vendor -m manifests "${1-example.jsonnet}" | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml; rm -f {}' -- {}
 
 ```
 
 > Note you need `jsonnet` and `gojsonyaml` (`go get github.com/brancz/gojsontoyaml`) installed. If you just want json output, not yaml, then you can skip the pipe and everything afterwards.
 
 This script reads each key of the generated json and uses that as the file name, and writes the value of that key to that file.
+
+> You can also run this script executing the command `make generate-raw` from kube-prometheus base directory of this repository but the above option it is recommended so that you run it in your own infrastructure repository.
 
 ## Configuration
 
@@ -285,6 +288,37 @@ In the above example the configuration has been inlined, but can just as well be
    },
  }).alertmanager.secret
 ```
+### Static etcd configuration
+
+In order to configure a static etcd cluster to scrape there is a simple mixin prepared, so only the IPs and certificate information need to be configured. Simply append the `kube-prometheus/kube-prometheus-static-etcd.libsonnet` mixin to the rest of the configuration, and configure the `ips` to be the IPs to scrape, and the `clientCA`, `clientKey` and `clientCert` to values that are valid to scrape etcd metrics with.
+
+Most likely these certificates are generated somewhere in an infrastructure repository, so using the jsonnet `importstr` function can be useful here. All the sensitive information on the certificates will end up in a Kubernetes Secret.
+
+[embedmd]:# (examples/etcd.jsonnet)
+```jsonnet
+local kp = (import 'kube-prometheus/kube-prometheus.libsonnet') +
+           (import 'kube-prometheus/kube-prometheus-static-etcd.libsonnet') + {
+  _config+:: {
+    namespace: 'monitoring',
+
+    etcd+:: {
+      ips: ['127.0.0.1'],
+      clientCA: importstr 'etcd-client-ca.crt',
+      clientKey: importstr 'etcd-client.key',
+      clientCert: importstr 'etcd-client.crt',
+      serverName: 'etcd.my-cluster.local',
+    },
+  },
+};
+
+{ ['00namespace-' + name]: kp.kubePrometheus[name] for name in std.objectFields(kp.kubePrometheus) } +
+{ ['0prometheus-operator-' + name]: kp.prometheusOperator[name] for name in std.objectFields(kp.prometheusOperator) } +
+{ ['node-exporter-' + name]: kp.nodeExporter[name] for name in std.objectFields(kp.nodeExporter) } +
+{ ['kube-state-metrics-' + name]: kp.kubeStateMetrics[name] for name in std.objectFields(kp.kubeStateMetrics) } +
+{ ['alertmanager-' + name]: kp.alertmanager[name] for name in std.objectFields(kp.alertmanager) } +
+{ ['prometheus-' + name]: kp.prometheus[name] for name in std.objectFields(kp.prometheus) } +
+{ ['grafana-' + name]: kp.grafana[name] for name in std.objectFields(kp.grafana) }
+```
 
 ### Customizing Prometheus alerting/recording rules and Grafana dashboards
 
@@ -329,6 +363,8 @@ Should the Prometheus `/targets` page show kubelet targets, but not able to succ
 
 As described in the [prerequisites](#prerequisites) section, in order to retrieve metrics from the kubelet token authentication and authorization must be enabled. Some Kubernetes setup tools do not enable this by default.
 
+If you are using Google's GKE product, see [docs/GKE-cadvisor-support.md].
+
 #### Authentication problem
 
 The Prometheus `/targets` page will show the kubelet job with the error `403 Unauthorized`, when token authentication is not enabled. Ensure, that the `--authentication-token-webhook=true` flag is enabled on all kubelet configurations.
@@ -336,3 +372,35 @@ The Prometheus `/targets` page will show the kubelet job with the error `403 Una
 #### Authorization problem
 
 The Prometheus `/targets` page will show the kubelet job with the error `401 Unauthorized`, when token authorization is not enabled. Ensure that the `--authorization-mode=Webhook` flag is enabled on all kubelet configurations.
+
+### kube-state-metrics resource usage
+
+In some environments, kube-state-metrics may need additional
+resources. One driver for more resource needs, is a high number of
+namespaces. There may be others.
+
+kube-state-metrics resource allocation is managed by
+[addon-resizer](https://github.com/kubernetes/autoscaler/tree/master/addon-resizer/nanny)
+You can control it's parameters by setting variables in the
+config. They default to:
+
+``` jsonnet
+    kubeStateMetrics+:: {
+      baseCPU: '100m',
+      cpuPerNode: '2m',
+      baseMemory: '150Mi',
+      memoryPerNode: '30Mi',
+    }
+```
+
+## Contributing
+
+All `.yaml` files in the `/manifests` folder are generated via
+[Jsonnet](https://jsonnet.org/). Contributing changes will most likely include
+the following process:
+
+1. Make your changes in the respective `*.jsonnet` file.
+2. Commit your changes (This is currently necessary due to our vendoring
+   process. This is likely to change in the future).
+3. Generate dependent `*.yaml` files: `make generate-in-docker`.
+4. Commit the generated changes.

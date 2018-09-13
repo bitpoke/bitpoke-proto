@@ -22,8 +22,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/presslabs/controller-util/syncer"
 
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
@@ -31,69 +32,32 @@ import (
 
 const (
 	memcachedServiceNameFmt = "%s-memcached"
-	// MemcachedServiceFailed is the event reason for a failed Memcached Service reconcile
-	MemcachedServiceFailed EventReason = "MemcachedFailed"
-	// MemcachedServiceUpdated is the event reason for a successful Memcached Service reconcile
-	MemcachedServiceUpdated EventReason = "MemcachedUpdated"
 )
 
-// memcachedServiceSyncer defines the Syncer for Memcached Service
-type memcachedServiceSyncer struct {
-	scheme   *runtime.Scheme
-	wp       *wordpressv1alpha1.Wordpress
-	key      types.NamespacedName
-	existing *corev1.Service
-}
-
-// NewMemcachedServiceSyncer returns a new sync.Interface for reconciling Memcached Service
-func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Scheme) Interface {
-	return &memcachedServiceSyncer{
-		scheme:   r,
-		wp:       wp,
-		existing: &corev1.Service{},
-		key: types.NamespacedName{
+// NewMemcachedServiceSyncer returns a new syncer.Interface for reconciling Memcached Service
+func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
+	obj := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf(memcachedServiceNameFmt, wp.Name),
 			Namespace: wp.Namespace,
-			Name:      wp.Name,
 		},
 	}
-}
 
-// GetInstance returns the memcachedServiceSyncer instance (memcachedServiceSyncer.wp)
-func (s *memcachedServiceSyncer) GetInstance() runtime.Object { return s.wp }
+	return syncer.New("MemcachedService", wp, obj, func(existing runtime.Object) error {
+		out := existing.(*corev1.Service)
 
-// GetKey returns the memcachedServiceSyncer key through which an existing object may be identified
-func (s *memcachedServiceSyncer) GetKey() types.NamespacedName { return s.key }
+		out.ObjectMeta.Labels = dashboardv1alpha1.GetSiteLabels(wp, "memcached")
 
-// GetExistingObjectPlaceholder returns a Placeholder object if an existing one is not found
-func (s *memcachedServiceSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+		out.Spec.ClusterIP = "None"
+		out.Spec.Ports = []corev1.ServicePort{
+			{
+				Name:       "memcached",
+				Port:       int32(80),
+				TargetPort: intstr.FromInt(memcachedPort),
+			},
+		}
+		out.Spec.Selector = dashboardv1alpha1.GetMemcachedSelector(wp)
 
-// T is the transform function used to reconcile the Memcached Service object
-func (s *memcachedServiceSyncer) T(in runtime.Object) (runtime.Object, error) {
-	out := in.(*corev1.Service)
-
-	out.ObjectMeta = metav1.ObjectMeta{
-		Name:      fmt.Sprintf(memcachedServiceNameFmt, s.wp.ObjectMeta.Name),
-		Labels:    dashboardv1alpha1.GetSiteLabels(s.wp, "memcached"),
-		Namespace: s.wp.ObjectMeta.Namespace,
-	}
-
-	out.Spec.ClusterIP = "None"
-	out.Spec.Ports = []corev1.ServicePort{
-		{
-			Name:       "memcached",
-			Port:       int32(80),
-			TargetPort: intstr.FromInt(memcachedPort),
-		},
-	}
-	out.Spec.Selector = dashboardv1alpha1.GetMemcachedSelector(s.wp)
-
-	return out, nil
-}
-
-// GetErrorEventReason returns a reason for changes in the object state
-func (s *memcachedServiceSyncer) GetErrorEventReason(err error) EventReason {
-	if err == nil {
-		return MemcachedServiceUpdated
-	}
-	return MemcachedServiceFailed
+		return nil
+	})
 }

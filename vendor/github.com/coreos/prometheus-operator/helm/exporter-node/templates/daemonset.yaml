@@ -1,3 +1,4 @@
+{{- if .Values.enableDaemonSet }}
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
@@ -42,9 +43,14 @@ spec:
       tolerations:
 {{ toYaml .Values.tolerations | indent 8 }}
     {{- end }}
+    {{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+    {{- end }}
       hostNetwork: true
       hostPID: true
       {{- if and .Values.container .Values.container.volumes }}
       volumes:
 {{ toYaml .Values.container.volumes | indent 6 }}
       {{- end}}
+{{- end }}

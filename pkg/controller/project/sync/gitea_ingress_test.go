@@ -39,10 +39,9 @@ var _ = Describe("The GiteaIngressSyncer transform func T", func() {
 		}
 		giteaIngress = &extv1beta1.Ingress{}
 
-		syncer := sync.NewGiteaIngressSyncer(&proj, rts)
-		intrf, err := syncer.T(giteaIngress)
+		syncer := sync.NewGiteaIngressSyncer(&proj)
+		err := syncer.SyncFn(giteaIngress)
 		Expect(err).ShouldNot(HaveOccurred())
-		giteaIngress = intrf.(*extv1beta1.Ingress)
 	})
 
 	It("uses the right domain", func() {

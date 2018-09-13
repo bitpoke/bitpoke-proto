@@ -35,13 +35,11 @@ var _ = Describe("The ResourceQuotaSyncer transform func T", func() {
 	Context("finds no existing ResourceQuota", func() {
 		proj := &dashboardv1alpha1.Project{}
 		rq := &corev1.ResourceQuota{}
-		syncer := sync.NewResourceQuotaSyncer(proj, rts)
+		syncer := sync.NewResourceQuotaSyncer(proj)
 
 		It("uses a default value", func() {
-			intrf, err := syncer.T(rq)
+			err := syncer.SyncFn(rq)
 			Expect(err).ShouldNot(HaveOccurred())
-			rq := intrf.(*corev1.ResourceQuota)
-
 			Expect(rq.Spec.Hard).To(Equal(defaultQuotaValues))
 		})
 	})
@@ -67,10 +65,9 @@ var _ = Describe("The ResourceQuotaSyncer transform func T", func() {
 				corev1.ResourcePods:           smallerResourcePods,
 			}
 
-			syncer := sync.NewResourceQuotaSyncer(proj, rts)
-			intrf, err := syncer.T(rq)
+			syncer := sync.NewResourceQuotaSyncer(proj)
+			err := syncer.SyncFn(rq)
 			Expect(err).ShouldNot(HaveOccurred())
-			rq = intrf.(*corev1.ResourceQuota)
 		})
 
 		It("uses the bigger overridden values", func() {

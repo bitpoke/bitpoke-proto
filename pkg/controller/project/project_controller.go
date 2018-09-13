@@ -26,12 +26,13 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"github.com/presslabs/controller-util/syncer"
 
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/controller/project/sync"
@@ -107,11 +108,6 @@ type ReconcileProject struct {
 	recorder record.EventRecorder
 }
 
-const (
-	eventNormal  = "Normal"
-	eventWarning = "Warning"
-)
-
 // Reconcile reads that state of the cluster for a Project object and makes changes based on the state read
 // and what is in the Project.Spec
 // +kubebuilder:rbac:groups=dashboard.presslabs.com,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -130,36 +126,26 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	syncers := []sync.Interface{
-		sync.NewNamespaceSyncer(project, r.scheme),
-		sync.NewResourceQuotaSyncer(project, r.scheme),
-		sync.NewGiteaSecretSyncer(project, r.scheme),
-		sync.NewGiteaPVCSyncer(project, r.scheme),
-		sync.NewGiteaDeploymentSyncer(project, r.scheme),
-		sync.NewGiteaServiceSyncer(project, r.scheme),
-		sync.NewGiteaIngressSyncer(project, r.scheme),
-		sync.NewPrometheusSyncer(project, r.scheme),
+	syncers := []syncer.Interface{
+		sync.NewNamespaceSyncer(project),
+		sync.NewResourceQuotaSyncer(project),
+		sync.NewGiteaSecretSyncer(project),
+		sync.NewGiteaPVCSyncer(project),
+		sync.NewGiteaDeploymentSyncer(project),
+		sync.NewGiteaServiceSyncer(project),
+		sync.NewGiteaIngressSyncer(project),
+		sync.NewPrometheusSyncer(project),
 	}
 
+	return reconcile.Result{}, r.sync(syncers)
+}
+
+func (r *ReconcileProject) sync(syncers []syncer.Interface) error {
 	for _, s := range syncers {
-		key := s.GetKey()
-		existing := s.GetExistingObjectPlaceholder()
-
-		var op controllerutil.OperationType
-		op, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
-		reason := string(s.GetErrorEventReason(err))
-
-		log.Info(string(op), "key", key, "kind", existing.GetObjectKind().GroupVersionKind().Kind)
-
-		if err != nil {
-			log.Error(err, "unable to run syncer")
-			r.recorder.Eventf(project, eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)
-			return reconcile.Result{}, err
-		}
-		if op != controllerutil.OperationNoop {
-			r.recorder.Eventf(project, eventNormal, reason, "%T %s/%s %s successfully", existing, key.Namespace, key.Name, op)
+		if err := syncer.Sync(context.TODO(), s, r.Client, r.scheme, r.recorder); err != nil {
+			log.Error(err, "unable to sync")
+			return err
 		}
 	}
-
-	return reconcile.Result{}, err
+	return nil
 }

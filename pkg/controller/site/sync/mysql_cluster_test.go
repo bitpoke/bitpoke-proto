@@ -23,7 +23,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/presslabs/controller-util/syncer"
 
 	"github.com/presslabs/dashboard/pkg/controller/site/sync"
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
@@ -34,13 +35,13 @@ var _ = Describe("MysqlClusterSyncer", func() {
 	var (
 		wp     *wordpressv1alpha1.Wordpress
 		mysql  *mysqlv1alpha1.MysqlCluster
-		syncer sync.Interface
+		syncer syncer.Interface
 	)
 
 	BeforeEach(func() {
 		wp = &wordpressv1alpha1.Wordpress{}
 		mysql = &mysqlv1alpha1.MysqlCluster{}
-		syncer = sync.NewMysqlClusterSyncer(wp, scheme.Scheme)
+		syncer = sync.NewMysqlClusterSyncer(wp)
 	})
 
 	DescribeTable("when Wordpress mysql.provisioner.presslabs.com/storage annotation",
@@ -48,7 +49,7 @@ var _ = Describe("MysqlClusterSyncer", func() {
 			if len(annotationValue) > 0 {
 				wp.ObjectMeta.Annotations = map[string]string{"mysql.provisioner.presslabs.com/storage": annotationValue}
 			}
-			_, err := syncer.T(mysql)
+			err := syncer.SyncFn(mysql)
 			if shouldErr {
 				Expect(err).To(HaveOccurred())
 			} else {
@@ -67,7 +68,7 @@ var _ = Describe("MysqlClusterSyncer", func() {
 			if len(annotationValue) > 0 {
 				wp.ObjectMeta.Annotations = map[string]string{"mysql.provisioner.presslabs.com/memory": annotationValue}
 			}
-			_, err := syncer.T(mysql)
+			err := syncer.SyncFn(mysql)
 			if shouldErr {
 				Expect(err).To(HaveOccurred())
 			} else {
@@ -86,7 +87,7 @@ var _ = Describe("MysqlClusterSyncer", func() {
 			if len(annotationValue) > 0 {
 				wp.ObjectMeta.Annotations = map[string]string{"mysql.provisioner.presslabs.com/cpu": annotationValue}
 			}
-			_, err := syncer.T(mysql)
+			err := syncer.SyncFn(mysql)
 			if shouldErr {
 				Expect(err).To(HaveOccurred())
 			} else {

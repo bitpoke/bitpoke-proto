@@ -1,3 +1,4 @@
+{{- if .Values.enableDaemonSet }}
 {{- if .Values.global.rbacEnable }}
 {{- if .Values.global.pspEnable }}
 kind: ClusterRole
@@ -5,6 +6,8 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
 {{- else if .Capabilities.APIVersions.Has "rbac.authorization.k8s.io/v1alpha1" }}
 apiVersion: rbac.authorization.k8s.io/v1alpha1
+{{- else }}
+apiVersion: rbac.authorization.k8s.io/v1
 {{- end }}
 metadata:
   labels:
@@ -19,5 +22,6 @@ rules:
   verbs:     ['use']
   resourceNames:
   - {{ template "exporter-node.fullname" . }}
+{{- end }}
 {{- end }}
 {{- end }}

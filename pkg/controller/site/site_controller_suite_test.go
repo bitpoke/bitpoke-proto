@@ -40,7 +40,6 @@ func TestSiteController(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-
 	var err error
 	t = &envtest.Environment{
 		CRDDirectoryPaths: []string{

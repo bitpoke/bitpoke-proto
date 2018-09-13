@@ -67,7 +67,7 @@ Parameter | Description | Default
 `routePrefix` | Prefix used to register routes, overriding externalUrl route | `/`
 `rules` | Prometheus alerting & recording rules | `{}`
 `ruleNamespaceSelector` | Namespaces to be selected for PrometheusRules discovery | `{}`
-`rulesSelector` | Rules ConfigMap selector | `{}`
+`rulesSelector` | Rules CRD selector | `{}`
 `secrets` | List of Secrets in the same namespace as the Prometheus object, which shall be mounted into the Prometheus Pods. | `{}`
 `service.annotations` | Annotations to be added to the Prometheus Service | `{}`
 `service.clusterIP` | Cluster-internal IP address for Prometheus Service | `""`
@@ -101,7 +101,7 @@ Custom service monitors can be added in values.yaml in the `serviceMonitors` sec
 #### Example service monitor
 
 
-This example Service Monitor will monitor applications matching `app: nginx-ingress`. The port `metrics` will be scraped with the path `/merics`. The endpoint will be scraped every 30 seconds.
+This example Service Monitor will monitor applications matching `app: nginx-ingress`. The port `metrics` will be scraped with the path `/metrics`. The endpoint will be scraped every 30 seconds.
 
 ```
 serviceMonitors:

@@ -1,7 +1,7 @@
 # Image URL to use all building/pushing image targets
 APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
 IMG ?= quay.io/presslabs/dashboard:$(APP_VERSION)
-KUBEBUILDER_VERSION ?= 1.0.0
+KUBEBUILDER_VERSION ?= 1.0.4
 PROTOC_VERSION ?= 3.6.1
 BINDIR ?= $(PWD)/bin
 
@@ -87,7 +87,7 @@ dependencies:
 	test -d $(BINDIR) || mkdir $(BINDIR)
 	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
 	GOBIN=$(BINDIR) go install ./vendor/github.com/golang/protobuf/protoc-gen-go
-	which unzip || (apt-get update && apt-get install --no-install-recommends -y unzip)
+	# which unzip || (apt-get update && apt-get install --no-install-recommends -y unzip)
 ifeq ($(GOOS),darwin)
 	curl -sfL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-osx-x86_64.zip -o protoc.zip
 else
@@ -99,4 +99,3 @@ endif
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
 	curl -sfL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH).tar.gz | \
 		tar -zx -C $(BINDIR) --strip-components=2
-

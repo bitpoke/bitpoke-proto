@@ -59,9 +59,10 @@ spec:
       containers:
       - args:
         - --kubelet-service=kube-system/kubelet
+        - -logtostderr=true
         - --config-reloader-image=quay.io/coreos/configmap-reload:v0.0.1
-        - --prometheus-config-reloader=quay.io/coreos/prometheus-config-reloader:v0.21.0
-        image: quay.io/coreos/prometheus-operator:v0.21.0
+        - --prometheus-config-reloader=quay.io/coreos/prometheus-config-reloader:v0.23.0
+        image: quay.io/coreos/prometheus-operator:v0.23.0
         name: prometheus-operator
         ports:
         - containerPort: 8080
@@ -69,10 +70,13 @@ spec:
         resources:
           limits:
             cpu: 200m
-            memory: 100Mi
+            memory: 200Mi
           requests:
             cpu: 100m
-            memory: 50Mi
+            memory: 100Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
       nodeSelector:
         beta.kubernetes.io/os: linux
       securityContext:
@@ -308,11 +312,11 @@ spec:
         name: kube-state-metrics
         resources:
           limits:
-            cpu: 102m
-            memory: 180Mi
+            cpu: 100m
+            memory: 150Mi
           requests:
-            cpu: 102m
-            memory: 180Mi
+            cpu: 100m
+            memory: 150Mi
       - command:
         - /pod_nanny
         - --container=kube-state-metrics
@@ -407,10 +411,8 @@ spec:
       prometheus: k8s
       role: alert-rules
   serviceAccountName: prometheus-k8s
-  serviceMonitorSelector:
-    matchExpressions:
-    - key: k8s-app
-      operator: Exists
+  serviceMonitorNamespaceSelector: {}
+  serviceMonitorSelector: {}
   version: v2.3.1
 ```
 
@@ -541,6 +543,7 @@ spec:
     interval: 30s
     port: https-main
     scheme: https
+    scrapeTimeout: 30s
     tlsConfig:
       insecureSkipVerify: true
   - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
