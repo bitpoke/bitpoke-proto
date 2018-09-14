@@ -40,7 +40,7 @@ import (
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const timeout = time.Second * 2
+const timeout = time.Second * 1
 
 var _ = Describe("Site controller", func() {
 	var (
@@ -130,6 +130,7 @@ var _ = Describe("Site controller", func() {
 			Entry("reconciles memcached service monitor", "%s-memcached", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles mysql cluster", "%s-mysql", &mysqlv1alpha1.MysqlCluster{}),
 			Entry("reconciles mysql service monitor", "%s-mysql", &monitoringv1.ServiceMonitor{}),
+			Entry("reconciles wordpress service monitor", "%s-wp", &monitoringv1.ServiceMonitor{}),
 		)
 	})
 })

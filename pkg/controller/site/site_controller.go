@@ -145,6 +145,7 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 		sync.NewMemcachedServiceSyncer(wp),
 		sync.NewMemcachedServiceMonitorSyncer(wp),
 		sync.NewWordpressSyncer(wp),
+		sync.NewWordpressServiceMonitorSyncer(wp),
 		sync.NewMysqlClusterSyncer(wp),
 		sync.NewMysqlServiceMonitorSyncer(wp),
 	}
