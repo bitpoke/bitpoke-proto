@@ -22,25 +22,25 @@ import (
 func NewGiteaIngressSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 	obj := &extv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.GetGiteaIngressName(),
-			Namespace: proj.GetNamespaceName(),
+			Name:      giteaIngressName(proj),
+			Namespace: getNamespaceName(proj),
 		},
 	}
 
 	return syncer.New("GiteaIngress", proj, obj, func(existing runtime.Object) error {
 		out := existing.(*extv1beta1.Ingress)
-		out.Labels = GetGiteaPodLabels(proj)
+		out.Labels = giteaPodLabels(proj)
 
 		out.Spec.Rules = []extv1beta1.IngressRule{
 			{
-				Host: proj.GetGiteaDomain(),
+				Host: giteaDomain(proj),
 				IngressRuleValue: extv1beta1.IngressRuleValue{
 					HTTP: &extv1beta1.HTTPIngressRuleValue{
 						Paths: []extv1beta1.HTTPIngressPath{
 							{
 								Path: "/",
 								Backend: extv1beta1.IngressBackend{
-									ServiceName: proj.GetGiteaServiceName(),
+									ServiceName: giteaServiceName(proj),
 									ServicePort: intstr.FromString("http"),
 								},
 							},

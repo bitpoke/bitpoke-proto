@@ -87,7 +87,7 @@ dependencies:
 	test -d $(BINDIR) || mkdir $(BINDIR)
 	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
 	GOBIN=$(BINDIR) go install ./vendor/github.com/golang/protobuf/protoc-gen-go
-	# which unzip || (apt-get update && apt-get install --no-install-recommends -y unzip)
+	which unzip || (apt-get update && apt-get install --no-install-recommends -y unzip)
 ifeq ($(GOOS),darwin)
 	curl -sfL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-osx-x86_64.zip -o protoc.zip
 else

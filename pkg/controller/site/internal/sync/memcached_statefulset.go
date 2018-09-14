@@ -29,36 +29,34 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 const (
 	// DefaultMemcachedMemory is the default value of memory for Memcached StatefulSet
-	DefaultMemcachedMemory            = "512Mi"
-	memcachedCPU                      = "100m"
-	memcachedReplicas           int32 = 1
-	memcachedImage                    = "docker.io/library/memcached:1.5.9-alpine"
-	memcachedImagePullPolicy          = "IfNotPresent"
-	memcachedExporterPort             = 9150
-	memcachedPort                     = 11211
-	memcachedExporterImage            = "quay.io/prometheus/memcached-exporter:v0.4.1"
-	memcachedStatefulSetNameFmt       = "%s-memcached"
-	// MemcachedStatefulSetFailed is the event reason for a failed Memcached StatefulSet reconcile
-	MemcachedStatefulSetFailed EventReason = "MemcachedFailed"
-	// MemcachedStatefulSetUpdated is the event reason for a successful Memcached StatefulSet reconcile
-	MemcachedStatefulSetUpdated EventReason = "MemcachedUpdated"
+	DefaultMemcachedMemory         = "512Mi"
+	memcachedCPU                   = "100m"
+	memcachedReplicas        int32 = 1
+	memcachedImage                 = "docker.io/library/memcached:1.5.9-alpine"
+	memcachedImagePullPolicy       = "IfNotPresent"
+	memcachedExporterPort          = 9150
+	memcachedPort                  = 11211
+	memcachedExporterImage         = "quay.io/prometheus/memcached-exporter:v0.4.1"
 )
 
 var (
 	resMemcachedCPU = resource.MustParse(memcachedCPU)
 )
 
+func memcachedStatefulSetName(wp *wordpressv1alpha1.Wordpress) string {
+	return fmt.Sprintf("%s-memcached", wp.Name)
+}
+
 // NewMemcachedStatefulSetSyncer returns a new syncer.Interface for reconciling Memcached StatefulSet
 func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
 	obj := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf(memcachedStatefulSetNameFmt, wp.Name),
+			Name:      memcachedStatefulSetName(wp),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -84,19 +82,19 @@ func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Inter
 		// make conversion: 12Mi (12 * 2^20)
 		memcachedMemoryArg := intVal / 1024 / 1024
 
-		out.ObjectMeta.Labels = dashboardv1alpha1.GetSiteLabels(wp, "memcached")
+		out.ObjectMeta.Labels = getSiteLabels(wp, "memcached")
 
-		out.Spec.ServiceName = fmt.Sprintf(memcachedServiceNameFmt, wp.ObjectMeta.Name)
+		out.Spec.ServiceName = memcachedServiceName(wp)
 		out.Spec.Replicas = &replicas
-		out.Spec.Selector = metav1.SetAsLabelSelector(dashboardv1alpha1.GetMemcachedSelector(wp))
+		out.Spec.Selector = metav1.SetAsLabelSelector(getSiteLabels(wp, "memcached"))
 		out.Spec.Template = corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: dashboardv1alpha1.GetSiteLabels(wp, "memcached"),
+				Labels: getSiteLabels(wp, "memcached"),
 			},
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
 					{
-						Name:            fmt.Sprintf(memcachedStatefulSetNameFmt, wp.ObjectMeta.Name),
+						Name:            memcachedStatefulSetName(wp),
 						Image:           memcachedImage,
 						ImagePullPolicy: memcachedImagePullPolicy,
 						Resources: corev1.ResourceRequirements{

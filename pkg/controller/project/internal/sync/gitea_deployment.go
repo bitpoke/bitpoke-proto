@@ -20,27 +20,32 @@ import (
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
+var (
+	resGiteaRequestMemory = resource.MustParse(giteaRequestsMemory)
+	resGiteaRequestsCPU   = resource.MustParse(giteaRequestsCPU)
+)
+
 // NewGiteaDeploymentSyncer returns a new syncer.Interface for reconciling Gitea Deployment
 func NewGiteaDeploymentSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 	obj := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.GetGiteaDeploymentName(),
-			Namespace: proj.GetNamespaceName(),
+			Name:      giteaDeploymentName(proj),
+			Namespace: getNamespaceName(proj),
 		},
 	}
 
 	return syncer.New("GiteaDeployment", proj, obj, func(existing runtime.Object) error {
 		out := existing.(*appsv1.Deployment)
 
-		out.Labels = GetGiteaPodLabels(proj)
+		out.Labels = giteaPodLabels(proj)
 
 		out.Spec.Selector = &metav1.LabelSelector{
-			MatchLabels: GetGiteaLabels(proj),
+			MatchLabels: giteaLabels(proj),
 		}
 
 		out.Spec.Template = corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: GetGiteaPodLabels(proj),
+				Labels: giteaPodLabels(proj),
 			},
 			Spec: corev1.PodSpec{
 				Volumes: []corev1.Volume{
@@ -48,7 +53,7 @@ func NewGiteaDeploymentSyncer(proj *dashboardv1alpha1.Project) syncer.Interface 
 						Name: "config",
 						VolumeSource: corev1.VolumeSource{
 							Secret: &corev1.SecretVolumeSource{
-								SecretName: proj.GetGiteaSecretName(),
+								SecretName: giteaSecretName(proj),
 							},
 						},
 					},
@@ -56,7 +61,7 @@ func NewGiteaDeploymentSyncer(proj *dashboardv1alpha1.Project) syncer.Interface 
 						Name: "data",
 						VolumeSource: corev1.VolumeSource{
 							PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-								ClaimName: proj.GetGiteaPVCName(),
+								ClaimName: giteaPVCName(proj),
 							},
 						},
 					},
@@ -96,8 +101,8 @@ func NewGiteaDeploymentSyncer(proj *dashboardv1alpha1.Project) syncer.Interface 
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								"memory": resource.MustParse(giteaRequestsMemory),
-								"cpu":    resource.MustParse(giteaRequestsCPU),
+								"memory": resGiteaRequestMemory,
+								"cpu":    resGiteaRequestsCPU,
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{

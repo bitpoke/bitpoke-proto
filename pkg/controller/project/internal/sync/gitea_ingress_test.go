@@ -23,7 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/presslabs/dashboard/pkg/controller/project/sync"
+	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
 )
 
 var _ = Describe("The GiteaIngressSyncer transform func T", func() {

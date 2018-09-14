@@ -19,49 +19,53 @@ import (
 )
 
 const (
-	prometheusName            = "prometheus"
 	prometheusBaseImage       = "quay.io/prometheus/prometheus"
 	prometheusVersion         = "v2.3.2"
 	defaultScrapeInterval     = "10s"
 	defaultEvaluationInterval = "30s"
 )
 
-// GetPrometheusSelector returns a set of labels that can be used to identify Prometheus
+// prometheusSelector returns a set of labels that can be used to identify Prometheus
 // related resources
-func GetPrometheusSelector(project *dashboardv1alpha1.Project) labels.Set {
+func prometheusSelector(project *dashboardv1alpha1.Project) labels.Set {
 	prometheusLabels := labels.Set{
-		"app.kubernetes.io/name": prometheusName,
+		"app.kubernetes.io/name": prometheusName(project),
 	}
-	return labels.Merge(project.GetDefaultLabels(), prometheusLabels)
+	return labels.Merge(getDefaultLabels(project), prometheusLabels)
 }
 
-// GetPrometheusLabels returns a set of labels that should be applied on Prometheus
+// prometheusLabels returns a set of labels that should be applied on Prometheus
 // related objects that are managed by the project controller
-func GetPrometheusLabels(project *dashboardv1alpha1.Project) labels.Set {
+func prometheusLabels(project *dashboardv1alpha1.Project) labels.Set {
 	prometheusLabels := labels.Set{
 		"app.kubernetes.io/version": prometheusVersion,
 	}
-	return labels.Merge(GetPrometheusSelector(project), prometheusLabels)
+	return labels.Merge(prometheusSelector(project), prometheusLabels)
+}
+
+// prometheusName returns the name of the Prometheus resource
+func prometheusName(project *dashboardv1alpha1.Project) string {
+	return "prometheus"
 }
 
 // NewPrometheusSyncer returns a new syncer.Interface for reconciling Prometheus
 func NewPrometheusSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 	obj := &monitoringv1.Prometheus{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.GetPrometheusName(),
-			Namespace: proj.GetNamespaceName(),
+			Name:      prometheusName(proj),
+			Namespace: getNamespaceName(proj),
 		},
 	}
 
 	return syncer.New("Prometheus", proj, obj, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.Prometheus)
-		out.Labels = GetPrometheusLabels(proj)
+		out.Labels = prometheusLabels(proj)
 
 		out.Spec = monitoringv1.PrometheusSpec{
 			ScrapeInterval:     defaultScrapeInterval,
 			EvaluationInterval: defaultEvaluationInterval,
 			ServiceMonitorSelector: &metav1.LabelSelector{
-				MatchLabels: proj.GetProjectLabel(),
+				MatchLabels: getProjectLabel(proj),
 			},
 			Version:   prometheusVersion,
 			BaseImage: prometheusBaseImage,

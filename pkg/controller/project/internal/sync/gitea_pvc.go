@@ -18,28 +18,32 @@ import (
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
+var (
+	resGiteaRequestsStorage = resource.MustParse(giteaRequestsStorage)
+)
+
 // NewGiteaPVCSyncer returns a new syncer.Interface for reconciling Gitea PVC
 func NewGiteaPVCSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 	obj := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.GetGiteaPVCName(),
-			Namespace: proj.GetNamespaceName(),
+			Name:      giteaPVCName(proj),
+			Namespace: getNamespaceName(proj),
 		},
 	}
 
 	return syncer.New("GiteaPVC", proj, obj, func(existing runtime.Object) error {
 		out := existing.(*corev1.PersistentVolumeClaim)
-		out.Labels = GetGiteaPodLabels(proj)
+		out.Labels = giteaPodLabels(proj)
 
 		out.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
 			corev1.ReadWriteOnce,
 		}
 		out.Spec.Selector = &metav1.LabelSelector{
-			MatchLabels: GetGiteaLabels(proj),
+			MatchLabels: giteaLabels(proj),
 		}
 		out.Spec.Resources = corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
-				"storage": resource.MustParse(giteaRequestsStorage),
+				"storage": resGiteaRequestsStorage,
 			},
 		}
 

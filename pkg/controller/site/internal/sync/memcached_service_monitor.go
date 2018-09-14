@@ -26,19 +26,18 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const (
-	memcachedServiceMonitorNameFmt = "%s-memcached"
-)
+func memcachedServiceMonitorName(wp *wordpressv1alpha1.Wordpress) string {
+	return fmt.Sprintf("%s-memcached", wp.Name)
+}
 
 // NewMemcachedServiceMonitorSyncer returns a new syncer.Interface for reconciling Memcached ServiceMonitor
 func NewMemcachedServiceMonitorSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
 	obj := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf(mysqlClustereNameFmt, wp.Name),
+			Name:      memcachedServiceMonitorName(wp),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -46,11 +45,7 @@ func NewMemcachedServiceMonitorSyncer(wp *wordpressv1alpha1.Wordpress) syncer.In
 	return syncer.New("MemcachedServiceMonitor", wp, obj, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.ServiceMonitor)
 
-		out.ObjectMeta = metav1.ObjectMeta{
-			Name:      fmt.Sprintf(memcachedServiceMonitorNameFmt, wp.ObjectMeta.Name),
-			Namespace: wp.ObjectMeta.Namespace,
-			Labels:    dashboardv1alpha1.GetSiteLabels(wp, "memcached-service-monitor"),
-		}
+		out.ObjectMeta.Labels = getSiteLabels(wp, "memcached-service-monitor")
 
 		out.Spec.Endpoints = []monitoringv1.Endpoint{
 			{

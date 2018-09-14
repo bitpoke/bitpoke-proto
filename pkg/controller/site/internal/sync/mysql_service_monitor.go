@@ -26,19 +26,18 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const (
-	mysqlServiceMonitorNameFmt = "%s-mysql"
-)
+func mysqlServiceMonitorName(wp *wordpressv1alpha1.Wordpress) string {
+	return fmt.Sprintf("%s-mysql", wp.Name)
+}
 
 // NewMysqlServiceMonitorSyncer returns a new syncer.Interface for reconciling Mysql ServiceMonitor
 func NewMysqlServiceMonitorSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
 	obj := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf(mysqlServiceMonitorNameFmt, wp.Name),
+			Name:      mysqlServiceMonitorName(wp),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -46,7 +45,7 @@ func NewMysqlServiceMonitorSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interf
 	return syncer.New("MysqlServiceMonitor", wp, obj, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.ServiceMonitor)
 
-		out.ObjectMeta.Labels = dashboardv1alpha1.GetSiteLabels(wp, "mysql-service-monitor")
+		out.ObjectMeta.Labels = getSiteLabels(wp, "mysql-service-monitor")
 
 		out.Spec.Endpoints = []monitoringv1.Endpoint{
 			{

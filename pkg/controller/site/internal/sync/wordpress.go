@@ -43,7 +43,7 @@ func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
 		out.Spec.Env = []corev1.EnvVar{
 			{
 				Name:  "MEMCACHED_DISCOVERY_SERVICE",
-				Value: fmt.Sprintf("%s-memcached.%s", wp.ObjectMeta.Name, wp.ObjectMeta.Namespace),
+				Value: fmt.Sprintf("%s.%s", memcachedServiceName(wp), wp.Namespace),
 			},
 		}
 

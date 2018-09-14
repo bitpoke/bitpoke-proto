@@ -26,17 +26,11 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 const (
-	mysqlClustereNameFmt = "%s-mysql"
-	// MysqlClusterFailed is the event reason for a failed MysqlCluster reconcile
-	MysqlClusterFailed EventReason = "MysqlClusterFailed"
-	// MysqlClusterUpdated is the event reason for a successful MysqlCluster reconcile
-	MysqlClusterUpdated EventReason = "MysqlClusterUpdated"
 	// DefaultMysqlVolumeStorage is the default value of storage for MysqlCluster
 	DefaultMysqlVolumeStorage = "8Gi"
 	// DefaultMysqlPodMemory is the default value of memory for MysqlCluster
@@ -45,11 +39,15 @@ const (
 	DefaultMysqlPodCPU = "200m"
 )
 
+func mysqlClusterName(wp *wordpressv1alpha1.Wordpress) string {
+	return fmt.Sprintf("%s-mysql", wp.Name)
+}
+
 // NewMysqlClusterSyncer returns a new syncer.Interface for reconciling MysqlCluster
 func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
 	obj := &mysqlv1alpha1.MysqlCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf(mysqlClustereNameFmt, wp.Name),
+			Name:      mysqlClusterName(wp),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -84,7 +82,7 @@ func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
 			return err
 		}
 
-		out.ObjectMeta.Labels = dashboardv1alpha1.GetSiteLabels(wp, "mysql")
+		out.ObjectMeta.Labels = getSiteLabels(wp, "mysql")
 
 		out.Spec.PodSpec.Resources = corev1.ResourceRequirements{
 			Requests: map[corev1.ResourceName]resource.Quantity{

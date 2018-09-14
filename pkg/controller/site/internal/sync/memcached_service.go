@@ -26,19 +26,18 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const (
-	memcachedServiceNameFmt = "%s-memcached"
-)
+func memcachedServiceName(wp *wordpressv1alpha1.Wordpress) string {
+	return fmt.Sprintf("%s-memcached", wp.Name)
+}
 
 // NewMemcachedServiceSyncer returns a new syncer.Interface for reconciling Memcached Service
 func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
 	obj := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf(memcachedServiceNameFmt, wp.Name),
+			Name:      memcachedServiceName(wp),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -46,7 +45,7 @@ func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface
 	return syncer.New("MemcachedService", wp, obj, func(existing runtime.Object) error {
 		out := existing.(*corev1.Service)
 
-		out.ObjectMeta.Labels = dashboardv1alpha1.GetSiteLabels(wp, "memcached")
+		out.ObjectMeta.Labels = getSiteLabels(wp, "memcached")
 
 		out.Spec.ClusterIP = "None"
 		out.Spec.Ports = []corev1.ServicePort{
@@ -56,7 +55,7 @@ func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface
 				TargetPort: intstr.FromInt(memcachedPort),
 			},
 		}
-		out.Spec.Selector = dashboardv1alpha1.GetMemcachedSelector(wp)
+		out.Spec.Selector = getSiteLabels(wp, "memcached")
 
 		return nil
 	})

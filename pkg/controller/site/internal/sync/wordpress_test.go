@@ -22,7 +22,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/presslabs/dashboard/pkg/controller/site/sync"
+	"github.com/presslabs/dashboard/pkg/controller/site/internal/sync"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 

@@ -17,16 +17,14 @@ limitations under the License.
 package sync
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/record"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"k8s.io/apimachinery/pkg/labels"
+
+	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-var log = logf.Log.WithName("project-controller")
-var (
-	c        client.Client
-	scheme   *runtime.Scheme
-	recorder record.EventRecorder
-	owner    runtime.Object
-)
+// getSiteLabels returns the default labels for site
+func getSiteLabels(wp *wordpressv1alpha1.Wordpress, component string) labels.Set {
+	l := wp.LabelsForComponent(component)
+	l["app.kubernetes.io/deploy-manager"] = "sites-controller.dashboard.presslabs.com"
+	return l
+}

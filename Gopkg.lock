@@ -433,7 +433,6 @@
   version = "v0.8.0"
 
 [[projects]]
-  branch = "master"
   digest = "1:c08e16b9dc8e583b29d7de70f778168c05e663375ebdd072c95eddc9276acebc"
   name = "github.com/presslabs/controller-util"
   packages = ["syncer"]
@@ -1077,7 +1076,6 @@
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
     "sigs.k8s.io/controller-runtime/pkg/controller",
-    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil",
     "sigs.k8s.io/controller-runtime/pkg/envtest",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",

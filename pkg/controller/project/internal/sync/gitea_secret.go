@@ -25,14 +25,14 @@ import (
 func NewGiteaSecretSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 	obj := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.GetGiteaSecretName(),
-			Namespace: proj.GetNamespaceName(),
+			Name:      giteaSecretName(proj),
+			Namespace: getNamespaceName(proj),
 		},
 	}
 
 	return syncer.New("GiteaSecret", proj, obj, func(existing runtime.Object) error {
 		out := existing.(*corev1.Secret)
-		out.Labels = GetGiteaPodLabels(proj)
+		out.Labels = giteaPodLabels(proj)
 
 		secretKeyBytes, ok := out.Data["SECRET_KEY"]
 		if !ok {

@@ -40,19 +40,24 @@ func defaultOrMaxValue(rl corev1.ResourceList, resource corev1.ResourceName) res
 	}
 }
 
+// resourceQuotaName returns the name of the Prometheus resource
+func resourceQuotaName(project *dashboardv1alpha1.Project) string {
+	return project.Name
+}
+
 // NewResourceQuotaSyncer returns a new syncer.Interface for reconciling ResourceQuota
 func NewResourceQuotaSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 	obj := &corev1.ResourceQuota{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.GetResourceQuotaName(),
-			Namespace: proj.GetNamespaceName(),
+			Name:      resourceQuotaName(proj),
+			Namespace: getNamespaceName(proj),
 		},
 	}
 
 	return syncer.New("ResourceQuota", proj, obj, func(existing runtime.Object) error {
 		out := existing.(*corev1.ResourceQuota)
 
-		out.Labels = proj.GetDefaultLabels()
+		out.Labels = getDefaultLabels(proj)
 
 		out.Spec = corev1.ResourceQuotaSpec{
 			Hard: corev1.ResourceList{

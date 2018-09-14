@@ -42,6 +42,10 @@ version="kubernetes-1.11.3"
   name="github.com/coreos/prometheus-operator"
   version="v0.23.2"
 
+[[constraint]]
+name="github.com/presslabs/controller-util"
+revision="4a1c218c04f90fbee8161177184c94be315c61ee"
+
 # STANZAS BELOW ARE GENERATED AND MAY BE WRITTEN - DO NOT MODIFY BELOW THIS LINE.
 
 [[constraint]]

@@ -26,7 +26,7 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
-	"github.com/presslabs/dashboard/pkg/controller/site/sync"
+	"github.com/presslabs/dashboard/pkg/controller/site/internal/sync"
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )

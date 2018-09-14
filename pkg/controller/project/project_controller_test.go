@@ -76,6 +76,7 @@ var _ = Describe("Project controller", func() {
 			organization     *corev1.Namespace
 			project          *dashboardv1alpha1.Project
 			projectName      string
+			projectNamespace string
 			organizationName string
 			componentsLabels map[string]map[string]string
 		)
@@ -83,6 +84,7 @@ var _ = Describe("Project controller", func() {
 		BeforeEach(func() {
 			projectName = fmt.Sprintf("proj-%d", rand.Int31())
 			organizationName = fmt.Sprintf("org-%d", rand.Int31())
+			projectNamespace = fmt.Sprintf("proj-%s-%s", organizationName, projectName)
 
 			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: projectName, Namespace: organizationName}}
 
@@ -135,7 +137,7 @@ var _ = Describe("Project controller", func() {
 			func(component string, nameFmt string, obj runtime.Object) {
 				key := types.NamespacedName{
 					Name:      fmt.Sprintf(nameFmt, project.Name),
-					Namespace: fmt.Sprintf("proj-%s-%s", organization.Name, project.Name),
+					Namespace: projectNamespace,
 				}
 				Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
 
@@ -153,12 +155,13 @@ var _ = Describe("Project controller", func() {
 
 		It("reconciles the namespace", func() {
 			ns := &corev1.Namespace{}
-			Eventually(func() error { return c.Get(context.TODO(), project.GetNamespaceKey(), ns) }, timeout).Should(Succeed())
+			Eventually(func() error {
+				return c.Get(context.TODO(), types.NamespacedName{Name: projectNamespace}, ns)
+			}, timeout).Should(Succeed())
 			Expect(ns.Labels).To(Equal(map[string]string{
 				"project.dashboard.presslabs.com/project": project.Name,
 				"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
 			}))
-			Expect(ns.Name).To(Equal(fmt.Sprintf("proj-%s-%s", project.Namespace, project.Name)))
 		})
 	})
 })

@@ -35,7 +35,7 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
-	"github.com/presslabs/dashboard/pkg/controller/site/sync"
+	"github.com/presslabs/dashboard/pkg/controller/site/internal/sync"
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
@@ -118,11 +118,6 @@ type ReconcileSite struct {
 	scheme   *runtime.Scheme
 	recorder record.EventRecorder
 }
-
-const (
-	eventNormal  = "Normal"
-	eventWarning = "Warning"
-)
 
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
 // and what is in the Wordpress.Spec

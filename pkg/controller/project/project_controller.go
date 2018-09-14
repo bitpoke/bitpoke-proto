@@ -35,7 +35,7 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/presslabs/dashboard/pkg/controller/project/sync"
+	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
 )
 
 var log = logf.Log.WithName("project-controller")

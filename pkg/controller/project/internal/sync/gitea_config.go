@@ -11,7 +11,6 @@ import (
 	"strconv"
 
 	"github.com/go-ini/ini"
-	"k8s.io/apimachinery/pkg/labels"
 
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
@@ -28,22 +27,6 @@ const (
 	giteaRequestsStorage = "10Gi"
 )
 
-// GetGiteaLabels returns a set of labels that can be used to identify Gitea related resources
-func GetGiteaLabels(project *dashboardv1alpha1.Project) labels.Set {
-	giteaSelector := labels.Set{
-		"app.kubernetes.io/name": giteaName,
-	}
-	return labels.Merge(project.GetDefaultLabels(), giteaSelector)
-}
-
-// GetGiteaPodLabels returns a set of labels that should be applied on Gitea related objects that are managed by the project controller
-func GetGiteaPodLabels(project *dashboardv1alpha1.Project) labels.Set {
-	giteaLabels := labels.Set{
-		"app.kubernetes.io/version": giteaReleaseVersion,
-	}
-	return labels.Merge(GetGiteaLabels(project), giteaLabels)
-}
-
 func createGiteaConfig(project *dashboardv1alpha1.Project, values map[string]string) (*ini.File, error) {
 	config := map[string]map[string]string{
 		"DEFAULT": {
@@ -51,12 +34,12 @@ func createGiteaConfig(project *dashboardv1alpha1.Project, values map[string]str
 		},
 		"server": {
 			"PROTOCOL":         "http",
-			"DOMAIN":           project.GetGiteaDomain(),
+			"DOMAIN":           giteaDomain(project),
 			"HTTP_ADDR":        giteaHTTPInternalIP,
 			"HTTP_PORT":        strconv.Itoa(giteaHTTPPort),
 			"DISABLE_SSH":      "true",
 			"START_SSH_SERVER": "false",
-			"SSH_DOMAIN":       project.GetGiteaDomain(),
+			"SSH_DOMAIN":       giteaDomain(project),
 			"SSH_PORT":         strconv.Itoa(giteaSSHPort),
 			"SSH_LISTEN_HOST":  "0.0.0.0",
 			"SSH_LISTEN_PORT":  strconv.Itoa(giteaSSHPort),
