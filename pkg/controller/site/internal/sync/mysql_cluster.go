@@ -23,9 +23,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
@@ -44,7 +44,7 @@ func mysqlClusterName(wp *wordpressv1alpha1.Wordpress) string {
 }
 
 // NewMysqlClusterSyncer returns a new syncer.Interface for reconciling MysqlCluster
-func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
+func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &mysqlv1alpha1.MysqlCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      mysqlClusterName(wp),
@@ -52,13 +52,13 @@ func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
 		},
 	}
 
-	return syncer.New("MysqlCluster", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MysqlCluster", wp, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*mysqlv1alpha1.MysqlCluster)
-
 		volumeStorage, exists := wp.ObjectMeta.Annotations["mysql.provisioner.presslabs.com/storage"]
 		if !exists {
 			volumeStorage = DefaultMysqlVolumeStorage
 		}
+
 		resVolumeStorage, err := resource.ParseQuantity(volumeStorage)
 		if err != nil {
 			return err

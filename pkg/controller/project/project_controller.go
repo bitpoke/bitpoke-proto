@@ -125,14 +125,14 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	syncers := []syncer.Interface{
-		sync.NewNamespaceSyncer(project),
-		sync.NewResourceQuotaSyncer(project),
-		sync.NewGiteaSecretSyncer(project),
-		sync.NewGiteaPVCSyncer(project),
-		sync.NewGiteaDeploymentSyncer(project),
-		sync.NewGiteaServiceSyncer(project),
-		sync.NewGiteaIngressSyncer(project),
-		sync.NewPrometheusSyncer(project),
+		sync.NewNamespaceSyncer(project, r.Client, r.scheme),
+		sync.NewResourceQuotaSyncer(project, r.Client, r.scheme),
+		sync.NewGiteaSecretSyncer(project, r.Client, r.scheme),
+		sync.NewGiteaPVCSyncer(project, r.Client, r.scheme),
+		sync.NewGiteaDeploymentSyncer(project, r.Client, r.scheme),
+		sync.NewGiteaServiceSyncer(project, r.Client, r.scheme),
+		sync.NewGiteaIngressSyncer(project, r.Client, r.scheme),
+		sync.NewPrometheusSyncer(project, r.Client, r.scheme),
 	}
 
 	return reconcile.Result{}, r.sync(syncers)
@@ -140,7 +140,7 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 
 func (r *ReconcileProject) sync(syncers []syncer.Interface) error {
 	for _, s := range syncers {
-		if err := syncer.Sync(context.TODO(), s, r.Client, r.scheme, r.recorder); err != nil {
+		if err := syncer.Sync(context.TODO(), s, r.recorder); err != nil {
 			log.Error(err, "unable to sync")
 			return err
 		}

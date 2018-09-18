@@ -40,7 +40,7 @@ import (
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const timeout = time.Second * 1
+const timeout = time.Second * 2
 
 var _ = Describe("Site controller", func() {
 	var (
@@ -75,6 +75,15 @@ var _ = Describe("Site controller", func() {
 			expectedRequest reconcile.Request
 		)
 
+		entries := []TableEntry{
+			Entry("reconciles memcached statefulset", "%s-memcached", &appsv1.StatefulSet{}),
+			Entry("reconciles memcached service", "%s-memcached", &corev1.Service{}),
+			Entry("reconciles memcached service monitor", "%s-memcached", &monitoringv1.ServiceMonitor{}),
+			Entry("reconciles mysql cluster", "%s-mysql", &mysqlv1alpha1.MysqlCluster{}),
+			Entry("reconciles mysql service monitor", "%s-mysql", &monitoringv1.ServiceMonitor{}),
+			Entry("reconciles wordpress service monitor", "%s-wp", &monitoringv1.ServiceMonitor{}),
+		}
+
 		BeforeEach(func() {
 			name := fmt.Sprintf("wp-%d", rand.Int31())
 			namespace := "default"
@@ -96,41 +105,47 @@ var _ = Describe("Site controller", func() {
 
 			// create Wordpress resource
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
-			// We need to drain the requests queue because syncing a subresource
-			// might trigger reconciliation again and we want to isolate tests
-			// to their own reconciliation requests
-			done := time.After(time.Second)
+			// Wait for initial reconciliation
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			// Wait for a second reconciliation triggered by components being created
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			// TODO: find out why sometimes we get extra reconciliation requests and remove this loop
+			done := time.After(100 * time.Millisecond)
+		drain:
 			for {
 				select {
 				case <-requests:
 					continue
 				case <-done:
-					return
+					break drain
 				}
 			}
+			// We need to make sure that the controller does not create infinite loops
+			Consistently(requests).ShouldNot(Receive(Equal(expectedRequest)))
 		})
 
 		AfterEach(func() {
 			// cleanup Wordpress resource
-			c.Delete(context.TODO(), wp)
+			Expect(c.Delete(context.TODO(), wp)).To(Succeed())
+
+			// GC created objects
+			for _, e := range entries {
+				obj := e.Parameters[1].(runtime.Object)
+				nameFmt := e.Parameters[0].(string)
+				mo := obj.(metav1.Object)
+				mo.SetName(fmt.Sprintf(nameFmt, wp.Name))
+				mo.SetNamespace(wp.Namespace)
+				c.Delete(context.TODO(), obj)
+			}
 		})
 
-		DescribeTable("the reconciler",
-			func(nameFmt string, obj runtime.Object) {
-				key := types.NamespacedName{
-					Name:      fmt.Sprintf(nameFmt, wp.Name),
-					Namespace: wp.Namespace,
-				}
-				Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
-			},
-			Entry("reconciles memcached statefulset", "%s-memcached", &appsv1.StatefulSet{}),
-			Entry("reconciles memcached service", "%s-memcached", &corev1.Service{}),
-			Entry("reconciles memcached service monitor", "%s-memcached", &monitoringv1.ServiceMonitor{}),
-			Entry("reconciles mysql cluster", "%s-mysql", &mysqlv1alpha1.MysqlCluster{}),
-			Entry("reconciles mysql service monitor", "%s-mysql", &monitoringv1.ServiceMonitor{}),
-			Entry("reconciles wordpress service monitor", "%s-wp", &monitoringv1.ServiceMonitor{}),
-		)
+		DescribeTable("the reconciler", func(nameFmt string, obj runtime.Object) {
+			key := types.NamespacedName{
+				Name:      fmt.Sprintf(nameFmt, wp.Name),
+				Namespace: wp.Namespace,
+			}
+			Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
+		}, entries...)
 	})
 })

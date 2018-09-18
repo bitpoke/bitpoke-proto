@@ -21,7 +21,10 @@ import (
 	. "github.com/onsi/gomega"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	"github.com/presslabs/controller-util/syncer"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
 )
@@ -39,8 +42,8 @@ var _ = Describe("The GiteaIngressSyncer transform func T", func() {
 		}
 		giteaIngress = &extv1beta1.Ingress{}
 
-		syncer := sync.NewGiteaIngressSyncer(&proj)
-		err := syncer.SyncFn(giteaIngress)
+		giteaIngressSyncer := sync.NewGiteaIngressSyncer(&proj, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
+		err := giteaIngressSyncer.SyncFn(giteaIngress)
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 

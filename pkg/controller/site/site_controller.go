@@ -34,7 +34,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/presslabs/controller-util/syncer"
-
 	"github.com/presslabs/dashboard/pkg/controller/site/internal/sync"
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
@@ -124,13 +123,13 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 	}
 
 	syncers := []syncer.Interface{
-		sync.NewMemcachedStatefulSetSyncer(wp),
-		sync.NewMemcachedServiceSyncer(wp),
-		sync.NewMemcachedServiceMonitorSyncer(wp),
-		sync.NewWordpressSyncer(wp),
-		sync.NewWordpressServiceMonitorSyncer(wp),
-		sync.NewMysqlClusterSyncer(wp),
-		sync.NewMysqlServiceMonitorSyncer(wp),
+		sync.NewMemcachedStatefulSetSyncer(wp, r.Client, r.scheme),
+		sync.NewMemcachedServiceSyncer(wp, r.Client, r.scheme),
+		sync.NewMemcachedServiceMonitorSyncer(wp, r.Client, r.scheme),
+		sync.NewWordpressSyncer(wp, r.Client, r.scheme),
+		sync.NewWordpressServiceMonitorSyncer(wp, r.Client, r.scheme),
+		sync.NewMysqlClusterSyncer(wp, r.Client, r.scheme),
+		sync.NewMysqlServiceMonitorSyncer(wp, r.Client, r.scheme),
 	}
 
 	return reconcile.Result{}, r.sync(syncers)
@@ -138,7 +137,7 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 
 func (r *ReconcileSite) sync(syncers []syncer.Interface) error {
 	for _, s := range syncers {
-		if err := syncer.Sync(context.TODO(), s, r.Client, r.scheme, r.recorder); err != nil {
+		if err := syncer.Sync(context.TODO(), s, r.recorder); err != nil {
 			log.Error(err, "unable to sync")
 			return err
 		}

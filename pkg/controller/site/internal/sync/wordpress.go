@@ -22,14 +22,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 // NewWordpressSyncer returns a new syncer.Interface for reconciling Wordpress
-func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
+func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &wordpressv1alpha1.Wordpress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.Name,
@@ -37,7 +37,7 @@ func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
 		},
 	}
 
-	return syncer.New("Wordpress", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Wordpress", wp, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*wordpressv1alpha1.Wordpress)
 
 		out.Spec.Env = []corev1.EnvVar{

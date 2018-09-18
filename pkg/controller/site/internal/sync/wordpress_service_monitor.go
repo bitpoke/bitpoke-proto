@@ -23,6 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
@@ -33,7 +34,7 @@ func wordpressServiceMonitorName(wp *wordpressv1alpha1.Wordpress) string {
 }
 
 // NewWordpressServiceMonitorSyncer returns a new sync.Interface for reconciling Wordpress ServiceMonitor
-func NewWordpressServiceMonitorSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
+func NewWordpressServiceMonitorSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wordpressServiceMonitorName(wp),
@@ -41,7 +42,7 @@ func NewWordpressServiceMonitorSyncer(wp *wordpressv1alpha1.Wordpress) syncer.In
 		},
 	}
 
-	return syncer.New("WordpressServiceMonitor", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("WordpressServiceMonitor", wp, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.ServiceMonitor)
 
 		out.ObjectMeta.Labels = getSiteLabels(wp, "wordpress-service-monitor")

@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -26,7 +27,7 @@ var (
 )
 
 // NewGiteaDeploymentSyncer returns a new syncer.Interface for reconciling Gitea Deployment
-func NewGiteaDeploymentSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
+func NewGiteaDeploymentSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      giteaDeploymentName(proj),
@@ -34,7 +35,7 @@ func NewGiteaDeploymentSyncer(proj *dashboardv1alpha1.Project) syncer.Interface 
 		},
 	}
 
-	return syncer.New("GiteaDeployment", proj, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("GiteaDeployment", proj, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*appsv1.Deployment)
 
 		out.Labels = giteaPodLabels(proj)

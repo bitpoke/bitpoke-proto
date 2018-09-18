@@ -24,24 +24,25 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/presslabs/controller-util/syncer"
-
 	"github.com/presslabs/dashboard/pkg/controller/site/internal/sync"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 var _ = Describe("MemcachedStatefulSetSyncer", func() {
 	var (
-		wp        *wordpressv1alpha1.Wordpress
-		memcached *appsv1.StatefulSet
-		syncer    syncer.Interface
+		wp              *wordpressv1alpha1.Wordpress
+		memcached       *appsv1.StatefulSet
+		memcachedSyncer *syncer.ObjectSyncer
 	)
 
 	BeforeEach(func() {
 		wp = &wordpressv1alpha1.Wordpress{}
 		memcached = &appsv1.StatefulSet{}
-		syncer = sync.NewMemcachedStatefulSetSyncer(wp)
+		memcachedSyncer = sync.NewMemcachedStatefulSetSyncer(wp, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
 	})
 
 	DescribeTable("when Wordpress memcached.provisioner.presslabs.com/memory annotation",
@@ -49,7 +50,7 @@ var _ = Describe("MemcachedStatefulSetSyncer", func() {
 			if len(annotationValue) > 0 {
 				wp.ObjectMeta.Annotations = map[string]string{"memcached.provisioner.presslabs.com/memory": annotationValue}
 			}
-			err := syncer.SyncFn(memcached)
+			err := memcachedSyncer.SyncFn(memcached)
 			if shouldErr {
 				Expect(err).To(HaveOccurred())
 			} else {

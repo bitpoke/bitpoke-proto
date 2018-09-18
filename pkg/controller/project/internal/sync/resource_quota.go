@@ -12,9 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
@@ -46,7 +46,7 @@ func resourceQuotaName(project *dashboardv1alpha1.Project) string {
 }
 
 // NewResourceQuotaSyncer returns a new syncer.Interface for reconciling ResourceQuota
-func NewResourceQuotaSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
+func NewResourceQuotaSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &corev1.ResourceQuota{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      resourceQuotaName(proj),
@@ -54,7 +54,7 @@ func NewResourceQuotaSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 		},
 	}
 
-	return syncer.New("ResourceQuota", proj, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("ResourceQuota", proj, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.ResourceQuota)
 
 		out.Labels = getDefaultLabels(proj)

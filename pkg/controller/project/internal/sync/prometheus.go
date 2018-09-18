@@ -12,9 +12,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
@@ -49,7 +49,7 @@ func prometheusName(project *dashboardv1alpha1.Project) string {
 }
 
 // NewPrometheusSyncer returns a new syncer.Interface for reconciling Prometheus
-func NewPrometheusSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
+func NewPrometheusSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &monitoringv1.Prometheus{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      prometheusName(proj),
@@ -57,7 +57,7 @@ func NewPrometheusSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 		},
 	}
 
-	return syncer.New("Prometheus", proj, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Prometheus", proj, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.Prometheus)
 		out.Labels = prometheusLabels(proj)
 

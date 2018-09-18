@@ -26,9 +26,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -53,7 +53,7 @@ func memcachedStatefulSetName(wp *wordpressv1alpha1.Wordpress) string {
 }
 
 // NewMemcachedStatefulSetSyncer returns a new syncer.Interface for reconciling Memcached StatefulSet
-func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
+func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      memcachedStatefulSetName(wp),
@@ -61,7 +61,7 @@ func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Inter
 		},
 	}
 
-	return syncer.New("MemcachedStatefulSet", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MemcachedStatefulSet", wp, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*appsv1.StatefulSet)
 
 		replicas := memcachedReplicas

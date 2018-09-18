@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -19,7 +20,7 @@ import (
 )
 
 // NewGiteaIngressSyncer returns a new syncer.Interface for reconciling Gitea Ingress
-func NewGiteaIngressSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
+func NewGiteaIngressSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &extv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      giteaIngressName(proj),
@@ -27,7 +28,7 @@ func NewGiteaIngressSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 		},
 	}
 
-	return syncer.New("GiteaIngress", proj, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("GiteaIngress", proj, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*extv1beta1.Ingress)
 		out.Labels = giteaPodLabels(proj)
 

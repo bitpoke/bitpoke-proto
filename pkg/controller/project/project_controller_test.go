@@ -37,10 +37,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
+
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
-const timeout = time.Second * 5
+const timeout = time.Second * 1
 
 var _ = Describe("Project controller", func() {
 	var (
@@ -81,12 +82,22 @@ var _ = Describe("Project controller", func() {
 			componentsLabels map[string]map[string]string
 		)
 
+		entries := []TableEntry{
+			Entry("reconciles prometheus", "prometheus", "prometheus%.0s", &monitoringv1.Prometheus{}),
+			Entry("reconciles resourcequota", "default", "%s", &corev1.ResourceQuota{}),
+			Entry("reconciles gitea deployment", "gitea", "gitea%.0s", &appsv1.Deployment{}),
+			Entry("reconciles gitea service", "gitea", "gitea%.0s", &corev1.Service{}),
+			Entry("reconciles gitea ingress", "gitea", "gitea%.0s", &extv1beta1.Ingress{}),
+			Entry("reconciles gitea pvc", "gitea", "gitea%.0s", &corev1.PersistentVolumeClaim{}),
+			Entry("reconciles gitea secret", "gitea", "gitea-conf%.0s", &corev1.Secret{}),
+		}
+
 		BeforeEach(func() {
 			projectName = fmt.Sprintf("proj-%d", rand.Int31())
 			organizationName = fmt.Sprintf("org-%d", rand.Int31())
 			projectNamespace = fmt.Sprintf("proj-%s-%s", organizationName, projectName)
 
-			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: projectName, Namespace: organizationName}}
+			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: projectName, Namespace: projectNamespace}}
 
 			organization = &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -103,17 +114,17 @@ var _ = Describe("Project controller", func() {
 				},
 			}
 			componentsLabels = map[string]map[string]string{
-				"default": map[string]string{
+				"default": {
 					"project.dashboard.presslabs.com/project": project.Name,
 					"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
 				},
-				"prometheus": map[string]string{
+				"prometheus": {
 					"project.dashboard.presslabs.com/project": project.Name,
 					"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":                  "prometheus",
 					"app.kubernetes.io/version":               "v2.3.2",
 				},
-				"gitea": map[string]string{
+				"gitea": {
 					"project.dashboard.presslabs.com/project": project.Name,
 					"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":                  "gitea",
@@ -125,33 +136,51 @@ var _ = Describe("Project controller", func() {
 			// Create the Project object and expect the Reconcile and Namespace to be created
 			Expect(c.Create(context.TODO(), project)).To(Succeed())
 
+			// Wait for initial reconciliation
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			// TODO: redesign projects since you cannot have owner in another
+			// namespace
+			// Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			// TODO: find out why sometimes we get extra reconciliation requests and remove this loop
+			done := time.After(100 * time.Millisecond)
+		drain:
+			for {
+				select {
+				case <-requests:
+					continue
+				case <-done:
+					break drain
+				}
+			}
+			// We need to make sure that the controller does not create infinite loops
+			Consistently(requests).ShouldNot(Receive(Equal(expectedRequest)))
 		})
 
 		AfterEach(func() {
 			c.Delete(context.TODO(), project)
 			c.Delete(context.TODO(), organization)
+
+			// GC created objects
+			for _, e := range entries {
+				obj := e.Parameters[2].(runtime.Object)
+				nameFmt := e.Parameters[1].(string)
+				mo := obj.(metav1.Object)
+				mo.SetName(fmt.Sprintf(nameFmt, project.Name))
+				mo.SetNamespace(projectNamespace)
+				c.Delete(context.TODO(), obj)
+			}
 		})
 
-		DescribeTable("the reconciler",
-			func(component string, nameFmt string, obj runtime.Object) {
-				key := types.NamespacedName{
-					Name:      fmt.Sprintf(nameFmt, project.Name),
-					Namespace: projectNamespace,
-				}
-				Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
+		DescribeTable("the reconciler", func(component string, nameFmt string, obj runtime.Object) {
+			key := types.NamespacedName{
+				Name:      fmt.Sprintf(nameFmt, project.Name),
+				Namespace: projectNamespace,
+			}
+			Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
 
-				metaObj := obj.(metav1.Object)
-				Expect(metaObj.GetLabels()).To(Equal(componentsLabels[component]))
-			},
-			Entry("reconciles prometheus", "prometheus", "prometheus%.0s", &monitoringv1.Prometheus{}),
-			Entry("reconciles resourcequota", "default", "%s", &corev1.ResourceQuota{}),
-			Entry("reconciles gitea deployment", "gitea", "gitea%.0s", &appsv1.Deployment{}),
-			Entry("reconciles gitea service", "gitea", "gitea%.0s", &corev1.Service{}),
-			Entry("reconciles gitea ingress", "gitea", "gitea%.0s", &extv1beta1.Ingress{}),
-			Entry("reconciles gitea pvc", "gitea", "gitea%.0s", &corev1.PersistentVolumeClaim{}),
-			Entry("reconciles gitea secret", "gitea", "gitea-conf%.0s", &corev1.Secret{}),
-		)
+			metaObj := obj.(metav1.Object)
+			Expect(metaObj.GetLabels()).To(Equal(componentsLabels[component]))
+		}, entries...)
 
 		It("reconciles the namespace", func() {
 			ns := &corev1.Namespace{}

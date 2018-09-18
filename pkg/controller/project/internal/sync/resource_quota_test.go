@@ -17,10 +17,14 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/presslabs/controller-util/syncer"
+	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
 )
 
 var defaultQuotaValues = corev1.ResourceList{
@@ -35,10 +39,10 @@ var _ = Describe("The ResourceQuotaSyncer transform func T", func() {
 	Context("finds no existing ResourceQuota", func() {
 		proj := &dashboardv1alpha1.Project{}
 		rq := &corev1.ResourceQuota{}
-		syncer := sync.NewResourceQuotaSyncer(proj)
+		rqSyncer := sync.NewResourceQuotaSyncer(proj, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
 
 		It("uses a default value", func() {
-			err := syncer.SyncFn(rq)
+			err := rqSyncer.SyncFn(rq)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(rq.Spec.Hard).To(Equal(defaultQuotaValues))
 		})
@@ -65,8 +69,8 @@ var _ = Describe("The ResourceQuotaSyncer transform func T", func() {
 				corev1.ResourcePods:           smallerResourcePods,
 			}
 
-			syncer := sync.NewResourceQuotaSyncer(proj)
-			err := syncer.SyncFn(rq)
+			rqSyncer := sync.NewResourceQuotaSyncer(proj, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
+			err := rqSyncer.SyncFn(rq)
 			Expect(err).ShouldNot(HaveOccurred())
 		})
 

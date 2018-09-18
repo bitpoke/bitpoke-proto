@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -33,7 +34,7 @@ func memcachedServiceName(wp *wordpressv1alpha1.Wordpress) string {
 }
 
 // NewMemcachedServiceSyncer returns a new syncer.Interface for reconciling Memcached Service
-func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface {
+func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      memcachedServiceName(wp),
@@ -41,7 +42,7 @@ func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface
 		},
 	}
 
-	return syncer.New("MemcachedService", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MemcachedService", wp, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Service)
 
 		out.ObjectMeta.Labels = getSiteLabels(wp, "memcached")

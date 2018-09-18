@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -22,7 +23,7 @@ import (
 )
 
 // NewGiteaSecretSyncer returns a new syncer.Interface for reconciling Gitea Secret
-func NewGiteaSecretSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
+func NewGiteaSecretSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      giteaSecretName(proj),
@@ -30,7 +31,7 @@ func NewGiteaSecretSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 		},
 	}
 
-	return syncer.New("GiteaSecret", proj, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("GiteaSecret", proj, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Secret)
 		out.Labels = giteaPodLabels(proj)
 

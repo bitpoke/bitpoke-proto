@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -23,7 +24,7 @@ var (
 )
 
 // NewGiteaPVCSyncer returns a new syncer.Interface for reconciling Gitea PVC
-func NewGiteaPVCSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
+func NewGiteaPVCSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      giteaPVCName(proj),
@@ -31,7 +32,7 @@ func NewGiteaPVCSyncer(proj *dashboardv1alpha1.Project) syncer.Interface {
 		},
 	}
 
-	return syncer.New("GiteaPVC", proj, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("GiteaPVC", proj, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.PersistentVolumeClaim)
 		out.Labels = giteaPodLabels(proj)
 
