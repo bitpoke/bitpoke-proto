@@ -112,6 +112,7 @@ func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Inter
 						Ports: []corev1.ContainerPort{
 							{
 								Name:          "memcached",
+								Protocol:      corev1.ProtocolTCP,
 								ContainerPort: memcachedPort,
 							},
 						},
@@ -136,7 +137,8 @@ func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Inter
 						ImagePullPolicy: memcachedImagePullPolicy,
 						Ports: []corev1.ContainerPort{
 							{
-								HostPort:      memcachedExporterPort,
+								Name:          "prometheus",
+								Protocol:      corev1.ProtocolTCP,
 								ContainerPort: memcachedExporterPort,
 							},
 						},

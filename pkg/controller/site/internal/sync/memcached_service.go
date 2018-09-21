@@ -22,7 +22,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -50,9 +49,9 @@ func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress) syncer.Interface
 		out.Spec.ClusterIP = "None"
 		out.Spec.Ports = []corev1.ServicePort{
 			{
-				Name:       "memcached",
-				Port:       int32(80),
-				TargetPort: intstr.FromInt(memcachedPort),
+				Name:     "memcached",
+				Protocol: corev1.ProtocolTCP,
+				Port:     memcachedPort,
 			},
 		}
 		out.Spec.Selector = getSiteLabels(wp, "memcached")
