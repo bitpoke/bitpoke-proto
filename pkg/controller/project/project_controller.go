@@ -20,7 +20,9 @@ import (
 	"context"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -69,31 +71,24 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch the Namespace created by Project
-	err = c.Watch(&source.Kind{Type: &corev1.Namespace{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &dashboardv1alpha1.Project{},
-	})
-	if err != nil {
-		return err
+	subresources := []runtime.Object{
+		&corev1.Namespace{},
+		&corev1.ResourceQuota{},
+		&corev1.Service{},
+		&corev1.PersistentVolumeClaim{},
+		&appsv1.Deployment{},
+		&extv1beta1.Ingress{},
+		&monitoringv1.Prometheus{},
 	}
 
-	// Watch the Prometheus created by Project
-	err = c.Watch(&source.Kind{Type: &monitoringv1.Prometheus{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &dashboardv1alpha1.Project{},
-	})
-	if err != nil {
-		return err
-	}
-
-	// Watch the ResourceQuota created by Project
-	err = c.Watch(&source.Kind{Type: &monitoringv1.Prometheus{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &dashboardv1alpha1.Project{},
-	})
-	if err != nil {
-		return err
+	for _, subresource := range subresources {
+		err = c.Watch(&source.Kind{Type: subresource}, &handler.EnqueueRequestForOwner{
+			IsController: true,
+			OwnerType:    &dashboardv1alpha1.Project{},
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -110,6 +105,9 @@ type ReconcileProject struct {
 
 // Reconcile reads that state of the cluster for a Project object and makes changes based on the state read
 // and what is in the Project.Spec
+// +kubebuilder:rbac:groups=,resources=services;persistentvolumeclaims;resourcequotas,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=dashboard.presslabs.com,resources=projects,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Result, error) {
