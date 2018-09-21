@@ -67,9 +67,21 @@ rules:
   - patch
   - delete
 - apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
   - apps
   resources:
-  - deployments
+  - statefulsets
   verbs:
   - get
   - list
@@ -94,6 +106,18 @@ rules:
   - mysql.presslabs.org
   resources:
   - mysqlcluster
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
   verbs:
   - get
   - list

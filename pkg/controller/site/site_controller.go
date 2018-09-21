@@ -71,40 +71,21 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to MysqlCluster
-	err = c.Watch(&source.Kind{Type: &mysqlv1alpha1.MysqlCluster{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &wordpressv1alpha1.Wordpress{},
-	})
-	if err != nil {
-		return err
+	subresources := []runtime.Object{
+		&corev1.Service{},
+		&appsv1.StatefulSet{},
+		&mysqlv1alpha1.MysqlCluster{},
+		&monitoringv1.ServiceMonitor{},
 	}
 
-	// Watch the Memcached StatefulSet created by Site
-	err = c.Watch(&source.Kind{Type: &appsv1.StatefulSet{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &wordpressv1alpha1.Wordpress{},
-	})
-	if err != nil {
-		return err
-	}
-
-	// Wathc the serviceMonitor created by Site
-	err = c.Watch(&source.Kind{Type: &monitoringv1.ServiceMonitor{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &wordpressv1alpha1.Wordpress{},
-	})
-	if err != nil {
-		return err
-	}
-
-	// Watch the Memcached Service created by Site
-	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &wordpressv1alpha1.Wordpress{},
-	})
-	if err != nil {
-		return err
+	for _, subresource := range subresources {
+		err = c.Watch(&source.Kind{Type: subresource}, &handler.EnqueueRequestForOwner{
+			IsController: true,
+			OwnerType:    &wordpressv1alpha1.Wordpress{},
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -122,9 +103,11 @@ type ReconcileSite struct {
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
 // and what is in the Wordpress.Spec
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpress,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mysql.presslabs.org,resources=mysqlcluster,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Site instance
 	wp := &wordpressv1alpha1.Wordpress{}
