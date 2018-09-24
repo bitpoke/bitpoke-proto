@@ -42,7 +42,7 @@ import (
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
-const timeout = time.Second * 1
+const timeout = time.Second * 2
 
 var _ = Describe("Project controller", func() {
 	var (

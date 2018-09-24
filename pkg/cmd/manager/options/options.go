@@ -25,9 +25,27 @@ import (
 // GitBaseDomainURL is the the base domain used to obtain the git repo domain for projects
 var GitBaseDomainURL = "git.presslabs.net"
 
+// WebhookNamespace is the namespace for webhooks
+var WebhookNamespace = "default"
+
+// WebhookSecretName is the secret for webhooks
+var WebhookSecretName = "presslabs-dashboard-admission-webhook-cert"
+
+// WebhookService is the service for webhooks
+var WebhookService = "presslabs-dashboard-admission-webhhok"
+
+// WebhookServiceSelector is the selector for webhook
+var WebhookServiceSelector = "app.kubernetes.io/name=presslabs-dashboard,app.kubernetes.io/component=controller-manager"
+
+var WebhookHost = "localhost"
+
 // AddToFlagSet add options to a FlagSet
 func AddToFlagSet(flag *pflag.FlagSet) {
 	flag.StringVar(&GitBaseDomainURL, "git-base-domain", GitBaseDomainURL, "The base git domain")
+	flag.StringVar(&WebhookNamespace, "webhook-namespace", WebhookNamespace, "The webhook namespace")
+	flag.StringVar(&WebhookSecretName, "webhook-secret", WebhookSecretName, "The webhook secret name")
+	flag.StringVar(&WebhookService, "webhook-service", WebhookService, "The webhook server name")
+	flag.StringVar(&WebhookServiceSelector, "webhook-service-selector", WebhookServiceSelector, "The selector for webhook service")
 }
 
 // Validate validates the arguments

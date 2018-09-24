@@ -17,15 +17,18 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/presslabs/dashboard/pkg/apis"
-	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
-	"github.com/presslabs/dashboard/pkg/controller"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+
+	"github.com/presslabs/dashboard/pkg/apis"
+	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
+	"github.com/presslabs/dashboard/pkg/controller"
+	"github.com/presslabs/dashboard/pkg/webhook"
 )
 
 // controllerManagerCmd represents the controllerManager command
@@ -58,6 +61,14 @@ var runControllerManager = func(cmd *cobra.Command, args []string) {
 		log.Error(err, "unable to setup controllers")
 		os.Exit(1)
 	}
+
+	// Setup webhook server
+	if err := webhook.AddToManager(mgr); err != nil {
+		log.Error(err, "unable to setup webhook server")
+		os.Exit(1)
+	}
+
+	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
