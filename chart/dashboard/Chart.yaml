@@ -2,4 +2,4 @@ apiVersion: v1
 appVersion: "master"
 description: Presslabs Dashbaord Helm Chart
 name: dashboard
-version: master
+version: 0.1.0+master

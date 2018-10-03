@@ -17,6 +17,8 @@
 .idea
 bin/*
 
-chart/dashboard
+build
 .gometalinter-*
 protoc.zip
+
+**/charts/*.tgz

@@ -4,6 +4,7 @@ IMG ?= quay.io/presslabs/dashboard:$(APP_VERSION)
 KUBEBUILDER_VERSION ?= 1.0.4
 PROTOC_VERSION ?= 3.6.1
 BINDIR ?= $(PWD)/bin
+CHARTDIR ?= $(PWD)/chart/dashboard
 
 GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH ?= amd64
@@ -35,27 +36,33 @@ install: manifests chart
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
+	# CRDs
+	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(CHARTDIR)/templates/_crds.yaml
+	yq m -d'*' -i $(CHARTDIR)/templates/_crds.yaml hack/chart-metadata.yaml
+	yq w -d'*' -i $(CHARTDIR)/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml metadata.creationTimestamp
+	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml status metadata.creationTimestamp
+	echo '{{- if .Values.crd.install }}' > $(CHARTDIR)/templates/crds.yaml
+	cat $(CHARTDIR)/templates/_crds.yaml >> $(CHARTDIR)/templates/crds.yaml
+	echo '{{- end }}' >> $(CHARTDIR)/templates/crds.yaml
+	rm $(CHARTDIR)/templates/_crds.yaml
+	# RBAC
+	cp config/rbac/rbac_role.yaml $(CHARTDIR)/templates/_rbac.yaml
+	yq m -d'*' -i $(CHARTDIR)/templates/_rbac.yaml hack/chart-metadata.yaml
+	yq d -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.creationTimestamp
+	yq w -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.name '{{ template "dashboard.fullname" . }}-controller'
+	echo '{{- if .Values.rbac.create }}' > $(CHARTDIR)/templates/controller-clusterrole.yaml
+	cat $(CHARTDIR)/templates/_rbac.yaml >> $(CHARTDIR)/templates/controller-clusterrole.yaml
+	echo '{{- end }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
+	rm $(CHARTDIR)/templates/_rbac.yaml
 
 .PHONY: chart
 chart:
-	rm -rf chart/dashboard
-	cp -r chart/dashboard-src chart/dashboard
-	yq w -i chart/dashboard/Chart.yaml version "$(APP_VERSION)"
-	yq w -i chart/dashboard/Chart.yaml appVersion "$(APP_VERSION)"
-	yq w -i chart/dashboard/values.yaml image "$(IMG)"
-	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > chart/dashboard/templates/crds.yaml
-	yq m -d'*' -i chart/dashboard/templates/crds.yaml hack/chart-metadata.yaml
-	yq w -d'*' -i chart/dashboard/templates/crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
-	yq d -d'*' -i chart/dashboard/templates/crds.yaml metadata.creationTimestamp
-	yq d -d'*' -i chart/dashboard/templates/crds.yaml status metadata.creationTimestamp
-	cp config/rbac/rbac_role.yaml chart/dashboard/templates/rbac.yaml
-	yq m -d'*' -i chart/dashboard/templates/rbac.yaml hack/chart-metadata.yaml
-	yq d -d'*' -i chart/dashboard/templates/rbac.yaml metadata.creationTimestamp
-	yq w -d'*' -i chart/dashboard/templates/rbac.yaml metadata.name '{{ template "dashboard.fullname" . }}-controller'
-	echo '{{- if .Values.rbac.create }}' > chart/dashboard/templates/controller-clusterrole.yaml
-	cat chart/dashboard/templates/rbac.yaml >> chart/dashboard/templates/controller-clusterrole.yaml
-	echo '{{- end }}' >> chart/dashboard/templates/controller-clusterrole.yaml
-	rm chart/dashboard/templates/rbac.yaml
+	yq w -i $(CHARTDIR)/Chart.yaml version "$(APP_VERSION)"
+	yq w -i $(CHARTDIR)/Chart.yaml appVersion "$(APP_VERSION)"
+	mv $(CHARTDIR)/values.yaml $(CHARTDIR)/_values.yaml
+	sed 's#$(REGISTRY)/$(IMAGE_NAME):latest#$(REGISTRY)/$(IMAGE_NAME):$(APP_VERSION)#g' $(CHARTDIR)/_values.yaml > $(CHARTDIR)/values.yaml
+	rm $(CHARTDIR)/_values.yaml
 
 # Run go fmt against code
 fmt:
@@ -73,7 +80,7 @@ generate:
 	presslabs/dashboard/core/v1/project.proto
 
 # Build the docker image
-images: test
+images:
 	docker build . -t ${IMG}
 
 # Push the docker image
