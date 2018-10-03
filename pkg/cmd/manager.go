@@ -17,7 +17,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -67,8 +66,6 @@ var runControllerManager = func(cmd *cobra.Command, args []string) {
 		log.Error(err, "unable to setup webhook server")
 		os.Exit(1)
 	}
-
-	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {

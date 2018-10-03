@@ -18,13 +18,13 @@ package podplacement_test
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 
-	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -45,7 +45,6 @@ var _ = Describe("Webhook server", func() {
 	)
 
 	BeforeEach(func() {
-
 		mgr, err := manager.New(cfg, manager.Options{})
 		Expect(err).NotTo(HaveOccurred())
 		c = mgr.GetClient()
@@ -64,17 +63,41 @@ var _ = Describe("Webhook server", func() {
 		close(stop)
 	})
 
-	When("registrd", func() {
-		BeforeEach(func() {
-			whc := &admissionregistrationv1beta1.ValidatingWebhookConfiguration{}
-			key := types.NamespacedName{
-				Name: server.Name,
-			}
-			c.Get(context.TODO(), key, whc)
-			fmt.Printf("%v\n", whc)
-		})
-		It("---", func() {
+	When("creating the pod", func() {
+		var (
+			pod *corev1.Pod
+		)
 
+		name := "testpod"
+		namespace := "default"
+		key := types.NamespacedName{
+			Name:      name,
+			Namespace: namespace,
+		}
+
+		BeforeEach(func() {
+
+			pod = &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "container-name",
+							Image: "container-image",
+						},
+					},
+				},
+			}
+
+			// create pod
+			Expect(c.Create(context.TODO(), pod)).To(Succeed())
+		})
+		It("should been mutated", func() {
+			Expect(c.Get(context.TODO(), key, pod)).To(Succeed())
+			Expect(pod.Annotations["example-mutating-admission-webhook"]).To(Equal("foo"))
 		})
 
 	})

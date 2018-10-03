@@ -22,8 +22,7 @@ test: generate manifests
 	KUBEBUILDER_ASSETS=$(BINDIR) ginkgo \
 		--randomizeAllSpecs --randomizeSuites --failOnPending \
 		--cover --coverprofile cover.out --trace --race -v \
-		./pkg/webhook/...	
-#	./pkg/... ./cmd/...
+		./pkg/... ./cmd/...
 
 # Build dashboard binary
 build: generate fmt vet

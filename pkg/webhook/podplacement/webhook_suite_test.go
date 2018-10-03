@@ -36,20 +36,18 @@ var t *envtest.Environment
 
 func TestProjectListing(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Webhook Server", []Reporter{envtest.NewlineReporter{}})
+	RunSpecsWithDefaultAndCustomReporters(t, "Webhook Server Suite", []Reporter{envtest.NewlineReporter{}})
 }
 
 var _ = BeforeSuite(func() {
 	var err error
 
 	options.WebhookSecretName = ""
-	options.WebhookService = ""
+	options.WebhookServiceName = ""
 
 	t = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "config", "crds"),
-			//filepath.Join("..", "..", "vendor/github.com/coreos/prometheus-operator/example/prometheus-operator-crd"),
-			//filepath.Join("..", "..", "vendor/github.com/presslabs/wordpress-operator/config/crds"),
 		},
 	}
 	apis.AddToScheme(scheme.Scheme)
@@ -66,6 +64,7 @@ var _ = AfterSuite(func() {
 func StartTestManager(mgr manager.Manager) chan struct{} {
 	stop := make(chan struct{})
 	go func() {
+		defer GinkgoRecover()
 		Expect(mgr.Start(stop)).To(Succeed())
 	}()
 	return stop

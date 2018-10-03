@@ -47,19 +47,16 @@ func (a *podPlacement) Handle(ctx context.Context, req types.Request) types.Resp
 	err := a.decoder.Decode(req, pod)
 	if err != nil {
 		return admission.ErrorResponse(http.StatusBadRequest, err)
-
 	}
 	copy := pod.DeepCopy()
 
 	err = a.mutatePodsFn(copy)
 	if err != nil {
 		return admission.ErrorResponse(http.StatusInternalServerError, err)
-
 	}
+
 	// admission.PatchResponse generates a Response containing patches.
 	return admission.PatchResponse(pod, copy)
-
-	//return types.Response{}
 }
 
 // mutatePodsFn add an annotation to the given pod
@@ -67,11 +64,9 @@ func (a *podPlacement) Handle(ctx context.Context, req types.Request) types.Resp
 func (a *podPlacement) mutatePodsFn(pod *corev1.Pod) error {
 	if pod.Annotations == nil {
 		pod.Annotations = map[string]string{}
-
 	}
 	pod.Annotations["example-mutating-admission-webhook"] = "foo"
 	return nil
-
 }
 
 // podPlacement implements inject.Client.

@@ -28,7 +28,7 @@ import (
 // addToServerFuncs is a list of functions to add all webhooks to the server
 var addToServerFuncs []func(manager.Manager, *webhook.Server) error
 
-// newServer creates a new webhook server
+// NewServer creates a new webhook server
 func NewServer(m manager.Manager) (*webhook.Server, error) {
 	selectors, err := labels.ConvertSelectorToLabelsMap(options.WebhookServiceSelector)
 	if err != nil {
@@ -38,6 +38,7 @@ func NewServer(m manager.Manager) (*webhook.Server, error) {
 	opts := webhook.ServerOptions{
 		CertDir:          "/tmp/cert",
 		BootstrapOptions: &webhook.BootstrapOptions{},
+		Port:             4433,
 	}
 
 	if len(options.WebhookSecretName) > 0 {
@@ -47,10 +48,10 @@ func NewServer(m manager.Manager) (*webhook.Server, error) {
 		}
 	}
 
-	if len(options.WebhookService) > 0 {
+	if len(options.WebhookServiceName) > 0 {
 		opts.BootstrapOptions.Service = &webhook.Service{
 			Namespace: options.WebhookNamespace,
-			Name:      options.WebhookService,
+			Name:      options.WebhookServiceName,
 			// Selectors should select the pods that runs this webhook server.
 			Selectors: selectors,
 		}
