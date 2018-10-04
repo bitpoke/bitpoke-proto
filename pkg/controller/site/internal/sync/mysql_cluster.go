@@ -96,6 +96,8 @@ func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, sc
 		}
 		out.Spec.VolumeSpec.PersistentVolumeClaimSpec.Resources.Requests[corev1.ResourceStorage] = resVolumeStorage
 
+		out.Spec.SecretName = fmt.Sprintf("%s-mysql", wp.Name)
+
 		return nil
 	})
 }

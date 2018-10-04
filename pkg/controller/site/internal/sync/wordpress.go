@@ -45,6 +45,43 @@ func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, schem
 				Name:  "MEMCACHED_DISCOVERY_SERVICE",
 				Value: fmt.Sprintf("%s.%s", memcachedServiceName(wp), wp.Namespace),
 			},
+			{
+				Name:  "WORDPRESS_DB_HOST",
+				Value: fmt.Sprintf("%s-mysql-master.%s", wp.Name, wp.Namespace),
+			},
+			{
+				Name: "WORDPRESS_DB_USER",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: fmt.Sprintf("%s-mysql", wp.Name),
+						},
+						Key: "USER",
+					},
+				},
+			},
+			{
+				Name: "WORDPRESS_DB_PASSWORD",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: fmt.Sprintf("%s-mysql", wp.Name),
+						},
+						Key: "PASSWORD",
+					},
+				},
+			},
+			{
+				Name: "WORDPRESS_DB_NAME",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: fmt.Sprintf("%s-mysql", wp.Name),
+						},
+						Key: "DATABASE",
+					},
+				},
+			},
 		}
 
 		return nil

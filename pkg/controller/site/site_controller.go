@@ -72,6 +72,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	subresources := []runtime.Object{
 		&corev1.Service{},
+		&corev1.Secret{},
 		&appsv1.StatefulSet{},
 		&mysqlv1alpha1.MysqlCluster{},
 		&monitoringv1.ServiceMonitor{},
@@ -102,7 +103,7 @@ type ReconcileSite struct {
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
 // and what is in the Wordpress.Spec
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
-// +kubebuilder:rbac:groups=,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=,resources=services;secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpress,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mysql.presslabs.org,resources=mysqlcluster,verbs=get;list;watch;create;update;patch;delete
@@ -129,6 +130,7 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 		sync.NewWordpressSyncer(wp, r.Client, r.scheme),
 		sync.NewWordpressServiceMonitorSyncer(wp, r.Client, r.scheme),
 		sync.NewMysqlClusterSyncer(wp, r.Client, r.scheme),
+		sync.NewMysqlClusterSecretSyncer(wp, r.Client, r.scheme),
 		sync.NewMysqlServiceMonitorSyncer(wp, r.Client, r.scheme),
 	}
 

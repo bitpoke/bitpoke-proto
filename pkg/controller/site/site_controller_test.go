@@ -81,6 +81,7 @@ var _ = Describe("Site controller", func() {
 			Entry("reconciles memcached service monitor", "%s-memcached", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles mysql cluster", "%s-mysql", &mysqlv1alpha1.MysqlCluster{}),
 			Entry("reconciles mysql service monitor", "%s-mysql", &monitoringv1.ServiceMonitor{}),
+			Entry("reconciles mysql cluster secret", "%s-mysql", &corev1.Secret{}),
 			Entry("reconciles wordpress service monitor", "%s-wp", &monitoringv1.ServiceMonitor{}),
 		}
 

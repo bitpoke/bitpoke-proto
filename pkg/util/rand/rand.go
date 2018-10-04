@@ -18,6 +18,6 @@ func GenerateRandomBytes(n int) []byte {
 
 // GenerateRandomString returns a URL-safe, base64 encoded
 // securely generated random string.
-func GenerateRandomString(s int) string {
-	return base64.URLEncoding.EncodeToString(GenerateRandomBytes(s))
+func GenerateRandomString(n int) string {
+	return base64.URLEncoding.EncodeToString(GenerateRandomBytes(n))
 }
