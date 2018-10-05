@@ -91,11 +91,10 @@ func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, sc
 			},
 		}
 
-		out.Spec.VolumeSpec.PersistentVolumeClaimSpec = corev1.PersistentVolumeClaimSpec{
-			Resources: corev1.ResourceRequirements{
-				Requests: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resVolumeStorage},
-			},
+		if len(out.Spec.VolumeSpec.PersistentVolumeClaimSpec.Resources.Requests) == 0 {
+			out.Spec.VolumeSpec.PersistentVolumeClaimSpec.Resources.Requests = make(map[corev1.ResourceName]resource.Quantity)
 		}
+		out.Spec.VolumeSpec.PersistentVolumeClaimSpec.Resources.Requests[corev1.ResourceStorage] = resVolumeStorage
 
 		return nil
 	})

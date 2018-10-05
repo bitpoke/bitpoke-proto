@@ -21,6 +21,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -45,17 +46,24 @@ func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client
 	return syncer.NewObjectSyncer("MemcachedService", wp, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Service)
 
-		out.ObjectMeta.Labels = getSiteLabels(wp, "memcached")
+		siteLabels := getSiteLabels(wp, "memcached")
+		out.ObjectMeta.Labels = labels.Merge(out.ObjectMeta.Labels, siteLabels)
 
 		out.Spec.ClusterIP = "None"
-		out.Spec.Ports = []corev1.ServicePort{
-			{
-				Name:     "memcached",
-				Protocol: corev1.ProtocolTCP,
-				Port:     memcachedPort,
-			},
+
+		if !labels.Equals(siteLabels, out.Spec.Selector) {
+			if out.ObjectMeta.CreationTimestamp.IsZero() {
+				out.Spec.Selector = siteLabels
+			} else {
+				return fmt.Errorf("service selector is immutable")
+			}
 		}
-		out.Spec.Selector = getSiteLabels(wp, "memcached")
+
+		if len(out.Spec.Ports) != 1 {
+			out.Spec.Ports = make([]corev1.ServicePort, 1)
+		}
+		out.Spec.Ports[0].Name = "memcached"
+		out.Spec.Ports[0].Port = memcachedPort
 
 		return nil
 	})
