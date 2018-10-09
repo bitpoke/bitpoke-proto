@@ -54,6 +54,14 @@
   revision = "e3000cb3d28c72b837601cac94debd91032d19fe"
 
 [[projects]]
+  digest = "1:6d027438b6c3ca751802d0024174d079d3fb7b0811a4e86212d2edc134c60a05"
+  name = "github.com/coreos/go-oidc"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "1180514eaf4d9f38d0d19eef639a1d695e066e72"
+  version = "v2.0.0"
+
+[[projects]]
   digest = "1:ea2867a39b2bde99644496fa9a8df0f0ec44222014ee6acda723cff2e8f7e411"
   name = "github.com/coreos/prometheus-operator"
   packages = ["pkg/client/monitoring/v1"]
@@ -472,6 +480,17 @@
   version = "v0.8.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:a07bf85ed02c23e01eef834c30d9612d45ccab2507fcfd7340e2305376c94de4"
+  name = "github.com/pquerna/cachecontrol"
+  packages = [
+    ".",
+    "cacheobject",
+  ]
+  pruneopts = "T"
+  revision = "1555304b9b35fdd2b425bccf1a5613677705e7d0"
+
+[[projects]]
   digest = "1:e4aeecc6e3a8968296ccdd0a7378cdf826fedfaca391d195486f01a25cafe649"
   name = "github.com/presslabs/controller-util"
   packages = [
@@ -548,17 +567,6 @@
   pruneopts = "T"
   revision = "9a97c102cda95a86cec2345a6f09f55a939babf5"
   version = "v1.0.2"
-
-[[projects]]
-  digest = "1:0e2f5bcb5e3c9a1e889fa84b49571df48c67b7047da64343cc88c078f77ea538"
-  name = "github.com/square/go-jose"
-  packages = [
-    ".",
-    "jwt",
-  ]
-  pruneopts = "T"
-  revision = "8254d6c783765f38c8675fae4427a1fe73fbd09d"
-  version = "v2.1.8"
 
 [[projects]]
   digest = "1:365b8ecb35a5faf5aa0ee8d798548fc9cd4200cb95d77a5b0b285ac881bae499"
@@ -1099,10 +1107,12 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/coreos/go-oidc",
     "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1",
     "github.com/emicklei/go-restful",
     "github.com/go-ini/ini",
     "github.com/go-logr/logr",
+    "github.com/gobuffalo/packr",
     "github.com/gobuffalo/packr/packr",
     "github.com/golang/protobuf/proto",
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",
@@ -1119,8 +1129,6 @@
     "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
-    "github.com/square/go-jose",
-    "github.com/square/go-jose/jwt",
     "golang.org/x/net/context",
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",

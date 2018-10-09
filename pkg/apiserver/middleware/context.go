@@ -21,7 +21,3 @@ type contextKey string
 func (c contextKey) String() string {
 	return "middleware." + string(c)
 }
-
-var (
-	contextKeyAuthtoken = contextKey("auth-token")
-)

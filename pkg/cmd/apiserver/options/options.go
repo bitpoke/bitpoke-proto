@@ -17,8 +17,25 @@ limitations under the License.
 package options
 
 import (
+	"os"
+
 	"github.com/spf13/pflag"
 )
+
+// ClientID is the OpenID connect client id
+var ClientID = ""
+
+// ClientSecret is the OpenID connect client id
+var ClientSecret = ""
+
+// OIDCIssuer is the OpenID Issuer
+var OIDCIssuer = ""
+
+// BaseURL is the base url for the webapp
+var BaseURL = "http://localhost:8080"
+
+// GRPCProxyURL is the url for the gRPC proxy
+var GRPCProxyURL = "http://localhost:8080"
 
 // GRPCAddr is the address to bind the gRPC server on
 var GRPCAddr = ":9090"
@@ -28,6 +45,21 @@ var HTTPAddr = ":8080"
 
 // AddToFlagSet add options to a FlagSet
 func AddToFlagSet(flag *pflag.FlagSet) {
+	flag.StringVar(&ClientID, "oidc-client-id", "", "OpenID Cliet ID")
+	flag.StringVar(&ClientSecret, "oidc-client-secret", "", "OpenID Cliet Secret")
+	flag.StringVar(&OIDCIssuer, "oidc-issuer", "", "The audience to validate JWT against")
+	flag.StringVar(&BaseURL, "base-url", BaseURL, "Base URL for the webapp")
+	flag.StringVar(&GRPCProxyURL, "grpc-proxy-url", GRPCProxyURL, "URL for the gRPC proxy")
 	flag.StringVar(&GRPCAddr, "grpc-addr", GRPCAddr, "gRPC server address")
 	flag.StringVar(&HTTPAddr, "http-addr", HTTPAddr, "web server address")
+}
+
+// LoadFromEnv fills in unset configs from environment variables
+func LoadFromEnv() {
+	if len(ClientID) == 0 {
+		ClientID = os.Getenv("CLIENT_ID")
+	}
+	if len(ClientSecret) == 0 {
+		ClientSecret = os.Getenv("CLIENT_SECRET")
+	}
 }

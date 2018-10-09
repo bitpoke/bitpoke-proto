@@ -39,6 +39,13 @@ type grpcRunner struct {
 	client client.Client
 }
 
+type config struct {
+	BaseURL      string
+	GRPCProxyURL string
+	ClientID     string
+	OIDCIssuer   string
+}
+
 var log = logf.Log.WithName("apiserver")
 
 func (s *grpcRunner) Start(stop <-chan struct{}) error {
@@ -59,7 +66,6 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 		if wrappedGrpc.IsGrpcWebRequest(req) {
 			wrappedGrpc.ServeHTTP(resp, req)
 		}
-		// Fall back to other servers.
 		http.DefaultServeMux.ServeHTTP(resp, req)
 	}
 

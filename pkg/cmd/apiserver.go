@@ -19,13 +19,14 @@ package cmd
 import (
 	"os"
 
-	"github.com/presslabs/dashboard/pkg/apis"
-	"github.com/presslabs/dashboard/pkg/apiserver"
-	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+
+	"github.com/presslabs/dashboard/pkg/apis"
+	"github.com/presslabs/dashboard/pkg/apiserver"
+	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
 // apiserverCmd represents the controllerManager command
@@ -36,6 +37,7 @@ var apiserverCmd = &cobra.Command{
 }
 
 var runAPIServer = func(cmd *cobra.Command, args []string) {
+	options.LoadFromEnv()
 	log = logf.Log.WithName("apiserver")
 	log.Info("Starting Presslabs Dashboard apiserver...")
 
