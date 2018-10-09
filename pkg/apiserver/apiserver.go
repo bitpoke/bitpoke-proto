@@ -18,8 +18,11 @@ package apiserver
 
 import (
 	"context"
+	"fmt"
+	"html/template"
 	"net"
 	"net/http"
+	"reflect"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
@@ -40,13 +43,37 @@ type grpcRunner struct {
 }
 
 type config struct {
-	BaseURL      string
-	GRPCProxyURL string
-	ClientID     string
-	OIDCIssuer   string
+	OIDCIssuer   string `jsenv:"OIDC_ISSUER"`
+	ClientID     string `jsenv:"OIDC_CLIENT_ID"`
+	GRPCProxyURL string `jsenv:"GRPC_PROXY_URL"`
 }
 
 var log = logf.Log.WithName("apiserver")
+
+func serveConfig(resp http.ResponseWriter, req *http.Request) {
+	cfg := config{
+		OIDCIssuer:   options.OIDCIssuer,
+		ClientID:     options.ClientID,
+		GRPCProxyURL: options.GRPCProxyURL,
+	}
+
+	resp.Header().Set("Content-Type", "application/javascript")
+	fmt.Fprintf(resp, "window.env = {};\n")
+	_cfg := reflect.ValueOf(cfg)
+	for i := 0; i < _cfg.NumField(); i++ {
+		field := _cfg.Type().Field(i)
+		value := _cfg.Field(i)
+		varName := field.Tag.Get("jsenv")
+		if len(varName) > 0 {
+			switch value.Kind() {
+			case reflect.String:
+				fmt.Fprintf(resp, "window.env.%s = \"%s\";\n", varName, template.JSEscapeString(value.String()))
+			default:
+				panic("jsenv must be strings")
+			}
+		}
+	}
+}
 
 func (s *grpcRunner) Start(stop <-chan struct{}) error {
 	grpcServer := grpc.NewServer(
@@ -65,8 +92,11 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 	handler := func(resp http.ResponseWriter, req *http.Request) {
 		if wrappedGrpc.IsGrpcWebRequest(req) {
 			wrappedGrpc.ServeHTTP(resp, req)
+		} else if req.URL.Path == "/env.js" {
+			serveConfig(resp, req)
+		} else {
+			http.DefaultServeMux.ServeHTTP(resp, req)
 		}
-		http.DefaultServeMux.ServeHTTP(resp, req)
 	}
 
 	httpServer := http.Server{
