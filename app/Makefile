@@ -5,14 +5,21 @@ REACT        := $(NODE_MODULES)/.bin/react-scripts-ts
 TSLINT       := $(NODE_MODULES)/.bin/tslint
 PROTOC_GEN   := $(NODE_MODULES)/.bin/protoc-gen-ts
 
+BINDIR ?= $(NODE_MODULES)/.bin
+
 PROTO_OUT_DIR ?= ./src/proto
 
-deps:
+PATH := $(BINDIR):$(PATH)
+SHELL := env 'PATH=$(PATH)' /bin/sh
+
+dependencies:
+	which yarn || npm install yarn
 	yarn install --modules-folder $(NODE_MODULES)
 
 run:
 	NODE_ENV=development BROWSER=none $(REACT) start
 
+.PHONY: build
 build:
 	NODE_ENV=$(NODE_ENV) $(REACT) build
 

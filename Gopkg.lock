@@ -152,6 +152,19 @@
   version = "v1.6.4"
 
 [[projects]]
+  digest = "1:391ee6cb52837b8a36aae5decac649ecf8bd4a692d1dc9c465f11f87de071fac"
+  name = "github.com/gobuffalo/packr"
+  packages = [
+    ".",
+    "builder",
+    "packr",
+    "packr/cmd",
+  ]
+  pruneopts = "T"
+  revision = "5a2cbb54c4e7d482e3f518c56f1f86f133d5204f"
+  version = "v1.13.7"
+
+[[projects]]
   digest = "1:da39f4a22829ca95e63566208e0ea42d6f055f41dff1b14fdab88d88f62df653"
   name = "github.com/gogo/protobuf"
   packages = [
@@ -624,6 +637,14 @@
   revision = "cdc340f7c179dbbfa4afd43b7614e8fcadde4269"
 
 [[projects]]
+  branch = "master"
+  digest = "1:568750bfc9b318e074c14e4ac471ae24617a5a3cb05a74ce56516ca0b567d1ba"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  pruneopts = "T"
+  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
+
+[[projects]]
   digest = "1:d38a94250632191c5df238ae4b1a78e019b41324307d5f4e70c3272949c432e3"
   name = "golang.org/x/sys"
   packages = [
@@ -1082,6 +1103,7 @@
     "github.com/emicklei/go-restful",
     "github.com/go-ini/ini",
     "github.com/go-logr/logr",
+    "github.com/gobuffalo/packr/packr",
     "github.com/golang/protobuf/proto",
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",
     "github.com/imdario/mergo",

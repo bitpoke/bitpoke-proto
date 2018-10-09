@@ -23,11 +23,11 @@ import (
 // GRPCAddr is the address to bind the gRPC server on
 var GRPCAddr = ":9090"
 
-// HTTPAddr is the address to bind the gRPC web proxy server on
+// HTTPAddr is the address to bind the HTTP server and gRPC proxy run
 var HTTPAddr = ":8080"
 
 // AddToFlagSet add options to a FlagSet
 func AddToFlagSet(flag *pflag.FlagSet) {
-	flag.StringVar(&GRPCAddr, "grpc-addr", GRPCAddr, "GRPC address to use")
-	flag.StringVar(&HTTPAddr, "http-addr", HTTPAddr, "HTTP address to use")
+	flag.StringVar(&GRPCAddr, "grpc-addr", GRPCAddr, "gRPC server address")
+	flag.StringVar(&HTTPAddr, "http-addr", HTTPAddr, "web server address")
 }

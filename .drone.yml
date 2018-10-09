@@ -10,9 +10,16 @@ clone:
 
 pipeline:
   dependencies:
+    group: dependencies
     image: golang:1.11
     commands:
       - make dependencies
+
+  webapp-dependencies:
+    group: dependencies
+    image: node:10
+    commands:
+      - cd app; make dependencies
 
   lint:
     group: lint
@@ -28,16 +35,39 @@ pipeline:
       - helm lint chart/dashboard
       - helm dep build chart/dashboard
 
+  lint-webapp:
+    group: lint
+    image: node:10
+    commands:
+      - cd app; make lint
+
   test:
+    group: test
     image: golang:1.11
     commands:
       - make test
 
+  # test-webapp:
+  #   group: test
+  #   image: node:10
+  #   commands:
+  #     - cd app; make test
+
+  build-webapp:
+    image: node:10
+    commands:
+      - cd app; make build
+
   build-chart:
-    group: build-dep
+    group: build
     image: quay.io/presslabs/kluster-toolbox
     commands:
       - make chart
+
+  bundle:
+    image: golang:1.11
+    commands:
+      - make bundle
 
   publish:
     group: publish

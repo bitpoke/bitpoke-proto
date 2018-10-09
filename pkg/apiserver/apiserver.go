@@ -23,6 +23,7 @@ import (
 
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
+	"github.com/gobuffalo/packr"
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"google.golang.org/grpc"
@@ -47,10 +48,19 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 	)
 	projectv1.RegisterProjectsServer(grpcServer, projectv1.NewProjectServer(s.client))
 
-	wrappedServer := grpcweb.WrapServer(grpcServer)
+	box := packr.NewBox("../../app/build")
+	if !box.Has("index.html") {
+		panic("Cannot find 'index.html' web server entry point. You need to build the webapp first.")
+	}
+
+	wrappedGrpc := grpcweb.WrapServer(grpcServer)
 
 	handler := func(resp http.ResponseWriter, req *http.Request) {
-		wrappedServer.ServeHTTP(resp, req)
+		if wrappedGrpc.IsGrpcWebRequest(req) {
+			wrappedGrpc.ServeHTTP(resp, req)
+		}
+		// Fall back to other servers.
+		http.DefaultServeMux.ServeHTTP(resp, req)
 	}
 
 	httpServer := http.Server{
@@ -58,7 +68,7 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 		Handler: http.HandlerFunc(handler),
 	}
 
-	errChan := make(chan error)
+	errChan := make(chan error, 2)
 
 	lis, err := net.Listen("tcp", options.GRPCAddr)
 	if err != nil {
@@ -72,7 +82,8 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 	}()
 
 	go func() {
-		log.Info("gRPC Web Server listening", "address", options.HTTPAddr)
+		log.Info("Web Server listening", "address", options.HTTPAddr)
+		http.Handle("/", http.FileServer(box))
 		err := httpServer.ListenAndServe()
 		errChan <- err
 	}()

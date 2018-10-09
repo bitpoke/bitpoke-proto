@@ -21,4 +21,6 @@ build
 .gometalinter-*
 protoc.zip
 
+*-packr.go
+
 **/charts/*.tgz
