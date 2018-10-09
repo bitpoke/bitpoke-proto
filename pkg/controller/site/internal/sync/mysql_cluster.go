@@ -39,15 +39,11 @@ const (
 	DefaultMysqlPodCPU = "200m"
 )
 
-func mysqlClusterName(wp *wordpressv1alpha1.Wordpress) string {
-	return fmt.Sprintf("%s-mysql", wp.Name)
-}
-
 // NewMysqlClusterSyncer returns a new syncer.Interface for reconciling MysqlCluster
 func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &mysqlv1alpha1.MysqlCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      mysqlClusterName(wp),
+			Name:      wp.Name,
 			Namespace: wp.Namespace,
 		},
 	}
@@ -89,6 +85,10 @@ func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, sc
 				corev1.ResourceMemory: resPodMemory,
 				corev1.ResourceCPU:    resPodCPU,
 			},
+		}
+
+		if out.Spec.Replicas == 0 {
+			out.Spec.Replicas = 1
 		}
 
 		if len(out.Spec.VolumeSpec.PersistentVolumeClaimSpec.Resources.Requests) == 0 {

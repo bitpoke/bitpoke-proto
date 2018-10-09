@@ -17,6 +17,8 @@ limitations under the License.
 package sync
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,7 +33,7 @@ import (
 func NewMysqlClusterSecretSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      mysqlClusterName(wp),
+			Name:      fmt.Sprintf("%s-mysql", wp.Name),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -39,18 +41,25 @@ func NewMysqlClusterSecretSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Clie
 	return syncer.NewObjectSyncer("MysqlCluster Secret", wp, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Secret)
 
-		out.StringData = map[string]string{
-			"USER":     "wordpress",
-			"DATABASE": "wordpress",
+		stringData := make(map[string]string)
+
+		_, ok := out.Data["USER"]
+		if !ok {
+			stringData["USER"] = "wordpress"
 		}
 
-		_, ok := out.Data["ROOT_PASSWORD"]
+		_, ok = out.Data["DATABASE"]
+		if !ok {
+			stringData["DATABASE"] = "wordpress"
+		}
+
+		_, ok = out.Data["ROOT_PASSWORD"]
 		if !ok {
 			password, err := rand.AlphaNumericString(20)
 			if err != nil {
 				return err
 			}
-			out.StringData["ROOT_PASSWORD"] = password
+			stringData["ROOT_PASSWORD"] = password
 		}
 
 		_, ok = out.Data["PASSWORD"]
@@ -59,7 +68,11 @@ func NewMysqlClusterSecretSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Clie
 			if err != nil {
 				return err
 			}
-			out.StringData["PASSWORD"] = password
+			stringData["PASSWORD"] = password
+		}
+
+		if len(stringData) > 0 {
+			out.StringData = stringData
 		}
 
 		return nil
