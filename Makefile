@@ -1,6 +1,9 @@
 # Image URL to use all building/pushing image targets
 APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
-IMG ?= quay.io/presslabs/dashboard:$(APP_VERSION)
+REGISTRY := quay.io/presslabs
+IMAGE_NAME := dashboard
+BUILD_TAG := build
+IMAGE_TAGS := $(APP_VERSION)
 KUBEBUILDER_VERSION ?= 1.0.4
 PROTOC_VERSION ?= 3.6.1
 BINDIR ?= $(PWD)/bin
@@ -28,10 +31,6 @@ build: generate fmt vet
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
 	go run ./cmd/dashboard/main.go
-
-# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-install: manifests chart
-	helm upgrade --install --namespace=presslabs-sys dashboard chart/dashboard --set image=$(IMG)
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
@@ -80,12 +79,23 @@ generate:
 	presslabs/dashboard/core/v1/project.proto
 
 # Build the docker image
-images:
-	docker build . -t ${IMG}
+.PHONY: images
+images: bundle
+	docker build . -t $(REGISTRY)/$(IMAGE_NAME):$(BUILD_TAG)
+	set -e; \
+		for tag in $(IMAGE_TAGS); do \
+			docker tag $(REGISTRY)/$(IMAGE_NAME):$(BUILD_TAG) $(REGISTRY)/$(IMAGE_NAME):$${tag}; \
+	done
+	$(BINDIR)/packr clean -v
+
 
 # Push the docker image
-publish:
-	docker push ${IMG}
+.PHONY: publish
+publish: images
+	set -e; \
+		for tag in $(IMAGE_TAGS); do \
+		docker push $(REGISTRY)/$(IMAGE_NAME):$${tag}; \
+	done
 
 lint:
 	$(BINDIR)/golangci-lint run ./pkg/... ./cmd/...
