@@ -43,9 +43,9 @@ type grpcRunner struct {
 }
 
 type config struct {
-	OIDCIssuer   string `jsenv:"OIDC_ISSUER"`
-	ClientID     string `jsenv:"OIDC_CLIENT_ID"`
-	GRPCProxyURL string `jsenv:"GRPC_PROXY_URL"`
+	OIDCIssuer   string `jsenv:"REACT_APP_OIDC_ISSUER"`
+	ClientID     string `jsenv:"REACT_APP_OIDC_CLIENT_ID"`
+	GRPCProxyURL string `jsenv:"REACT_APP_API_URL"`
 }
 
 var log = logf.Log.WithName("apiserver")

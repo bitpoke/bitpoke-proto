@@ -11,7 +11,7 @@ import { RootState, auth } from '../redux'
 import { ListRequest, Project } from '../proto/presslabs/dashboard/core/v1/project_pb'
 import { Projects } from '../proto/presslabs/dashboard/core/v1/project_pb_service'
 
-const host: string = config.REACT_API_URL || 'http://localhost:8080'
+const host: string = config.REACT_APP_API_URL || 'http://localhost:8080'
 
 
 //
