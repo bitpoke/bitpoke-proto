@@ -8,6 +8,7 @@ which is part of this source code package.
 package sync
 
 import (
+	"sort"
 	"strconv"
 
 	"github.com/go-ini/ini"
@@ -17,17 +18,19 @@ import (
 
 const (
 	giteaName            = "gitea"
-	giteaReleaseVersion  = "1.5.0"
+	giteaReleaseVersion  = "1.5.2"
 	giteaImage           = "docker.io/gitea/gitea:" + giteaReleaseVersion
 	giteaHTTPInternalIP  = "0.0.0.0"
-	giteaHTTPPort        = 80
+	giteaHTTPPort        = 8080
 	giteaSSHPort         = 22
-	giteaRequestsMemory  = "512Mi"
+	giteaRequestsMemory  = "256Mi"
 	giteaRequestsCPU     = "100m"
 	giteaRequestsStorage = "10Gi"
 )
 
-func createGiteaConfig(project *dashboardv1alpha1.Project, values map[string]string) (*ini.File, error) {
+func createGiteaConfig(project *dashboardv1alpha1.Project, data map[string][]byte) (*ini.File, error) {
+	cfg := ini.Empty()
+
 	config := map[string]map[string]string{
 		"DEFAULT": {
 			"RUN_MODE": "prod",
@@ -54,8 +57,8 @@ func createGiteaConfig(project *dashboardv1alpha1.Project, values map[string]str
 		},
 		"security": {
 			"INSTALL_LOCK":                      "true",
-			"SECRET_KEY":                        values["SECRET_KEY"],
-			"INTERNAL_TOKEN":                    values["INTERNAL_TOKEN"],
+			"SECRET_KEY":                        string(data["SECRET_KEY"]),
+			"INTERNAL_TOKEN":                    string(data["INTERNAL_TOKEN"]),
 			"LOGIN_REMEMBER_DAYS":               "7",
 			"COOKIE_USERNAME":                   "gitea_user",
 			"COOKIE_REMEMBER_NAME":              "gitea_rememberme",
@@ -69,16 +72,26 @@ func createGiteaConfig(project *dashboardv1alpha1.Project, values map[string]str
 		},
 	}
 
-	iniConfig := ini.Empty()
+	sections := []string{}
+	for section := range config {
+		sections = append(sections, section)
+	}
+	sort.Strings(sections)
 
-	for sectionName, keyValue := range config {
-		section := iniConfig.Section(sectionName)
-		for key, value := range keyValue {
-			_, err := section.NewKey(key, value)
-			if err != nil {
+	for _, sectionName := range sections {
+		section := cfg.Section(sectionName)
+		keys := []string{}
+		for key := range config[sectionName] {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+
+		for _, key := range keys {
+			if _, err := section.NewKey(key, config[sectionName][key]); err != nil {
 				return nil, err
 			}
 		}
 	}
-	return iniConfig, nil
+
+	return cfg, nil
 }

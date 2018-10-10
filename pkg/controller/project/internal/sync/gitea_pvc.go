@@ -39,9 +39,6 @@ func NewGiteaPVCSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme
 		out.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
 			corev1.ReadWriteOnce,
 		}
-		out.Spec.Selector = &metav1.LabelSelector{
-			MatchLabels: giteaLabels(proj),
-		}
 		out.Spec.Resources = corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
 				"storage": resGiteaRequestsStorage,

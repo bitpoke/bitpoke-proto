@@ -8,8 +8,11 @@ which is part of this source code package.
 package sync
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,14 +35,25 @@ func NewGiteaServiceSyncer(proj *dashboardv1alpha1.Project, cl client.Client, sc
 		out := existing.(*corev1.Service)
 		out.Labels = giteaPodLabels(proj)
 
-		out.Spec.Ports = []corev1.ServicePort{
-			{
-				Name:       "http",
-				Port:       int32(80),
-				TargetPort: intstr.FromInt(giteaHTTPPort),
-			},
+		if !labels.Equals(giteaLabels(proj), out.Spec.Selector) {
+			if out.ObjectMeta.CreationTimestamp.IsZero() {
+				out.Spec.Selector = giteaLabels(proj)
+			} else {
+				return fmt.Errorf("service selector is immutable")
+			}
 		}
-		out.Spec.Selector = giteaLabels(proj)
+
+		if len(out.Spec.Ports) != 2 {
+			out.Spec.Ports = make([]corev1.ServicePort, 2)
+		}
+
+		out.Spec.Ports[0].Name = "http"
+		out.Spec.Ports[0].Port = int32(80)
+		out.Spec.Ports[0].TargetPort = intstr.FromInt(giteaHTTPPort)
+
+		out.Spec.Ports[1].Name = "ssh"
+		out.Spec.Ports[1].Port = int32(22)
+		out.Spec.Ports[1].TargetPort = intstr.FromInt(giteaSSHPort)
 
 		return nil
 	})
