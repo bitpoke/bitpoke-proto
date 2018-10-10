@@ -74,6 +74,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	subresources := []runtime.Object{
 		&corev1.Namespace{},
 		&corev1.ResourceQuota{},
+		&corev1.LimitRange{},
 		&corev1.Service{},
 		&corev1.PersistentVolumeClaim{},
 		&appsv1.Deployment{},
@@ -105,7 +106,7 @@ type ReconcileProject struct {
 
 // Reconcile reads that state of the cluster for a Project object and makes changes based on the state read
 // and what is in the Project.Spec
-// +kubebuilder:rbac:groups=,resources=services;persistentvolumeclaims;resourcequotas;namespaces,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=,resources=services;persistentvolumeclaims;resourcequotas;namespaces;limitranges,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=dashboard.presslabs.com,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -126,6 +127,7 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	syncers := []syncer.Interface{
 		sync.NewNamespaceSyncer(project, r.Client, r.scheme),
+		sync.NewLimitRangeSyncer(project, r.Client, r.scheme),
 		sync.NewResourceQuotaSyncer(project, r.Client, r.scheme),
 		sync.NewGiteaSecretSyncer(project, r.Client, r.scheme),
 		sync.NewGiteaPVCSyncer(project, r.Client, r.scheme),

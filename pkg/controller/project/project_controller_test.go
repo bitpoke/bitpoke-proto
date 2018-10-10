@@ -19,6 +19,7 @@ package project
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -83,8 +84,9 @@ var _ = Describe("Project controller", func() {
 		)
 
 		entries := []TableEntry{
+			Entry("reconciles limit range", "default", "presslabs-dashboard", &corev1.LimitRange{}),
+			Entry("reconciles resource quota", "default", "presslabs-dashboard", &corev1.ResourceQuota{}),
 			Entry("reconciles prometheus", "prometheus", "prometheus%.0s", &monitoringv1.Prometheus{}),
-			Entry("reconciles resourcequota", "default", "%s", &corev1.ResourceQuota{}),
 			Entry("reconciles gitea deployment", "gitea", "gitea%.0s", &appsv1.Deployment{}),
 			Entry("reconciles gitea service", "gitea", "gitea%.0s", &corev1.Service{}),
 			Entry("reconciles gitea ingress", "gitea", "gitea%.0s", &extv1beta1.Ingress{}),
@@ -128,7 +130,7 @@ var _ = Describe("Project controller", func() {
 					"project.dashboard.presslabs.com/project": project.Name,
 					"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":                  "gitea",
-					"app.kubernetes.io/version":               "1.5.0",
+					"app.kubernetes.io/version":               "1.5.2",
 				},
 			}
 			// Create the Organization in which the Project will live
@@ -172,8 +174,12 @@ var _ = Describe("Project controller", func() {
 		})
 
 		DescribeTable("the reconciler", func(component string, nameFmt string, obj runtime.Object) {
+			name := nameFmt
+			if strings.Count(nameFmt, "%") > 0 {
+				name = fmt.Sprintf(nameFmt, project.Name)
+			}
 			key := types.NamespacedName{
-				Name:      fmt.Sprintf(nameFmt, project.Name),
+				Name:      name,
 				Namespace: projectNamespace,
 			}
 			Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())

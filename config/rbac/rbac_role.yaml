@@ -11,6 +11,7 @@ rules:
   - persistentvolumeclaims
   - resourcequotas
   - namespaces
+  - limitranges
   verbs:
   - get
   - list
