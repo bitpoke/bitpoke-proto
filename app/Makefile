@@ -29,6 +29,7 @@ generate:
 		--js_out="import_style=commonjs,binary:${PROTO_OUT_DIR}" \
 		--ts_out="service=true:${PROTO_OUT_DIR}" \
 		presslabs/dashboard/core/v1/project.proto
+	echo '/* eslint-disable */' | cat - src/proto/presslabs/dashboard/core/v1/project_pb.js > temp && mv temp src/proto/presslabs/dashboard/core/v1/project_pb.js
 
 test:
 	NODE_ENV=$(NODE_ENV) $(REACT) test --env=jsdom
