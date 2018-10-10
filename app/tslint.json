@@ -16,6 +16,8 @@
     "trailing-comma": [true, {"multiline": "never", "singleline": "never"}],
     "object-literal-sort-keys": false,
 
+    "brace-style": [true, "stroustrup", { "allowSingleLine": true }],
+
     "ordered-imports": false,
     "import-name": false,
     "no-submodule-imports": false,
