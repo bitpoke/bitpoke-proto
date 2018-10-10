@@ -11,7 +11,10 @@ type Props = {
 
 const Link: React.SFC<Props> = ({ children, to, onClick }) => {
     const handleClick = isString(to)
-        ? (e: React.SyntheticEvent<EventTarget>) => { e.preventDefault() && routing.push(to) }
+        ? (e: React.SyntheticEvent<EventTarget>) => {
+            e.preventDefault()
+            routing.push(to)
+        }
         : () => isFunction(onClick) && onClick()
 
     return (
