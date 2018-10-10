@@ -12,6 +12,10 @@ type Props = {
 }
 
 const UserCard: React.SFC<Props> = ({ entry, dispatch }) => {
+    if (!entry) {
+        return null
+    }
+
     return (
         <div className={ styles.container }>
             <img className={ styles.avatar } src={ entry.avatarURL } />

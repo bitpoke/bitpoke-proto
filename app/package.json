@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "auth0-js": "^9.8.0",
     "google-protobuf": "^3.6.1",
     "grpc-web-client": "^0.6.3",
     "history": "^4.7.2",
     "localforage": "^1.7.2",
     "lodash": "^4.17.11",
     "node-sass": "^4.9.3",
+    "oidc-client": "^1.5.3-beta.1",
     "path-to-regexp": "^2.4.0",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
@@ -38,7 +38,6 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "@types/auth0-js": "^8.11.6",
     "@types/google-protobuf": "^3.2.7",
     "@types/history": "^4.7.0",
     "@types/jest": "^23.3.5",
@@ -53,6 +52,7 @@
     "@types/redux-persist": "^4.3.1",
     "@types/urijs": "^1.15.38",
     "@types/webpack": "^4.4.16",
+    "ts-protoc-gen": "^0.7.6",
     "tslint-config-airbnb": "^5.11.0",
     "tslint-eslint-rules": "^5.4.0",
     "tslint-react-recommended": "^1.0.15",

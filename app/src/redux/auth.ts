@@ -1,8 +1,9 @@
 import { ActionType, action as createAction } from 'typesafe-actions'
 import { takeEvery, select } from 'redux-saga/effects'
 import { channel as createChannel } from 'redux-saga'
-import { Auth0DecodedHash, Auth0Error, WebAuth } from 'auth0-js'
+import { User as Token, UserManager } from 'oidc-client'
 import { createSelector } from 'reselect'
+
 
 import config from '../config'
 
@@ -14,12 +15,8 @@ import { watchChannel } from '../utils'
 //
 //  TYPES
 
-export type State = Auth0DecodedHash | null
+export type State = Token | null
 export type Actions = ActionType<typeof actions>
-
-type TokenPayload = {
-    exp: number
-}
 
 export type User = {
     id: string,
@@ -28,7 +25,7 @@ export type User = {
     isEmailVerified: boolean,
     nickname: string,
     avatarURL: string
-}
+} | null
 
 //
 //  ACTIONS
@@ -38,8 +35,8 @@ export const LOGIN_FAILED            = '@ auth / LOGIN_FAILED'
 export const LOGOUT_REQUESTED        = '@ auth / LOGOUT_REQUESTED'
 export const TOKEN_REFRESH_REQUESTED = '@ auth / TOKEN_REFRESH_REQUESTED'
 
-export const loginSuccess = (hash: Auth0DecodedHash) => createAction(LOGIN_SUCCEEDED, hash)
-export const loginFailure = (error: Auth0Error) => createAction(LOGIN_FAILED, error)
+export const loginSuccess = (token: Token) => createAction(LOGIN_SUCCEEDED, token)
+export const loginFailure = (error: any) => createAction(LOGIN_FAILED, error)
 export const logout = () => createAction(LOGOUT_REQUESTED)
 export const refreshToken = () => createAction(TOKEN_REFRESH_REQUESTED)
 
@@ -91,15 +88,17 @@ function* ensureAuthentication(action: ActionType<typeof app.initialize>) {
     const route = yield select(routing.getCurrentRoute)
 
     if (userIsAuthenticated) {
+        provider.startSilentRenew()
         return
     }
 
     if (route && hasAuthenticationPayload(route.path)) {
+        provider.signinRedirectCallback()
         return
     }
 
     if (!userIsAuthenticated) {
-        provider.authorize()
+        provider.signinRedirect()
     }
 
     return
@@ -107,20 +106,12 @@ function* ensureAuthentication(action: ActionType<typeof app.initialize>) {
 
 function handleAuthenticationIfRequired(action: ActionType<typeof routing.updateRoute>) {
     if (hasAuthenticationPayload(action.payload)) {
-        provider.parseHash(handleTokenResponse)
+        provider.signinRedirectCallback()
     }
 }
 
 function handleTokenRefresh(action: ActionType<typeof refreshToken>) {
-    provider.checkSession({}, handleTokenResponse)
-}
-
-function handleTokenResponse(err: Auth0Error | null, authResult: Auth0DecodedHash) {
-    if (authResult && authResult.accessToken && authResult.idToken) {
-        channel.put(loginSuccess(authResult))
-    } else if (err) {
-        channel.put(loginFailure(err))
-    }
+    provider.signinSilent()
 }
 
 function redirectToDashboard() {
@@ -131,46 +122,62 @@ function redirectToDashboard() {
 //
 //   HELPERS and UTILITIES
 
-const provider = new WebAuth({
-    domain       : config.REACT_APP_AUTH0_DOMAIN || '{DOMAIN}',
-    clientID     : config.REACT_APP_AUTH0_CLIENT_ID || '{CLIENT_ID}',
-    redirectUri  : config.REACT_APP_AUTH0_CALLBACK_URL || 'http://localhost:3000/',
-    audience     : `https://${config.REACT_APP_AUTH0_DOMAIN}/userinfo`,
-    responseType : 'token id_token',
-    scope        : 'openid email profile'
+const provider = new UserManager({
+    authority            : config.REACT_APP_OIDC_ISSUER,
+    client_id            : config.REACT_APP_OIDC_CLIENT_ID,
+    redirect_uri         : window.location.href,
+    silent_redirect_uri  : window.location.href,
+    response_type        : 'token id_token',
+    scope                : 'openid email profile',
+    automaticSilentRenew : true
 })
+
+provider.events.addUserLoaded((user) => {
+    user && !user.expired
+        ? channel.put(loginSuccess(user))
+        : channel.put(loginFailure(user))
+})
+provider.events.addUserUnloaded(() => channel.put(logout()))
+provider.events.addUserSignedOut(() => channel.put(logout()))
+provider.events.addAccessTokenExpired(() => channel.put(logout()))
 
 function hasAuthenticationPayload(path: string) {
     return /access_token|id_token|error/.test(path)
 }
 
-function tokenIsValid(token: TokenPayload) {
-    return (token && token.exp && (Date.now() / 1000) < token.exp) || false
+function tokenIsValid(token: State) {
+    if (!token || !token.expires_at) {
+        return false
+    }
+    return (Date.now() / 1000) < token.expires_at
 }
 
+function normalizeProfile(token: Token) {
+    if (!tokenIsValid(token)) {
+        return null
+    }
+
+    return {
+        id: token.profile.sub,
+        isEmailVerified: token.profile.email_verified,
+        avatarURL: token.profile.picture,
+        ...pick(token.profile, ['email', 'name', 'nickname'])
+    }
+}
 
 //
 //  SELECTORS
 
 export const getState = (state: RootState): State => state.auth
-export const getTokenPayload = createSelector(
-    getState,
-    (state) => state ? state.idTokenPayload : null
-)
 export const getAuthorizationHeader = createSelector(
     getState,
-    (state) => state ? join([state.tokenType, state.idToken], ' ') : null
+    (state) => state ? join([state.token_type, state.id_token], ' ') : null
 )
 export const getCurrentUser = createSelector(
-    getTokenPayload,
-    (token): User => ({
-        id: token.sub,
-        isEmailVerified: token.email_verified,
-        avatarURL: token.picture,
-        ...pick(token, ['email', 'name', 'nickname'])
-    })
+    getState,
+    (state) => state ? normalizeProfile(state) : null
 )
 export const isAuthenticated = createSelector(
-    getTokenPayload,
-    (token) => tokenIsValid(token)
+    getState,
+    (state) => tokenIsValid(state)
 )
