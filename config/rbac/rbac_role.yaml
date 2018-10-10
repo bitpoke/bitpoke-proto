@@ -10,6 +10,7 @@ rules:
   - services
   - persistentvolumeclaims
   - resourcequotas
+  - namespaces
   verbs:
   - get
   - list
@@ -94,7 +95,7 @@ rules:
 - apiGroups:
   - wordpress.presslabs.org
   resources:
-  - wordpress
+  - wordpresses
   verbs:
   - get
   - list
@@ -106,7 +107,7 @@ rules:
 - apiGroups:
   - mysql.presslabs.org
   resources:
-  - mysqlcluster
+  - mysqlclusters
   verbs:
   - get
   - list

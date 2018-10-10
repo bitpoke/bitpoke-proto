@@ -105,8 +105,8 @@ type ReconcileSite struct {
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
 // +kubebuilder:rbac:groups=,resources=services;secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpress,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=mysql.presslabs.org,resources=mysqlcluster,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=mysql.presslabs.org,resources=mysqlclusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Site instance
