@@ -2,12 +2,9 @@ import * as React from 'react'
 import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 
-import { map, isEmpty } from 'lodash'
+import { map } from 'lodash'
 
-import { RootState, app, auth, projects } from '../redux'
-
-import Router from '../containers/Router'
-import NavBar from '../components/NavBar'
+import { RootState, projects } from '../redux'
 
 type Props = {
     dispatch: Dispatch

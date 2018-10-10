@@ -1,5 +1,4 @@
-import { takeEvery } from 'redux-saga/effects'
-import { ActionType, action as createAction } from 'typesafe-actions'
+import { ActionType } from 'typesafe-actions'
 import { createSelector } from 'reselect'
 
 import { RootState } from '../redux'

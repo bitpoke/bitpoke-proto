@@ -2,12 +2,12 @@ import * as React from 'react'
 import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 
-import { RootState, auth, projects, routing } from '../redux'
+import { RootState, auth, routing } from '../redux'
 
 import Link from '../components/Link'
 import UserCard from '../components/UserCard'
 
-import './NavBar.css'
+import styles from './NavBar.module.scss'
 
 type Props = {
     dispatch: Dispatch
@@ -19,8 +19,8 @@ type ReduxProps = {
 
 const NavBar: React.SFC<Props & ReduxProps> = ({ dispatch, currentUser }) => {
     return (
-        <div className="NavBar_container">
-            <h2 className="NavBar_logo">
+        <div className={ styles.container }>
+            <h2 className={ styles.logo }>
                 <Link to={ routing.routeFor('dashboard') }>Dashboard</Link>
             </h2>
             <UserCard entry={ currentUser } />

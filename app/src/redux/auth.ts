@@ -1,20 +1,20 @@
 import { ActionType, action as createAction } from 'typesafe-actions'
-import { takeEvery, fork, put, select, take, call } from 'redux-saga/effects'
-import { SagaIterator, channel as createChannel } from 'redux-saga'
-import auth0 from 'auth0-js'
+import { takeEvery, select } from 'redux-saga/effects'
+import { channel as createChannel } from 'redux-saga'
+import { Auth0DecodedHash, Auth0Error, WebAuth } from 'auth0-js'
 import { createSelector } from 'reselect'
 
 import config from '../config'
 
-import { get, join, pick } from 'lodash'
+import { join, pick } from 'lodash'
 
-import { AnyAction, RootState, app, routing } from '../redux'
+import { RootState, app, routing } from '../redux'
 import { watchChannel } from '../utils'
 
 //
 //  TYPES
 
-export type State = auth0.Auth0DecodedHash | null
+export type State = Auth0DecodedHash | null
 export type Actions = ActionType<typeof actions>
 
 type TokenPayload = {
@@ -38,8 +38,8 @@ export const LOGIN_FAILED            = '@ auth / LOGIN_FAILED'
 export const LOGOUT_REQUESTED        = '@ auth / LOGOUT_REQUESTED'
 export const TOKEN_REFRESH_REQUESTED = '@ auth / TOKEN_REFRESH_REQUESTED'
 
-export const loginSuccess = (hash: auth0.Auth0DecodedHash) => createAction(LOGIN_SUCCEEDED, hash)
-export const loginFailure = (error: auth0.Auth0Error) => createAction(LOGIN_FAILED, error)
+export const loginSuccess = (hash: Auth0DecodedHash) => createAction(LOGIN_SUCCEEDED, hash)
+export const loginFailure = (error: Auth0Error) => createAction(LOGIN_FAILED, error)
 export const logout = () => createAction(LOGOUT_REQUESTED)
 export const refreshToken = () => createAction(TOKEN_REFRESH_REQUESTED)
 
@@ -115,7 +115,7 @@ function handleTokenRefresh(action: ActionType<typeof refreshToken>) {
     provider.checkSession({}, handleTokenResponse)
 }
 
-function handleTokenResponse(err: auth0.Auth0Error | null, authResult: auth0.Auth0DecodedHash) {
+function handleTokenResponse(err: Auth0Error | null, authResult: Auth0DecodedHash) {
     if (authResult && authResult.accessToken && authResult.idToken) {
         channel.put(loginSuccess(authResult))
     } else if (err) {
@@ -131,7 +131,7 @@ function redirectToDashboard() {
 //
 //   HELPERS and UTILITIES
 
-const provider = new auth0.WebAuth({
+const provider = new WebAuth({
     domain       : config.REACT_APP_AUTH0_DOMAIN || '{DOMAIN}',
     clientID     : config.REACT_APP_AUTH0_CLIENT_ID || '{CLIENT_ID}',
     redirectUri  : config.REACT_APP_AUTH0_CALLBACK_URL || 'http://localhost:3000/',

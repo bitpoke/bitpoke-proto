@@ -1,10 +1,8 @@
-import { ActionType, createAsyncAction, action as createAction } from 'typesafe-actions'
-import { takeEvery, put, select, take, call } from 'redux-saga/effects'
-import { SagaIterator, channel as createChannel } from 'redux-saga'
+import { ActionType, action as createAction } from 'typesafe-actions'
+import { takeEvery, select } from 'redux-saga/effects'
+import { channel as createChannel } from 'redux-saga'
 import { grpc } from 'grpc-web-client'
 import { createSelector } from 'reselect'
-
-import { reduce } from 'lodash'
 
 import config from '../config'
 import { watchChannel } from '../utils'

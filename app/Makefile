@@ -13,7 +13,6 @@ PATH := $(BINDIR):$(PATH)
 SHELL := env 'PATH=$(PATH)' /bin/sh
 
 dependencies:
-	which yarn || npm install yarn
 	yarn install --modules-folder $(NODE_MODULES)
 
 run:
@@ -41,4 +40,4 @@ clean:
 	rm -rf build
 	rm -rf $(NODE_MODULES)
 
-.PHONY: deps run test lint clean
+.PHONY: dependencies run test lint clean

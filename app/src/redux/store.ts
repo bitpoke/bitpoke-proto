@@ -4,9 +4,8 @@ import { persistStore, persistReducer } from 'redux-persist'
 import localForage from 'localforage'
 import createSagaMiddleware from 'redux-saga'
 import { fork, all } from 'redux-saga/effects'
-import { StateType } from 'typesafe-actions'
 
-import { map, reduce, compact, has, isFunction } from 'lodash'
+import { map, reduce, compact, has } from 'lodash'
 
 import * as reduxModules from '../redux'
 
@@ -35,7 +34,7 @@ function* rootSaga() {
 
 function createStore() {
     const middleware = []
-    const enhancers = []
+    const enhancers = [] as any
 
     if (process.env.NODE_ENV === 'development') {
         const logger = createLogger({
@@ -60,8 +59,8 @@ function createStore() {
         rootReducer,
         initialState,
         compose(
-            applyMiddleware(...middleware) // ,
-            // ...enhancers
+            applyMiddleware(...middleware),
+            ...enhancers
         )
     )
 

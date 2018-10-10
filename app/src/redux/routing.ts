@@ -3,14 +3,13 @@ import { connect } from 'react-redux'
 import { createHashHistory, createMemoryHistory } from 'history'
 import pathToRegexp, { Key, compile } from 'path-to-regexp'
 import { matchPath } from 'react-router'
-import { takeEvery, put, select, take, call } from 'redux-saga/effects'
+import { takeEvery, put } from 'redux-saga/effects'
 import { channel as createChannel } from 'redux-saga'
-import { createSelector } from 'reselect'
 import { ActionType, action as createAction } from 'typesafe-actions'
 
 import URI from 'urijs'
 
-import { map, filter, omit, head, has, isEmpty, startCase } from 'lodash'
+import { map, filter, omit, head, has, isEmpty } from 'lodash'
 
 import { RootState, app } from '../redux'
 import { watchChannel } from '../utils'
