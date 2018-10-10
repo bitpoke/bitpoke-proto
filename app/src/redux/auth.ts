@@ -4,6 +4,8 @@ import { SagaIterator, channel as createChannel } from 'redux-saga'
 import auth0 from 'auth0-js'
 import { createSelector } from 'reselect'
 
+import config from '../config'
+
 import { get, join, pick } from 'lodash'
 
 import { AnyAction, RootState, app, routing } from '../redux'
@@ -130,10 +132,10 @@ function redirectToDashboard() {
 //   HELPERS and UTILITIES
 
 const provider = new auth0.WebAuth({
-    domain       : process.env.REACT_APP_AUTH0_DOMAIN || '{DOMAIN}',
-    clientID     : process.env.REACT_APP_AUTH0_CLIENT_ID || '{CLIENT_ID}',
-    redirectUri  : process.env.REACT_APP_AUTH0_CALLBACK_URL || 'http://localhost:3000/',
-    audience     : `https://${process.env.REACT_APP_AUTH0_DOMAIN}/userinfo`,
+    domain       : config.REACT_APP_AUTH0_DOMAIN || '{DOMAIN}',
+    clientID     : config.REACT_APP_AUTH0_CLIENT_ID || '{CLIENT_ID}',
+    redirectUri  : config.REACT_APP_AUTH0_CALLBACK_URL || 'http://localhost:3000/',
+    audience     : `https://${config.REACT_APP_AUTH0_DOMAIN}/userinfo`,
     responseType : 'token id_token',
     scope        : 'openid email profile'
 })
