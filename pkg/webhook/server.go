@@ -38,7 +38,7 @@ func NewServer(m manager.Manager) (*webhook.Server, error) {
 	opts := webhook.ServerOptions{
 		CertDir:          "/tmp/cert",
 		BootstrapOptions: &webhook.BootstrapOptions{},
-		Port:             4433,
+		Port:             int32(options.WebhookPort),
 	}
 
 	if len(options.WebhookSecretName) > 0 {
