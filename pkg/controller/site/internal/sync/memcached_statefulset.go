@@ -34,49 +34,44 @@ import (
 
 	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
-
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	site "github.com/presslabs/dashboard/pkg/internal/site"
 )
 
 const (
 	// DefaultMemcachedMemory is the default value of memory for Memcached StatefulSet
-	DefaultMemcachedMemory         = "512Mi"
-	memcachedCPU                   = "100m"
-	memcachedReplicas        int32 = 1
-	memcachedImage                 = "docker.io/library/memcached:1.5.9-alpine"
-	memcachedImagePullPolicy       = "IfNotPresent"
-	memcachedExporterPort          = 9150
-	memcachedPort                  = 11211
-	memcachedExporterImage         = "quay.io/prometheus/memcached-exporter:v0.4.1"
+	DefaultMemcachedMemory   = "512Mi"
+	memcachedCPU             = "100m"
+	memcachedImage           = "docker.io/library/memcached:1.5.9-alpine"
+	memcachedImagePullPolicy = "IfNotPresent"
+	memcachedExporterPort    = 9150
+	memcachedPort            = 11211
+	memcachedExporterImage   = "quay.io/prometheus/memcached-exporter:v0.4.1"
 )
 
 var (
-	resMemcachedCPU = resource.MustParse(memcachedCPU)
+	resMemcachedCPU         = resource.MustParse(memcachedCPU)
+	memcachedReplicas int32 = 1
 )
 
-func memcachedStatefulSetName(wp *wordpressv1alpha1.Wordpress) string {
-	return fmt.Sprintf("%s-memcached", wp.Name)
-}
-
 // NewMemcachedStatefulSetSyncer returns a new syncer.Interface for reconciling Memcached StatefulSet
-func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewMemcachedStatefulSetSyncer(wp *site.Site, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := wp.ComponentLabels(site.MemcachedService)
+
 	obj := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      memcachedStatefulSetName(wp),
+			Name:      wp.ComponentName(site.MemcachedStatefulSet),
 			Namespace: wp.Namespace,
 		},
 	}
 
-	return syncer.NewObjectSyncer("MemcachedStatefulSet", wp, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MemcachedStatefulSet", wp.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*appsv1.StatefulSet)
 
-		siteLabels := getSiteLabels(wp, "memcached")
-		out.ObjectMeta.Labels = labels.Merge(out.ObjectMeta.Labels, siteLabels)
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
-		replicas := memcachedReplicas
-		out.Spec.Replicas = &replicas
+		out.Spec.Replicas = &memcachedReplicas
 
-		selector := metav1.SetAsLabelSelector(getSiteLabels(wp, "memcached"))
+		selector := metav1.SetAsLabelSelector(objLabels)
 		if !reflect.DeepEqual(selector, out.Spec.Selector) {
 			if out.ObjectMeta.CreationTimestamp.IsZero() {
 				out.Spec.Selector = selector
@@ -85,15 +80,15 @@ func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Cl
 			}
 		}
 
-		if out.Spec.ServiceName != memcachedServiceName(wp) {
+		if out.Spec.ServiceName != wp.ComponentName(site.MemcachedService) {
 			if out.ObjectMeta.CreationTimestamp.IsZero() {
-				out.Spec.ServiceName = memcachedServiceName(wp)
+				out.Spec.ServiceName = wp.ComponentName(site.MemcachedService)
 			} else {
 				return fmt.Errorf("statefullset service is immutable")
 			}
 		}
 
-		out.Spec.Template.ObjectMeta.Labels = labels.Merge(out.Spec.Template.ObjectMeta.Labels, siteLabels)
+		out.Spec.Template.ObjectMeta.Labels = objLabels
 
 		spec, err := getMemcachedPodSpec(wp)
 		if err != nil {
@@ -108,7 +103,7 @@ func NewMemcachedStatefulSetSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Cl
 	})
 }
 
-func getMemcachedPodSpec(wp *wordpressv1alpha1.Wordpress) (corev1.PodSpec, error) {
+func getMemcachedPodSpec(wp *site.Site) (corev1.PodSpec, error) {
 	spec := corev1.PodSpec{}
 	memcachedMemory, e := wp.ObjectMeta.Annotations["memcached.provisioner.presslabs.com/memory"]
 	if !e {
@@ -130,7 +125,7 @@ func getMemcachedPodSpec(wp *wordpressv1alpha1.Wordpress) (corev1.PodSpec, error
 	spec = corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
-				Name:            memcachedStatefulSetName(wp),
+				Name:            "memcached",
 				Image:           memcachedImage,
 				ImagePullPolicy: memcachedImagePullPolicy,
 				Resources: corev1.ResourceRequirements{
@@ -174,7 +169,7 @@ func getMemcachedPodSpec(wp *wordpressv1alpha1.Wordpress) (corev1.PodSpec, error
 				},
 			},
 			{
-				Name:            fmt.Sprintf("memcached-exporter"),
+				Name:            "memcached-exporter",
 				Image:           memcachedExporterImage,
 				ImagePullPolicy: memcachedImagePullPolicy,
 				Ports: []corev1.ContainerPort{

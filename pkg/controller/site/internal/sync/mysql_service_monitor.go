@@ -17,8 +17,6 @@ limitations under the License.
 package sync
 
 import (
-	"fmt"
-
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -26,26 +24,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/internal/site"
 )
 
-func mysqlServiceMonitorName(wp *wordpressv1alpha1.Wordpress) string {
-	return fmt.Sprintf("%s-mysql", wp.Name)
-}
-
 // NewMysqlServiceMonitorSyncer returns a new syncer.Interface for reconciling Mysql ServiceMonitor
-func NewMysqlServiceMonitorSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewMysqlServiceMonitorSyncer(wp *site.Site, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := wp.ComponentLabels(site.MysqlServiceMonitor)
+
 	obj := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      mysqlServiceMonitorName(wp),
+			Name:      wp.ComponentName(site.MysqlServiceMonitor),
 			Namespace: wp.Namespace,
 		},
 	}
 
-	return syncer.NewObjectSyncer("MysqlServiceMonitor", wp, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MysqlServiceMonitor", wp.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.ServiceMonitor)
 
-		out.ObjectMeta.Labels = getSiteLabels(wp, "mysql-service-monitor")
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		out.Spec.Endpoints = []monitoringv1.Endpoint{
 			{
@@ -53,13 +49,7 @@ func NewMysqlServiceMonitorSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Cli
 			},
 		}
 
-		out.Spec.Selector = metav1.LabelSelector{
-			MatchLabels: labels.Set{
-				"app.kubernetes.io/app-instance": wp.Name,
-				"app.kubernetes.io/component":    "mysql",
-				"app.kubernetes.io/name":         "wordpress",
-			},
-		}
+		out.Spec.Selector = metav1.LabelSelector{MatchLabels: objLabels}
 
 		return nil
 	})

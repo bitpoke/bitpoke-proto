@@ -35,6 +35,7 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/site/internal/sync"
+	"github.com/presslabs/dashboard/pkg/internal/site"
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
@@ -110,9 +111,9 @@ type ReconcileSite struct {
 // +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Site instance
-	wp := &wordpressv1alpha1.Wordpress{}
+	wp := site.New(&wordpressv1alpha1.Wordpress{})
 
-	err := r.Get(context.TODO(), request.NamespacedName, wp)
+	err := r.Get(context.TODO(), request.NamespacedName, wp.Unwrap())
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.

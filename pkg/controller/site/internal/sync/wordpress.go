@@ -21,15 +21,17 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/dashboard/pkg/internal/site"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 // NewWordpressSyncer returns a new syncer.Interface for reconciling Wordpress
-func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewWordpressSyncer(wp *site.Site, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &wordpressv1alpha1.Wordpress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.Name,
@@ -37,13 +39,15 @@ func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, schem
 		},
 	}
 
-	return syncer.NewObjectSyncer("Wordpress", wp, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Wordpress", wp.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*wordpressv1alpha1.Wordpress)
+
+		out.Labels = labels.Merge(labels.Merge(out.Labels, wp.Labels()), controllerLabels)
 
 		out.Spec.Env = []corev1.EnvVar{
 			{
 				Name:  "MEMCACHED_DISCOVERY_SERVICE",
-				Value: fmt.Sprintf("%s.%s", memcachedServiceName(wp), wp.Namespace),
+				Value: fmt.Sprintf("%s.%s", wp.ComponentName(site.MemcachedService), wp.Namespace),
 			},
 			{
 				Name:  "WORDPRESS_DB_HOST",
@@ -54,7 +58,7 @@ func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, schem
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: fmt.Sprintf("%s-mysql", wp.Name),
+							Name: wp.ComponentName(site.MysqlClusterSecret),
 						},
 						Key: "USER",
 					},
@@ -65,7 +69,7 @@ func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, schem
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: fmt.Sprintf("%s-mysql", wp.Name),
+							Name: wp.ComponentName(site.MysqlClusterSecret),
 						},
 						Key: "PASSWORD",
 					},
@@ -76,7 +80,7 @@ func NewWordpressSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, schem
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: fmt.Sprintf("%s-mysql", wp.Name),
+							Name: wp.ComponentName(site.MysqlClusterSecret),
 						},
 						Key: "DATABASE",
 					},

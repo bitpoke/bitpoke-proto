@@ -82,7 +82,7 @@ var _ = Describe("Site controller", func() {
 			Entry("reconciles mysql cluster", "%s", &mysqlv1alpha1.MysqlCluster{}),
 			Entry("reconciles mysql service monitor", "%s-mysql", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles mysql cluster secret", "%s-mysql", &corev1.Secret{}),
-			Entry("reconciles wordpress service monitor", "%s-wp", &monitoringv1.ServiceMonitor{}),
+			Entry("reconciles wordpress service monitor", "%s-wordpress", &monitoringv1.ServiceMonitor{}),
 		}
 
 		BeforeEach(func() {

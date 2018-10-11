@@ -31,6 +31,7 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/site/internal/sync"
+	"github.com/presslabs/dashboard/pkg/internal/site"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -44,13 +45,13 @@ func getEnvVar(env []corev1.EnvVar, name string) corev1.EnvVar {
 }
 
 var _ = Describe("WordpressSyncer", func() {
-	var wp *wordpressv1alpha1.Wordpress
+	var wp *site.Site
 
 	BeforeEach(func() {
-		wp = &wordpressv1alpha1.Wordpress{ObjectMeta: metav1.ObjectMeta{Name: "wp", Namespace: "default"}}
+		wp = site.New(&wordpressv1alpha1.Wordpress{ObjectMeta: metav1.ObjectMeta{Name: "wp", Namespace: "default"}})
 		wpSyncer := sync.NewWordpressSyncer(wp, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
 
-		Expect(wpSyncer.SyncFn(wp)).To(Succeed())
+		Expect(wpSyncer.SyncFn(wp.Unwrap())).To(Succeed())
 	})
 
 	DescribeTable("when syncing", func(name string, value interface{}) {

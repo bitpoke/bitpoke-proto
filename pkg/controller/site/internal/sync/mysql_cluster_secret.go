@@ -17,29 +17,32 @@ limitations under the License.
 package sync
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/rand"
 	"github.com/presslabs/controller-util/syncer"
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/internal/site"
 )
 
 // NewMysqlClusterSecretSyncer returns a new syncer.Interface for reconciling MysqlCluster Secret
-func NewMysqlClusterSecretSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewMysqlClusterSecretSyncer(wp *site.Site, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := wp.ComponentLabels(site.MysqlClusterSecret)
+
 	obj := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-mysql", wp.Name),
+			Name:      wp.ComponentName(site.MysqlClusterSecret),
 			Namespace: wp.Namespace,
 		},
 	}
 
-	return syncer.NewObjectSyncer("MysqlCluster Secret", wp, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MysqlCluster Secret", wp.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Secret)
+
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		stringData := make(map[string]string)
 

@@ -28,19 +28,20 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/site/internal/sync"
+	"github.com/presslabs/dashboard/pkg/internal/site"
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 var _ = Describe("MysqlClusterSyncer", func() {
 	var (
-		wp          *wordpressv1alpha1.Wordpress
+		wp          *site.Site
 		mysql       *mysqlv1alpha1.MysqlCluster
 		mysqlSyncer *syncer.ObjectSyncer
 	)
 
 	BeforeEach(func() {
-		wp = &wordpressv1alpha1.Wordpress{}
+		wp = site.New(&wordpressv1alpha1.Wordpress{})
 		mysql = &mysqlv1alpha1.MysqlCluster{}
 		mysqlSyncer = sync.NewMysqlClusterSyncer(wp, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
 	})

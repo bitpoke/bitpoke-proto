@@ -27,33 +27,31 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/internal/site"
 )
 
-func memcachedServiceName(wp *wordpressv1alpha1.Wordpress) string {
-	return fmt.Sprintf("%s-memcached", wp.Name)
-}
-
 // NewMemcachedServiceSyncer returns a new syncer.Interface for reconciling Memcached Service
-func NewMemcachedServiceSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewMemcachedServiceSyncer(wp *site.Site, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := wp.ComponentLabels(site.MemcachedService)
+
 	obj := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      memcachedServiceName(wp),
+			Name:      wp.ComponentName(site.MemcachedService),
 			Namespace: wp.Namespace,
 		},
 	}
 
-	return syncer.NewObjectSyncer("MemcachedService", wp, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MemcachedService", wp.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Service)
 
-		siteLabels := getSiteLabels(wp, "memcached")
-		out.ObjectMeta.Labels = labels.Merge(out.ObjectMeta.Labels, siteLabels)
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		out.Spec.ClusterIP = "None"
 
-		if !labels.Equals(siteLabels, out.Spec.Selector) {
+		selectorLabels := wp.ComponentLabels(site.MemcachedStatefulSet)
+		if !labels.Equals(selectorLabels, out.Spec.Selector) {
 			if out.ObjectMeta.CreationTimestamp.IsZero() {
-				out.Spec.Selector = siteLabels
+				out.Spec.Selector = selectorLabels
 			} else {
 				return fmt.Errorf("service selector is immutable")
 			}

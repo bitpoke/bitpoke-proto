@@ -29,18 +29,19 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/site/internal/sync"
+	"github.com/presslabs/dashboard/pkg/internal/site"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 var _ = Describe("MemcachedStatefulSetSyncer", func() {
 	var (
-		wp              *wordpressv1alpha1.Wordpress
+		wp              *site.Site
 		memcached       *appsv1.StatefulSet
 		memcachedSyncer *syncer.ObjectSyncer
 	)
 
 	BeforeEach(func() {
-		wp = &wordpressv1alpha1.Wordpress{}
+		wp = site.New(&wordpressv1alpha1.Wordpress{})
 		memcached = &appsv1.StatefulSet{}
 		memcachedSyncer = sync.NewMemcachedStatefulSetSyncer(wp, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
 	})

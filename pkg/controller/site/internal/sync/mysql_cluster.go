@@ -17,17 +17,16 @@ limitations under the License.
 package sync
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/dashboard/pkg/internal/site"
 	mysqlv1alpha1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 const (
@@ -40,16 +39,23 @@ const (
 )
 
 // NewMysqlClusterSyncer returns a new syncer.Interface for reconciling MysqlCluster
-func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewMysqlClusterSyncer(wp *site.Site, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := wp.ComponentLabels(site.MysqlCluster)
+
 	obj := &mysqlv1alpha1.MysqlCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.Name,
+			Name:      wp.ComponentName(site.MysqlCluster),
 			Namespace: wp.Namespace,
 		},
 	}
 
-	return syncer.NewObjectSyncer("MysqlCluster", wp, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MysqlCluster", wp.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*mysqlv1alpha1.MysqlCluster)
+
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+
+		out.Spec.SecretName = wp.ComponentName(site.MysqlClusterSecret)
+
 		volumeStorage, exists := wp.ObjectMeta.Annotations["mysql.provisioner.presslabs.com/storage"]
 		if !exists {
 			volumeStorage = DefaultMysqlVolumeStorage
@@ -78,8 +84,6 @@ func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, sc
 			return err
 		}
 
-		out.ObjectMeta.Labels = getSiteLabels(wp, "mysql")
-
 		out.Spec.PodSpec.Resources = corev1.ResourceRequirements{
 			Requests: map[corev1.ResourceName]resource.Quantity{
 				corev1.ResourceMemory: resPodMemory,
@@ -95,8 +99,6 @@ func NewMysqlClusterSyncer(wp *wordpressv1alpha1.Wordpress, cl client.Client, sc
 			out.Spec.VolumeSpec.PersistentVolumeClaimSpec.Resources.Requests = make(map[corev1.ResourceName]resource.Quantity)
 		}
 		out.Spec.VolumeSpec.PersistentVolumeClaimSpec.Resources.Requests[corev1.ResourceStorage] = resVolumeStorage
-
-		out.Spec.SecretName = fmt.Sprintf("%s-mysql", wp.Name)
 
 		return nil
 	})
