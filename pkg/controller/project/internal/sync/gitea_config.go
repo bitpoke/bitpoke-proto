@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-ini/ini"
 
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 const (
@@ -28,7 +28,7 @@ const (
 	giteaRequestsStorage = "10Gi"
 )
 
-func createGiteaConfig(project *dashboardv1alpha1.Project, data map[string][]byte) (*ini.File, error) {
+func createGiteaConfig(project *project.Project, data map[string][]byte) (*ini.File, error) {
 	cfg := ini.Empty()
 
 	config := map[string]map[string]string{

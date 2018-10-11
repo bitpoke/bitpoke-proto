@@ -10,27 +10,29 @@ package sync
 import (
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 // NewGiteaIngressSyncer returns a new syncer.Interface for reconciling Gitea Ingress
-func NewGiteaIngressSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewGiteaIngressSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(project.GiteaIngress)
+
 	obj := &extv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      giteaIngressName(proj),
-			Namespace: getNamespaceName(proj),
+			Name:      proj.ComponentName(project.GiteaIngress),
+			Namespace: proj.ComponentName(project.Namespace),
 		},
 	}
 
-	return syncer.NewObjectSyncer("GiteaIngress", proj, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("GiteaIngress", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*extv1beta1.Ingress)
-		out.Labels = giteaPodLabels(proj)
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		out.Spec.Rules = []extv1beta1.IngressRule{
 			{
@@ -41,7 +43,7 @@ func NewGiteaIngressSyncer(proj *dashboardv1alpha1.Project, cl client.Client, sc
 							{
 								Path: "/",
 								Backend: extv1beta1.IngressBackend{
-									ServiceName: giteaServiceName(proj),
+									ServiceName: proj.ComponentName(project.GiteaService),
 									ServicePort: intstr.FromString("http"),
 								},
 							},

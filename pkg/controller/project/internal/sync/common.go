@@ -17,44 +17,11 @@ limitations under the License.
 package sync
 
 import (
-	"fmt"
-
-	"k8s.io/apimachinery/pkg/labels"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
 var log = logf.Log.WithName("project-controller")
 
-// getNamespaceName returns the name of the project's namespace
-func getNamespaceName(project *dashboardv1alpha1.Project) string {
-	return fmt.Sprintf("proj-%s-%s", project.Namespace, project.Name)
-}
-
-// getProjectDomainName returns the DNS domain name for a project
-func getProjectDomainName(project *dashboardv1alpha1.Project) string {
-	return fmt.Sprintf("%s-%s", project.Name, project.Namespace)
-}
-
-// getProjectLabel returns a label that should be applied on objects belonging to a
-// project
-func getProjectLabel(project *dashboardv1alpha1.Project) labels.Set {
-	return labels.Set{
-		"project.dashboard.presslabs.com/project": project.Name,
-	}
-}
-
-// getDeployManagerLabel returns a label that should be applied on objects managed
-// by the project controller
-func getDeployManagerLabel(project *dashboardv1alpha1.Project) labels.Set { // nolint: unparam
-	return labels.Set{
-		"app.kubernetes.io/deploy-manager": "project-controller.dashboard.presslabs.com",
-	}
-}
-
-// getDefaultLabels returns a set of labels that should be applied on objects
-// managed by the project controller
-func getDefaultLabels(project *dashboardv1alpha1.Project) labels.Set {
-	return labels.Merge(getProjectLabel(project), getDeployManagerLabel(project))
+var controllerLabels = map[string]string{
+	"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 }

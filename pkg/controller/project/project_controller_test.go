@@ -95,9 +95,9 @@ var _ = Describe("Project controller", func() {
 		}
 
 		BeforeEach(func() {
-			projectName = fmt.Sprintf("proj-%d", rand.Int31())
-			organizationName = fmt.Sprintf("org-%d", rand.Int31())
-			projectNamespace = fmt.Sprintf("proj-%s-%s", organizationName, projectName)
+			projectName = fmt.Sprintf("awesome-%d", rand.Int31())
+			organizationName = fmt.Sprintf("acme-%d", rand.Int31())
+			projectNamespace = fmt.Sprintf("proj-%s", projectName)
 
 			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: projectName, Namespace: projectNamespace}}
 
@@ -117,20 +117,19 @@ var _ = Describe("Project controller", func() {
 			}
 			componentsLabels = map[string]map[string]string{
 				"default": {
-					"project.dashboard.presslabs.com/project": project.Name,
-					"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
+					"presslabs.com/project":        project.Name,
+					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 				},
 				"prometheus": {
-					"project.dashboard.presslabs.com/project": project.Name,
-					"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
-					"app.kubernetes.io/name":                  "prometheus",
-					"app.kubernetes.io/version":               "v2.3.2",
+					"presslabs.com/project":        project.Name,
+					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/name":       "prometheus",
 				},
 				"gitea": {
-					"project.dashboard.presslabs.com/project": project.Name,
-					"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
-					"app.kubernetes.io/name":                  "gitea",
-					"app.kubernetes.io/version":               "1.5.2",
+					"presslabs.com/project":        project.Name,
+					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/name":       "gitea",
+					"app.kubernetes.io/component":  "web",
 				},
 			}
 			// Create the Organization in which the Project will live
@@ -194,8 +193,8 @@ var _ = Describe("Project controller", func() {
 				return c.Get(context.TODO(), types.NamespacedName{Name: projectNamespace}, ns)
 			}, timeout).Should(Succeed())
 			Expect(ns.Labels).To(Equal(map[string]string{
-				"project.dashboard.presslabs.com/project": project.Name,
-				"app.kubernetes.io/deploy-manager":        "project-controller.dashboard.presslabs.com",
+				"presslabs.com/project":        project.Name,
+				"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 			}))
 		})
 	})

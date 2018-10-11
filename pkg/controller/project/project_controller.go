@@ -35,9 +35,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/presslabs/controller-util/syncer"
-
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 var log = logf.Log.WithName("project-controller")
@@ -113,8 +113,8 @@ type ReconcileProject struct {
 // +kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Project instance
-	project := &dashboardv1alpha1.Project{}
-	err := r.Get(context.TODO(), request.NamespacedName, project)
+	proj := project.New(&dashboardv1alpha1.Project{})
+	err := r.Get(context.TODO(), request.NamespacedName, proj.Unwrap())
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
@@ -126,15 +126,15 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	syncers := []syncer.Interface{
-		sync.NewNamespaceSyncer(project, r.Client, r.scheme),
-		sync.NewLimitRangeSyncer(project, r.Client, r.scheme),
-		sync.NewResourceQuotaSyncer(project, r.Client, r.scheme),
-		sync.NewGiteaSecretSyncer(project, r.Client, r.scheme),
-		sync.NewGiteaPVCSyncer(project, r.Client, r.scheme),
-		sync.NewGiteaDeploymentSyncer(project, r.Client, r.scheme),
-		sync.NewGiteaServiceSyncer(project, r.Client, r.scheme),
-		sync.NewGiteaIngressSyncer(project, r.Client, r.scheme),
-		sync.NewPrometheusSyncer(project, r.Client, r.scheme),
+		sync.NewNamespaceSyncer(proj, r.Client, r.scheme),
+		sync.NewLimitRangeSyncer(proj, r.Client, r.scheme),
+		sync.NewResourceQuotaSyncer(proj, r.Client, r.scheme),
+		sync.NewGiteaSecretSyncer(proj, r.Client, r.scheme),
+		sync.NewGiteaPVCSyncer(proj, r.Client, r.scheme),
+		sync.NewGiteaDeploymentSyncer(proj, r.Client, r.scheme),
+		sync.NewGiteaServiceSyncer(proj, r.Client, r.scheme),
+		sync.NewGiteaIngressSyncer(proj, r.Client, r.scheme),
+		sync.NewPrometheusSyncer(proj, r.Client, r.scheme),
 	}
 
 	return reconcile.Result{}, r.sync(syncers)

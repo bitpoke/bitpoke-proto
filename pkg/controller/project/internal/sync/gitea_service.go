@@ -18,26 +18,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 // NewGiteaServiceSyncer returns a new syncer.Interface for reconciling Gitea Service
-func NewGiteaServiceSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewGiteaServiceSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(project.GiteaService)
+
 	obj := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      giteaServiceName(proj),
-			Namespace: getNamespaceName(proj),
+			Name:      proj.ComponentName(project.GiteaService),
+			Namespace: proj.ComponentName(project.Namespace),
 		},
 	}
 
-	return syncer.NewObjectSyncer("GiteaService", proj, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("GiteaService", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Service)
-		out.Labels = giteaPodLabels(proj)
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
-		if !labels.Equals(giteaLabels(proj), out.Spec.Selector) {
+		selectorLabels := proj.ComponentLabels(project.GiteaDeployment)
+		if !labels.Equals(selectorLabels, out.Spec.Selector) {
 			if out.ObjectMeta.CreationTimestamp.IsZero() {
-				out.Spec.Selector = giteaLabels(proj)
+				out.Spec.Selector = selectorLabels
 			} else {
 				return fmt.Errorf("service selector is immutable")
 			}

@@ -11,12 +11,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 var (
@@ -24,17 +24,20 @@ var (
 )
 
 // NewGiteaPVCSyncer returns a new syncer.Interface for reconciling Gitea PVC
-func NewGiteaPVCSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewGiteaPVCSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(project.GiteaPVC)
+
 	obj := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      giteaPVCName(proj),
-			Namespace: getNamespaceName(proj),
+			Name:      proj.ComponentName(project.GiteaPVC),
+			Namespace: proj.ComponentName(project.Namespace),
 		},
 	}
 
-	return syncer.NewObjectSyncer("GiteaPVC", proj, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("GiteaPVC", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.PersistentVolumeClaim)
-		out.Labels = giteaPodLabels(proj)
+
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		out.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
 			corev1.ReadWriteOnce,

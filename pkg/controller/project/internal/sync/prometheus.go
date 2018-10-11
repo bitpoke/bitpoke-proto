@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 const (
@@ -25,50 +25,26 @@ const (
 	defaultEvaluationInterval = "30s"
 )
 
-// prometheusSelector returns a set of labels that can be used to identify Prometheus
-// related resources
-func prometheusSelector(project *dashboardv1alpha1.Project) labels.Set {
-	prometheusLabels := labels.Set{
-		"app.kubernetes.io/name": prometheusName(project),
-	}
-	return labels.Merge(getDefaultLabels(project), prometheusLabels)
-}
-
-// prometheusLabels returns a set of labels that should be applied on Prometheus
-// related objects that are managed by the project controller
-func prometheusLabels(project *dashboardv1alpha1.Project) labels.Set {
-	prometheusLabels := labels.Set{
-		"app.kubernetes.io/version": prometheusVersion,
-	}
-	return labels.Merge(prometheusSelector(project), prometheusLabels)
-}
-
-// prometheusName returns the name of the Prometheus resource
-func prometheusName(project *dashboardv1alpha1.Project) string {
-	return "prometheus"
-}
-
 // NewPrometheusSyncer returns a new syncer.Interface for reconciling Prometheus
-func NewPrometheusSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewPrometheusSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(project.Prometheus)
+
 	obj := &monitoringv1.Prometheus{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      prometheusName(proj),
-			Namespace: getNamespaceName(proj),
+			Name:      proj.ComponentName(project.Prometheus),
+			Namespace: proj.ComponentName(project.Namespace),
 		},
 	}
 
-	return syncer.NewObjectSyncer("Prometheus", proj, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Prometheus", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.Prometheus)
-		out.Labels = prometheusLabels(proj)
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		out.Spec = monitoringv1.PrometheusSpec{
 			ScrapeInterval:     defaultScrapeInterval,
 			EvaluationInterval: defaultEvaluationInterval,
-			ServiceMonitorSelector: &metav1.LabelSelector{
-				MatchLabels: getProjectLabel(proj),
-			},
-			Version:   prometheusVersion,
-			BaseImage: prometheusBaseImage,
+			Version:            prometheusVersion,
+			BaseImage:          prometheusBaseImage,
 		}
 
 		return nil

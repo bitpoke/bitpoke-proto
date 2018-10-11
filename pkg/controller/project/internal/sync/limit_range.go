@@ -11,26 +11,29 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 // NewLimitRangeSyncer returns a new syncer.Interface for reconciling Gitea Secret
-func NewLimitRangeSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewLimitRangeSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(project.LimitRange)
+
 	obj := &corev1.LimitRange{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "presslabs-dashboard",
-			Namespace: getNamespaceName(proj),
+			Name:      proj.ComponentName(project.LimitRange),
+			Namespace: proj.ComponentName(project.Namespace),
 		},
 	}
 
-	return syncer.NewObjectSyncer("LimitRange", proj, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("LimitRange", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.LimitRange)
-		out.Labels = getDefaultLabels(proj)
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		out.Spec.Limits = []corev1.LimitRangeItem{
 			{

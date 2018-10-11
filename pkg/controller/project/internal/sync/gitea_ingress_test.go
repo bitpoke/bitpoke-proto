@@ -27,27 +27,28 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 var _ = Describe("The GiteaIngressSyncer transform func T", func() {
-	proj := dashboardv1alpha1.Project{}
 	var giteaIngress *extv1beta1.Ingress
+	var proj *project.Project
 
 	BeforeEach(func() {
-		proj = dashboardv1alpha1.Project{
+		proj = project.New(&dashboardv1alpha1.Project{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("proj-%d", rand.Int31()),
 				Namespace: fmt.Sprintf("org-%d", rand.Int31()),
 			},
-		}
+		})
 		giteaIngress = &extv1beta1.Ingress{}
 
-		giteaIngressSyncer := sync.NewGiteaIngressSyncer(&proj, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
+		giteaIngressSyncer := sync.NewGiteaIngressSyncer(proj, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
 		err := giteaIngressSyncer.SyncFn(giteaIngress)
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	It("uses the right domain", func() {
-		Expect(giteaIngress.Spec.Rules[0].Host).To(Equal(fmt.Sprintf("%s-%s.git.presslabs.net", proj.Name, proj.Namespace)))
+		Expect(giteaIngress.Spec.Rules[0].Host).To(Equal(fmt.Sprintf("%s.git.presslabs.net", proj.Name)))
 	})
 })

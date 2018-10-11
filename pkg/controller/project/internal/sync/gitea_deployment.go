@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,8 +21,7 @@ import (
 
 	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
-
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 var (
@@ -30,25 +30,25 @@ var (
 )
 
 // NewGiteaDeploymentSyncer returns a new syncer.Interface for reconciling Gitea Deployment
-func NewGiteaDeploymentSyncer(proj *dashboardv1alpha1.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewGiteaDeploymentSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(project.GiteaDeployment)
+
 	obj := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      giteaDeploymentName(proj),
-			Namespace: getNamespaceName(proj),
+			Name:      proj.ComponentName(project.GiteaDeployment),
+			Namespace: proj.ComponentName(project.Namespace),
 		},
 	}
 
-	return syncer.NewObjectSyncer("GiteaDeployment", proj, obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("GiteaDeployment", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*appsv1.Deployment)
 
-		out.Labels = giteaPodLabels(proj)
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
-		out.Spec.Selector = &metav1.LabelSelector{
-			MatchLabels: giteaLabels(proj),
-		}
+		out.Spec.Selector = &metav1.LabelSelector{MatchLabels: objLabels}
 
 		out.Spec.Template.ObjectMeta = metav1.ObjectMeta{
-			Labels: giteaPodLabels(proj),
+			Labels: labels.Merge(objLabels, giteaVersionLabels),
 		}
 
 		spec := corev1.PodSpec{
@@ -57,7 +57,7 @@ func NewGiteaDeploymentSyncer(proj *dashboardv1alpha1.Project, cl client.Client,
 					Name: "config-secret",
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
-							SecretName: giteaSecretName(proj),
+							SecretName: proj.ComponentName(project.GiteaSecret),
 						},
 					},
 				},
@@ -71,7 +71,7 @@ func NewGiteaDeploymentSyncer(proj *dashboardv1alpha1.Project, cl client.Client,
 					Name: "data",
 					VolumeSource: corev1.VolumeSource{
 						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: giteaPVCName(proj),
+							ClaimName: proj.ComponentName(project.GiteaPVC),
 						},
 					},
 				},
