@@ -42,7 +42,7 @@ import (
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
-const timeout = time.Second * 2
+const timeout = time.Second * 1
 
 var _ = Describe("Project controller", func() {
 	var (
@@ -74,13 +74,14 @@ var _ = Describe("Project controller", func() {
 
 	When("creating a new Project object", func() {
 		var (
-			expectedRequest  reconcile.Request
-			organization     *corev1.Namespace
-			project          *dashboardv1alpha1.Project
-			projectName      string
-			projectNamespace string
-			organizationName string
-			componentsLabels map[string]map[string]string
+			expectedRequest      reconcile.Request
+			organization         *corev1.Namespace
+			project              *dashboardv1alpha1.Project
+			projectName          string
+			projectNamespace     string
+			organizationRealName string
+			organizationName     string
+			componentsLabels     map[string]map[string]string
 		)
 
 		entries := []TableEntry{
@@ -104,6 +105,10 @@ var _ = Describe("Project controller", func() {
 			organization = &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: organizationName,
+					Labels: map[string]string{
+						"presslabs.com/organization": organizationRealName,
+						"presslabs.com/kind":         "organization",
+					},
 					Annotations: map[string]string{
 						"org.dashboard.presslabs.net/display-name": organizationName,
 					},
@@ -113,23 +118,31 @@ var _ = Describe("Project controller", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      projectName,
 					Namespace: organizationName,
+					Labels: map[string]string{
+						"presslabs.com/organization": organizationRealName,
+						"presslabs.com/project":      projectName,
+					},
 				},
 			}
 			componentsLabels = map[string]map[string]string{
 				"default": {
-					"presslabs.com/project":        project.Name,
-					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"presslabs.com/project":            project.Name,
+					"presslabs.com/organization":       organizationRealName,
+					"app.kubernetes.io/deploy-manager": "project-controller.dashboard.presslabs.com",
 				},
 				"prometheus": {
-					"presslabs.com/project":        project.Name,
-					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
-					"app.kubernetes.io/name":       "prometheus",
+					"presslabs.com/project":            project.Name,
+					"presslabs.com/organization":       organizationRealName,
+					"app.kubernetes.io/deploy-manager": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/name":           "prometheus",
+					"app.kubernetes.io/version":        "v2.3.2",
 				},
 				"gitea": {
-					"presslabs.com/project":        project.Name,
-					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
-					"app.kubernetes.io/name":       "gitea",
-					"app.kubernetes.io/component":  "web",
+					"presslabs.com/project":            project.Name,
+					"presslabs.com/organization":       organizationRealName,
+					"app.kubernetes.io/deploy-manager": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/name":           "gitea",
+					"app.kubernetes.io/version":        "1.5.2",
 				},
 			}
 			// Create the Organization in which the Project will live
@@ -193,8 +206,9 @@ var _ = Describe("Project controller", func() {
 				return c.Get(context.TODO(), types.NamespacedName{Name: projectNamespace}, ns)
 			}, timeout).Should(Succeed())
 			Expect(ns.Labels).To(Equal(map[string]string{
-				"presslabs.com/project":        project.Name,
-				"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+				"presslabs.com/project":            project.Name,
+				"presslabs.com/organization":       organizationRealName,
+				"app.kubernetes.io/deploy-manager": "project-controller.dashboard.presslabs.com",
 			}))
 		})
 	})
