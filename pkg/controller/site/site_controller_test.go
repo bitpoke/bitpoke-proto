@@ -40,7 +40,7 @@ import (
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const timeout = time.Second * 2
+const timeout = time.Second * 1
 
 var _ = Describe("Site controller", func() {
 	var (
