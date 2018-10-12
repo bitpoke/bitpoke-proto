@@ -24,32 +24,34 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/internal/site"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
-// NewMemcachedServiceMonitorSyncer returns a new syncer.Interface for reconciling Memcached ServiceMonitor
-func NewMemcachedServiceMonitorSyncer(wp *site.Site, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := wp.ComponentLabels(site.MemcachedServiceMonitor)
+// NewWordpressServiceMonitorSyncer returns a new syncer.Interface for reconciling Wordpress ServiceMonitor
+func NewWordpressServiceMonitorSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(project.WordpressServiceMonitor)
 
 	obj := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.ComponentName(site.MemcachedServiceMonitor),
-			Namespace: wp.Namespace,
+			Name:      proj.ComponentName(project.WordpressServiceMonitor),
+			Namespace: proj.ComponentName(project.Namespace),
 		},
 	}
 
-	return syncer.NewObjectSyncer("MemcachedServiceMonitor", wp.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("WordpressServiceMonitor", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.ServiceMonitor)
 
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		out.Spec.Endpoints = []monitoringv1.Endpoint{
 			{
-				Port: "prometheus",
+				Port: "http",
 			},
 		}
 
-		out.Spec.Selector = metav1.LabelSelector{MatchLabels: objLabels}
+		out.Spec.Selector = metav1.LabelSelector{MatchLabels: map[string]string{
+			"app.kubernetes.io/name": "wordpress",
+		}}
 
 		return nil
 	})

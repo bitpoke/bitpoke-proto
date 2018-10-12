@@ -108,7 +108,6 @@ type ReconcileSite struct {
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mysql.presslabs.org,resources=mysqlclusters,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Site instance
 	wp := site.New(&wordpressv1alpha1.Wordpress{})
@@ -127,12 +126,9 @@ func (r *ReconcileSite) Reconcile(request reconcile.Request) (reconcile.Result, 
 	syncers := []syncer.Interface{
 		sync.NewMemcachedStatefulSetSyncer(wp, r.Client, r.scheme),
 		sync.NewMemcachedServiceSyncer(wp, r.Client, r.scheme),
-		sync.NewMemcachedServiceMonitorSyncer(wp, r.Client, r.scheme),
 		sync.NewWordpressSyncer(wp, r.Client, r.scheme),
-		sync.NewWordpressServiceMonitorSyncer(wp, r.Client, r.scheme),
 		sync.NewMysqlClusterSyncer(wp, r.Client, r.scheme),
 		sync.NewMysqlClusterSecretSyncer(wp, r.Client, r.scheme),
-		sync.NewMysqlServiceMonitorSyncer(wp, r.Client, r.scheme),
 	}
 
 	return reconcile.Result{}, r.sync(syncers)

@@ -66,6 +66,18 @@ rules:
   - patch
   - delete
 - apiGroups:
+  - rbac
+  resources:
+  - rolebindings
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
   - extensions
   resources:
   - ingresses
@@ -78,9 +90,22 @@ rules:
   - patch
   - delete
 - apiGroups:
+  - dashboard.presslabs.com
+  resources:
+  - projects
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
   - monitoring.coreos.com
   resources:
   - prometheuses
+  - servicemonitors
   verbs:
   - get
   - list
@@ -131,18 +156,6 @@ rules:
   - mysql.presslabs.org
   resources:
   - mysqlclusters
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
   verbs:
   - get
   - list

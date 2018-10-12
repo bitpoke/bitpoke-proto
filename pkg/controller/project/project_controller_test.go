@@ -94,7 +94,9 @@ var _ = Describe("Project controller", func() {
 		entries := []TableEntry{
 			Entry("reconciles limit range", "default", "presslabs-dashboard", &corev1.LimitRange{}),
 			Entry("reconciles resource quota", "default", "presslabs-dashboard", &corev1.ResourceQuota{}),
-			Entry("reconciles prometheus", "prometheus", "prometheus%.0s", &monitoringv1.Prometheus{}),
+			Entry("reconciles prometheus service account", "prometheus", "prometheus", &corev1.ServiceAccount{}),
+			Entry("reconciles prometheus role binding", "prometheus", "prometheus%.0s", &rbacv1.RoleBinding{}),
+			Entry("reconciles prometheus", "prometheus-instance", "prometheus%.0s", &monitoringv1.Prometheus{}),
 			Entry("reconciles gitea deployment", "gitea-deployment", "gitea%.0s", &appsv1.Deployment{}),
 			Entry("reconciles gitea service", "gitea", "gitea%.0s", &corev1.Service{}),
 			Entry("reconciles gitea ingress", "gitea", "gitea%.0s", &extv1beta1.Ingress{}),
@@ -102,6 +104,9 @@ var _ = Describe("Project controller", func() {
 			Entry("reconciles gitea secret", "gitea", "gitea-conf%.0s", &corev1.Secret{}),
 			Entry("reconciles member role binding", "member", "member", &rbacv1.RoleBinding{}),
 			Entry("reconciles owner role binding", "owner", "owner", &rbacv1.RoleBinding{}),
+			Entry("reconciles memcached service monitor", "prometheus", "memcached", &monitoringv1.ServiceMonitor{}),
+			Entry("reconciles mysql service monitor", "prometheus", "mysql", &monitoringv1.ServiceMonitor{}),
+			Entry("reconciles wordpress service monitor", "prometheus", "wordpress", &monitoringv1.ServiceMonitor{}),
 		}
 
 		BeforeEach(func() {
@@ -157,12 +162,18 @@ var _ = Describe("Project controller", func() {
 					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 				},
-				"prometheus": {
+				"prometheus-instance": {
 					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "prometheus",
 					"app.kubernetes.io/version":    "v2.3.2",
+				},
+				"prometheus": {
+					"presslabs.com/project":        projectName,
+					"presslabs.com/organization":   organizationName,
+					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/name":       "prometheus",
 				},
 				"gitea": {
 					"presslabs.com/project":        projectName,

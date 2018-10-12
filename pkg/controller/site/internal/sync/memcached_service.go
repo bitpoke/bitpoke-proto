@@ -57,11 +57,13 @@ func NewMemcachedServiceSyncer(wp *site.Site, cl client.Client, scheme *runtime.
 			}
 		}
 
-		if len(out.Spec.Ports) != 1 {
-			out.Spec.Ports = make([]corev1.ServicePort, 1)
+		if len(out.Spec.Ports) != 2 {
+			out.Spec.Ports = make([]corev1.ServicePort, 2)
 		}
 		out.Spec.Ports[0].Name = "memcached"
 		out.Spec.Ports[0].Port = memcachedPort
+		out.Spec.Ports[1].Name = "prometheus"
+		out.Spec.Ports[1].Port = memcachedExporterPort
 
 		return nil
 	})

@@ -83,6 +83,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		&corev1.PersistentVolumeClaim{},
 		&appsv1.Deployment{},
 		&extv1beta1.Ingress{},
+		&rbacv1.RoleBinding{},
+		&monitoringv1.ServiceMonitor{},
 		&monitoringv1.Prometheus{},
 		&rbacv1.RoleBinding{},
 	}
@@ -113,8 +115,10 @@ type ReconcileProject struct {
 // and what is in the Project.Spec
 // +kubebuilder:rbac:groups=,resources=services;persistentvolumeclaims;resourcequotas;namespaces;limitranges;events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=rbac,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=dashboard.presslabs.com,resources=projects,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses;servicemonitors,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Project instance
 	proj := project.New(&corev1.Namespace{})
@@ -137,9 +141,14 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 		sync.NewGiteaDeploymentSyncer(proj, r.Client, r.scheme),
 		sync.NewGiteaServiceSyncer(proj, r.Client, r.scheme),
 		sync.NewGiteaIngressSyncer(proj, r.Client, r.scheme),
+		sync.NewPrometheusServiceAccountSyncer(proj, r.Client, r.scheme),
+		sync.NewPrometheusRoleBindingSyncer(proj, r.Client, r.scheme),
 		sync.NewPrometheusSyncer(proj, r.Client, r.scheme),
 		sync.NewMemberRoleBindingSyncer(proj, r.Client, r.scheme),
 		sync.NewOwnerRoleBindingSyncer(proj, r.Client, r.scheme),
+		sync.NewMemcachedServiceMonitorSyncer(proj, r.Client, r.scheme),
+		sync.NewMysqlServiceMonitorSyncer(proj, r.Client, r.scheme),
+		sync.NewWordpressServiceMonitorSyncer(proj, r.Client, r.scheme),
 	}
 
 	return reconcile.Result{}, r.sync(syncers)

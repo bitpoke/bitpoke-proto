@@ -24,32 +24,40 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/internal/site"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
-// NewWordpressServiceMonitorSyncer returns a new sync.Interface for reconciling Wordpress ServiceMonitor
-func NewWordpressServiceMonitorSyncer(wp *site.Site, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := wp.ComponentLabels(site.WordpressServiceMonitor)
+// NewMemcachedServiceMonitorSyncer returns a new syncer.Interface for reconciling Memcached ServiceMonitor
+func NewMemcachedServiceMonitorSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(project.MemcachedServiceMonitor)
 
 	obj := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.ComponentName(site.WordpressServiceMonitor),
-			Namespace: wp.Namespace,
+			Name:      proj.ComponentName(project.MemcachedServiceMonitor),
+			Namespace: proj.ComponentName(project.Namespace),
 		},
 	}
 
-	return syncer.NewObjectSyncer("WordpressServiceMonitor", wp.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MemcachedServiceMonitor", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.ServiceMonitor)
 
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		out.Spec.Endpoints = []monitoringv1.Endpoint{
 			{
-				Port: "http",
+				Port: "prometheus",
+				// MetricRelabelConfigs: []*monitoringv1.RelabelConfig{
+				// 	{
+				// 		SourceLabels: []string{"__meta_kubernetes_service_label_app_kubernetes_io_instance"},
+				// 		TargetLabel:  "site",
+				// 	},
+				// },
 			},
 		}
 
-		out.Spec.Selector = metav1.LabelSelector{MatchLabels: objLabels}
+		out.Spec.Selector = metav1.LabelSelector{MatchLabels: map[string]string{
+			"app.kubernetes.io/name": "memcached",
+		}}
 
 		return nil
 	})

@@ -36,20 +36,14 @@ type component struct {
 }
 
 var (
-	// WordpressServiceMonitor component
-	WordpressServiceMonitor = component{name: "web", app: "wordpress", objNameFmt: "%s-wordpress"}
 	// MysqlCluster component
 	MysqlCluster = component{name: "database", app: "mysql", objNameFmt: "%s"}
 	// MysqlClusterSecret component
 	MysqlClusterSecret = component{name: "database", app: "mysql", objNameFmt: "%s-mysql"}
-	// MysqlServiceMonitor component
-	MysqlServiceMonitor = component{name: "database", app: "mysql", objNameFmt: "%s-mysql"}
 	// MemcachedService component
 	MemcachedService = component{name: "cache", app: "memcached", objNameFmt: "%s-memcached"}
 	// MemcachedStatefulSet component
 	MemcachedStatefulSet = component{name: "cache", app: "memcached", objNameFmt: "%s-memcached"}
-	// MemcachedServiceMonitor component
-	MemcachedServiceMonitor = component{name: "cache", app: "memcached", objNameFmt: "%s-memcached"}
 )
 
 // New wraps a wordpressv1alpha1.Wordpress into a Site object

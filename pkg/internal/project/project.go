@@ -48,6 +48,10 @@ var (
 	LimitRange = component{objName: "presslabs-dashboard"}
 	// ResourceQuota component
 	ResourceQuota = component{objName: "presslabs-dashboard"}
+	// PrometheusServiceAccount component
+	PrometheusServiceAccount = component{app: "prometheus", objName: "prometheus"}
+	// PrometheusRoleBinding for ServiceAccount component
+	PrometheusRoleBinding = component{app: "prometheus", objName: "prometheus"}
 	// Prometheus component
 	Prometheus = component{app: "prometheus", objName: "prometheus"}
 	// GiteaDeployment component
@@ -72,6 +76,12 @@ var (
 		objName:         "member",
 		objNamespaceFmt: "%s",
 	}
+	// WordpressServiceMonitor component
+	WordpressServiceMonitor = component{app: "prometheus", objName: "wordpress"}
+	// MysqlServiceMonitor component
+	MysqlServiceMonitor = component{app: "prometheus", objName: "mysql"}
+	// MemcachedServiceMonitor component
+	MemcachedServiceMonitor = component{app: "prometheus", objName: "memcached"}
 )
 
 // NamespaceName returns the name of the project's namespace

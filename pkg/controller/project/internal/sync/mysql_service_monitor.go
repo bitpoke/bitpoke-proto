@@ -24,21 +24,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/internal/site"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 // NewMysqlServiceMonitorSyncer returns a new syncer.Interface for reconciling Mysql ServiceMonitor
-func NewMysqlServiceMonitorSyncer(wp *site.Site, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := wp.ComponentLabels(site.MysqlServiceMonitor)
+func NewMysqlServiceMonitorSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(project.MysqlServiceMonitor)
 
 	obj := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.ComponentName(site.MysqlServiceMonitor),
-			Namespace: wp.Namespace,
+			Name:      proj.ComponentName(project.MysqlServiceMonitor),
+			Namespace: proj.ComponentName(project.Namespace),
 		},
 	}
 
-	return syncer.NewObjectSyncer("MysqlServiceMonitor", wp.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MysqlServiceMonitor", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.ServiceMonitor)
 
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
@@ -49,7 +49,9 @@ func NewMysqlServiceMonitorSyncer(wp *site.Site, cl client.Client, scheme *runti
 			},
 		}
 
-		out.Spec.Selector = metav1.LabelSelector{MatchLabels: objLabels}
+		out.Spec.Selector = metav1.LabelSelector{MatchLabels: map[string]string{
+			"app": "mysql-operator",
+		}}
 
 		return nil
 	})

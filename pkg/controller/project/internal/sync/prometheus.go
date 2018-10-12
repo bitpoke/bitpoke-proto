@@ -42,10 +42,13 @@ func NewPrometheusSyncer(proj *project.Project, cl client.Client, scheme *runtim
 		out.Labels["app.kubernetes.io/version"] = prometheusVersion
 
 		out.Spec = monitoringv1.PrometheusSpec{
-			ScrapeInterval:     defaultScrapeInterval,
-			EvaluationInterval: defaultEvaluationInterval,
-			Version:            prometheusVersion,
-			BaseImage:          prometheusBaseImage,
+			ServiceMonitorSelector:          &metav1.LabelSelector{},
+			ServiceAccountName:              proj.ComponentName(project.PrometheusServiceAccount),
+			ScrapeInterval:                  defaultScrapeInterval,
+			EvaluationInterval:              defaultEvaluationInterval,
+			Version:                         prometheusVersion,
+			BaseImage:                       prometheusBaseImage,
+			ServiceMonitorNamespaceSelector: nil,
 		}
 
 		return nil

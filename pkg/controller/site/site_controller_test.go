@@ -26,7 +26,6 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -89,11 +88,8 @@ var _ = Describe("Site controller", func() {
 		entries := []TableEntry{
 			Entry("reconciles memcached statefulset", "%s-memcached", &appsv1.StatefulSet{}),
 			Entry("reconciles memcached service", "%s-memcached", &corev1.Service{}),
-			Entry("reconciles memcached service monitor", "%s-memcached", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles mysql cluster", "%s", &mysqlv1alpha1.MysqlCluster{}),
-			Entry("reconciles mysql service monitor", "%s-mysql", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles mysql cluster secret", "%s-mysql", &corev1.Secret{}),
-			Entry("reconciles wordpress service monitor", "%s-wordpress", &monitoringv1.ServiceMonitor{}),
 		}
 
 		BeforeEach(func() {
