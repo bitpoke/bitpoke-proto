@@ -217,6 +217,7 @@ var _ = Describe("Project controller", func() {
 				"presslabs.com/project":        project.Name,
 				"presslabs.com/organization":   organizationRealName,
 				"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+				"presslabs.com/kind":           "project",
 			}))
 		})
 	})

@@ -21,6 +21,7 @@ import (
 // NewNamespaceSyncer returns a new syncer.Interface for reconciling Namespace
 func NewNamespaceSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := proj.ComponentLabels(project.Namespace)
+	objLabels["presslabs.com/kind"] = "project"
 
 	obj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{

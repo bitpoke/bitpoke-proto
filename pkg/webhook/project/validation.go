@@ -26,6 +26,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
@@ -99,11 +100,12 @@ func (a *projectValidation) validateProjectFn(ctx context.Context, o *project.Pr
 		namespaceAnnotations[key] = o.Project.Annotations[key]
 	}
 
+	kindLabel := labels.Set{"presslabs.com/kind": "project"}
 	// Try to create the Project's Namespace
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        o.ComponentName(project.Namespace),
-			Labels:      o.ComponentLabels(project.Namespace),
+			Labels:      labels.Merge(o.ComponentLabels(project.Namespace), kindLabel),
 			Annotations: namespaceAnnotations,
 		},
 	}
