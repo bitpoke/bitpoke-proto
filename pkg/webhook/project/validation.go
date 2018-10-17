@@ -35,7 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/builder"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/types"
 
-	projectinternal "github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 var log = logf.Log.WithName("project-controller")
@@ -73,13 +73,15 @@ func NewStatusError(status int32, err error) *StatusError {
 }
 
 func (a *projectValidation) Handle(ctx context.Context, req types.Request) types.Response {
-	project := &dashboardv1alpha1.Project{}
+	p := &dashboardv1alpha1.Project{}
 
-	if err := a.decoder.Decode(req, project); err != nil {
+	if err := a.decoder.Decode(req, p); err != nil {
 		return admission.ErrorResponse(http.StatusBadRequest, err)
 	}
 
-	if err := a.validateProjectFn(ctx, project); err != nil {
+	o := project.New(p)
+
+	if err := a.validateProjectFn(ctx, o); err != nil {
 		return admission.ErrorResponse(err.StatusCode(), err)
 	}
 
@@ -87,33 +89,27 @@ func (a *projectValidation) Handle(ctx context.Context, req types.Request) types
 	return admission.ValidationResponse(true, "the project is valid")
 }
 
-func (a *projectValidation) validateProjectFn(ctx context.Context, project *dashboardv1alpha1.Project) *StatusError {
-	if err := projectinternal.ValidateMetadata(project); err != nil {
+func (a *projectValidation) validateProjectFn(ctx context.Context, o *project.Project) *StatusError {
+	if err := o.ValidateMetadata(); err != nil {
 		return NewStatusError(http.StatusBadRequest, err)
 	}
 
-	namespaceLabels := map[string]string{
-		"presslabs.com/kind": "project",
-	}
-	for _, key := range projectinternal.RequiredLabels() {
-		namespaceLabels[key] = project.Labels[key]
-	}
 	namespaceAnnotations := map[string]string{}
-	for _, key := range projectinternal.RequiredAnnotations() {
-		namespaceAnnotations[key] = project.Annotations[key]
+	for _, key := range project.RequiredAnnotations {
+		namespaceAnnotations[key] = o.Project.Annotations[key]
 	}
 
 	// Try to create the Project's Namespace
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        projectinternal.GetNamespaceName(project),
-			Labels:      namespaceLabels,
+			Name:        o.ComponentName(project.Namespace),
+			Labels:      o.ComponentLabels(project.Namespace),
 			Annotations: namespaceAnnotations,
 		},
 	}
 	if err := a.client.Create(ctx, namespace); err != nil {
 		if apierrors.IsAlreadyExists(err) {
-			return NewStatusError(http.StatusBadRequest, fmt.Errorf("project \"%s\" is not available", project.Name))
+			return NewStatusError(http.StatusBadRequest, fmt.Errorf("project \"%s\" is not available", o.Project.Name))
 		}
 
 		log.Error(err, "unable to create project namespace")

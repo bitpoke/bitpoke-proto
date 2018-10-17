@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/labels"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
@@ -19,6 +20,13 @@ import (
 type Site struct {
 	*wordpressv1alpha1.Wordpress
 }
+
+var (
+	// RequiredLabels is a list of required Site labels
+	RequiredLabels = []string{"presslabs.com/organization", "presslabs.com/project", "presslabs.com/site"}
+	// RequiredAnnotations is a list of required Site annotations
+	RequiredAnnotations = []string{"presslabs.com/created-by"}
+)
 
 type component struct {
 	name       string // eg. web, database, cache
@@ -56,10 +64,22 @@ func (o *Site) Unwrap() *wordpressv1alpha1.Wordpress {
 
 // Labels returns default label set for wordpressv1alpha1.Wordpress
 func (o *Site) Labels() labels.Set {
-	return labels.Set{
+	labels := labels.Set{
 		"app.kubernetes.io/part-of":  "wordpress",
 		"app.kubernetes.io/instance": o.ObjectMeta.Name,
 	}
+
+	if o.ObjectMeta.Labels != nil {
+		if org, ok := o.ObjectMeta.Labels["presslabs.com/organization"]; ok {
+			labels["presslabs.com/organization"] = org
+		}
+
+		if proj, ok := o.ObjectMeta.Labels["presslabs.com/project"]; ok {
+			labels["presslabs.com/project"] = proj
+		}
+	}
+
+	return labels
 }
 
 // ComponentLabels returns labels for a label set for a wordpressv1alpha1.Wordpress component
@@ -80,4 +100,22 @@ func (o *Site) ComponentName(component component) string {
 		return component.objName
 	}
 	return fmt.Sprintf(component.objNameFmt, o.ObjectMeta.Name)
+}
+
+// ValidateMetadata validates the metadata of a Site
+func (o *Site) ValidateMetadata() error {
+	errorList := []error{}
+	// Check for some required Project Labels and Annotations
+	for _, label := range RequiredLabels {
+		if value, exists := o.Wordpress.Labels[label]; !exists || value == "" {
+			errorList = append(errorList, fmt.Errorf("required label \"%s\" is missing", label))
+		}
+	}
+	for _, annotation := range RequiredAnnotations {
+		if value, exists := o.Wordpress.Annotations[annotation]; !exists || value == "" {
+			errorList = append(errorList, fmt.Errorf("required annotation \"%s\" is missing", annotation))
+		}
+	}
+
+	return utilerrors.Flatten(utilerrors.NewAggregate(errorList))
 }

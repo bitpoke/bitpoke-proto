@@ -10,16 +10,8 @@ package sync
 import (
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
 	"github.com/presslabs/dashboard/pkg/internal/project"
-)
-
-var (
-	giteaVersionLabels = labels.Set{
-		"app.kubernetes.io/version": giteaReleaseVersion,
-	}
 )
 
 func giteaDomain(o *project.Project) string {

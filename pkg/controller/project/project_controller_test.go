@@ -88,7 +88,7 @@ var _ = Describe("Project controller", func() {
 			Entry("reconciles limit range", "default", "presslabs-dashboard", &corev1.LimitRange{}),
 			Entry("reconciles resource quota", "default", "presslabs-dashboard", &corev1.ResourceQuota{}),
 			Entry("reconciles prometheus", "prometheus", "prometheus%.0s", &monitoringv1.Prometheus{}),
-			Entry("reconciles gitea deployment", "gitea", "gitea%.0s", &appsv1.Deployment{}),
+			Entry("reconciles gitea deployment", "gitea-deployment", "gitea%.0s", &appsv1.Deployment{}),
 			Entry("reconciles gitea service", "gitea", "gitea%.0s", &corev1.Service{}),
 			Entry("reconciles gitea ingress", "gitea", "gitea%.0s", &extv1beta1.Ingress{}),
 			Entry("reconciles gitea pvc", "gitea", "gitea%.0s", &corev1.PersistentVolumeClaim{}),
@@ -126,23 +126,31 @@ var _ = Describe("Project controller", func() {
 			}
 			componentsLabels = map[string]map[string]string{
 				"default": {
-					"presslabs.com/project":            project.Name,
-					"presslabs.com/organization":       organizationRealName,
-					"app.kubernetes.io/deploy-manager": "project-controller.dashboard.presslabs.com",
+					"presslabs.com/project":        project.Name,
+					"presslabs.com/organization":   organizationRealName,
+					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 				},
 				"prometheus": {
-					"presslabs.com/project":            project.Name,
-					"presslabs.com/organization":       organizationRealName,
-					"app.kubernetes.io/deploy-manager": "project-controller.dashboard.presslabs.com",
-					"app.kubernetes.io/name":           "prometheus",
-					"app.kubernetes.io/version":        "v2.3.2",
+					"presslabs.com/project":        project.Name,
+					"presslabs.com/organization":   organizationRealName,
+					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/name":       "prometheus",
+					"app.kubernetes.io/version":    "v2.3.2",
 				},
 				"gitea": {
-					"presslabs.com/project":            project.Name,
-					"presslabs.com/organization":       organizationRealName,
-					"app.kubernetes.io/deploy-manager": "project-controller.dashboard.presslabs.com",
-					"app.kubernetes.io/name":           "gitea",
-					"app.kubernetes.io/version":        "1.5.2",
+					"presslabs.com/project":        project.Name,
+					"presslabs.com/organization":   organizationRealName,
+					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/name":       "gitea",
+					"app.kubernetes.io/component":  "web",
+				},
+				"gitea-deployment": {
+					"presslabs.com/project":        project.Name,
+					"presslabs.com/organization":   organizationRealName,
+					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/name":       "gitea",
+					"app.kubernetes.io/component":  "web",
+					"app.kubernetes.io/version":    "1.5.2",
 				},
 			}
 			// Create the Organization in which the Project will live
@@ -206,9 +214,9 @@ var _ = Describe("Project controller", func() {
 				return c.Get(context.TODO(), types.NamespacedName{Name: projectNamespace}, ns)
 			}, timeout).Should(Succeed())
 			Expect(ns.Labels).To(Equal(map[string]string{
-				"presslabs.com/project":            project.Name,
-				"presslabs.com/organization":       organizationRealName,
-				"app.kubernetes.io/deploy-manager": "project-controller.dashboard.presslabs.com",
+				"presslabs.com/project":        project.Name,
+				"presslabs.com/organization":   organizationRealName,
+				"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 			}))
 		})
 	})

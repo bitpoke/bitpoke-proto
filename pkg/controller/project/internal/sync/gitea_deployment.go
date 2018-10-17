@@ -48,7 +48,7 @@ func NewGiteaDeploymentSyncer(proj *project.Project, cl client.Client, scheme *r
 		out.Spec.Selector = &metav1.LabelSelector{MatchLabels: objLabels}
 
 		out.Spec.Template.ObjectMeta = metav1.ObjectMeta{
-			Labels: labels.Merge(objLabels, giteaVersionLabels),
+			Labels: objLabels,
 		}
 
 		spec := corev1.PodSpec{

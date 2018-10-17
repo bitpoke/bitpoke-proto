@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/labels"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
@@ -20,9 +21,17 @@ type Project struct {
 	*dashboardv1alpha1.Project
 }
 
+var (
+	// RequiredLabels is a list of required Project labels
+	RequiredLabels = []string{"presslabs.com/organization", "presslabs.com/project"}
+	// RequiredAnnotations is a list of required Project annotations
+	RequiredAnnotations = []string{"presslabs.com/created-by"}
+)
+
 type component struct {
 	name       string // eg. web, database, cache
 	app        string // eg. mysql, memcached
+	Version    string
 	objNameFmt string
 	objName    string
 }
@@ -35,9 +44,9 @@ var (
 	// ResourceQuota component
 	ResourceQuota = component{objName: "presslabs-dashboard"}
 	// Prometheus component
-	Prometheus = component{app: "prometheus", objName: "prometheus"}
+	Prometheus = component{app: "prometheus", objName: "prometheus", Version: "v2.3.2"}
 	// GiteaDeployment component
-	GiteaDeployment = component{name: "web", app: "gitea", objName: "gitea"}
+	GiteaDeployment = component{name: "web", app: "gitea", objName: "gitea", Version: "1.5.2"}
 	// GiteaService component
 	GiteaService = component{name: "web", app: "gitea", objName: "gitea"}
 	// GiteaIngress component
@@ -82,6 +91,9 @@ func (o *Project) ComponentLabels(component component) labels.Set {
 	if len(component.name) > 0 {
 		labels["app.kubernetes.io/component"] = component.name
 	}
+	if len(component.Version) > 0 {
+		labels["app.kubernetes.io/version"] = component.Version
+	}
 	return labels
 }
 
@@ -96,4 +108,22 @@ func (o *Project) ComponentName(component component) string {
 // Domain returns the project's subdomain label
 func (o *Project) Domain() string {
 	return o.Name
+}
+
+// ValidateMetadata validates the metadata of a Project
+func (o *Project) ValidateMetadata() error {
+	errorList := []error{}
+	// Check for some required Project Labels and Annotations
+	for _, label := range RequiredLabels {
+		if value, exists := o.Project.Labels[label]; !exists || value == "" {
+			errorList = append(errorList, fmt.Errorf("required label \"%s\" is missing", label))
+		}
+	}
+	for _, annotation := range RequiredAnnotations {
+		if value, exists := o.Project.Annotations[annotation]; !exists || value == "" {
+			errorList = append(errorList, fmt.Errorf("required annotation \"%s\" is missing", annotation))
+		}
+	}
+
+	return utilerrors.Flatten(utilerrors.NewAggregate(errorList))
 }

@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	"github.com/presslabs/dashboard/pkg/internal/site"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -37,7 +38,7 @@ var _ = Describe("Organization webhook", func() {
 		c client.Client
 
 		webhook          *siteValidation
-		site             *wordpressv1alpha1.Wordpress
+		wp               *site.Site
 		siteName         string
 		projectName      string
 		organizationName string
@@ -48,12 +49,12 @@ var _ = Describe("Organization webhook", func() {
 		projectName = fmt.Sprintf("project%d", rand.Int31())
 		organizationName = fmt.Sprintf("organization%d", rand.Int31())
 
-		site = &wordpressv1alpha1.Wordpress{
+		wp = site.New(&wordpressv1alpha1.Wordpress{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      siteName,
 				Namespace: fmt.Sprintf("proj-%s", projectName),
 			},
-		}
+		})
 		webhook = &siteValidation{}
 
 		mgr, err := manager.New(cfg, manager.Options{})
@@ -70,7 +71,7 @@ var _ = Describe("Organization webhook", func() {
 	})
 
 	It("returns error when metadata is missing", func() {
-		err := webhook.validateSiteFn(site)
+		err := webhook.validateSiteFn(wp)
 
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/organization\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/project\" is missing")))
@@ -78,16 +79,16 @@ var _ = Describe("Organization webhook", func() {
 		Expect(err).To(MatchError(ContainSubstring("required annotation \"presslabs.com/created-by\" is missing")))
 	})
 	It("doesn't return error when metadata is set", func() {
-		site.SetLabels(map[string]string{
+		wp.SetLabels(map[string]string{
 			"presslabs.com/organization": organizationName,
 			"presslabs.com/project":      projectName,
 			"presslabs.com/site":         siteName,
 		})
 
-		site.SetAnnotations(map[string]string{
+		wp.SetAnnotations(map[string]string{
 			"presslabs.com/created-by": "Andi",
 		})
 
-		Expect(webhook.validateSiteFn(site)).To(Succeed())
+		Expect(webhook.validateSiteFn(wp)).To(Succeed())
 	})
 })

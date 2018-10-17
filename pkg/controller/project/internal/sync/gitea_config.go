@@ -18,14 +18,16 @@ import (
 
 const (
 	giteaName            = "gitea"
-	giteaReleaseVersion  = "1.5.2"
-	giteaImage           = "docker.io/gitea/gitea:" + giteaReleaseVersion
 	giteaHTTPInternalIP  = "0.0.0.0"
 	giteaHTTPPort        = 8080
 	giteaSSHPort         = 22
 	giteaRequestsMemory  = "256Mi"
 	giteaRequestsCPU     = "100m"
 	giteaRequestsStorage = "10Gi"
+)
+
+var (
+	giteaImage = "docker.io/gitea/gitea:" + project.GiteaDeployment.Version
 )
 
 func createGiteaConfig(project *project.Project, data map[string][]byte) (*ini.File, error) {

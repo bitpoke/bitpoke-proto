@@ -1,4 +1,4 @@
-/*v
+/*
 Copyright 2018 Pressinfra SRL.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +30,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/builder"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/types"
 
+	"github.com/presslabs/dashboard/pkg/internal/site"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
-
-	siteinternal "github.com/presslabs/dashboard/pkg/internal/site"
 )
 
 type siteValidation struct {
@@ -44,15 +43,15 @@ type siteValidation struct {
 var _ admission.Handler = &siteValidation{}
 
 func (a *siteValidation) Handle(ctx context.Context, req types.Request) types.Response {
-	site := &wordpressv1alpha1.Wordpress{}
+	wp := &wordpressv1alpha1.Wordpress{}
 
-	err := a.decoder.Decode(req, site)
+	err := a.decoder.Decode(req, wp)
 	if err != nil {
 		return admission.ErrorResponse(http.StatusBadRequest, err)
 	}
-	copy := site.DeepCopy()
+	o := site.New(wp)
 
-	err = a.validateSiteFn(copy)
+	err = a.validateSiteFn(o)
 	if err != nil {
 		return admission.ErrorResponse(http.StatusInternalServerError, err)
 	}
@@ -60,8 +59,8 @@ func (a *siteValidation) Handle(ctx context.Context, req types.Request) types.Re
 	return admission.ValidationResponse(true, "the site is valid")
 }
 
-func (a *siteValidation) validateSiteFn(site *wordpressv1alpha1.Wordpress) error {
-	return siteinternal.ValidateMetadata(site)
+func (a *siteValidation) validateSiteFn(o *site.Site) error {
+	return o.ValidateMetadata()
 }
 
 // siteValidation implements inject.Client.
