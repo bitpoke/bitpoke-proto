@@ -50,7 +50,7 @@ func NewGiteaDeploymentSyncer(proj *project.Project, cl client.Client, scheme *r
 
 		if out.ObjectMeta.CreationTimestamp.IsZero() {
 			out.Spec.Selector = &metav1.LabelSelector{MatchLabels: objLabels}
-		} else {
+		} else if !labels.Equals(out.Spec.Selector.MatchLabels, objLabels) {
 			return fmt.Errorf("service selector is immutable")
 		}
 
