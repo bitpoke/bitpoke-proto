@@ -8,6 +8,8 @@ which is part of this source code package.
 package sync
 
 import (
+	"fmt"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -44,8 +46,13 @@ func NewGiteaDeploymentSyncer(proj *project.Project, cl client.Client, scheme *r
 		out := existing.(*appsv1.Deployment)
 
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+		out.Labels["app.kubernetes.io/version"] = giteaVersion
 
-		out.Spec.Selector = &metav1.LabelSelector{MatchLabels: objLabels}
+		if out.ObjectMeta.CreationTimestamp.IsZero() {
+			out.Spec.Selector = &metav1.LabelSelector{MatchLabels: objLabels}
+		} else {
+			return fmt.Errorf("service selector is immutable")
+		}
 
 		out.Spec.Template.ObjectMeta = metav1.ObjectMeta{
 			Labels: objLabels,

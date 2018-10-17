@@ -39,6 +39,7 @@ func NewPrometheusSyncer(proj *project.Project, cl client.Client, scheme *runtim
 	return syncer.NewObjectSyncer("Prometheus", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*monitoringv1.Prometheus)
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+		out.Labels["app.kubernetes.io/version"] = prometheusVersion
 
 		out.Spec = monitoringv1.PrometheusSpec{
 			ScrapeInterval:     defaultScrapeInterval,

@@ -31,7 +31,6 @@ var (
 type component struct {
 	name       string // eg. web, database, cache
 	app        string // eg. mysql, memcached
-	Version    string
 	objNameFmt string
 	objName    string
 }
@@ -44,9 +43,9 @@ var (
 	// ResourceQuota component
 	ResourceQuota = component{objName: "presslabs-dashboard"}
 	// Prometheus component
-	Prometheus = component{app: "prometheus", objName: "prometheus", Version: "v2.3.2"}
+	Prometheus = component{app: "prometheus", objName: "prometheus"}
 	// GiteaDeployment component
-	GiteaDeployment = component{name: "web", app: "gitea", objName: "gitea", Version: "1.5.2"}
+	GiteaDeployment = component{name: "web", app: "gitea", objName: "gitea"}
 	// GiteaService component
 	GiteaService = component{name: "web", app: "gitea", objName: "gitea"}
 	// GiteaIngress component
@@ -90,9 +89,6 @@ func (o *Project) ComponentLabels(component component) labels.Set {
 	}
 	if len(component.name) > 0 {
 		labels["app.kubernetes.io/component"] = component.name
-	}
-	if len(component.Version) > 0 {
-		labels["app.kubernetes.io/version"] = component.Version
 	}
 	return labels
 }

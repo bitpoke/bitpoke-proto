@@ -97,7 +97,9 @@ var _ = Describe("Project controller", func() {
 
 		BeforeEach(func() {
 			projectName = fmt.Sprintf("awesome-%d", rand.Int31())
-			organizationName = fmt.Sprintf("acme-%d", rand.Int31())
+			orgRand := rand.Int31()
+			organizationName = fmt.Sprintf("acme-%d", orgRand)
+			organizationRealName = fmt.Sprintf("ACME %d Inc.", orgRand)
 			projectNamespace = fmt.Sprintf("proj-%s", projectName)
 
 			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: projectName, Namespace: projectNamespace}}
@@ -106,11 +108,11 @@ var _ = Describe("Project controller", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: organizationName,
 					Labels: map[string]string{
-						"presslabs.com/organization": organizationRealName,
+						"presslabs.com/organization": organizationName,
 						"presslabs.com/kind":         "organization",
 					},
 					Annotations: map[string]string{
-						"org.dashboard.presslabs.net/display-name": organizationName,
+						"org.dashboard.presslabs.net/display-name": organizationRealName,
 					},
 				},
 			}
@@ -119,7 +121,7 @@ var _ = Describe("Project controller", func() {
 					Name:      projectName,
 					Namespace: organizationName,
 					Labels: map[string]string{
-						"presslabs.com/organization": organizationRealName,
+						"presslabs.com/organization": organizationName,
 						"presslabs.com/project":      projectName,
 					},
 				},
@@ -127,26 +129,26 @@ var _ = Describe("Project controller", func() {
 			componentsLabels = map[string]map[string]string{
 				"default": {
 					"presslabs.com/project":        project.Name,
-					"presslabs.com/organization":   organizationRealName,
+					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 				},
 				"prometheus": {
 					"presslabs.com/project":        project.Name,
-					"presslabs.com/organization":   organizationRealName,
+					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "prometheus",
 					"app.kubernetes.io/version":    "v2.3.2",
 				},
 				"gitea": {
 					"presslabs.com/project":        project.Name,
-					"presslabs.com/organization":   organizationRealName,
+					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "gitea",
 					"app.kubernetes.io/component":  "web",
 				},
 				"gitea-deployment": {
 					"presslabs.com/project":        project.Name,
-					"presslabs.com/organization":   organizationRealName,
+					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "gitea",
 					"app.kubernetes.io/component":  "web",
@@ -215,7 +217,7 @@ var _ = Describe("Project controller", func() {
 			}, timeout).Should(Succeed())
 			Expect(ns.Labels).To(Equal(map[string]string{
 				"presslabs.com/project":        project.Name,
-				"presslabs.com/organization":   organizationRealName,
+				"presslabs.com/organization":   organizationName,
 				"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 				"presslabs.com/kind":           "project",
 			}))

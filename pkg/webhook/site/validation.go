@@ -43,15 +43,14 @@ type siteValidation struct {
 var _ admission.Handler = &siteValidation{}
 
 func (a *siteValidation) Handle(ctx context.Context, req types.Request) types.Response {
-	wp := &wordpressv1alpha1.Wordpress{}
+	wp := site.New(&wordpressv1alpha1.Wordpress{})
 
-	err := a.decoder.Decode(req, wp)
+	err := a.decoder.Decode(req, wp.Unwrap())
 	if err != nil {
 		return admission.ErrorResponse(http.StatusBadRequest, err)
 	}
-	o := site.New(wp)
 
-	err = a.validateSiteFn(o)
+	err = a.validateSiteFn(wp)
 	if err != nil {
 		return admission.ErrorResponse(http.StatusInternalServerError, err)
 	}

@@ -74,15 +74,13 @@ func NewStatusError(status int32, err error) *StatusError {
 }
 
 func (a *projectValidation) Handle(ctx context.Context, req types.Request) types.Response {
-	p := &dashboardv1alpha1.Project{}
+	proj := project.New(&dashboardv1alpha1.Project{})
 
-	if err := a.decoder.Decode(req, p); err != nil {
+	if err := a.decoder.Decode(req, proj.Unwrap()); err != nil {
 		return admission.ErrorResponse(http.StatusBadRequest, err)
 	}
 
-	o := project.New(p)
-
-	if err := a.validateProjectFn(ctx, o); err != nil {
+	if err := a.validateProjectFn(ctx, proj); err != nil {
 		return admission.ErrorResponse(err.StatusCode(), err)
 	}
 
