@@ -20,6 +20,7 @@ import (
 	"context"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
+	"github.com/presslabs/dashboard/pkg/internal/predicate"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -35,7 +36,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/presslabs/controller-util/syncer"
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 )
@@ -65,14 +65,17 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to Project
-	err = c.Watch(&source.Kind{Type: &dashboardv1alpha1.Project{}}, &handler.EnqueueRequestForObject{})
+	// Watch for changes to the Project Namespace
+	err = c.Watch(
+		&source.Kind{Type: &corev1.Namespace{}},
+		&handler.EnqueueRequestForObject{},
+		predicate.NewKindPredicate("project"),
+	)
 	if err != nil {
 		return err
 	}
 
 	subresources := []runtime.Object{
-		&corev1.Namespace{},
 		&corev1.ResourceQuota{},
 		&corev1.LimitRange{},
 		&corev1.Service{},
@@ -85,7 +88,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	for _, subresource := range subresources {
 		err = c.Watch(&source.Kind{Type: subresource}, &handler.EnqueueRequestForOwner{
 			IsController: true,
-			OwnerType:    &dashboardv1alpha1.Project{},
+			OwnerType:    &corev1.Namespace{},
 		})
 		if err != nil {
 			return err
@@ -109,11 +112,10 @@ type ReconcileProject struct {
 // +kubebuilder:rbac:groups=,resources=services;persistentvolumeclaims;resourcequotas;namespaces;limitranges,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=dashboard.presslabs.com,resources=projects,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Project instance
-	proj := project.New(&dashboardv1alpha1.Project{})
+	proj := project.New(&corev1.Namespace{})
 	err := r.Get(context.TODO(), request.NamespacedName, proj.Unwrap())
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -126,7 +128,6 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	syncers := []syncer.Interface{
-		sync.NewNamespaceSyncer(proj, r.Client, r.scheme),
 		sync.NewLimitRangeSyncer(proj, r.Client, r.scheme),
 		sync.NewResourceQuotaSyncer(proj, r.Client, r.scheme),
 		sync.NewGiteaSecretSyncer(proj, r.Client, r.scheme),

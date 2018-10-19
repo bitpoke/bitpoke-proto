@@ -71,8 +71,14 @@ var _ = Describe("Site controller", func() {
 
 	When("creating a new Wordpress resource", func() {
 		var (
-			wp              *wordpressv1alpha1.Wordpress
-			expectedRequest reconcile.Request
+			expectedRequest         reconcile.Request
+			wp                      *wordpressv1alpha1.Wordpress
+			organization            *corev1.Namespace
+			project                 *corev1.Namespace
+			projectNamespace        string
+			projectName             string
+			organizationDisplayName string
+			organizationName        string
 		)
 
 		entries := []TableEntry{
@@ -86,13 +92,44 @@ var _ = Describe("Site controller", func() {
 		}
 
 		BeforeEach(func() {
-			name := fmt.Sprintf("wp-%d", rand.Int31())
-			namespace := "default"
+			projectName = fmt.Sprintf("awesome-%d", rand.Int31())
+			projectNamespace = fmt.Sprintf("proj-%s", projectName)
+
+			orgRand := rand.Int31()
+			organizationName = fmt.Sprintf("acme-%d", orgRand)
+			organizationDisplayName = fmt.Sprintf("ACME %d Inc.", orgRand)
+
+			siteName := fmt.Sprintf("wp-%d", rand.Int31())
+
+			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: projectNamespace}}
+
+			organization = &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: organizationName,
+					Labels: map[string]string{
+						"presslabs.com/organization": organizationName,
+						"presslabs.com/kind":         "organization",
+					},
+					Annotations: map[string]string{
+						"presslabs.com/display-name": organizationDisplayName,
+					},
+				},
+			}
+			project = &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: projectNamespace,
+					Labels: map[string]string{
+						"presslabs.com/organization": organizationName,
+						"presslabs.com/project":      projectName,
+						"presslabs.com/kind":         "project",
+					},
+				},
+			}
 
 			wp = &wordpressv1alpha1.Wordpress{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: namespace,
+					Name:      siteName,
+					Namespace: projectNamespace,
 				},
 				Spec: wordpressv1alpha1.WordpressSpec{
 					Runtime: "runtime-example",
@@ -102,9 +139,11 @@ var _ = Describe("Site controller", func() {
 				},
 			}
 
-			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: name, Namespace: namespace}}
+			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: siteName, Namespace: projectNamespace}}
 
 			// create Wordpress resource
+			Expect(c.Create(context.TODO(), organization)).To(Succeed())
+			Expect(c.Create(context.TODO(), project)).To(Succeed())
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
 
 			// Wait for initial reconciliation

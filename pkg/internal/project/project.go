@@ -10,20 +10,19 @@ package project
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
 // Project embeds dashboardv1alpha1.Project and adds utility functions
 type Project struct {
-	*dashboardv1alpha1.Project
+	*corev1.Namespace
 }
 
 var (
 	// RequiredLabels is a list of required Project labels
-	RequiredLabels = []string{"presslabs.com/organization", "presslabs.com/project"}
+	RequiredLabels = []string{"presslabs.com/organization", "presslabs.com/project", "presslabs.com/kind"}
 	// RequiredAnnotations is a list of required Project annotations
 	RequiredAnnotations = []string{"presslabs.com/created-by"}
 )
@@ -57,19 +56,19 @@ var (
 )
 
 // New wraps a dashboardv1alpha1.Project into a Project object
-func New(obj *dashboardv1alpha1.Project) *Project {
+func New(obj *corev1.Namespace) *Project {
 	return &Project{obj}
 }
 
 // Unwrap returns the wrapped dashboardv1alpha1.Project object
-func (o *Project) Unwrap() *dashboardv1alpha1.Project {
-	return o.Project
+func (o *Project) Unwrap() *corev1.Namespace {
+	return o.Namespace
 }
 
 // Labels returns default label set for dashboardv1alpha1.Project
 func (o *Project) Labels() labels.Set {
 	labels := labels.Set{
-		"presslabs.com/project": o.Name,
+		"presslabs.com/project": o.GetLabels()["presslabs.com/project"],
 	}
 
 	if o.ObjectMeta.Labels != nil {
@@ -98,7 +97,7 @@ func (o *Project) ComponentName(component component) string {
 	if len(component.objNameFmt) == 0 {
 		return component.objName
 	}
-	return fmt.Sprintf(component.objNameFmt, o.ObjectMeta.Name)
+	return fmt.Sprintf(component.objNameFmt, o.GetLabels()["presslabs.com/project"])
 }
 
 // Domain returns the project's subdomain label
@@ -111,12 +110,12 @@ func (o *Project) ValidateMetadata() error {
 	errorList := []error{}
 	// Check for some required Project Labels and Annotations
 	for _, label := range RequiredLabels {
-		if value, exists := o.Project.Labels[label]; !exists || value == "" {
+		if value, exists := o.Namespace.Labels[label]; !exists || value == "" {
 			errorList = append(errorList, fmt.Errorf("required label \"%s\" is missing", label))
 		}
 	}
 	for _, annotation := range RequiredAnnotations {
-		if value, exists := o.Project.Annotations[annotation]; !exists || value == "" {
+		if value, exists := o.Namespace.Annotations[annotation]; !exists || value == "" {
 			errorList = append(errorList, fmt.Errorf("required annotation \"%s\" is missing", annotation))
 		}
 	}

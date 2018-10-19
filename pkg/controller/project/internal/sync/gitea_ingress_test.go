@@ -19,13 +19,13 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/presslabs/controller-util/syncer"
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 )
@@ -35,7 +35,7 @@ var _ = Describe("The GiteaIngressSyncer transform func T", func() {
 	var proj *project.Project
 
 	BeforeEach(func() {
-		proj = project.New(&dashboardv1alpha1.Project{
+		proj = project.New(&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("proj-%d", rand.Int31()),
 				Namespace: fmt.Sprintf("org-%d", rand.Int31()),

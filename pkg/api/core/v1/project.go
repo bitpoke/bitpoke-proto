@@ -3,9 +3,8 @@ package v1
 import (
 	"context"
 
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
 type projectsServer struct {
@@ -13,7 +12,7 @@ type projectsServer struct {
 }
 
 func (s *projectsServer) List(r *ListRequest, stream Projects_ListServer) error {
-	projects := &dashboardv1alpha1.ProjectList{}
+	projects := &corev1.NamespaceList{}
 
 	err := s.client.List(context.TODO(), &client.ListOptions{}, projects)
 	if err != nil {
@@ -37,6 +36,6 @@ func NewProjectServer(client client.Client) ProjectsServer {
 	}
 }
 
-func newFromK8s(p *dashboardv1alpha1.Project) *Project {
+func newFromK8s(p *corev1.Namespace) *Project {
 	return &Project{Id: p.Name, Name: p.Name}
 }

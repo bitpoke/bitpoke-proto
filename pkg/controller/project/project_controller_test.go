@@ -38,8 +38,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
-
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
 const timeout = time.Second * 1
@@ -74,14 +72,14 @@ var _ = Describe("Project controller", func() {
 
 	When("creating a new Project object", func() {
 		var (
-			expectedRequest      reconcile.Request
-			organization         *corev1.Namespace
-			project              *dashboardv1alpha1.Project
-			projectName          string
-			projectNamespace     string
-			organizationRealName string
-			organizationName     string
-			componentsLabels     map[string]map[string]string
+			expectedRequest         reconcile.Request
+			organization            *corev1.Namespace
+			project                 *corev1.Namespace
+			projectNamespace        string
+			projectName             string
+			organizationDisplayName string
+			organizationName        string
+			componentsLabels        map[string]map[string]string
 		)
 
 		entries := []TableEntry{
@@ -97,12 +95,13 @@ var _ = Describe("Project controller", func() {
 
 		BeforeEach(func() {
 			projectName = fmt.Sprintf("awesome-%d", rand.Int31())
-			orgRand := rand.Int31()
-			organizationName = fmt.Sprintf("acme-%d", orgRand)
-			organizationRealName = fmt.Sprintf("ACME %d Inc.", orgRand)
 			projectNamespace = fmt.Sprintf("proj-%s", projectName)
 
-			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: projectName, Namespace: projectNamespace}}
+			orgRand := rand.Int31()
+			organizationName = fmt.Sprintf("acme-%d", orgRand)
+			organizationDisplayName = fmt.Sprintf("ACME %d Inc.", orgRand)
+
+			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: projectNamespace}}
 
 			organization = &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -112,42 +111,42 @@ var _ = Describe("Project controller", func() {
 						"presslabs.com/kind":         "organization",
 					},
 					Annotations: map[string]string{
-						"org.dashboard.presslabs.net/display-name": organizationRealName,
+						"org.dashboard.presslabs.net/display-name": organizationDisplayName,
 					},
 				},
 			}
-			project = &dashboardv1alpha1.Project{
+			project = &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      projectName,
-					Namespace: organizationName,
+					Name: projectNamespace,
 					Labels: map[string]string{
 						"presslabs.com/organization": organizationName,
 						"presslabs.com/project":      projectName,
+						"presslabs.com/kind":         "project",
 					},
 				},
 			}
 			componentsLabels = map[string]map[string]string{
 				"default": {
-					"presslabs.com/project":        project.Name,
+					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 				},
 				"prometheus": {
-					"presslabs.com/project":        project.Name,
+					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "prometheus",
 					"app.kubernetes.io/version":    "v2.3.2",
 				},
 				"gitea": {
-					"presslabs.com/project":        project.Name,
+					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "gitea",
 					"app.kubernetes.io/component":  "web",
 				},
 				"gitea-deployment": {
-					"presslabs.com/project":        project.Name,
+					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "gitea",
@@ -162,10 +161,6 @@ var _ = Describe("Project controller", func() {
 
 			// Wait for initial reconciliation
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-			// TODO: redesign projects since you cannot have owner in another
-			// namespace
-			// Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-			// TODO: find out why sometimes we get extra reconciliation requests and remove this loop
 			done := time.After(100 * time.Millisecond)
 		drain:
 			for {
@@ -189,7 +184,7 @@ var _ = Describe("Project controller", func() {
 				obj := e.Parameters[2].(runtime.Object)
 				nameFmt := e.Parameters[1].(string)
 				mo := obj.(metav1.Object)
-				mo.SetName(fmt.Sprintf(nameFmt, project.Name))
+				mo.SetName(fmt.Sprintf(nameFmt, projectName))
 				mo.SetNamespace(projectNamespace)
 				c.Delete(context.TODO(), obj)
 			}
@@ -209,18 +204,5 @@ var _ = Describe("Project controller", func() {
 			metaObj := obj.(metav1.Object)
 			Expect(metaObj.GetLabels()).To(Equal(componentsLabels[component]))
 		}, entries...)
-
-		It("reconciles the namespace", func() {
-			ns := &corev1.Namespace{}
-			Eventually(func() error {
-				return c.Get(context.TODO(), types.NamespacedName{Name: projectNamespace}, ns)
-			}, timeout).Should(Succeed())
-			Expect(ns.Labels).To(Equal(map[string]string{
-				"presslabs.com/project":        project.Name,
-				"presslabs.com/organization":   organizationName,
-				"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
-				"presslabs.com/kind":           "project",
-			}))
-		})
 	})
 })

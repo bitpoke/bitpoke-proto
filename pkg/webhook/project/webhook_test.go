@@ -17,20 +17,16 @@ limitations under the License.
 package project
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
-	"net/http"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
@@ -53,10 +49,9 @@ var _ = Describe("Project webhook", func() {
 		projectName := fmt.Sprintf("project%d", rand.Int31())
 
 		proj = project.New(
-			&dashboardv1alpha1.Project{
+			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: fmt.Sprintf("org-%s", organizationName),
-					Name:      projectName,
+					Name: projectName,
 				},
 			})
 		webhook = &projectValidation{}
@@ -75,41 +70,24 @@ var _ = Describe("Project webhook", func() {
 	})
 
 	It("returns error when metadata is missing", func() {
-		err := webhook.validateProjectFn(context.TODO(), proj)
+		err := webhook.validateProjectFn(proj)
 
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/organization\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/project\" is missing")))
+		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/kind\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required annotation \"presslabs.com/created-by\" is missing")))
 	})
-	It("creates project namespace", func() {
+	It("doesn't return error if metadata is provided", func() {
 		proj.SetLabels(map[string]string{
 			"presslabs.com/organization": organizationName,
 			"presslabs.com/project":      proj.Name,
+			"presslabs.com/kind":         proj.Name,
 		})
 
 		proj.SetAnnotations(map[string]string{
 			"presslabs.com/created-by": "Andi",
 		})
 
-		Expect(webhook.validateProjectFn(context.TODO(), proj)).To(Succeed())
-
-		Expect(c.Get(context.TODO(), types.NamespacedName{Name: fmt.Sprintf("proj-%s", proj.Name)}, &corev1.Namespace{})).To(Succeed())
-	})
-	It("returns error when project namespace is taken", func() {
-		Expect(c.Create(context.TODO(), &corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("proj-%s", proj.Name),
-			},
-		})).To(Succeed())
-		proj.SetLabels(map[string]string{
-			"presslabs.com/organization": organizationName,
-			"presslabs.com/project":      proj.Name,
-		})
-
-		proj.SetAnnotations(map[string]string{
-			"presslabs.com/created-by": "Andi",
-		})
-
-		Expect(webhook.validateProjectFn(context.TODO(), proj)).To(MatchError(NewStatusError(http.StatusBadRequest, fmt.Errorf("project \"%s\" is not available", proj.Name))))
+		Expect(webhook.validateProjectFn(proj)).To(Succeed())
 	})
 })

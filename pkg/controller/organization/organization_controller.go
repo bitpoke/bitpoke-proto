@@ -35,6 +35,7 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/organization/internal/sync"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
+	"github.com/presslabs/dashboard/pkg/internal/predicate"
 )
 
 var log = logf.Log.WithName("organization-controller")
@@ -66,7 +67,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	err = c.Watch(
 		&source.Kind{Type: &corev1.Namespace{}},
 		&handler.EnqueueRequestForObject{},
-		&Predicate{},
+		predicate.NewKindPredicate("organization"),
 	)
 	if err != nil {
 		return err

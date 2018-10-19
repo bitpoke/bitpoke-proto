@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	"github.com/presslabs/dashboard/pkg/apis"
 )
@@ -35,6 +36,7 @@ var cfg *rest.Config
 var t *envtest.Environment
 
 func TestProjectController(t *testing.T) {
+	logf.SetLogger(logf.ZapLogger(true))
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Project Controller Suite", []Reporter{envtest.NewlineReporter{}})
 }
