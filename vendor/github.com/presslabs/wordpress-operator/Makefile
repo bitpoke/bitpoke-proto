@@ -1,20 +1,35 @@
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
+REGISTRY := quay.io/presslabs
+IMAGE_NAME := wordpress-operator
+BUILD_TAG := build
+IMAGE_TAGS := $(APP_VERSION)
+KUBEBUILDER_VERSION ?= 1.0.4
+BINDIR ?= $(PWD)/bin
+BUILDDIR ?= $(PWD)/build
+CHARTDIR ?= $(PWD)/chart/wordpress-operator
 
-KUBEBUILDER_VERSION ?= 1.0.0
+GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
+GOARCH ?= amd64
+
+PATH := $(BINDIR):$(PATH)
+SHELL := env PATH=$(PATH) /bin/sh
 
 all: test manager
 
 # Run tests
-test: generate fmt vet manifests
-	go test -v -race ./pkg/... ./cmd/... -coverprofile cover.out
+test: generate manifests
+	KUBEBUILDER_ASSETS=$(BINDIR) ginkgo \
+		--randomizeAllSpecs --randomizeSuites --failOnPending \
+		--cover --coverprofile cover.out --trace --race -v \
+		./pkg/... ./cmd/...
 
 # Build manager binary
-manager: generate fmt vet
+manager: generate
 	go build -o bin/manager github.com/presslabs/wordpress-operator/cmd/manager
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate fmt vet
+run: generate
 	go run ./cmd/manager/main.go
 
 # Install CRDs into a cluster
@@ -29,63 +44,63 @@ deploy: manifests
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
+	# CRDs
+	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(CHARTDIR)/templates/_crds.yaml
+	yq m -d'*' -i $(CHARTDIR)/templates/_crds.yaml hack/chart-metadata.yaml
+	yq w -d'*' -i $(CHARTDIR)/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml metadata.creationTimestamp
+	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml status metadata.creationTimestamp
+	echo '{{- if .Values.crd.install }}' > $(CHARTDIR)/templates/crds.yaml
+	cat $(CHARTDIR)/templates/_crds.yaml >> $(CHARTDIR)/templates/crds.yaml
+	echo '{{- end }}' >> $(CHARTDIR)/templates/crds.yaml
+	rm $(CHARTDIR)/templates/_crds.yaml
+	# RBAC
+	cp config/rbac/rbac_role.yaml $(CHARTDIR)/templates/_rbac.yaml
+	yq m -d'*' -i $(CHARTDIR)/templates/_rbac.yaml hack/chart-metadata.yaml
+	yq d -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.creationTimestamp
+	yq w -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}'
+	echo '{{- if .Values.rbac.create }}' > $(CHARTDIR)/templates/controller-clusterrole.yaml
+	cat $(CHARTDIR)/templates/_rbac.yaml >> $(CHARTDIR)/templates/controller-clusterrole.yaml
+	echo '{{- end }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
+	rm $(CHARTDIR)/templates/_rbac.yaml
 
-# Run go fmt against code
-fmt:
-	go fmt ./pkg/... ./cmd/...
-
-# Run go vet against code
-vet:
-	go vet ./pkg/... ./cmd/...
+.PHONY: chart
+chart:
+	yq w -i $(CHARTDIR)/Chart.yaml version "$(APP_VERSION)"
+	yq w -i $(CHARTDIR)/Chart.yaml appVersion "$(APP_VERSION)"
+	mv $(CHARTDIR)/values.yaml $(CHARTDIR)/_values.yaml
+	sed 's#$(REGISTRY)/$(IMAGE_NAME):latest#$(REGISTRY)/$(IMAGE_NAME):$(APP_VERSION)#g' $(CHARTDIR)/_values.yaml > $(CHARTDIR)/values.yaml
+	rm $(CHARTDIR)/_values.yaml
 
 # Generate code
 generate:
 	go generate ./pkg/... ./cmd/...
 
 # Build the docker image
-docker-build: test
-	docker build . -t ${IMG}
-	@echo "updating kustomize image patch file for manager resource"
-	sed -i 's@image: .*@image: '"${IMG}"'@' ./config/default/manager_image_patch.yaml
+.PHONY: images
+images:
+	docker build . -t $(REGISTRY)/$(IMAGE_NAME):$(BUILD_TAG)
+	set -e; \
+		for tag in $(IMAGE_TAGS); do \
+			docker tag $(REGISTRY)/$(IMAGE_NAME):$(BUILD_TAG) $(REGISTRY)/$(IMAGE_NAME):$${tag}; \
+	done
 
 # Push the docker image
-docker-push:
-	docker push ${IMG}
+.PHONY: publish
+publish: images
+	set -e; \
+		for tag in $(IMAGE_TAGS); do \
+		docker push $(REGISTRY)/$(IMAGE_NAME):$${tag}; \
+	done
 
 lint:
-	gometalinter.v2 --disable-all \
-    --deadline 5m \
-    --enable=misspell \
-    --enable=structcheck \
-    --enable=golint \
-    --enable=deadcode \
-    --enable=goimports \
-    --enable=errcheck \
-    --enable=varcheck \
-    --enable=goconst \
-    --enable=gas \
-    --enable=unparam \
-    --enable=ineffassign \
-    --enable=nakedret \
-    --enable=interfacer \
-    --enable=misspell \
-    --enable=gocyclo \
-    --line-length=170 \
-    --enable=lll \
-    --dupl-threshold=400 \
-    --enable=dupl \
-    --exclude=zz_generated.deepcopy.go \
-    ./pkg/... ./cmd/...
-
-    # TODO: Enable these as we fix them to make them pass
-    # --enable=maligned \
-    # --enable=safesql \
+	$(BINDIR)/golangci-lint run ./pkg/... ./cmd/...
 
 dependencies:
-	go get -u gopkg.in/alecthomas/gometalinter.v2
-	gometalinter.v2 --install
-
-	# install Kubebuilder
-	curl -L -O https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${KUBEBUILDER_VERSION}/kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz
-	tar -zxvf kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz
-	mv kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64 -T /usr/local/kubebuilder
+	test -d $(BINDIR) || mkdir $(BINDIR)
+	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
+	curl -sL https://github.com/mikefarah/yq/releases/download/2.1.1/yq_$(GOOS)_$(GOARCH) -o $(BINDIR)/yq
+	chmod +x $(BINDIR)/yq
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
+	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH).tar.gz | \
+		tar -zx -C $(BINDIR) --strip-components=2

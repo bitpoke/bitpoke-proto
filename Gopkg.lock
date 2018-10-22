@@ -37,21 +37,9 @@
   branch = "release-7.0"
   digest = "1:b379bdba91a5feb5c138bfc327ce3fdebc2c297fc4e331a641ca397cbadf2696"
   name = "github.com/appscode/kutil"
-  packages = [
-    ".",
-    "apiextensions/v1beta1",
-    "core/v1",
-  ]
+  packages = ["apiextensions/v1beta1"]
   pruneopts = "T"
   revision = "a2c0ee076fe416eb4a35107fc8b64f9be1f2aebc"
-
-[[projects]]
-  branch = "master"
-  digest = "1:eec6fc4022df49ec8f756b6aa167e2b4ccab3dcf82053dce18cb4ea2d40fb74a"
-  name = "github.com/appscode/mergo"
-  packages = ["."]
-  pruneopts = "T"
-  revision = "e3000cb3d28c72b837601cac94debd91032d19fe"
 
 [[projects]]
   digest = "1:6d027438b6c3ca751802d0024174d079d3fb7b0811a4e86212d2edc134c60a05"
@@ -518,12 +506,12 @@
   version = "v0.1.10"
 
 [[projects]]
-  branch = "master"
-  digest = "1:d635c050b72c5551324a23f2512321b238674fab659891df0ba7ac455ddeb710"
+  digest = "1:484605a96550540f78d3c8bc0d66996894e83ed34e9ac06744581667e15dfd87"
   name = "github.com/presslabs/wordpress-operator"
   packages = ["pkg/apis/wordpress/v1alpha1"]
   pruneopts = "T"
-  revision = "9b10e5d212508749d705a0b8691020859a517148"
+  revision = "000aa9f8b48ee4de80721c27a50fb0309b4280ac"
+  version = "v0.1.8"
 
 [[projects]]
   digest = "1:6cae6970d70fc5fe75bf83c48ee33e9c4c561a62d0b033254bee8dd5942b815a"
@@ -1069,8 +1057,14 @@
     "pkg/runtime/signals",
     "pkg/source",
     "pkg/source/internal",
+    "pkg/webhook",
     "pkg/webhook/admission",
+    "pkg/webhook/admission/builder",
     "pkg/webhook/admission/types",
+    "pkg/webhook/internal/cert",
+    "pkg/webhook/internal/cert/generator",
+    "pkg/webhook/internal/cert/writer",
+    "pkg/webhook/internal/cert/writer/atomic",
     "pkg/webhook/types",
   ]
   pruneopts = "T"
@@ -1137,6 +1131,7 @@
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
+    "k8s.io/api/rbac/v1",
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/api/resource",
@@ -1145,6 +1140,7 @@
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/types",
+    "k8s.io/apimachinery/pkg/util/errors",
     "k8s.io/apimachinery/pkg/util/intstr",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
@@ -1156,13 +1152,19 @@
     "sigs.k8s.io/controller-runtime/pkg/client/fake",
     "sigs.k8s.io/controller-runtime/pkg/controller",
     "sigs.k8s.io/controller-runtime/pkg/envtest",
+    "sigs.k8s.io/controller-runtime/pkg/event",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
+    "sigs.k8s.io/controller-runtime/pkg/runtime/inject",
     "sigs.k8s.io/controller-runtime/pkg/runtime/log",
     "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",
     "sigs.k8s.io/controller-runtime/pkg/runtime/signals",
     "sigs.k8s.io/controller-runtime/pkg/source",
+    "sigs.k8s.io/controller-runtime/pkg/webhook",
+    "sigs.k8s.io/controller-runtime/pkg/webhook/admission",
+    "sigs.k8s.io/controller-runtime/pkg/webhook/admission/builder",
+    "sigs.k8s.io/controller-runtime/pkg/webhook/admission/types",
     "sigs.k8s.io/controller-tools/cmd/controller-gen",
     "sigs.k8s.io/testing_frameworks/integration",
   ]
