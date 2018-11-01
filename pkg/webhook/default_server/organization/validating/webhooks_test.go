@@ -1,12 +1,9 @@
 /*
 Copyright 2018 Pressinfra SRL.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
 		http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package organization
+package validating
 
 import (
 	"fmt"
@@ -34,7 +31,7 @@ var _ = Describe("Organization webhook", func() {
 		// stop channel for controller manager
 		stop chan struct{}
 
-		webhook *organizationValidation
+		webhook *NamespaceCreateHandler
 
 		org *organization.Organization
 
@@ -49,7 +46,7 @@ var _ = Describe("Organization webhook", func() {
 				Name: organizationName,
 			},
 		})
-		webhook = &organizationValidation{}
+		webhook = &NamespaceCreateHandler{}
 
 		mgr, err := manager.New(cfg, manager.Options{})
 		Expect(err).NotTo(HaveOccurred())
@@ -65,8 +62,10 @@ var _ = Describe("Organization webhook", func() {
 	})
 
 	It("returns error when metadata is missing", func() {
-		err := webhook.validateOrganizationFn(org)
+		allowed, reason, err := webhook.validatingNamespaceFn(org)
 
+		Expect(allowed).To(Equal(false))
+		Expect(reason).To(Equal("validation failed"))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/organization\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/kind\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required annotation \"presslabs.com/created-by\" is missing")))
@@ -81,6 +80,8 @@ var _ = Describe("Organization webhook", func() {
 			"presslabs.com/created-by": "Andi",
 		})
 
-		Expect(webhook.validateOrganizationFn(org)).To(Succeed())
+		allowed, _, err := webhook.validatingNamespaceFn(org)
+		Expect(allowed).To(Equal(true))
+		Expect(err).To(BeNil())
 	})
 })

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package project
+package validating
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ var _ = Describe("Project webhook", func() {
 		// stop channel for controller manager
 		stop chan struct{}
 
-		webhook *projectValidation
+		webhook *NamespaceCreateHandler
 
 		proj *project.Project
 
@@ -51,7 +51,7 @@ var _ = Describe("Project webhook", func() {
 					Name: projectName,
 				},
 			})
-		webhook = &projectValidation{}
+		webhook = &NamespaceCreateHandler{}
 
 		mgr, err := manager.New(cfg, manager.Options{})
 		Expect(err).NotTo(HaveOccurred())
@@ -67,8 +67,10 @@ var _ = Describe("Project webhook", func() {
 	})
 
 	It("returns error when metadata is missing", func() {
-		err := webhook.validateProjectFn(proj)
+		allowed, reason, err := webhook.validatingNamespaceFn(proj)
 
+		Expect(allowed).To(Equal(false))
+		Expect(reason).To(Equal("validation failed"))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/organization\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/project\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/kind\" is missing")))
@@ -85,6 +87,8 @@ var _ = Describe("Project webhook", func() {
 			"presslabs.com/created-by": "Andi",
 		})
 
-		Expect(webhook.validateProjectFn(proj)).To(Succeed())
+		allowed, _, err := webhook.validatingNamespaceFn(proj)
+		Expect(allowed).To(Equal(true))
+		Expect(err).To(BeNil())
 	})
 })

@@ -29,6 +29,15 @@ spec:
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           args:
             - controller-manager
+            - --webhook-port={{ .Values.webhook.service.port }}
+            - --webhook-cert-dir={{ include "dashboard.webhook.certDir" . | quote}}
+            - --webhook-disable-bootstrapping=true
+          env:
+            - name: VALIDATING_WEBHOOK_SERVICE_NAME
+              value: {{ include "dashboard.webhook.serviceName" . | quote}}
+          volumeMount:
+            - name: webhook-certs
+              mountPath: {{ include "dashboard.webhook.certDir" . | quote}}
           # livenessProbe:
           #   httpGet:
           #     path: /
@@ -39,6 +48,10 @@ spec:
           #     port: http
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: {{ include "dashboard.webhook.secretName" . | quote}}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}

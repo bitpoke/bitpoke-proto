@@ -28,3 +28,5 @@ protoc.zip
 *-packr.go
 
 **/charts/*.tgz
+
+**/node_modules

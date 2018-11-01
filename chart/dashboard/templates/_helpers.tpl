@@ -53,3 +53,23 @@ Create the name of the controller service account to use
 {{- end -}}
 {{- end -}}
 
+{{/*
+Create the name of the webhook secret to use
+*/}}
+{{- define "dashboard.webhook.secretName" -}}
+{{ default (printf "%s-webhook" (include "dashboard.fullname" .)) .Values.webhook.secretName }}
+{{- end -}}
+
+{{/*
+Create the name of the webhook service to use
+*/}}
+{{- define "dashboard.webhook.serviceName" -}}
+{{ default (printf "%s-webhook" (include "dashboard.fullname" .)) .Values.webhook.service.name }}
+{{- end -}}
+
+{{/*
+Create the path of the webhook certificates directory
+*/}}
+{{- define "dashboard.webhook.certDir" -}}
+{{ default (printf "/tmp/%s-webhook-cert-dir" (include "dashboard.fullname" .)) .Values.webhook.certDir }}
+{{- end -}}

@@ -28,17 +28,21 @@ var GitBaseDomainURL = "git.presslabs.net"
 var (
 	// WebhookNamespace is the namespace for webhooks
 	WebhookNamespace = "default"
+	// WebhookDisableBootstrapping decides whether or not to disable the webhook bootstrapping (true means disabled)
+	WebhookDisableBootstrapping = false
 	// WebhookSecretName is the secret for webhooks
 	// nolint: gosec
 	WebhookSecretName = "presslabs-dashboard-admission-webhook-cert"
 	// WebhookServiceName is the service for webhooks
-	WebhookServiceName = "presslabs-dashboard-admission-webhhok"
+	WebhookServiceName = "presslabs-dashboard-admission-webhook"
 	// WebhookServiceSelector is the selector for webhook
 	WebhookServiceSelector = "app.kubernetes.io/name=presslabs-dashboard,app.kubernetes.io/component=controller-manager"
 	// WebhookHost is the host of the webhook server
 	WebhookHost = "localhost"
 	// WebhookPort is the port of the webbhook server
 	WebhookPort = 4433
+	// WebhookCertDir is the directory where the TLS certs are kept
+	WebhookCertDir = "/tmp/webhook-certs"
 )
 
 // AddToFlagSet add options to a FlagSet
@@ -46,11 +50,13 @@ func AddToFlagSet(flag *pflag.FlagSet) {
 	flag.StringVar(&GitBaseDomainURL, "git-base-domain", GitBaseDomainURL, "The base git domain")
 
 	flag.StringVar(&WebhookNamespace, "webhook-namespace", WebhookNamespace, "The webhook namespace")
+	flag.BoolVar(&WebhookDisableBootstrapping, "webhook-disable-bootstrapping", WebhookDisableBootstrapping, "Decides if the webhook bootstrapping should be disabled")
 	flag.StringVar(&WebhookSecretName, "webhook-secret-name", WebhookSecretName, "The webhook secret name")
 	flag.StringVar(&WebhookServiceName, "webhook-service-name", WebhookServiceName, "The webhook server name")
 	flag.StringVar(&WebhookServiceSelector, "webhook-service-selector", WebhookServiceSelector, "The selector for webhook service")
 	flag.StringVar(&WebhookHost, "webhook-host", WebhookHost, "The webhook server host")
 	flag.IntVar(&WebhookPort, "webhook-port", WebhookPort, "The webhook server port")
+	flag.StringVar(&WebhookCertDir, "webhook-cert-dir", WebhookCertDir, "The webhook server certificates directory")
 }
 
 // Validate validates the arguments
