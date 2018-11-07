@@ -50,6 +50,8 @@ var _ = Describe("Site controller", func() {
 		stop chan struct{}
 		// controller k8s client
 		c client.Client
+		// in the first test, wait for the creation of the project, the organization and the wordpress
+		firstTest = true
 	)
 
 	BeforeEach(func() {
@@ -145,6 +147,11 @@ var _ = Describe("Site controller", func() {
 			Expect(c.Create(context.TODO(), organization)).To(Succeed())
 			Expect(c.Create(context.TODO(), project)).To(Succeed())
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+
+			if firstTest {
+				firstTest = false
+				time.Sleep(time.Second * 2)
+			}
 
 			// Wait for initial reconciliation
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))

@@ -50,6 +50,8 @@ var _ = Describe("Project controller", func() {
 		stop chan struct{}
 		// controller k8s client
 		c client.Client
+		// in the first test, wait for the creation of the project and the organization
+		firstTest = true
 	)
 
 	BeforeEach(func() {
@@ -158,6 +160,11 @@ var _ = Describe("Project controller", func() {
 			Expect(c.Create(context.TODO(), organization)).To(Succeed())
 			// Create the Project object and expect the Reconcile and Namespace to be created
 			Expect(c.Create(context.TODO(), project)).To(Succeed())
+
+			if firstTest {
+				firstTest = false
+				time.Sleep(time.Second)
+			}
 
 			// Wait for initial reconciliation
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
