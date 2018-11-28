@@ -33,7 +33,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	projectv1 "github.com/presslabs/dashboard/pkg/api/core/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
@@ -80,7 +79,6 @@ func (s *grpcRunner) Start(stop <-chan struct{}) error {
 		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(middleware.Auth)),
 		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(middleware.Auth)),
 	)
-	projectv1.RegisterProjectsServer(grpcServer, projectv1.NewProjectServer(s.client))
 
 	box := packr.NewBox("../../app/build")
 	if !box.Has("index.html") {

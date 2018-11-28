@@ -1,13 +1,11 @@
 # Image URL to use all building/pushing image targets
-APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
-REGISTRY := quay.io/presslabs
-IMAGE_NAME := dashboard
-BUILD_TAG := build
-IMAGE_TAGS := $(APP_VERSION)
-KUBEBUILDER_VERSION ?= 1.0.5
-PROTOC_VERSION ?= 3.6.1
-BINDIR ?= $(PWD)/bin
-CHARTDIR ?= $(PWD)/chart/dashboard
+APP_VERSION      ?= $(shell git describe --abbrev=5 --dirty --tags --always)
+REGISTRY         := quay.io/presslabs
+IMAGE_NAME       := dashboard
+BUILD_TAG        := build
+IMAGE_TAGS       := $(APP_VERSION)
+BINDIR           ?= $(CURDIR)/bin
+CHARTDIR         ?= $(CURDIR)/chart/dashboard
 
 GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH ?= amd64
@@ -15,13 +13,11 @@ GOARCH ?= amd64
 PATH := $(BINDIR):$(PATH)
 SHELL := env 'PATH=$(PATH)' /bin/sh
 
-all: test dashboard
-
 # Run tests
 test: generate manifests
-	KUBEBUILDER_ASSETS=$(BINDIR) ginkgo \
+	ginkgo \
 		--randomizeAllSpecs --randomizeSuites --failOnPending \
-		--cover --coverprofile cover.out --trace --race -v \
+		--cover --coverprofile cover.out --trace --race \
 		./pkg/... ./cmd/...
 
 # Build dashboard binary
@@ -65,7 +61,7 @@ chart:
 
 .PHONY: bundle
 bundle:
-	$(BINDIR)/packr -i $(PWD)/pkg -v
+	$(BINDIR)/packr -i $(CURDIR)/pkg -v
 
 # Run go fmt against code
 fmt:
@@ -78,9 +74,7 @@ vet:
 # Generate code
 generate:
 	go generate ./pkg/... ./cmd/...
-	protoc -I ./proto \
-	--go_out=plugins=grpc:$(GOPATH)/src \
-	presslabs/dashboard/core/v1/project.proto
+	$(MAKE) -C proto build
 
 # Build the docker image
 .PHONY: images
@@ -107,18 +101,6 @@ lint:
 dependencies:
 	test -d $(BINDIR) || mkdir $(BINDIR)
 	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
-	GOBIN=$(BINDIR) go install ./vendor/github.com/golang/protobuf/protoc-gen-go
 	GOBIN=$(BINDIR) go install ./vendor/github.com/gobuffalo/packr/packr
-	which unzip || (apt-get update && apt-get install --no-install-recommends -y unzip)
-ifeq ($(GOOS),darwin)
-	curl -sfL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-osx-x86_64.zip -o protoc.zip
-else
-	curl -sfL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(GOOS)-x86_64.zip -o protoc.zip
-endif
-	unzip -u protoc.zip bin/protoc
-	rm protoc.zip
-	curl -sfL https://github.com/mikefarah/yq/releases/download/2.1.1/yq_$(GOOS)_$(GOARCH) -o $(BINDIR)/yq
-	chmod +x $(BINDIR)/yq
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
-	curl -sfL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH).tar.gz | \
-		tar -zx -C $(BINDIR) --strip-components=2
+	$(MAKE) -C app

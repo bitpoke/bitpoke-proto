@@ -1,5 +1,5 @@
 workspace:
-  base: /go
+  base: /root/go
   path: src/github.com/presslabs/dashboard
 
 clone:
@@ -10,64 +10,54 @@ clone:
 
 pipeline:
   dependencies:
-    group: dependencies
-    image: golang:1.11
+    pull: true
+    image: quay.io/presslabs/bfc:latest
     commands:
       - make dependencies
 
-  webapp-dependencies:
-    group: dependencies
-    image: node:10
+  verify-generate:
+    image: quay.io/presslabs/bfc:latest
     commands:
-      - cd app; make dependencies
+      - make fmt generate manifests
+      - make -C app generate
+      - git diff --exit-code
 
   lint:
-    group: lint
-    image: golang:1.11
+    image: quay.io/presslabs/bfc:latest
     commands:
+      - make -C proto lint
+      - make -C app lint
       - make lint
-
-  lint-chart:
-    group: lint
-    image: quay.io/presslabs/kluster-toolbox
-    pull: true
-    commands:
       - helm lint chart/dashboard
-      - helm dep build chart/dashboard
-
-  lint-webapp:
-    group: lint
-    image: node:10
-    commands:
-      - cd app; make lint
 
   test:
     group: test
-    image: golang:1.11
+    image: quay.io/presslabs/bfc:latest
     commands:
       - make test
 
-  # test-webapp:
-  #   group: test
-  #   image: node:10
-  #   commands:
-  #     - cd app; make test
-
-  build-webapp:
-    image: node:10
+  test-webapp:
+    group: test
+    image: quay.io/presslabs/bfc:latest
     commands:
-      - cd app; make build
+      - cd app; make test
+
+  # build-webapp:
+  #   group: build
+  #   image: quay.io/presslabs/bfc:latest
+  #   commands:
+  #     - cd app; make build
 
   build-chart:
     group: build
-    image: quay.io/presslabs/kluster-toolbox
+    image: quay.io/presslabs/bfc:latest
     commands:
       - make chart
 
-  bundle:
-    image: golang:1.11
-    commands:
-      - make bundle
+  # bundle:
+  #   image: quay.io/presslabs/bfc:latest
+  #   commands:
+  #     - make bundle
 
   publish:
     group: publish
@@ -98,7 +88,7 @@ pipeline:
 
   publish-chart:
     group: publish
-    image: quay.io/presslabs/kluster-toolbox
+    image: quay.io/presslabs/bfc:latest
     environment:
       - GH_USER=presslabs-bot
     commands:

@@ -165,6 +165,7 @@
   name = "github.com/gogo/protobuf"
   packages = [
     "proto",
+    "protoc-gen-gogo/descriptor",
     "sortkeys",
   ]
   pruneopts = "T"
@@ -194,6 +195,7 @@
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
+    "ptypes/empty",
     "ptypes/timestamp",
   ]
   pruneopts = "T"
@@ -381,6 +383,14 @@
   pruneopts = "T"
   revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
   version = "1.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:ddaa69d877892628736f60aa6584ef0b56b8a13c3b73dd7959d49b87ea66d00a"
+  name = "github.com/mwitkow/go-proto-validators"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "0950a79900071e9f3f5979b78078c599376422fd"
 
 [[projects]]
   digest = "1:99ec7b4370b05816679fe9ae77f1f8af4eae3df0abaeef8c3d2d42d86f55f549"
@@ -727,7 +737,10 @@
   branch = "master"
   digest = "1:e43f1cb3f488a0c2be85939c2a594636f60b442a12a196c778bd2d6c9aca3df7"
   name = "google.golang.org/genproto"
-  packages = ["googleapis/rpc/status"]
+  packages = [
+    "googleapis/rpc/status",
+    "protobuf/field_mask",
+  ]
   pruneopts = "T"
   revision = "11092d34479b07829b72e10713b159248caf5dad"
 
@@ -1109,9 +1122,11 @@
     "github.com/gobuffalo/packr",
     "github.com/gobuffalo/packr/packr",
     "github.com/golang/protobuf/proto",
+    "github.com/golang/protobuf/ptypes/empty",
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",
     "github.com/imdario/mergo",
     "github.com/improbable-eng/grpc-web/go/grpcweb",
+    "github.com/mwitkow/go-proto-validators",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
@@ -1124,6 +1139,7 @@
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
     "golang.org/x/net/context",
+    "google.golang.org/genproto/protobuf/field_mask",
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",
     "google.golang.org/grpc/status",

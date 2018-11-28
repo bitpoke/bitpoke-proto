@@ -16,6 +16,7 @@
 .DS_Store
 .idea
 bin/*
+*.swp
 
 build
 .gometalinter-*

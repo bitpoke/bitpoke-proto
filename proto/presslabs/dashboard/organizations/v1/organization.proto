@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+package presslabs.dashboard.organizations.v1;
+
+option go_package = "github.com/presslabs/dashboard/pkg/api/organizations/v1";
+
+import "github.com/mwitkow/go-proto-validators/validator.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+
+// Organization represents an organization within the presslabs dashboard
+// context
+message Organization {
+  // The fully qualified organization name in the form orgs/{organization_name}.
+  // The `organization_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  string name = 1 [
+    (validator.field) = {
+      regex: "^orgs/[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+      length_gt: 8
+      length_lt: 53
+    }
+  ];
+  // The display_name for the organization
+  string display_name = 2;
+}
+
+message GetOrganizationRequest {
+  // The resource name of the organization to fetch in the form orgs/{organization_name}
+  // The `organization_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [
+    (validator.field) = {
+      msg_exists: true
+      regex: "^orgs/[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+      length_gt: 8
+      length_lt: 53
+    }
+  ];
+}
+
+message ListOrganizationsRequest {
+  // The maximum number of items to return.
+  int32 page_size = 1;
+  // The next_page_token value returned from a previous List request, if any.
+  string page_token = 2;
+}
+
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message CreateOrganizationRequest {
+  // The organization name to assign
+  string organization_id = 1 [
+    (validator.field) = {
+      regex: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+      length_gt: 3
+      length_lt: 48
+    }
+  ];
+  // The organization resource to create
+  Organization organization = 2;
+}
+
+message UpdateOrganizationRequest {
+  // The new definition of the Folder. It must include
+  // a `name` and `display_name` field. The other fields
+  // will be ignored.
+  Organization organization = 1 [
+    (validator.field) = {
+      msg_exists: true
+    }
+  ];
+  // Fields to be updated.
+  // Only the `display_name` can be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message DeleteOrganizationRequest {
+  // The resource name of the organization to delete in the form orgs/{organization_name}
+  // The `organization_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [
+    (validator.field) = {
+      msg_exists: true
+      regex: "^orgs/[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+      length_gt: 8
+      length_lt: 53
+    }
+  ];
+}
+
+// OrganizationsService allow managing organizations
+service OrganizationsService {
+  // CreateOrganization creates a new organization
+  rpc CreateOrganization(CreateOrganizationRequest) returns (Organization);
+  // GetOrganization fetches an organization by it's name
+  rpc GetOrganization(GetOrganizationRequest) returns (Organization);
+  // UpdateOrganization updates an organization details
+  rpc UpdateOrganization(UpdateOrganizationRequest) returns (Organization);
+  // DeleteOrganization deletes an organization by it's name
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (google.protobuf.Empty);
+  // ListOrganizations list organizations
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse);
+}
