@@ -42,7 +42,7 @@ type organizationValidation struct {
 var _ admission.Handler = &organizationValidation{}
 
 func (a *organizationValidation) Handle(ctx context.Context, req types.Request) types.Response {
-	org := organization.New(&corev1.Namespace{})
+	org := organization.Wrap(&corev1.Namespace{})
 
 	err := a.decoder.Decode(req, org.Unwrap())
 	if err != nil {

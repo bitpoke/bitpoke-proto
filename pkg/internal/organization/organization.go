@@ -26,7 +26,8 @@ type Organization struct {
 var (
 	// RequiredLabels is a list of required Organization labels
 	RequiredLabels = []string{"presslabs.com/organization", "presslabs.com/kind"}
-	// RequiredAnnotations is a list of required Organization annotations
+	// RequiredAnnotations is a list of required Organization
+	// annotations
 	RequiredAnnotations = []string{"presslabs.com/created-by"}
 )
 
@@ -60,8 +61,42 @@ var (
 	}
 )
 
-// New wraps a dashboardv1alpha1.Organization into a Organization object
-func New(obj *corev1.Namespace) *Organization {
+// NamespaceName returns the name of the organization's namespace
+func NamespaceName(name string) string {
+	return fmt.Sprintf("org-%s", name)
+}
+
+// New creates a new Organization object
+func New(name, displayName, createdBy string) *Organization {
+	org := &Organization{
+		Namespace: &corev1.Namespace{},
+	}
+
+	org.Namespace.ObjectMeta = metav1.ObjectMeta{
+		Name: NamespaceName(name),
+		Labels: map[string]string{
+			"presslabs.com/kind":         "organization",
+			"presslabs.com/organization": name,
+		},
+		Annotations: map[string]string{
+			"presslabs.com/created-by": createdBy,
+		},
+	}
+
+	if displayName != "" {
+		org.Namespace.ObjectMeta.Annotations["presslabs.com/display-name"] = displayName
+	}
+
+	return org
+}
+
+// UpdateDisplayName updates the display-name annotation
+func (o *Organization) UpdateDisplayName(displayName string) {
+	o.Namespace.ObjectMeta.Annotations["presslabs.com/display-name"] = displayName
+}
+
+// Wrap wraps a dashboardv1alpha1.Organization into a Organization object
+func Wrap(obj *corev1.Namespace) *Organization {
 	return &Organization{obj}
 }
 
@@ -75,11 +110,11 @@ func (o *Organization) Labels() labels.Set {
 	labels := labels.Set{
 		"presslabs.com/organization": o.ObjectMeta.Labels["presslabs.com/organization"],
 	}
-
 	return labels
 }
 
-// ComponentLabels returns labels for a label set for a dashboardv1alpha1.Organization component
+// ComponentLabels returns labels for a label set for a
+// dashboardv1alpha1.Organization component
 func (o *Organization) ComponentLabels(component Component) labels.Set {
 	labels := o.Labels()
 	if len(component.app) > 0 {

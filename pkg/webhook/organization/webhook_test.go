@@ -47,7 +47,7 @@ var _ = Describe("Organization webhook", func() {
 	BeforeEach(func() {
 		organizationName = fmt.Sprintf("organization%d", rand.Int31())
 
-		org = organization.New(&corev1.Namespace{
+		org = organization.Wrap(&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: organizationName,
 			},

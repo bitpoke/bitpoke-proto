@@ -39,7 +39,7 @@ var _ = Describe("The MemberRoleSyncer transform func T", func() {
 		orgRand := rand.Int31()
 		organizationName = fmt.Sprintf("acme-%d", orgRand)
 
-		org = organization.New(&corev1.Namespace{
+		org = organization.Wrap(&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: organizationName,
 				Labels: map[string]string{

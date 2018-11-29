@@ -20,7 +20,7 @@ import (
 	"context"
 
 	oidc "github.com/coreos/go-oidc"
-	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -28,10 +28,19 @@ import (
 )
 
 var (
-	authTokenContextKey = contextKey("auth-token")
+	// AuthTokenContextKey is the context key for auth token
+	AuthTokenContextKey = contextKey("auth-token")
 )
 
-// Auth verifies the authentication token present in the gRPC request context
+// Claims are the custom claims
+type Claims struct {
+	Subject  string `json:"sub"`
+	Email    string `json:"email"`
+	Verified bool   `json:"email_verified"`
+}
+
+// Auth verifies the authentication token present in the gRPC request
+// context
 func Auth(ctx context.Context) (context.Context, error) {
 	token, err := grpc_auth.AuthFromMD(ctx, "bearer")
 	if err != nil {
@@ -51,15 +60,11 @@ func Auth(ctx context.Context) (context.Context, error) {
 	}
 
 	// Extract custom claims
-	var claims struct {
-		Subject  string `json:"sub"`
-		Email    string `json:"email"`
-		Verified bool   `json:"email_verified"`
-	}
+	var claims Claims
 	if err := idToken.Claims(&claims); err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
-	newCtx := context.WithValue(ctx, authTokenContextKey, claims)
+	newCtx := context.WithValue(ctx, AuthTokenContextKey, claims)
 	return newCtx, nil
 }

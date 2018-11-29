@@ -132,7 +132,7 @@ var _ = Describe("Project controller", func() {
 
 		AfterEach(func() {
 			c.Delete(context.TODO(), org)
-			orgWrapper := organization.New(org)
+			orgWrapper := organization.Wrap(org)
 			for _, component := range []organization.Component{
 				organization.MemberRoleBinding,
 				organization.OwnerClusterRoleBinding,

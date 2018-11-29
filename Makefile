@@ -21,6 +21,14 @@ test: generate manifests
 		--cover --coverprofile cover.out --trace --race \
 		./pkg/... ./cmd/...
 
+# Run apiserver tests
+apiserver-test:
+	ginkgo \
+	--randomizeAllSpecs --randomizeSuites --failOnPending \
+	--cover --coverprofile cover.out --trace --race -v \
+	--untilItFails \
+	./pkg/apiserver/...
+
 # Build dashboard binary
 build: generate fmt vet
 	go build -o bin/dashboard github.com/presslabs/dashboard/cmd/dashboard

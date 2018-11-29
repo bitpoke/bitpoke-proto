@@ -25,7 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/presslabs/dashboard/pkg/apis"
-	"github.com/presslabs/dashboard/pkg/apiserver"
+	apiserver "github.com/presslabs/dashboard/pkg/apiserver/controller"
+	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
@@ -55,7 +56,7 @@ var runAPIServer = func(cmd *cobra.Command, args []string) {
 	}
 
 	// Setup all Controllers
-	if err := apiserver.AddToManager(mgr); err != nil {
+	if err := apiserver.AddToServer(mgr, middleware.Auth, options.GRPCAddr, options.HTTPAddr); err != nil {
 		log.Error(err, "unable to setup controllers")
 		os.Exit(1)
 	}
