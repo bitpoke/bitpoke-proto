@@ -10,7 +10,8 @@ CHARTDIR         ?= $(CURDIR)/chart/dashboard
 GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH ?= amd64
 
-PATH := $(BINDIR):$(PATH)
+APP_BIN_PATH := $(CURDIR)/app/node_modules/.bin
+PATH := $(APP_BIN_PATH):$(BINDIR):$(PATH)
 SHELL := env 'PATH=$(PATH)' /bin/sh
 
 # Run tests
@@ -103,4 +104,5 @@ dependencies:
 	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
 	GOBIN=$(BINDIR) go install ./vendor/github.com/gobuffalo/packr/packr
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
-	$(MAKE) -C app
+	$(MAKE) -C app dependencies
+	$(MAKE) -C proto dependencies
