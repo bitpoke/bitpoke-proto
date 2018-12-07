@@ -2,7 +2,6 @@
 // file: presslabs/dashboard/organizations/v1/organization.proto
 
 import * as jspb from "google-protobuf";
-import * as github_com_mwitkow_go_proto_validators_validator_pb from "../../../../github.com/mwitkow/go-proto-validators/validator_pb";
 import * as google_protobuf_empty_pb from "google-protobuf/google/protobuf/empty_pb";
 import * as google_protobuf_field_mask_pb from "google-protobuf/google/protobuf/field_mask_pb";
 

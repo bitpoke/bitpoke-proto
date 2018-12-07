@@ -26,8 +26,6 @@ generate:
     - name: go
       flags: plugins=grpc
       output: ../../../../
-    - name: govalidators
-      output: ../../../../
     - name: ts
       output: ../app/src/generated/
       flags: service=true

@@ -11,7 +11,6 @@ var jspb = require('google-protobuf');
 var goog = jspb;
 var global = Function('return this')();
 
-var github_com_mwitkow_go$proto$validators_validator_pb = require('../../../../github.com/mwitkow/go-proto-validators/validator_pb.js');
 var google_protobuf_empty_pb = require('google-protobuf/google/protobuf/empty_pb.js');
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.exportSymbol('proto.presslabs.dashboard.organizations.v1.CreateOrganizationRequest', null, global);
