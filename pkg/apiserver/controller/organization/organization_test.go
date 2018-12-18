@@ -15,9 +15,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gstruct"
 
-	gomegatypes "github.com/onsi/gomega/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
@@ -28,6 +26,7 @@ import (
 	orgv1 "github.com/presslabs/dashboard/pkg/api/organizations/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/errors"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
+	apiserverutil "github.com/presslabs/dashboard/pkg/apiserver/util"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 	dashboardrand "github.com/presslabs/dashboard/pkg/util/rand"
 )
@@ -213,7 +212,7 @@ var _ = Describe("API server", func() {
 					Name: organization.NamespaceName(name),
 				}
 
-				Eventually(getOrg(ctx, c, key), deleteTimeout).Should(beInPhase(corev1.NamespaceTerminating))
+				Eventually(apiserverutil.GetNamespace(ctx, c, key), deleteTimeout).Should(apiserverutil.BeInPhase(corev1.NamespaceTerminating))
 			})
 		})
 
@@ -262,7 +261,7 @@ var _ = Describe("API server", func() {
 					Name: organization.NamespaceName(name),
 				}
 
-				Eventually(getOrg(ctx, c, key), updateTimeout).Should(haveAnnotation("presslabs.com/display-name", newDisplayName))
+				Eventually(apiserverutil.GetNamespace(ctx, c, key), updateTimeout).Should(apiserverutil.HaveAnnotation("presslabs.com/display-name", newDisplayName))
 			})
 		})
 
@@ -343,31 +342,3 @@ var _ = Describe("API server", func() {
 		})
 	})
 })
-
-// beInPhase is a helper func that returns a mather to check for namespace phase
-func beInPhase(phase corev1.NamespacePhase) gomegatypes.GomegaMatcher {
-	return MatchFields(IgnoreExtras, Fields{
-		"Status": MatchFields(IgnoreExtras, Fields{
-			"Phase": Equal(phase),
-		}),
-	})
-}
-
-// haveAnnotation is a helper func that returns a matcher to check for namespace
-// annotations
-func haveAnnotation(annKey, annValue string) gomegatypes.GomegaMatcher {
-	return MatchFields(IgnoreExtras, Fields{
-		"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-			"Annotations": HaveKeyWithValue(annKey, annValue),
-		}),
-	})
-}
-
-// getOrg is a helper func that returns an organization
-func getOrg(ctx context.Context, c client.Client, key client.ObjectKey) func() corev1.Namespace {
-	return func() corev1.Namespace {
-		var orgNs corev1.Namespace
-		Expect(c.Get(ctx, key, &orgNs)).To(Succeed())
-		return orgNs
-	}
-}
