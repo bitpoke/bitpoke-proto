@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/presslabs/dashboard/pkg/apis"
-	apiserver "github.com/presslabs/dashboard/pkg/apiserver/controller"
+	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
@@ -55,7 +55,7 @@ var runAPIServer = func(cmd *cobra.Command, args []string) {
 	}
 
 	// Add APIServer to manager
-	if err := apiserver.AddToServer(mgr); err != nil {
+	if err := apiserver.AddToManager(mgr); err != nil {
 		log.Error(err, "unable to setup apiserver")
 		os.Exit(1)
 	}
