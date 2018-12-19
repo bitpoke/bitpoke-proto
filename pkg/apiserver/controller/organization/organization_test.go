@@ -17,6 +17,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,7 +25,6 @@ import (
 	// logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	orgv1 "github.com/presslabs/dashboard/pkg/api/organizations/v1"
-	"github.com/presslabs/dashboard/pkg/apiserver/errors"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
@@ -113,7 +113,7 @@ var _ = Describe("API server", func() {
 				}
 
 				_, err := orgClient.CreateOrganization(context.TODO(), &req)
-				Expect(status.Convert(err).Message()).To(Equal(errors.AlreadyExists.Msg))
+				Expect(status.Convert(err).Code()).To(Equal(codes.AlreadyExists))
 			})
 		})
 
@@ -186,7 +186,7 @@ var _ = Describe("API server", func() {
 					Name: name,
 				}
 				_, err := orgClient.GetOrganization(context.TODO(), &req)
-				Expect(status.Convert(err).Message()).To(Equal(errors.NotFound.Msg))
+				Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 			})
 		})
 	})
@@ -228,7 +228,7 @@ var _ = Describe("API server", func() {
 					Name: name,
 				}
 				_, err := orgClient.DeleteOrganization(context.TODO(), &req)
-				Expect(status.Convert(err).Message()).To(Equal(errors.NotFound.Msg))
+				Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 			})
 		})
 	})
@@ -281,7 +281,7 @@ var _ = Describe("API server", func() {
 					},
 				}
 				_, err := orgClient.UpdateOrganization(context.TODO(), &req)
-				Expect(status.Convert(err).Message()).To(Equal(errors.NotFound.Msg))
+				Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 			})
 		})
 	})

@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/presslabs/dashboard/pkg/apiserver/errors"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	// nolint: golint
 	. "github.com/presslabs/dashboard/pkg/api/organizations/v1"
@@ -43,7 +43,7 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 	org := organization.New(r.Organization.Name, r.Organization.DisplayName, createdBy)
 
 	if err := s.client.Create(context.TODO(), org.Unwrap()); err != nil {
-		return nil, errors.NewApiserverError(err)
+		return nil, status.Error(err)
 	}
 
 	return newOrganizationFromK8s(org), nil
@@ -56,7 +56,7 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrgani
 	}
 
 	if err := s.client.Get(ctx, key, &org); err != nil {
-		return nil, errors.NewApiserverError(err)
+		return nil, status.Error(err)
 	}
 
 	return newOrganizationFromK8s(organization.Wrap(&org)), nil
@@ -69,13 +69,13 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *Update
 	}
 
 	if err := s.client.Get(ctx, key, &org); err != nil {
-		return nil, errors.NewApiserverError(err)
+		return nil, status.Error(err)
 	}
 
 	organization.Wrap(&org).UpdateDisplayName(r.Organization.DisplayName)
 
 	if err := s.client.Update(ctx, &org); err != nil {
-		return nil, errors.NewApiserverError(err)
+		return nil, status.Error(err)
 	}
 
 	return newOrganizationFromK8s(organization.Wrap(&org)), nil
@@ -88,11 +88,11 @@ func (s *organizationsService) DeleteOrganization(ctx context.Context, r *Delete
 	}
 
 	if err := s.client.Get(ctx, key, &org); err != nil {
-		return nil, errors.NewApiserverError(err)
+		return nil, status.Error(err)
 	}
 
 	if err := s.client.Delete(ctx, &org); err != nil {
-		return nil, errors.NewApiserverError(err)
+		return nil, status.Error(err)
 	}
 
 	return &empty.Empty{}, nil
@@ -117,7 +117,7 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrg
 	}
 
 	if err := s.client.List(context.TODO(), listOptions, orgs); err != nil {
-		return nil, errors.NewApiserverError(err)
+		return nil, status.Error(err)
 	}
 
 	// TODO: implement pagination
