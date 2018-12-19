@@ -191,6 +191,7 @@
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
+    "protoc-gen-go/descriptor",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
@@ -759,6 +760,8 @@
     "metadata",
     "naming",
     "peer",
+    "reflection",
+    "reflection/grpc_reflection_v1alpha",
     "resolver",
     "resolver/dns",
     "resolver/passthrough",
@@ -1092,14 +1095,16 @@
   version = "v0.1.5"
 
 [[projects]]
-  digest = "1:a2a1732136cc0d306a6b1a6999f71fbe0d16e9c1d2234b34d67e0ebb952e5982"
+  branch = "master"
+  digest = "1:290b4da306982122bcdff12dbababbb95c6e4a94a2995db88baf235ef2f6e93e"
   name = "sigs.k8s.io/testing_frameworks"
   packages = [
     "integration",
+    "integration/addr",
     "integration/internal",
   ]
   pruneopts = "T"
-  revision = "f53464b8b84b4507805a0b033a8377b225163fea"
+  revision = "d348cb12705b516376e0c323bacca72b00a78425"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -1121,6 +1126,7 @@
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
     "github.com/onsi/gomega/gstruct",
+    "github.com/onsi/gomega/types",
     "github.com/presslabs/controller-util/mergo/transformers",
     "github.com/presslabs/controller-util/rand",
     "github.com/presslabs/controller-util/syncer",
@@ -1132,6 +1138,7 @@
     "google.golang.org/genproto/protobuf/field_mask",
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",
+    "google.golang.org/grpc/reflection",
     "google.golang.org/grpc/status",
     "k8s.io/api/admissionregistration/v1beta1",
     "k8s.io/api/apps/v1",
@@ -1173,6 +1180,7 @@
     "sigs.k8s.io/controller-runtime/pkg/webhook/admission/types",
     "sigs.k8s.io/controller-tools/cmd/controller-gen",
     "sigs.k8s.io/testing_frameworks/integration",
+    "sigs.k8s.io/testing_frameworks/integration/addr",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
