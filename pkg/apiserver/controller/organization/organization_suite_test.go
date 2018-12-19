@@ -72,7 +72,7 @@ func SetupAPIServer(mgr manager.Manager) *apiserver.APIServer {
 	server, err := apiserver.NewAPIServer(opts)
 	Expect(err).To(Succeed())
 
-    mgr.Add(server)
+	mgr.Add(server)
 
 	return server
 }
