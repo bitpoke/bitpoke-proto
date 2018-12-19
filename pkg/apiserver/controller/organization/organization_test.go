@@ -26,8 +26,8 @@ import (
 	orgv1 "github.com/presslabs/dashboard/pkg/api/organizations/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/errors"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
-	apiserverutil "github.com/presslabs/dashboard/pkg/apiserver/util"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
+	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 )
 
 const (
@@ -35,6 +35,15 @@ const (
 	deleteTimeout = time.Second
 	updateTimeout = time.Second
 )
+
+// GetNamespace is a helper func that returns an organization
+func GetNamespace(ctx context.Context, c client.Client, key client.ObjectKey) func() corev1.Namespace {
+	return func() corev1.Namespace {
+		var orgNs corev1.Namespace
+		Expect(c.Get(ctx, key, &orgNs)).To(Succeed())
+		return orgNs
+	}
+}
 
 // var log = logf.Log.WithName("apiserver")
 
@@ -205,7 +214,7 @@ var _ = Describe("API server", func() {
 					Name: organization.NamespaceName(name),
 				}
 
-				Eventually(apiserverutil.GetNamespace(context.TODO(), c, key), deleteTimeout).Should(apiserverutil.BeInPhase(corev1.NamespaceTerminating))
+				Eventually(GetNamespace(context.TODO(), c, key), deleteTimeout).Should(BeInPhase(corev1.NamespaceTerminating))
 			})
 		})
 
@@ -254,7 +263,7 @@ var _ = Describe("API server", func() {
 					Name: organization.NamespaceName(name),
 				}
 
-				Eventually(apiserverutil.GetNamespace(context.TODO(), c, key), updateTimeout).Should(apiserverutil.HaveAnnotation("presslabs.com/display-name", newDisplayName))
+				Eventually(GetNamespace(context.TODO(), c, key), updateTimeout).Should(HaveAnnotation("presslabs.com/display-name", newDisplayName))
 			})
 		})
 

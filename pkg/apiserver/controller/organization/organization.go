@@ -24,17 +24,16 @@ import (
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 )
 
-type organizationsServer struct {
+type organizationsService struct {
 	client client.Client
 }
 
 // Add creates a new Organization Controller and adds it to the API Server
-func Add(server *apiserver.APIServer) error {
-	RegisterOrganizationsServiceServer(server.GRPCServer, NewOrganizationsServer(server.Client))
-	return nil
+func Add(server *apiserver.APIServer) {
+	RegisterOrganizationsServiceServer(server.GRPCServer, NewOrganizationsServiceServer(server.Client))
 }
 
-func (s *organizationsServer) CreateOrganization(ctx context.Context, r *CreateOrganizationRequest) (*Organization, error) {
+func (s *organizationsService) CreateOrganization(ctx context.Context, r *CreateOrganizationRequest) (*Organization, error) {
 	cl := ctx.Value(middleware.AuthTokenContextKey)
 	if cl == nil {
 		return nil, fmt.Errorf("No auth-token value in context")
@@ -50,7 +49,7 @@ func (s *organizationsServer) CreateOrganization(ctx context.Context, r *CreateO
 	return newOrganizationFromK8s(org), nil
 }
 
-func (s *organizationsServer) GetOrganization(ctx context.Context, r *GetOrganizationRequest) (*Organization, error) {
+func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrganizationRequest) (*Organization, error) {
 	var org corev1.Namespace
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(r.Name),
@@ -63,7 +62,7 @@ func (s *organizationsServer) GetOrganization(ctx context.Context, r *GetOrganiz
 	return newOrganizationFromK8s(organization.Wrap(&org)), nil
 }
 
-func (s *organizationsServer) UpdateOrganization(ctx context.Context, r *UpdateOrganizationRequest) (*Organization, error) {
+func (s *organizationsService) UpdateOrganization(ctx context.Context, r *UpdateOrganizationRequest) (*Organization, error) {
 	var org corev1.Namespace
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(r.Organization.Name),
@@ -82,7 +81,7 @@ func (s *organizationsServer) UpdateOrganization(ctx context.Context, r *UpdateO
 	return newOrganizationFromK8s(organization.Wrap(&org)), nil
 }
 
-func (s *organizationsServer) DeleteOrganization(ctx context.Context, r *DeleteOrganizationRequest) (*empty.Empty, error) {
+func (s *organizationsService) DeleteOrganization(ctx context.Context, r *DeleteOrganizationRequest) (*empty.Empty, error) {
 	var org corev1.Namespace
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(r.Name),
@@ -99,7 +98,7 @@ func (s *organizationsServer) DeleteOrganization(ctx context.Context, r *DeleteO
 	return &empty.Empty{}, nil
 }
 
-func (s *organizationsServer) ListOrganizations(ctx context.Context, r *ListOrganizationsRequest) (*ListOrganizationsResponse, error) {
+func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrganizationsRequest) (*ListOrganizationsResponse, error) {
 	cl := ctx.Value(middleware.AuthTokenContextKey)
 	if cl == nil {
 		return nil, fmt.Errorf("No auth-token value in context")
@@ -132,9 +131,9 @@ func (s *organizationsServer) ListOrganizations(ctx context.Context, r *ListOrga
 	return resp, nil
 }
 
-// NewOrganizationsServer creates a new gRPC server for organizations
-func NewOrganizationsServer(client client.Client) OrganizationsServiceServer {
-	return &organizationsServer{
+// NewOrganizationsServiceServer creates a new gRPC organizations service server
+func NewOrganizationsServiceServer(client client.Client) OrganizationsServiceServer {
+	return &organizationsService{
 		client: client,
 	}
 }
