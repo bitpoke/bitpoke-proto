@@ -24,16 +24,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
+	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
+
+type APIServerOptions struct {
+	Manager  manager.Manager
+	GRPCAddr string
+	HTTPAddr string
+	AuthFunc grpc_auth.AuthFunc
+}
 
 // APIServer is the API Server that contains GRPC Server, HTTP Server and client
 type APIServer struct {
 	Client     client.Client
 	GRPCServer *grpc.Server
-	GRPCAddr   string
 	HTTPServer *http.Server
-	serveMux   *http.ServeMux
+	serverMux  *http.ServeMux
+	grpcAddr   string
 }
 
 type config struct {
@@ -43,6 +51,41 @@ type config struct {
 }
 
 var log = logf.Log.WithName("apiserver")
+
+func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
+	// Create the gRPC server
+	grpcServer := grpc.NewServer(
+		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(opts.AuthFunc)),
+		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(opts.AuthFunc)),
+	)
+	// register reflection service on gRPC server
+	reflection.Register(grpcServer)
+
+	// Create the HTTP handler and server
+	sMux := http.NewServeMux()
+	wrappedGrpc := grpcweb.WrapServer(grpcServer)
+	handler := func(resp http.ResponseWriter, req *http.Request) {
+		if wrappedGrpc.IsGrpcWebRequest(req) {
+			wrappedGrpc.ServeHTTP(resp, req)
+		} else if req.URL.Path == "/env.js" {
+			serveConfig(resp, req)
+		} else {
+			sMux.ServeHTTP(resp, req)
+		}
+	}
+	httpServer := &http.Server{
+		Addr:    opts.HTTPAddr,
+		Handler: http.HandlerFunc(handler),
+	}
+
+	return &APIServer{
+		Client:     opts.Manager.GetClient(),
+		GRPCServer: grpcServer,
+		HTTPServer: httpServer,
+		serverMux:  sMux,
+		grpcAddr:   opts.GRPCAddr,
+	}, nil
+}
 
 func serveConfig(resp http.ResponseWriter, req *http.Request) {
 	cfg := config{
@@ -69,8 +112,16 @@ func serveConfig(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (s *APIServer) GetGRPCAddr() string {
+	return s.grpcAddr
+}
+
+func (s *APIServer) GetHTTPAddr() string {
+	return s.HTTPServer.Addr
+}
+
 func (s *APIServer) startGRPCServer() error {
-	lis, err := net.Listen("tcp", s.GRPCAddr)
+	lis, err := net.Listen("tcp", s.grpcAddr)
 	if err != nil {
 		return err
 	}
@@ -87,7 +138,7 @@ func (s *APIServer) startHTTPServer() error {
 	// }
 
 	log.Info("Web Server listening", "address", s.HTTPServer.Addr)
-	s.serveMux.Handle("/", http.FileServer(box))
+	s.serverMux.Handle("/", http.FileServer(box))
 	if err := s.HTTPServer.ListenAndServe(); err != http.ErrServerClosed {
 		return err
 	}
@@ -96,7 +147,6 @@ func (s *APIServer) startHTTPServer() error {
 
 // Start starts API server
 func (s *APIServer) Start(stop <-chan struct{}) error {
-
 	errChan := make(chan error, 2)
 
 	go func() {
@@ -126,41 +176,18 @@ func (s *APIServer) GracefullShutdown() {
 	s.GRPCServer.GracefulStop()
 }
 
-// AddToServer adds all Controllers to the Manager and to the API server
-func AddToServer(m manager.Manager, auth grpc_auth.AuthFunc, grpcAddr, httpAddr string) (*APIServer, error) {
-	grpcServer := grpc.NewServer(
-		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(auth)),
-		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(auth)),
-	)
-
-	wrappedGrpc := grpcweb.WrapServer(grpcServer)
-
-	sMux := http.NewServeMux()
-	handler := func(resp http.ResponseWriter, req *http.Request) {
-		if wrappedGrpc.IsGrpcWebRequest(req) {
-			wrappedGrpc.ServeHTTP(resp, req)
-		} else if req.URL.Path == "/env.js" {
-			serveConfig(resp, req)
-		} else {
-			sMux.ServeHTTP(resp, req)
-		}
+// AddToManager adds the API server to manager
+func AddToManager(m manager.Manager) error {
+	opts := &APIServerOptions{
+		Manager:  m,
+		HTTPAddr: options.HTTPAddr,
+		GRPCAddr: options.GRPCAddr,
+		AuthFunc: middleware.Auth,
+	}
+	server, err := NewAPIServer(opts)
+	if err != nil {
+		return err
 	}
 
-	httpServer := &http.Server{
-		Addr:    httpAddr,
-		Handler: http.HandlerFunc(handler),
-	}
-
-	apiServer := &APIServer{
-		Client:     m.GetClient(),
-		GRPCServer: grpcServer,
-		GRPCAddr:   grpcAddr,
-		HTTPServer: httpServer,
-		serveMux:   sMux,
-	}
-
-	// register reflection service on gRPC server
-	reflection.Register(grpcServer)
-
-	return apiServer, m.Add(apiServer)
+	return m.Add(server)
 }

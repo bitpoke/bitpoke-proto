@@ -8,18 +8,17 @@ which is part of this source code package.
 package controller
 
 import (
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"github.com/presslabs/dashboard/pkg/apiserver"
 )
 
 // AddToServerFuncs is a list of functions to add all Controllers to the
 // Manager and to the API server
-var AddToServerFuncs []func(m manager.Manager, auth grpc_auth.AuthFunc, grpcAddr, httpAddr string) error
+var AddToServerFuncs []func(server *apiserver.APIServer) error
 
 // AddToServer adds all Controllers to the Manager and to the API server
-func AddToServer(m manager.Manager, auth grpc_auth.AuthFunc, grpcAddr, httpAddr string) error {
+func AddToServer(server *apiserver.APIServer) error {
 	for _, f := range AddToServerFuncs {
-		if err := f(m, auth, grpcAddr, httpAddr); err != nil {
+		if err := f(server); err != nil {
 			return err
 		}
 	}

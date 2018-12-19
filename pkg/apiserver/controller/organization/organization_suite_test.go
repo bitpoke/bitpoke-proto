@@ -8,6 +8,7 @@ which is part of this source code package.
 package organization
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -18,9 +19,12 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/testing_frameworks/integration/addr"
 	// logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	"github.com/presslabs/dashboard/pkg/apis"
+	"github.com/presslabs/dashboard/pkg/apiserver"
+	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 )
 
 var cfg *rest.Config
@@ -50,6 +54,28 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	t.Stop()
 })
+
+func SetupAPIServer(mgr manager.Manager) *apiserver.APIServer {
+	grpcPort, _, err := addr.Suggest()
+	Expect(err).To(Succeed())
+
+	httpPort, _, err := addr.Suggest()
+	Expect(err).To(Succeed())
+
+	opts := &apiserver.APIServerOptions{
+		Manager:  mgr,
+		HTTPAddr: fmt.Sprintf(":%d", httpPort),
+		GRPCAddr: fmt.Sprintf(":%d", grpcPort),
+		AuthFunc: middleware.FakeAuth,
+	}
+
+	server, err := apiserver.NewAPIServer(opts)
+	Expect(err).To(Succeed())
+
+    mgr.Add(server)
+
+	return server
+}
 
 func StartTestManager(mgr manager.Manager) chan struct{} {
 	stop := make(chan struct{})

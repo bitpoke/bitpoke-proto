@@ -28,7 +28,6 @@ import (
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	apiserverutil "github.com/presslabs/dashboard/pkg/apiserver/util"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
-	dashboardrand "github.com/presslabs/dashboard/pkg/util/rand"
 )
 
 const (
@@ -49,37 +48,31 @@ var _ = Describe("API server", func() {
 		conn *grpc.ClientConn
 		// orgClient
 		orgClient orgv1.OrganizationsServiceClient
-		// context
-		ctx context.Context
-		// cancel function
-		cancel context.CancelFunc
 	)
 
 	BeforeEach(func() {
 		mgr, err := manager.New(cfg, manager.Options{})
 		Expect(err).To(Succeed())
 
-		grpcAddr := fmt.Sprintf(":%d", dashboardrand.GenerateRandomPort())
-		httpAddr := fmt.Sprintf(":%d", dashboardrand.GenerateRandomPort())
-
-		Expect(Add(mgr, middleware.FakeAuth, grpcAddr, httpAddr)).To(Succeed())
+		server := SetupAPIServer(mgr)
+		// add ourselves to the server
+		Add(server)
 
 		c = mgr.GetClient()
 
 		stop = StartTestManager(mgr)
 
-		ctx, cancel = context.WithTimeout(context.TODO(), ctxTimeout)
-
-		conn, err = grpc.Dial(grpcAddr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(ctxTimeout))
+		conn, err = grpc.Dial(server.GetGRPCAddr(), grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(ctxTimeout))
 		Expect(err).To(Succeed())
 
 		orgClient = orgv1.NewOrganizationsServiceClient(conn)
 	})
 
 	AfterEach(func() {
-		close(stop)
-		cancel()
+		// close the gRPC client connection
 		conn.Close()
+		// stop the manager and API server
+		close(stop)
 	})
 
 	var (
@@ -98,7 +91,7 @@ var _ = Describe("API server", func() {
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 
 				org := organization.New(name, displayName, createdBy)
-				Expect(c.Create(ctx, org.Unwrap())).To(Succeed())
+				Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			})
 
 			It("returns error", func() {
@@ -110,7 +103,7 @@ var _ = Describe("API server", func() {
 					},
 				}
 
-				_, err := orgClient.CreateOrganization(ctx, &req)
+				_, err := orgClient.CreateOrganization(context.TODO(), &req)
 				Expect(status.Convert(err).Message()).To(Equal(errors.AlreadyExists.Msg))
 			})
 		})
@@ -134,7 +127,7 @@ var _ = Describe("API server", func() {
 					},
 				}
 
-				resp, err := orgClient.CreateOrganization(ctx, &req)
+				resp, err := orgClient.CreateOrganization(context.TODO(), &req)
 				Expect(err).To(Succeed())
 				Expect(resp.Name).To(Equal(name))
 
@@ -143,7 +136,7 @@ var _ = Describe("API server", func() {
 				key := client.ObjectKey{
 					Name: organization.NamespaceName(name),
 				}
-				err = c.Get(ctx, key, &orgNs)
+				err = c.Get(context.TODO(), key, &orgNs)
 				Expect(err).To(Succeed())
 				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", displayName))
 				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", createdBy))
@@ -159,7 +152,7 @@ var _ = Describe("API server", func() {
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 
 				org := organization.New(name, displayName, createdBy)
-				Expect(c.Create(ctx, org.Unwrap())).To(Succeed())
+				Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			})
 
 			It("returns the organization", func() {
@@ -167,7 +160,7 @@ var _ = Describe("API server", func() {
 					Name: name,
 				}
 
-				resp, err := orgClient.GetOrganization(ctx, &req)
+				resp, err := orgClient.GetOrganization(context.TODO(), &req)
 				Expect(err).To(Succeed())
 				Expect(resp.Name).To(Equal(name))
 				Expect(resp.DisplayName).To(Equal(displayName))
@@ -183,7 +176,7 @@ var _ = Describe("API server", func() {
 				req := orgv1.GetOrganizationRequest{
 					Name: name,
 				}
-				_, err := orgClient.GetOrganization(ctx, &req)
+				_, err := orgClient.GetOrganization(context.TODO(), &req)
 				Expect(status.Convert(err).Message()).To(Equal(errors.NotFound.Msg))
 			})
 		})
@@ -197,7 +190,7 @@ var _ = Describe("API server", func() {
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 
 				org := organization.New(name, displayName, createdBy)
-				err := c.Create(ctx, org.Unwrap())
+				err := c.Create(context.TODO(), org.Unwrap())
 				Expect(err).To(Succeed())
 			})
 
@@ -205,14 +198,14 @@ var _ = Describe("API server", func() {
 				req := orgv1.DeleteOrganizationRequest{
 					Name: name,
 				}
-				_, err := orgClient.DeleteOrganization(ctx, &req)
+				_, err := orgClient.DeleteOrganization(context.TODO(), &req)
 				Expect(err).To(Succeed())
 
 				key := client.ObjectKey{
 					Name: organization.NamespaceName(name),
 				}
 
-				Eventually(apiserverutil.GetNamespace(ctx, c, key), deleteTimeout).Should(apiserverutil.BeInPhase(corev1.NamespaceTerminating))
+				Eventually(apiserverutil.GetNamespace(context.TODO(), c, key), deleteTimeout).Should(apiserverutil.BeInPhase(corev1.NamespaceTerminating))
 			})
 		})
 
@@ -225,7 +218,7 @@ var _ = Describe("API server", func() {
 				req := orgv1.DeleteOrganizationRequest{
 					Name: name,
 				}
-				_, err := orgClient.DeleteOrganization(ctx, &req)
+				_, err := orgClient.DeleteOrganization(context.TODO(), &req)
 				Expect(status.Convert(err).Message()).To(Equal(errors.NotFound.Msg))
 			})
 		})
@@ -244,7 +237,7 @@ var _ = Describe("API server", func() {
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 
 				org := organization.New(name, displayName, createdBy)
-				Expect(c.Create(ctx, org.Unwrap())).To(Succeed())
+				Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			})
 
 			It("update the organization", func() {
@@ -254,14 +247,14 @@ var _ = Describe("API server", func() {
 						DisplayName: newDisplayName,
 					},
 				}
-				_, err := orgClient.UpdateOrganization(ctx, &req)
+				_, err := orgClient.UpdateOrganization(context.TODO(), &req)
 				Expect(err).To(Succeed())
 
 				key := client.ObjectKey{
 					Name: organization.NamespaceName(name),
 				}
 
-				Eventually(apiserverutil.GetNamespace(ctx, c, key), updateTimeout).Should(apiserverutil.HaveAnnotation("presslabs.com/display-name", newDisplayName))
+				Eventually(apiserverutil.GetNamespace(context.TODO(), c, key), updateTimeout).Should(apiserverutil.HaveAnnotation("presslabs.com/display-name", newDisplayName))
 			})
 		})
 
@@ -278,7 +271,7 @@ var _ = Describe("API server", func() {
 						DisplayName: displayName,
 					},
 				}
-				_, err := orgClient.UpdateOrganization(ctx, &req)
+				_, err := orgClient.UpdateOrganization(context.TODO(), &req)
 				Expect(status.Convert(err).Message()).To(Equal(errors.NotFound.Msg))
 			})
 		})
@@ -311,7 +304,7 @@ var _ = Describe("API server", func() {
 					displayName := fmt.Sprintf("%d", rand.Int31())
 
 					org := organization.New(name, displayName, createdBy)
-					Expect(c.Create(ctx, org.Unwrap())).To(Succeed())
+					Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 
 					orgList[i] = org
 				}
@@ -323,7 +316,7 @@ var _ = Describe("API server", func() {
 					PageSize:  pageSize,
 				}
 
-				resp, err := orgClient.ListOrganizations(ctx, &req)
+				resp, err := orgClient.ListOrganizations(context.TODO(), &req)
 				Expect(err).To(Succeed())
 				Expect(len(resp.Organizations)).To(Equal(noItems))
 

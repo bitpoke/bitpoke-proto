@@ -12,11 +12,9 @@ import (
 	"fmt"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/presslabs/dashboard/pkg/apiserver/errors"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
@@ -31,12 +29,8 @@ type organizationsServer struct {
 }
 
 // Add creates a new Organization Controller and adds it to the API Server
-func Add(mgr manager.Manager, auth grpc_auth.AuthFunc, grpcAddr, httpAddr string) error {
-	apiServer, err := apiserver.AddToServer(mgr, auth, grpcAddr, httpAddr)
-	if err != nil {
-		return err
-	}
-	RegisterOrganizationsServiceServer(apiServer.GRPCServer, NewOrganizationsServer(mgr.GetClient()))
+func Add(server *apiserver.APIServer) error {
+	RegisterOrganizationsServiceServer(server.GRPCServer, NewOrganizationsServer(server.Client))
 	return nil
 }
 
