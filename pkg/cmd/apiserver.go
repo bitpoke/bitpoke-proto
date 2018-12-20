@@ -26,6 +26,8 @@ import (
 
 	"github.com/presslabs/dashboard/pkg/apis"
 	"github.com/presslabs/dashboard/pkg/apiserver"
+	"github.com/presslabs/dashboard/pkg/apiserver/controller"
+	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
@@ -54,11 +56,26 @@ var runAPIServer = func(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	// Add APIServer to manager
-	if err := apiserver.AddToManager(mgr); err != nil {
+	opts := &apiserver.APIServerOptions{
+		Manager:  mgr,
+		HTTPAddr: options.HTTPAddr,
+		GRPCAddr: options.GRPCAddr,
+		AuthFunc: middleware.Auth,
+	}
+
+	server, err := apiserver.NewAPIServer(opts)
+	if err != nil {
 		log.Error(err, "unable to setup apiserver")
 		os.Exit(1)
 	}
+
+	err = controller.AddToServer(server)
+	if err != nil {
+		log.Error(err, "unable to setup apiserver controllers")
+		os.Exit(1)
+	}
+
+	mgr.Add(server)
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {

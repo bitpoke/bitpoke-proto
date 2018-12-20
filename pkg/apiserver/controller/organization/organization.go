@@ -29,8 +29,9 @@ type organizationsService struct {
 }
 
 // Add creates a new Organization Controller and adds it to the API Server
-func Add(server *apiserver.APIServer) {
+func Add(server *apiserver.APIServer) error {
 	RegisterOrganizationsServiceServer(server.GRPCServer, NewOrganizationsServiceServer(server.Client))
+    return nil
 }
 
 func (s *organizationsService) CreateOrganization(ctx context.Context, r *CreateOrganizationRequest) (*Organization, error) {

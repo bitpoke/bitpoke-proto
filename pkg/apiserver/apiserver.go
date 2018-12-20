@@ -24,7 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
-	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
@@ -174,20 +173,4 @@ func (s *APIServer) GracefullShutdown() {
 	}
 
 	s.GRPCServer.GracefulStop()
-}
-
-// AddToManager adds the API server to manager
-func AddToManager(m manager.Manager) error {
-	opts := &APIServerOptions{
-		Manager:  m,
-		HTTPAddr: options.HTTPAddr,
-		GRPCAddr: options.GRPCAddr,
-		AuthFunc: middleware.Auth,
-	}
-	server, err := NewAPIServer(opts)
-	if err != nil {
-		return err
-	}
-
-	return m.Add(server)
 }
