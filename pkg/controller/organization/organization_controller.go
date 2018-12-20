@@ -106,7 +106,7 @@ type ReconcileOrganization struct {
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;clusterrolebindings;rolebindings,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileOrganization) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Organization instance
-	org := organization.Wrap(&corev1.Namespace{})
+	org := organization.New(&corev1.Namespace{})
 	err := r.Get(context.TODO(), request.NamespacedName, org.Unwrap())
 	if err != nil {
 		if errors.IsNotFound(err) {

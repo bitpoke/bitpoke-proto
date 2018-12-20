@@ -51,7 +51,8 @@ var runAPIServer = func(cmd *cobra.Command, args []string) {
 	}
 
 	// Setup Scheme for all resources
-	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+	err = apis.AddToScheme(mgr.GetScheme())
+	if err != nil {
 		log.Error(err, "unable to register types to scheme")
 		os.Exit(1)
 	}
@@ -75,7 +76,11 @@ var runAPIServer = func(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	mgr.Add(server)
+	err = mgr.Add(server)
+	if err != nil {
+		log.Error(err, "unable to add to managaer")
+		os.Exit(1)
+	}
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {

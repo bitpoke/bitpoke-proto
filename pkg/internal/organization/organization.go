@@ -66,37 +66,17 @@ func NamespaceName(name string) string {
 	return fmt.Sprintf("org-%s", name)
 }
 
-// New creates a new Organization object
-func New(name, displayName, createdBy string) *Organization {
-	org := &Organization{
-		Namespace: &corev1.Namespace{},
-	}
-
-	org.Namespace.ObjectMeta = metav1.ObjectMeta{
-		Name: NamespaceName(name),
-		Labels: map[string]string{
-			"presslabs.com/kind":         "organization",
-			"presslabs.com/organization": name,
-		},
-		Annotations: map[string]string{
-			"presslabs.com/created-by": createdBy,
-		},
-	}
-
-	if displayName != "" {
-		org.Namespace.ObjectMeta.Annotations["presslabs.com/display-name"] = displayName
-	}
-
-	return org
-}
-
 // UpdateDisplayName updates the display-name annotation
 func (o *Organization) UpdateDisplayName(displayName string) {
-	o.Namespace.ObjectMeta.Annotations["presslabs.com/display-name"] = displayName
+	if len(displayName) == 0 {
+		o.Namespace.ObjectMeta.Annotations["presslabs.com/display-name"] = o.Namespace.ObjectMeta.Labels["presslabs.com/organization"]
+	} else {
+		o.Namespace.ObjectMeta.Annotations["presslabs.com/display-name"] = displayName
+	}
 }
 
-// Wrap wraps a dashboardv1alpha1.Organization into a Organization object
-func Wrap(obj *corev1.Namespace) *Organization {
+// New wraps a dashboardv1alpha1.Organization into a Organization object
+func New(obj *corev1.Namespace) *Organization {
 	return &Organization{obj}
 }
 

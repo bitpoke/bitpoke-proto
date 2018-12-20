@@ -26,7 +26,6 @@ apiserver-test:
 	ginkgo \
 	--randomizeAllSpecs --randomizeSuites --failOnPending \
 	--cover --coverprofile cover.out --trace --race -v \
-	--untilItFails \
 	./pkg/apiserver/...
 
 # Build dashboard binary

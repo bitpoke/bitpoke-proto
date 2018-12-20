@@ -13,6 +13,7 @@ import (
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -31,7 +32,7 @@ type organizationsService struct {
 // Add creates a new Organization Controller and adds it to the API Server
 func Add(server *apiserver.APIServer) error {
 	RegisterOrganizationsServiceServer(server.GRPCServer, NewOrganizationsServiceServer(server.Client))
-    return nil
+	return nil
 }
 
 func (s *organizationsService) CreateOrganization(ctx context.Context, r *CreateOrganizationRequest) (*Organization, error) {
@@ -41,7 +42,19 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 	}
 	createdBy := cl.(middleware.Claims).Subject
 
-	org := organization.New(r.Organization.Name, r.Organization.DisplayName, createdBy)
+	org := organization.New(&corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: organization.NamespaceName(r.Organization.Name),
+			Labels: map[string]string{
+				"presslabs.com/kind":         "organization",
+				"presslabs.com/organization": r.Organization.Name,
+			},
+			Annotations: map[string]string{
+				"presslabs.com/created-by": createdBy,
+			},
+		},
+	})
+	org.UpdateDisplayName(r.Organization.DisplayName)
 
 	if err := s.client.Create(context.TODO(), org.Unwrap()); err != nil {
 		return nil, status.Error(err)
@@ -60,7 +73,7 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrgani
 		return nil, status.Error(err)
 	}
 
-	return newOrganizationFromK8s(organization.Wrap(&org)), nil
+	return newOrganizationFromK8s(organization.New(&org)), nil
 }
 
 func (s *organizationsService) UpdateOrganization(ctx context.Context, r *UpdateOrganizationRequest) (*Organization, error) {
@@ -73,13 +86,13 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *Update
 		return nil, status.Error(err)
 	}
 
-	organization.Wrap(&org).UpdateDisplayName(r.Organization.DisplayName)
+	organization.New(&org).UpdateDisplayName(r.Organization.DisplayName)
 
 	if err := s.client.Update(ctx, &org); err != nil {
 		return nil, status.Error(err)
 	}
 
-	return newOrganizationFromK8s(organization.Wrap(&org)), nil
+	return newOrganizationFromK8s(organization.New(&org)), nil
 }
 
 func (s *organizationsService) DeleteOrganization(ctx context.Context, r *DeleteOrganizationRequest) (*empty.Empty, error) {
@@ -125,7 +138,7 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrg
 	resp.Organizations = []*Organization{} //make([]*Organization, len(orgs.Items))
 	for i := range orgs.Items {
 		if orgs.Items[i].ObjectMeta.Annotations["presslabs.com/created-by"] == createdBy {
-			resp.Organizations = append(resp.Organizations, newOrganizationFromK8s(organization.Wrap(&orgs.Items[i])))
+			resp.Organizations = append(resp.Organizations, newOrganizationFromK8s(organization.New(&orgs.Items[i])))
 		}
 	}
 

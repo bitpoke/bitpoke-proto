@@ -27,6 +27,8 @@ import (
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
+// APIServerOptions contains manager, GRPC address, HTTP address and AuthFunc
+// nolint: golint
 type APIServerOptions struct {
 	Manager  manager.Manager
 	GRPCAddr string
@@ -51,6 +53,7 @@ type config struct {
 
 var log = logf.Log.WithName("apiserver")
 
+// NewAPIServer creates a new API Server
 func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 	// Create the gRPC server
 	grpcServer := grpc.NewServer(
@@ -111,10 +114,12 @@ func serveConfig(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// GetGRPCAddr returns the GRPC address
 func (s *APIServer) GetGRPCAddr() string {
 	return s.grpcAddr
 }
 
+// GetHTTPAddr returns the HTTP address
 func (s *APIServer) GetHTTPAddr() string {
 	return s.HTTPServer.Addr
 }

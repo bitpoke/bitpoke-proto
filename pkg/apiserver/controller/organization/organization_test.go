@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	// logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -35,6 +36,25 @@ const (
 	deleteTimeout = time.Second
 	updateTimeout = time.Second
 )
+
+// createOrganization is a helper func that creates an organization
+func createOrganization(name, displayName, createdBy string) *organization.Organization {
+	org := organization.New(&corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: organization.NamespaceName(name),
+			Labels: map[string]string{
+				"presslabs.com/kind":         "organization",
+				"presslabs.com/organization": name,
+			},
+			Annotations: map[string]string{
+				"presslabs.com/created-by": createdBy,
+			},
+		},
+	})
+	org.UpdateDisplayName(displayName)
+
+	return org
+}
 
 // GetNamespace is a helper func that returns an organization
 func GetNamespace(ctx context.Context, c client.Client, key client.ObjectKey) func() corev1.Namespace {
@@ -99,7 +119,7 @@ var _ = Describe("API server", func() {
 				displayName = fmt.Sprintf("%d", rand.Int31())
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 
-				org := organization.New(name, displayName, createdBy)
+				org := createOrganization(name, displayName, createdBy)
 				Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			})
 
@@ -160,7 +180,7 @@ var _ = Describe("API server", func() {
 				displayName = fmt.Sprintf("%d", rand.Int31())
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 
-				org := organization.New(name, displayName, createdBy)
+				org := createOrganization(name, displayName, createdBy)
 				Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			})
 
@@ -198,7 +218,7 @@ var _ = Describe("API server", func() {
 				displayName = fmt.Sprintf("%d", rand.Int31())
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 
-				org := organization.New(name, displayName, createdBy)
+				org := createOrganization(name, displayName, createdBy)
 				err := c.Create(context.TODO(), org.Unwrap())
 				Expect(err).To(Succeed())
 			})
@@ -245,7 +265,7 @@ var _ = Describe("API server", func() {
 				newDisplayName = fmt.Sprintf("%d", rand.Int31())
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 
-				org := organization.New(name, displayName, createdBy)
+				org := createOrganization(name, displayName, createdBy)
 				Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			})
 
@@ -312,7 +332,7 @@ var _ = Describe("API server", func() {
 					name = fmt.Sprintf("%d", rand.Int31())
 					displayName := fmt.Sprintf("%d", rand.Int31())
 
-					org := organization.New(name, displayName, createdBy)
+					org := createOrganization(name, displayName, createdBy)
 					Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 
 					orgList[i] = org
