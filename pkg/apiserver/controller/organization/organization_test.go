@@ -170,6 +170,29 @@ var _ = Describe("API server", func() {
 				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", displayName))
 				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", createdBy))
 			})
+
+			It("successfully creates an organization and set the default display name", func() {
+				req := orgv1.CreateOrganizationRequest{
+					OrganizationId: id,
+					Organization: &orgv1.Organization{
+						Name:        name,
+						DisplayName: "",
+					},
+				}
+
+				resp, err := orgClient.CreateOrganization(context.TODO(), &req)
+				Expect(err).To(Succeed())
+				Expect(resp.Name).To(Equal(name))
+
+				var orgNs corev1.Namespace
+				key := client.ObjectKey{
+					Name: organization.NamespaceName(name),
+				}
+				err = c.Get(context.TODO(), key, &orgNs)
+				Expect(err).To(Succeed())
+				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", name))
+				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", createdBy))
+			})
 		})
 	})
 
