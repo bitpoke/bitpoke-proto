@@ -14,6 +14,7 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
 	"google.golang.org/grpc"
@@ -56,8 +57,8 @@ func createOrganization(name, displayName, createdBy string) *organization.Organ
 	return org
 }
 
-// GetNamespace is a helper func that returns an organization
-func GetNamespace(ctx context.Context, c client.Client, key client.ObjectKey) func() corev1.Namespace {
+// getNamespaceFn is a helper func that returns an organization
+func getNamespaceFn(ctx context.Context, c client.Client, key client.ObjectKey) func() corev1.Namespace {
 	return func() corev1.Namespace {
 		var orgNs corev1.Namespace
 		Expect(c.Get(ctx, key, &orgNs)).To(Succeed())
@@ -91,7 +92,8 @@ var _ = Describe("API server", func() {
 
 		stop = StartTestManager(mgr)
 
-		conn, err = grpc.Dial(server.GetGRPCAddr(), grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(ctxTimeout))
+		conn, err = grpc.Dial(server.GetGRPCAddr(), grpc.WithInsecure(), grpc.WithBlock(),
+			grpc.WithTimeout(ctxTimeout))
 		Expect(err).To(Succeed())
 
 		orgClient = orgv1.NewOrganizationsServiceClient(conn)
@@ -123,7 +125,7 @@ var _ = Describe("API server", func() {
 				Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			})
 
-			It("returns error", func() {
+			It("should returns error", func() {
 				req := orgv1.CreateOrganizationRequest{
 					OrganizationId: id,
 					Organization: &orgv1.Organization{
@@ -137,46 +139,29 @@ var _ = Describe("API server", func() {
 			})
 		})
 
-		When("organization not exists", func() {
+		When("organization does not exists", func() {
 			BeforeEach(func() {
 				id = fmt.Sprintf("%d", rand.Int31())
 				name = fmt.Sprintf("%d", rand.Int31())
-				displayName = fmt.Sprintf("%d", rand.Int31())
-
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 				middleware.FakeSubject = createdBy
 			})
 
-			It("successfully creates an organization", func() {
+			entries := []TableEntry{
+				Entry("should creates the organization and set the given display-name", "display-name"),
+				Entry("sdould creates the organization and set the default display-name", ""),
+			}
+
+			DescribeTable("", func(dispName string) {
+				expectedDispName := dispName
+				if len(dispName) == 0 {
+					expectedDispName = name
+				}
 				req := orgv1.CreateOrganizationRequest{
 					OrganizationId: id,
 					Organization: &orgv1.Organization{
 						Name:        name,
-						DisplayName: displayName,
-					},
-				}
-
-				resp, err := orgClient.CreateOrganization(context.TODO(), &req)
-				Expect(err).To(Succeed())
-				Expect(resp.Name).To(Equal(name))
-
-				// check org
-				var orgNs corev1.Namespace
-				key := client.ObjectKey{
-					Name: organization.NamespaceName(name),
-				}
-				err = c.Get(context.TODO(), key, &orgNs)
-				Expect(err).To(Succeed())
-				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", displayName))
-				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", createdBy))
-			})
-
-			It("successfully creates an organization and set the default display name", func() {
-				req := orgv1.CreateOrganizationRequest{
-					OrganizationId: id,
-					Organization: &orgv1.Organization{
-						Name:        name,
-						DisplayName: "",
+						DisplayName: dispName,
 					},
 				}
 
@@ -190,9 +175,9 @@ var _ = Describe("API server", func() {
 				}
 				err = c.Get(context.TODO(), key, &orgNs)
 				Expect(err).To(Succeed())
-				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", name))
+				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", expectedDispName))
 				Expect(orgNs.ObjectMeta.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", createdBy))
-			})
+			}, entries...)
 		})
 	})
 
@@ -207,7 +192,7 @@ var _ = Describe("API server", func() {
 				Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			})
 
-			It("returns the organization", func() {
+			It("should returns the organization", func() {
 				req := orgv1.GetOrganizationRequest{
 					Name: name,
 				}
@@ -219,12 +204,12 @@ var _ = Describe("API server", func() {
 			})
 		})
 
-		When("organization not exists", func() {
+		When("organization does not exists", func() {
 			BeforeEach(func() {
 				name = fmt.Sprintf("%d", rand.Int31())
 			})
 
-			It("return error", func() {
+			It("should return error", func() {
 				req := orgv1.GetOrganizationRequest{
 					Name: name,
 				}
@@ -246,7 +231,7 @@ var _ = Describe("API server", func() {
 				Expect(err).To(Succeed())
 			})
 
-			It("delete the organization", func() {
+			It("should delete the organization", func() {
 				req := orgv1.DeleteOrganizationRequest{
 					Name: name,
 				}
@@ -257,16 +242,17 @@ var _ = Describe("API server", func() {
 					Name: organization.NamespaceName(name),
 				}
 
-				Eventually(GetNamespace(context.TODO(), c, key), deleteTimeout).Should(BeInPhase(corev1.NamespaceTerminating))
+				Eventually(getNamespaceFn(context.TODO(), c, key), deleteTimeout).Should(
+					BeInPhase(corev1.NamespaceTerminating))
 			})
 		})
 
-		When("organization not exists", func() {
+		When("organization does not exists", func() {
 			BeforeEach(func() {
 				name = fmt.Sprintf("%d", rand.Int31())
 			})
 
-			It("returns error", func() {
+			It("should returns error", func() {
 				req := orgv1.DeleteOrganizationRequest{
 					Name: name,
 				}
@@ -278,21 +264,27 @@ var _ = Describe("API server", func() {
 
 	Describe("at Update request", func() {
 		When("organization exists", func() {
-			var (
-				newDisplayName string
-			)
-
 			BeforeEach(func() {
 				name = fmt.Sprintf("%d", rand.Int31())
 				displayName = fmt.Sprintf("%d", rand.Int31())
-				newDisplayName = fmt.Sprintf("%d", rand.Int31())
+				// newDisplayName = fmt.Sprintf("%d", rand.Int31())
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 
 				org := createOrganization(name, displayName, createdBy)
 				Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			})
 
-			It("update the organization", func() {
+			entries := []TableEntry{
+				Entry("should update the display name with given value", "new-display-name"),
+				Entry("should update the display name with default value", ""),
+			}
+
+			DescribeTable("", func(newDisplayName string) {
+				expectedDisplayName := newDisplayName
+				if newDisplayName == "" {
+					expectedDisplayName = name
+				}
+
 				req := orgv1.UpdateOrganizationRequest{
 					Organization: &orgv1.Organization{
 						Name:        name,
@@ -306,17 +298,18 @@ var _ = Describe("API server", func() {
 					Name: organization.NamespaceName(name),
 				}
 
-				Eventually(GetNamespace(context.TODO(), c, key), updateTimeout).Should(HaveAnnotation("presslabs.com/display-name", newDisplayName))
-			})
+				Eventually(getNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
+					HaveAnnotation("presslabs.com/display-name", expectedDisplayName))
+			}, entries...)
 		})
 
-		When("organization not exists", func() {
+		When("organization does not exists", func() {
 			BeforeEach(func() {
 				name = fmt.Sprintf("%d", rand.Int31())
 				displayName = fmt.Sprintf("%d", rand.Int31())
 			})
 
-			It("return error", func() {
+			It("should return error", func() {
 				req := orgv1.UpdateOrganizationRequest{
 					Organization: &orgv1.Organization{
 						Name:        name,
@@ -330,21 +323,18 @@ var _ = Describe("API server", func() {
 	})
 
 	Describe("at List request", func() {
-		When("organizations exist", func() {
+		When("should organizations exist", func() {
 			var (
 				orgList   []*organization.Organization
 				pageToken string
 				pageSize  int32
 				noItems   int
-				checked   []bool
-				noChecked int
 			)
 
 			BeforeEach(func() {
 				pageToken = ""
 				pageSize = int32(3)
 				noItems = 3
-				checked = make([]bool, noItems)
 				createdBy = fmt.Sprintf("%d", rand.Int31())
 
 				middleware.FakeSubject = createdBy
@@ -370,19 +360,8 @@ var _ = Describe("API server", func() {
 
 				resp, err := orgClient.ListOrganizations(context.TODO(), &req)
 				Expect(err).To(Succeed())
-				Expect(len(resp.Organizations)).To(Equal(noItems))
-
-				noChecked = 0
-				for _, org := range resp.Organizations {
-					for i, myOrg := range orgList {
-						if organization.NamespaceName(org.Name) == myOrg.Unwrap().ObjectMeta.Name && !checked[i] {
-							checked[i] = true
-							noChecked++
-							break
-						}
-					}
-				}
-				Expect(noChecked).To(Equal(noItems))
+				Expect(resp.Organizations).To(HaveLen(noItems))
+				// TODO: check pagination when it's implemented
 			})
 		})
 	})
