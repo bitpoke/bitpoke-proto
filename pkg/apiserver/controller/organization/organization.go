@@ -36,10 +36,11 @@ type organizationsService struct {
 
 // resolve resolves an fully-qualified resource name to a k8s object name
 func resolve(path string) (string, error) {
-	if !strings.HasPrefix(path, "orgs/") {
-		return "", status.InvalidArgumentf("organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
+	prefix := "orgs/"
+	if !strings.HasPrefix(path, prefix) {
+		return "", fmt.Errorf("Organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
 	}
-	name := path[5:]
+	name := path[len(prefix):]
 	if len(name) == 0 {
 		return "", status.InvalidArgumentf("organization name cannot be empty")
 	}

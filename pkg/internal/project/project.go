@@ -56,24 +56,38 @@ var (
 	GiteaSecret = component{name: "web", app: "gitea", objName: "gitea-conf"}
 )
 
+// NamespaceName returns the name of the project's namespace
+func NamespaceName(name string) string {
+	return fmt.Sprintf("proj-%s", name)
+}
+
+// UpdateDisplayName updates the display-name annotation
+func (p *Project) UpdateDisplayName(displayName string) {
+	if len(displayName) == 0 {
+		p.Namespace.ObjectMeta.Annotations["presslabs.com/display-name"] = p.Namespace.ObjectMeta.Labels["presslabs.com/project"]
+	} else {
+		p.Namespace.ObjectMeta.Annotations["presslabs.com/display-name"] = displayName
+	}
+}
+
 // New wraps a dashboardv1alpha1.Project into a Project object
 func New(obj *corev1.Namespace) *Project {
 	return &Project{obj}
 }
 
 // Unwrap returns the wrapped dashboardv1alpha1.Project object
-func (o *Project) Unwrap() *corev1.Namespace {
-	return o.Namespace
+func (p *Project) Unwrap() *corev1.Namespace {
+	return p.Namespace
 }
 
 // Labels returns default label set for dashboardv1alpha1.Project
-func (o *Project) Labels() labels.Set {
+func (p *Project) Labels() labels.Set {
 	labels := labels.Set{
-		"presslabs.com/project": o.GetLabels()["presslabs.com/project"],
+		"presslabs.com/project": p.GetLabels()["presslabs.com/project"],
 	}
 
-	if o.ObjectMeta.Labels != nil {
-		if org, ok := o.ObjectMeta.Labels["presslabs.com/organization"]; ok {
+	if p.ObjectMeta.Labels != nil {
+		if org, ok := p.ObjectMeta.Labels["presslabs.com/organization"]; ok {
 			labels["presslabs.com/organization"] = org
 		}
 	}
@@ -82,8 +96,8 @@ func (o *Project) Labels() labels.Set {
 }
 
 // ComponentLabels returns labels for a label set for a dashboardv1alpha1.Project component
-func (o *Project) ComponentLabels(component component) labels.Set {
-	labels := o.Labels()
+func (p *Project) ComponentLabels(component component) labels.Set {
+	labels := p.Labels()
 	if len(component.app) > 0 {
 		labels["app.kubernetes.io/name"] = component.app
 	}
@@ -94,24 +108,24 @@ func (o *Project) ComponentLabels(component component) labels.Set {
 }
 
 // ComponentName returns the object name for a component
-func (o *Project) ComponentName(component component) string {
+func (p *Project) ComponentName(component component) string {
 	if len(component.objNameFmt) == 0 {
 		return component.objName
 	}
-	return fmt.Sprintf(component.objNameFmt, o.GetLabels()["presslabs.com/project"])
+	return fmt.Sprintf(component.objNameFmt, p.GetLabels()["presslabs.com/project"])
 }
 
 // Domain returns the project's subdomain label
-func (o *Project) Domain() string {
-	return o.Name
+func (p *Project) Domain() string {
+	return p.Name
 }
 
 // ValidateMetadata validates the metadata of a Project
-func (o *Project) ValidateMetadata() error {
+func (p *Project) ValidateMetadata() error {
 	errorList := []error{}
 	// Check for some required Project Labels and Annotations
 	for _, label := range RequiredLabels {
-		if value, exists := o.Namespace.Labels[label]; !exists || value == "" {
+		if value, exists := p.Namespace.Labels[label]; !exists || value == "" {
 			errorList = append(errorList, fmt.Errorf("required label \"%s\" is missing", label))
 		}
 	}
@@ -122,7 +136,7 @@ func (o *Project) ValidateMetadata() error {
 	}
 
 	for _, annotation := range RequiredAnnotations {
-		if value, exists := o.Namespace.Annotations[annotation]; !exists || value == "" {
+		if value, exists := p.Namespace.Annotations[annotation]; !exists || value == "" {
 			errorList = append(errorList, fmt.Errorf("required annotation \"%s\" is missing", annotation))
 		}
 	}

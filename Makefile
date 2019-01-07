@@ -30,9 +30,9 @@ test: generate manifests
 # Run apiserver tests
 apiserver-test:
 	ginkgo \
-	--randomizeAllSpecs --randomizeSuites --failOnPending \
-	--cover --coverprofile cover.out --trace --race -v \
-	./pkg/apiserver/...
+		--randomizeAllSpecs --randomizeSuites --failOnPending \
+		--cover --coverprofile cover.out --trace --race -v \
+		./pkg/apiserver/...
 
 # Build dashboard binary
 build: generate fmt vet

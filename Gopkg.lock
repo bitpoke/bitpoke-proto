@@ -514,7 +514,10 @@
   branch = "master"
   digest = "1:0f5c7a92dce44c102b6533068b99cbb7902043a31efb6d86ea33aafa9f15545b"
   name = "github.com/presslabs/dashboard-go"
-  packages = ["pkg/proto/presslabs/dashboard/organizations/v1"]
+  packages = [
+    "pkg/proto/presslabs/dashboard/organizations/v1",
+    "pkg/proto/presslabs/dashboard/projects/v1",
+  ]
   pruneopts = "T"
   revision = "5563d9a30d194a74cabf19761ad1db921d8094b9"
 
@@ -1208,6 +1211,7 @@
     "github.com/presslabs/controller-util/rand",
     "github.com/presslabs/controller-util/syncer",
     "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1",
+    "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1",
     "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1",
     "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1",
     "github.com/spf13/cobra",

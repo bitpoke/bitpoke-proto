@@ -36,7 +36,7 @@ import (
 // APIServerOptions contains manager, GRPC address, HTTP address and AuthFunc
 // nolint: golint
 type APIServerOptions struct {
-	Manager  manager.Manager
+	manager.Manager
 	GRPCAddr string
 	HTTPAddr string
 	AuthFunc grpc_auth.AuthFunc
