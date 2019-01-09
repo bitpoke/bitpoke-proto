@@ -48,6 +48,10 @@ name="github.com/presslabs/wordpress-operator"
 version="v0.1.8"
 
 [[constraint]]
+name="github.com/presslabs/mysql-operator"
+version="v0.2.2"
+
+[[constraint]]
 name="github.com/presslabs/controller-util"
 version="v0.1.3"
 

@@ -26,22 +26,6 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
-  branch = "master"
-  digest = "1:99295e64694847d7f94117efa547ef8babca2e3a997410c1d27f315b7182b004"
-  name = "github.com/appscode/go"
-  packages = ["types"]
-  pruneopts = "T"
-  revision = "df3c57fca2bef0e5b7fd085507deb20f18c790df"
-
-[[projects]]
-  branch = "release-7.0"
-  digest = "1:b379bdba91a5feb5c138bfc327ce3fdebc2c297fc4e331a641ca397cbadf2696"
-  name = "github.com/appscode/kutil"
-  packages = ["apiextensions/v1beta1"]
-  pruneopts = "T"
-  revision = "a2c0ee076fe416eb4a35107fc8b64f9be1f2aebc"
-
-[[projects]]
   digest = "1:6d027438b6c3ca751802d0024174d079d3fb7b0811a4e86212d2edc134c60a05"
   name = "github.com/coreos/go-oidc"
   packages = ["."]
@@ -244,6 +228,14 @@
   pruneopts = "T"
   revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
   version = "v1.4.0"
+
+[[projects]]
+  digest = "1:e1aa8e520787bfd8623c7df394352be3183ef207039cfb513ba40dc00c82fa6d"
+  name = "github.com/gosimple/slug"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "42ac18c34c2c6f4843fa48167317dcaa9416d1e2"
+  version = "v1.4.2"
 
 [[projects]]
   branch = "master"
@@ -494,26 +486,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:16462feec2d37864a0f3c41294256a6a2a829ba9762ee217b63674d9c22bed9e"
+  digest = "1:0f5c7a92dce44c102b6533068b99cbb7902043a31efb6d86ea33aafa9f15545b"
   name = "github.com/presslabs/dashboard-go"
   packages = ["pkg/proto/presslabs/dashboard/organizations/v1"]
   pruneopts = "T"
-  revision = "9fdd33810355b17543344ef101d467485ae1eabe"
+  revision = "5563d9a30d194a74cabf19761ad1db921d8094b9"
 
 [[projects]]
-  digest = "1:b40cebf85f5267dd3489b4f704c4445a03678f7fb6d5efbac5ff6505f0168903"
+  digest = "1:02cb434138ce852c640634af161c47f9776cfe8c2aef94be729cedf6e6b60656"
   name = "github.com/presslabs/mysql-operator"
-  packages = [
-    "pkg/apis/mysql",
-    "pkg/apis/mysql/v1alpha1",
-    "pkg/openapi",
-    "pkg/util",
-    "pkg/util/constants",
-    "pkg/util/options",
-  ]
+  packages = ["pkg/apis/mysql/v1alpha1"]
   pruneopts = "T"
-  revision = "354f7b14d7782082b10f462ce29be6a2521df941"
-  version = "v0.1.10"
+  revision = "2a49e6d670495d46a45a7deabce881f4a5b56239"
+  version = "v0.2.2"
 
 [[projects]]
   digest = "1:484605a96550540f78d3c8bc0d66996894e83ed34e9ac06744581667e15dfd87"
@@ -524,20 +509,20 @@
   version = "v0.1.8"
 
 [[projects]]
+  branch = "master"
+  digest = "1:e6a29574542c00bb18adb1bfbe629ff88c468c2af2e2e953d3e58eda07165086"
+  name = "github.com/rainycape/unidecode"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "cb7f23ec59bec0d61b19c56cd88cee3d0cc1870c"
+
+[[projects]]
   digest = "1:6cae6970d70fc5fe75bf83c48ee33e9c4c561a62d0b033254bee8dd5942b815a"
   name = "github.com/rs/cors"
   packages = ["."]
   pruneopts = "T"
   revision = "3fb1b69b103a84de38a19c3c6ec073dd6caa4d3f"
   version = "v1.5.0"
-
-[[projects]]
-  digest = "1:e3bb58bcd5cf318d91ccdb290fd8e0e78d16add716b1ccf861fed19c1551fde0"
-  name = "github.com/sirupsen/logrus"
-  packages = ["."]
-  pruneopts = "T"
-  revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
-  version = "v1.0.6"
 
 [[projects]]
   digest = "1:7e4d5394f3d5d87eff2b1b4d8a8756bbabbe670b28db7cb3c6878d7ace89605f"
@@ -1126,6 +1111,7 @@
     "github.com/gobuffalo/packr",
     "github.com/gobuffalo/packr/packr",
     "github.com/golang/protobuf/ptypes/empty",
+    "github.com/gosimple/slug",
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",
     "github.com/imdario/mergo",
     "github.com/improbable-eng/grpc-web/go/grpcweb",

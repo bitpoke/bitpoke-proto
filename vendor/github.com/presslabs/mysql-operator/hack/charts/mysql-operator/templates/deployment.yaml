@@ -36,23 +36,21 @@ spec:
                   name: {{ template "mysql-operator.orchestrator.fullname" . }}
                   key: TOPOLOGY_PASSWORD
           args:
-            - --orchestrator-uri=http://{{ template "mysql-operator.orchestrator.fullname" . }}.{{ .Release.Namespace }}/api
             - --leader-election-namespace={{ .Release.Namespace }}
-            {{- if .Values.helperImage }}
-            - --helper-image={{ .Values.helperImage }}
+            - --orchestrator-uri=http://{{ template "mysql-operator.orchestrator.fullname" . }}.{{ .Release.Namespace }}/api
+            {{- if .Values.sidecarImage }}
+            - --helper-image={{ .Values.sidecarImage }}
             {{- end -}}
             {{- range $arg := .Values.extraArgs }}
             - {{ $arg }}
             {{- end }}
-            {{- if .Values.installCRDs }}
-            - --install-crds
-            {{- end }}
           resources:
             {{ toYaml .Values.resources | nindent 12 }}
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 80
+          # TODO: add livenessProbe to controller
+          # livenessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: 80
     {{- with .Values.nodeSelector }}
       nodeSelector:
         {{ toYaml . | nindent 8 }}

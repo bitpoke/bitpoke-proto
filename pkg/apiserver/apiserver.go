@@ -20,7 +20,6 @@ import (
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
@@ -38,7 +37,7 @@ type APIServerOptions struct {
 
 // APIServer is the API Server that contains GRPC Server, HTTP Server and client
 type APIServer struct {
-	Client     client.Client
+	Manager    manager.Manager
 	GRPCServer *grpc.Server
 	HTTPServer *http.Server
 	serverMux  *http.ServeMux
@@ -81,7 +80,7 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 	}
 
 	return &APIServer{
-		Client:     opts.Manager.GetClient(),
+		Manager:    opts.Manager,
 		GRPCServer: grpcServer,
 		HTTPServer: httpServer,
 		serverMux:  sMux,

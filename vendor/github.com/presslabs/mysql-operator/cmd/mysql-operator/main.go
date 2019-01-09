@@ -20,47 +20,81 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/golang/glog"
+	customLog "github.com/presslabs/mysql-operator/pkg/util/log"
+	"github.com/spf13/pflag"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
-	"github.com/presslabs/mysql-operator/cmd/mysql-operator/app"
-	"github.com/presslabs/mysql-operator/pkg/util/logs"
+	"github.com/presslabs/mysql-operator/pkg/apis"
+	"github.com/presslabs/mysql-operator/pkg/controller"
+	"github.com/presslabs/mysql-operator/pkg/options"
+	"github.com/presslabs/mysql-operator/pkg/util/stop"
 )
 
+var log = logf.Log.WithName("mysql-operator")
+
 func main() {
-	logs.InitLogs()
-	defer logs.FlushLogs()
-	stopCh := SetupSignalHandler()
+	fs := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
+	fs.AddGoFlagSet(flag.CommandLine)
 
-	cmd := app.NewControllerCommand(os.Stdout, os.Stderr, stopCh)
-	cmd.Flags().AddGoFlagSet(flag.CommandLine)
-	flag.CommandLine.Parse([]string{})
-	if err := cmd.Execute(); err != nil {
-		glog.Fatal(err)
+	opt := options.GetOptions()
+	opt.AddFlags(fs)
+	if err := fs.Parse(os.Args); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to parse command line args, see help, err: %s", err)
+		os.Exit(1)
 	}
-}
 
-var shutdownSignals = []os.Signal{os.Interrupt, syscall.SIGTERM}
-var onlyOneSignalHandler = make(chan struct{})
+	// for glog
+	if err := flag.Lookup("logtostderr").Value.Set("true"); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to set glog to use stderr, err: %s", err)
+	}
 
-// SetupSignalHandler registered for SIGTERM and SIGINT. A stop channel is returned
-// which is closed on one of these signals. If a second signal is caught, the program
-// is terminated with exit code 1.
-func SetupSignalHandler() (stopCh <-chan struct{}) {
-	close(onlyOneSignalHandler) // panics when called twice
+	// set logging
+	logf.SetLogger(customLog.ZapLogger())
 
-	stop := make(chan struct{})
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, shutdownSignals...)
-	go func() {
-		<-c
-		close(stop)
-		fmt.Println("Press C-c again to exit.")
-		<-c
-		os.Exit(1) // second signal. Exit directly.
-	}()
+	if err := opt.Validate(); err != nil {
+		log.Error(err, "failed to validate command line args, see help.")
+		os.Exit(1)
+	}
 
-	return stop
+	log.Info("Starting mysql-operator...")
+
+	// Get a config to talk to the apiserver
+	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Error(err, "unable to get configuration")
+		os.Exit(1)
+	}
+
+	// Create a new Cmd to provide shared dependencies and start components
+	mgr, err := manager.New(cfg, manager.Options{
+		LeaderElection:          true,
+		LeaderElectionNamespace: opt.LeaderElectionNamespace,
+		LeaderElectionID:        opt.LeaderElectionID,
+	})
+	if err != nil {
+		log.Error(err, "unable to create a new manager")
+		os.Exit(1)
+	}
+
+	// Setup Scheme for all resources
+	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "unable to register types to scheme")
+		os.Exit(1)
+	}
+
+	// Setup all Controllers
+	if err := controller.AddToManager(mgr); err != nil {
+		log.Error(err, "unable to setup controllers")
+		os.Exit(1)
+	}
+
+	// Start the Cmd
+	if err := mgr.Start(stop.Channel); err != nil {
+		log.Error(err, "unable to start the manager")
+		os.Exit(1)
+	}
 }

@@ -3,9 +3,9 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-image: quay.io/presslabs/mysql-operator:v0.1.10
+image: quay.io/presslabs/mysql-operator:latest
 imagePullPolicy: IfNotPresent
-helperImage: quay.io/presslabs/mysql-helper:v0.1.10
+sidecarImage: quay.io/presslabs/mysql-operator-sidecar:latest
 
 installCRDs: true
 
@@ -30,6 +30,7 @@ rbac:
   serviceAccountName: default
 
 orchestrator:
+  replicas: 1
   orchestratorConf:
     # the operator is handling the registries, do not auto discover
     DiscoverByShowSlaveHosts: false

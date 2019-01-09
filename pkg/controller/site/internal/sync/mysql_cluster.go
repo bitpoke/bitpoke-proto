@@ -91,10 +91,6 @@ func NewMysqlClusterSyncer(wp *site.Site, cl client.Client, scheme *runtime.Sche
 			},
 		}
 
-		if out.Spec.Replicas == 0 {
-			out.Spec.Replicas = 1
-		}
-
 		if len(out.Spec.VolumeSpec.PersistentVolumeClaimSpec.Resources.Requests) == 0 {
 			out.Spec.VolumeSpec.PersistentVolumeClaimSpec.Resources.Requests = make(map[corev1.ResourceName]resource.Quantity)
 		}

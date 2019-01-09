@@ -10,11 +10,14 @@ package organization
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
+	"github.com/gosimple/slug"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
@@ -29,14 +32,69 @@ type organizationsService struct {
 	client client.Client
 }
 
+// resolves an fully-qualified resource name to a k8s object name
+func resolve(path string) (string, error) {
+	if !strings.HasPrefix(path, "orgs/") {
+		return "", fmt.Errorf("Organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
+	}
+	name := path[5:]
+	if len(name) == 0 {
+		return "", fmt.Errorf("Organization name cannot be empty")
+	}
+	return name, nil
+}
+
 // Add creates a new Organization Controller and adds it to the API Server
 func Add(server *apiserver.APIServer) error {
-	RegisterOrganizationsServiceServer(server.GRPCServer, NewOrganizationsServiceServer(server.Client))
+	RegisterOrganizationsServiceServer(server.GRPCServer, NewOrganizationsServiceServer(server.Manager.GetClient()))
+
+	err := server.Manager.GetFieldIndexer().IndexField(&rbacv1.ClusterRoleBinding{}, "subject.user", func(in runtime.Object) []string {
+		crb := in.(*rbacv1.ClusterRoleBinding)
+		var users []string
+		for _, sub := range crb.Subjects {
+			if sub.APIGroup == "rbac.authorization.k8s.io" && sub.Kind == "User" {
+				users = append(users, sub.Name)
+			}
+		}
+		return users
+	})
+	if err != nil {
+		return err
+	}
+
+	err = server.Manager.GetFieldIndexer().IndexField(&rbacv1.RoleBinding{}, "subject.user", func(in runtime.Object) []string {
+		rb := in.(*rbacv1.RoleBinding)
+		var users []string
+		for _, sub := range rb.Subjects {
+			if sub.APIGroup == "rbac.authorization.k8s.io" && sub.Kind == "User" {
+				users = append(users, sub.Name)
+			}
+		}
+		return users
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (s *organizationsService) CreateOrganization(ctx context.Context, r *CreateOrganizationRequest) (*Organization, error) {
 	cl := ctx.Value(middleware.AuthTokenContextKey)
+	var name string
+	var err error
+	if len(r.Organization.Name) > 0 {
+		if name, err = resolve(r.Organization.Name); err != nil {
+			return nil, status.Error(err)
+		}
+	} else {
+		name = slug.Make(r.Organization.DisplayName)
+	}
+
+	if len(name) == 0 {
+		return nil, status.Error(fmt.Errorf("You should provide a name for the organization"))
+	}
+
 	if cl == nil {
 		return nil, fmt.Errorf("No auth-token value in context")
 	}
@@ -44,10 +102,10 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 
 	org := organization.New(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: organization.NamespaceName(r.Organization.Name),
+			Name: organization.NamespaceName(name),
 			Labels: map[string]string{
 				"presslabs.com/kind":         "organization",
-				"presslabs.com/organization": r.Organization.Name,
+				"presslabs.com/organization": name,
 			},
 			Annotations: map[string]string{
 				"presslabs.com/created-by": createdBy,
@@ -65,8 +123,13 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 
 func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrganizationRequest) (*Organization, error) {
 	var org corev1.Namespace
+	name, err := resolve(r.Name)
+	if err != nil {
+		return nil, status.Error(err)
+	}
+
 	key := client.ObjectKey{
-		Name: organization.NamespaceName(r.Name),
+		Name: organization.NamespaceName(name),
 	}
 
 	if err := s.client.Get(ctx, key, &org); err != nil {
@@ -78,8 +141,13 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrgani
 
 func (s *organizationsService) UpdateOrganization(ctx context.Context, r *UpdateOrganizationRequest) (*Organization, error) {
 	var org corev1.Namespace
+	name, err := resolve(r.Organization.Name)
+	if err != nil {
+		return nil, status.Error(err)
+	}
+
 	key := client.ObjectKey{
-		Name: organization.NamespaceName(r.Organization.Name),
+		Name: organization.NamespaceName(name),
 	}
 
 	if err := s.client.Get(ctx, key, &org); err != nil {
@@ -97,8 +165,13 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *Update
 
 func (s *organizationsService) DeleteOrganization(ctx context.Context, r *DeleteOrganizationRequest) (*empty.Empty, error) {
 	var org corev1.Namespace
+	name, err := resolve(r.Name)
+	if err != nil {
+		return nil, status.Error(err)
+	}
+
 	key := client.ObjectKey{
-		Name: organization.NamespaceName(r.Name),
+		Name: organization.NamespaceName(name),
 	}
 
 	if err := s.client.Get(ctx, key, &org); err != nil {
@@ -117,29 +190,37 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrg
 	if cl == nil {
 		return nil, fmt.Errorf("No auth-token value in context")
 	}
-	createdBy := cl.(middleware.Claims).Subject
+	userID := cl.(middleware.Claims).Subject
 
-	orgs := &corev1.NamespaceList{}
-	resp := &ListOrganizationsResponse{}
-
-	listOptions := &client.ListOptions{
-		LabelSelector: labels.SelectorFromSet(
-			labels.Set{
-				"presslabs.com/kind": "organization",
-			},
-		),
+	memberLists := &rbacv1.RoleBindingList{}
+	opts := client.MatchingField("subject.user", userID)
+	if err := s.client.List(context.TODO(), opts, memberLists); err != nil {
+		return nil, status.Error(err)
 	}
 
-	if err := s.client.List(context.TODO(), listOptions, orgs); err != nil {
+	var orgNames []string
+	for _, list := range memberLists.Items {
+		if list.Name == "members" && len(list.Labels) > 0 && len(list.Labels["presslabs.com/organization"]) > 0 {
+			orgNames = append(orgNames, list.Labels["presslabs.com/organization"])
+		}
+	}
+
+	orgs := &corev1.NamespaceList{}
+	opts = &client.ListOptions{}
+	err := opts.SetLabelSelector(fmt.Sprintf("presslabs.com/kind=organization, presslabs.com/organization in (%s)", strings.Join(orgNames, ", ")))
+	if err != nil {
+		return nil, status.Error(err)
+	}
+	resp := &ListOrganizationsResponse{}
+
+	if err := s.client.List(context.TODO(), opts, orgs); err != nil {
 		return nil, status.Error(err)
 	}
 
 	// TODO: implement pagination
 	resp.Organizations = []*Organization{} //make([]*Organization, len(orgs.Items))
 	for i := range orgs.Items {
-		if orgs.Items[i].ObjectMeta.Annotations["presslabs.com/created-by"] == createdBy {
-			resp.Organizations = append(resp.Organizations, newOrganizationFromK8s(organization.New(&orgs.Items[i])))
-		}
+		resp.Organizations = append(resp.Organizations, newOrganizationFromK8s(organization.New(&orgs.Items[i])))
 	}
 
 	return resp, nil
@@ -154,7 +235,7 @@ func NewOrganizationsServiceServer(client client.Client) OrganizationsServiceSer
 
 func newOrganizationFromK8s(o *organization.Organization) *Organization {
 	return &Organization{
-		Name:        o.Namespace.ObjectMeta.Labels["presslabs.com/organization"],
+		Name:        fmt.Sprintf("orgs/%s", o.Namespace.ObjectMeta.Labels["presslabs.com/organization"]),
 		DisplayName: o.Annotations["presslabs.com/display-name"],
 	}
 }

@@ -1,144 +1,111 @@
-PACKAGE_NAME := github.com/presslabs/mysql-operator
+APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
 REGISTRY := quay.io/presslabs
-IMAGE_TAGS := canary
+IMAGE_NAME := mysql-operator
+SIDECAR_IMAGE_NAME := mysql-operator-sidecar
 BUILD_TAG := build
+IMAGE_TAGS := $(APP_VERSION)
 
-SRCDIRS  := cmd pkg
-PACKAGES := $(shell go list ./... | grep -v /vendor)
-GOFILES  := $(shell find $(SRCDIRS) -name '*.go' -type f | grep -v '_test.go')
+BINDIR := $(PWD)/bin
+KUBEBUILDER_VERSION ?= 1.0.5
+HELM_VERSION ?= 2.11.0
 
-ifeq ($(APP_VERSION),)
-APP_VERSION := $(shell git describe --abbrev=7 --dirty --tags --always)
-endif
-
-GIT_COMMIT ?= $(shell git rev-parse HEAD)
-
-ifeq ($(shell git status --porcelain),)
-	GIT_STATE ?= clean
-else
-	GIT_STATE ?= dirty
-endif
-
-HACK_DIR ?= hack
-GOPATH ?= $(HOME)/go
-GOBIN :=${GOPATH}/bin
 GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH ?= amd64
-GOFLAGS := -ldflags "-X $(PACKAGE_NAME)/pkg/util.AppGitState=${GIT_STATE} -X $(PACKAGE_NAME)/pkg/util.AppGitCommit=${GIT_COMMIT} -X $(PACKAGE_NAME)/pkg/util.AppVersion=${APP_VERSION}"
 
-# Get a list of all binaries to be built
-CMDS     := $(shell find ./cmd/ -maxdepth 1 -type d -exec basename {} \; | grep -v cmd)
-BIN_CMDS := $(patsubst %, bin/%_$(GOOS)_$(GOARCH), $(CMDS))
-DOCKER_BIN_CMDS := $(patsubst %, $(HACK_DIR)/docker/%/%, $(CMDS))
+PATH := $(BINDIR):$(PATH)
+SHELL := env PATH=$(PATH) /bin/sh
 
-DOCKER_IMAGES := mysql-operator mysql-helper
+all: test build
 
-.DEFAULT_GOAL := bin/mysql-operator_$(GOOS)_$(GOARCH)
+# Run tests
+test: generate fmt vet manifests
+	ginkgo --randomizeAllSpecs --randomizeSuites --failOnPending \
+			--cover --coverprofile cover.out --trace --race --progress  $(TEST_ARGS)\
+			./pkg/... ./cmd/...
 
-# Code building targets
-#######################
-.PHONY: build
-build: $(BIN_CMDS)
+# Build mysql-operator binary
+build: generate fmt vet
+	go build -o bin/mysql-operator github.com/presslabs/mysql-operator/cmd/mysql-operator
+	go build -o bin/mysql-operator-sidecar github.com/presslabs/mysql-operator/cmd/mysql-operator-sidecar
 
-bin/%: $(GOFILES) Makefile
-	CGO_ENABLED=0 \
-	GOOS=$(shell echo "$*" | cut -d'_' -f2) \
-	GOARCH=$(shell echo "$*" | cut -d'_' -f3) \
-		go build $(GOFLAGS) \
-			-v -o $@ cmd/$(shell echo "$*" | cut -d'_' -f1)/main.go
+# Run against the configured Kubernetes cluster in ~/.kube/config
+run: generate fmt vet
+	go run ./cmd/mysql-operator/main.go
 
-# Testing targets
-#################
-.PHONY: test
-test:
-	go test -v \
-	    -race \
-		$$(go list ./... | \
-			grep -v '/vendor/' | \
-			grep -v '/test/e2e' | \
-			grep -v '/pkg/generated/' | \
-			grep -v '/pkg/client' \
-		)
+# Install CRDs into a cluster
+install: manifests
+	kubectl apply -f config/crds
 
-.PHONY: full-test
-full-test: generate_verify test
+# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
+deploy: manifests
+	kubectl apply -f config/crds
 
-.PHONY: lint
+# Generate manifests e.g. CRD, RBAC etc.
+manifests:
+	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
+	cd hack && ./generate_chart_manifests.sh
+
+# Run go fmt against code
+fmt:
+	go fmt ./pkg/... ./cmd/...
+
+# Run go vet against code
+vet:
+	go vet ./pkg/... ./cmd/...
+
+# Generate code
+generate:
+	go generate ./pkg/... ./cmd/...
+
 lint:
-	@set -e; \
-	GO_FMT=$$(git ls-files *.go | grep -v 'vendor/' | xargs gofmt -d); \
-	if [ -n "$${GO_FMT}" ] ; then \
-		echo "Please run go fmt"; \
-		echo "$$GO_FMT"; \
-		exit 1; \
-	fi
+	$(BINDIR)/golangci-lint run ./pkg/... ./cmd/...
 
-# Cleanup targets
-#################
-.PHONY: clean
-clean:
-	rm -rf bin/*
+.PHONY: chart
+chart: generate manifests
+	cd hack && ./generate_chart.sh $(APP_VERSION)
 
-# Docker image targets
-######################
-.PHONY: install-docker
-install-docker : $(patsubst %, bin/%_linux_amd64, $(CMDS))
-	set -e;
-		for cmd in $(DOCKER_IMAGES); do \
-			install -m 755 bin/$${cmd}_linux_amd64 $(HACK_DIR)/docker/$${cmd}/$${cmd} ; \
-		done
+dependencies:
+	test -d $(BINDIR) || mkdir $(BINDIR)
+	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
 
+# Build the docker image
 .PHONY: images
-images: install-docker
-	set -e;
-	for cmd in $(DOCKER_IMAGES); do \
-		docker build \
-			--build-arg VCS_REF=$(GIT_COMMIT) \
-			--build-arg APP_VERSION=$(APP_VERSION) \
-			-t $(REGISTRY)/$${cmd}:$(BUILD_TAG) \
-			-f $(HACK_DIR)/docker/$${cmd}/Dockerfile $(HACK_DIR)/docker/$${cmd} ; \
+images:
+	docker build . -f Dockerfile -t $(REGISTRY)/$(IMAGE_NAME):$(BUILD_TAG)
+	docker build . -f Dockerfile.sidecar -t $(REGISTRY)/$(SIDECAR_IMAGE_NAME):$(BUILD_TAG)
+	set -e; \
+		for tag in $(IMAGE_TAGS); do \
+			docker tag $(REGISTRY)/$(IMAGE_NAME):$(BUILD_TAG) $(REGISTRY)/$(IMAGE_NAME):$${tag}; \
+			docker tag $(REGISTRY)/$(SIDECAR_IMAGE_NAME):$(BUILD_TAG) $(REGISTRY)/$(SIDECAR_IMAGE_NAME):$${tag}; \
 	done
 
+# Push the docker image
+.PHONY: publish
 publish: images
 	set -e; \
-	for cmd in $(DOCKER_IMAGES); do \
 		for tag in $(IMAGE_TAGS); do \
-			docker tag $(REGISTRY)/$${cmd}:$(BUILD_TAG) $(REGISTRY)/$${cmd}:$${tag}; \
-			docker push $(REGISTRY)/$${cmd}:$${tag}; \
-		done ; \
+		docker push $(REGISTRY)/$(IMAGE_NAME):$${tag}; \
+		docker push $(REGISTRY)/$(SIDECAR_IMAGE_NAME):$${tag}; \
 	done
 
+# E2E tests
+###########
 
-# CRD generator
-###############
-CHART_TEMPLATE_PATH := deploy/
-CRDS := mysqlclusters.mysql.presslabs.org mysqlbackups.mysql.presslabs.org
-GROUP_NAME := mysql.presslabs.org
+KUBECONFIG ?= ~/.kube/config
+K8S_CONTEXT ?= minikube
 
-CRD_GEN_FILES := $(addprefix $(CHART_TEMPLATE_PATH),$(addsuffix .yaml,$(CRDS)))
+e2e-local: images
+	go test ./test/e2e -v $(G_ARGS) -timeout 20m --pod-wait-timeout 60 \
+		-ginkgo.slowSpecThreshold 300 \
+		--kubernetes-config $(KUBECONFIG) --kubernetes-context $(K8S_CONTEXT) \
+		--report-dir ../../e2e-reports
 
-$(CRD_GEN_FILES):
-	bin/gen-crds-yaml_$(GOOS)_$(GOARCH) --crd $(basename $(notdir $@)) > $(@:.$(GROUP_NAME).yaml=.yaml)
-
-.PHONY: gen-crds gen-crds-verify gen-crds-clean
-gen-crds: gen-crds-clean $(CRD_GEN_FILES)
-
-gen-crds-verify: SHELL := /bin/bash
-gen-crds-verify: $(addsuffix -verify,$(CRD_GEN_FILES))
-	@echo "Verifying generated CRDs"
-
-$(addsuffix -verify,$(CRD_GEN_FILES)): bin/gen-crds-yaml_$(GOOS)_$(GOARCH)
-	$(eval FILE := $(subst -verify,,$@))
-	$(eval CRD := $(basename $(notdir $@)))
-	diff -Naupr $(FILE:.$(GROUP_NAME).yaml=.yaml) <(bin/gen-crds-yaml_$(GOOS)_$(GOARCH) --crd $(CRD))
-
-gen-crds-clean:
-	rm -f $(CRD_GEN_FILES)
-
-
-# Code generation targets
-#########################
-CODEGEN_APIS_VERSIONS := mysql:v1alpha1
-CODEGEN_TOOLS := deepcopy client lister informer openapi
-CODEGEN_OUTPUT_PKG := $(PACKAGE_NAME)/pkg/generated
-include hack/codegen.mk
+E2E_IMG_TAG ?= latest
+e2e-remote:
+	go test ./test/e2e -v $(G_ARGS) -timeout 50m --pod-wait-timeout 200 \
+		-ginkgo.slowSpecThreshold 300 \
+		--kubernetes-config $(KUBECONFIG) --kubernetes-context $(K8S_CONTEXT) \
+		--report-dir ../../e2e-reports \
+		--operator-image quay.io/presslabs/mysql-operator:$(E2E_IMG_TAG) \
+		--sidecar-image  quay.io/presslabs/mysql-operator-sidecar:$(E2E_IMG_TAG)

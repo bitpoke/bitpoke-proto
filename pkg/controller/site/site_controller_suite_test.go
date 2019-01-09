@@ -46,7 +46,7 @@ var _ = BeforeSuite(func() {
 			filepath.Join("..", "..", "..", "config", "crds"),
 			filepath.Join("..", "..", "..", "vendor/github.com/coreos/prometheus-operator/example/prometheus-operator-crd"),
 			filepath.Join("..", "..", "..", "vendor/github.com/presslabs/wordpress-operator/config/crds"),
-			filepath.Join("..", "..", "..", "vendor/github.com/presslabs/mysql-operator/deploy"),
+			filepath.Join("..", "..", "..", "vendor/github.com/presslabs/mysql-operator/config/crds"),
 		},
 	}
 	apis.AddToScheme(scheme.Scheme)

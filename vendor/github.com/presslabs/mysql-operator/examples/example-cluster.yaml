@@ -1,18 +1,23 @@
 apiVersion: mysql.presslabs.org/v1alpha1
 kind: MysqlCluster
 metadata:
-  name: foo
+  name: my-cluster
 spec:
-  replicas: 1
-  secretName: the-secret
+  replicas: 2
+  secretName: my-secret
   # mysqlVersion: 5.7
   # initBucketUri: gs://bucket_name/backup.xtrabackup.gz
   # initBucketSecretName:
+
+  ## PodDisruptionBudget
+  # minAvailable: 1
 
   ## For recurrent backups set backupSchedule with a cronjob expression
   # backupSchedule:
   # backupUri: s3://bucket_name/
   # backupSecretName:
+  # backupScheduleJobsHistoryLimit:
+
 
   ## Configs that will be added to my.cnf for cluster
   # mysqlConf:
