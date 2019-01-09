@@ -1,0 +1,26 @@
+workspace:
+  base: /root/go
+  path: src/github.com/presslabs/dashboard
+
+clone:
+  git:
+    image: plugins/git
+    depth: 100
+    tags: true
+
+pipeline:
+  dependencies:
+    pull: true
+    image: quay.io/presslabs/bfc:latest
+    commands:
+      - make dependencies
+
+  lint:
+    image: quay.io/presslabs/bfc:latest
+    commands:
+      - make lint
+
+  build:
+    image: quay.io/presslabs/bfc:latest
+    commands:
+      - make build
