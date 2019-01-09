@@ -13,6 +13,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/builder"
 )
 
+// +kubebuilder:webhook:groups=,versions=v1,resources=namespaces,verbs=create
+// +kubebuilder:webhook:name=validating-create-organization.presslabs.com
+// +kubebuilder:webhook:path=/validating-create-organization
+// +kubebuilder:webhook:type=validating,failure-policy=fail
 func init() {
 	builderName := "validating-create-organization"
 	Builders[builderName] = builder.

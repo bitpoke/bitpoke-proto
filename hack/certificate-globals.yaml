@@ -1,0 +1,4 @@
+{{- $domain := include "dashboard.name" . }}
+{{- $ca := genCA "dashboard-webhook-ca" 365 -}}
+{{- $cert := genSignedCert $domain nil nil 365 $ca -}}
+

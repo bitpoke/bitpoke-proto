@@ -30,14 +30,12 @@ spec:
           args:
             - controller-manager
             - --webhook-port={{ .Values.webhook.service.port }}
-            - --webhook-cert-dir={{ include "dashboard.webhook.certDir" . | quote}}
+            - --webhook-cert-dir={{ include "dashboard.webhook.certDir" . }}
             - --webhook-disable-bootstrapping=true
-          env:
-            - name: VALIDATING_WEBHOOK_SERVICE_NAME
-              value: {{ include "dashboard.webhook.serviceName" . | quote}}
+            - --webhook-service-name={{ include "dashboard.webhook.serviceName" . | quote}}
           volumeMount:
             - name: webhook-certs
-              mountPath: {{ include "dashboard.webhook.certDir" . | quote}}
+              mountPath: {{ include "dashboard.webhook.certDir" . }}
           # livenessProbe:
           #   httpGet:
           #     path: /
@@ -47,20 +45,20 @@ spec:
           #     path: /
           #     port: http
           resources:
-{{ toYaml .Values.resources | indent 12 }}
+            {{ toYaml .Values.resources | nindent 12 }}
       volumes:
         - name: webhook-certs
           secret:
             secretName: {{ include "dashboard.webhook.secretName" . | quote}}
     {{- with .Values.nodeSelector }}
       nodeSelector:
-{{ toYaml . | indent 8 }}
+        {{ toYaml . | nindent 8 }}
     {{- end }}
     {{- with .Values.affinity }}
       affinity:
-{{ toYaml . | indent 8 }}
+        {{ toYaml . | nindent 8 }}
     {{- end }}
     {{- with .Values.tolerations }}
       tolerations:
-{{ toYaml . | indent 8 }}
+        {{ toYaml . | nindent 8 }}
     {{- end }}

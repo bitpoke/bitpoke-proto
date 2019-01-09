@@ -30,3 +30,5 @@ protoc.zip
 **/charts/*.tgz
 
 **/node_modules
+
+k8s-webhook-server/

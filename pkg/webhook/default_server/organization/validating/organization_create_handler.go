@@ -61,14 +61,6 @@ func (h *NamespaceCreateHandler) Handle(ctx context.Context, req types.Request) 
 	return admission.ValidationResponse(allowed, reason)
 }
 
-//var _ inject.Client = &NamespaceCreateHandler{}
-//
-//// InjectClient injects the client into the NamespaceCreateHandler
-//func (h *NamespaceCreateHandler) InjectClient(c client.Client) error {
-//	h.Client = c
-//	return nil
-//}
-
 var _ inject.Decoder = &NamespaceCreateHandler{}
 
 // InjectDecoder injects the decoder into the NamespaceCreateHandler

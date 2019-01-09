@@ -45,7 +45,8 @@ manifests:
 	yq w -d'*' -i $(CHARTDIR)/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
 	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml metadata.creationTimestamp
 	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml status metadata.creationTimestamp
-	echo '{{- if .Values.crd.install }}' > $(CHARTDIR)/templates/crds.yaml
+	cat hack/generated-by-makefile.yaml > $(CHARTDIR)/templates/crds.yaml
+	echo '{{- if .Values.crd.install }}' >> $(CHARTDIR)/templates/crds.yaml
 	cat $(CHARTDIR)/templates/_crds.yaml >> $(CHARTDIR)/templates/crds.yaml
 	echo '{{- end }}' >> $(CHARTDIR)/templates/crds.yaml
 	rm $(CHARTDIR)/templates/_crds.yaml
@@ -54,10 +55,48 @@ manifests:
 	yq m -d'*' -i $(CHARTDIR)/templates/_rbac.yaml hack/chart-metadata.yaml
 	yq d -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.creationTimestamp
 	yq w -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.name '{{ template "dashboard.fullname" . }}-controller'
-	echo '{{- if .Values.rbac.create }}' > $(CHARTDIR)/templates/controller-clusterrole.yaml
+	cat hack/generated-by-makefile.yaml > $(CHARTDIR)/templates/controller-clusterrole.yaml
+	echo '{{- if .Values.rbac.create }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
 	cat $(CHARTDIR)/templates/_rbac.yaml >> $(CHARTDIR)/templates/controller-clusterrole.yaml
 	echo '{{- end }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
 	rm $(CHARTDIR)/templates/_rbac.yaml
+	# Webhooks
+	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go webhook
+	cp config/webhook/webhook.yaml chart/dashboard/templates/webhook.yaml
+	yq m -d'*' -i $(CHARTDIR)/templates/webhook.yaml hack/chart-metadata.yaml
+	yq d -d'*' -i $(CHARTDIR)/templates/webhook.yaml metadata.creationTimestamp
+	#   secret
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml 'data[ca-cert.pem]' '{{ $$ca.Cert | b64enc | quote }}'
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml 'data[key.pem]' '{{ $$cert.Cert | b64enc | quote }}'
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml 'data[cert.pem]' '{{ $$cert.Key | b64enc | quote }}'
+	yq d -d0 -i $(CHARTDIR)/templates/webhook.yaml 'data[ca-key.pem]'
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml metadata.name '{{ include "dashboard.webhook.secretName" . }}'
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml metadata.namespace '{{ .Release.Namespace }}'
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml 'metadata.annotations[helm.sh/hook]' pre-install
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml 'metadata.annotations[helm.sh/hook-delete-policy]' before-hook-creation
+	#   service
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml metadata.name '{{ include "dashboard.fullname" . }}-webhook'
+	yq d -d1 -i $(CHARTDIR)/templates/webhook.yaml metadata.namespace '{{ .Release.Namespace }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml spec.type '{{ .Values.webhook.service.type }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml spec.type '{{ .Values.webhook.service.type }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml 'spec.ports[0].port' '{{ .Values.webhook.service.port }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml 'spec.ports[0].targetPort' http
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml 'spec.ports[0].protocol' TCP
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml 'spec.ports[0].name' http
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml spec.selector.app '{{ include "dashboard.name" . }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml spec.selector.release '{{ .Release.Name }}'
+	#   configurations
+	number=0 ; while [ "$$(yq r -d2 config/webhook/webhook.yaml webhooks[$$number])" != "null" ] ; do \
+		yq w -d2 -i $(CHARTDIR)/templates/webhook.yaml webhooks[$$number].clientConfig.caBundle '{{ $$ca.Cert | b64enc | quote }}' ;\
+		yq w -d2 -i $(CHARTDIR)/templates/webhook.yaml webhooks[$$number].clientConfig.service.name '{{ include "dashboard.fullname" . }}-webhook' ;\
+		yq w -d2 -i $(CHARTDIR)/templates/webhook.yaml webhooks[$$number].clientConfig.service.namespace '{{ .Release.Namespace }}' ;\
+		number=`expr $$number + 1` ; \
+	done
+	cat hack/generated-by-makefile.yaml \
+		hack/certificate-globals.yaml \
+		chart/dashboard/templates/webhook.yaml \
+		> chart/dashboard/templates/_webhook.yaml
+	mv chart/dashboard/templates/_webhook.yaml chart/dashboard/templates/webhook.yaml
 
 .PHONY: chart
 chart:

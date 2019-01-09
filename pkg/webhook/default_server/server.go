@@ -30,6 +30,11 @@ var (
 )
 
 // Add adds itself to the manager
+// +kubebuilder:webhook:port=7890,cert-dir=/path/to/cert
+// +kubebuilder:webhook:service=test-system:webhook-service,selector=app:webhook-server
+// +kubebuilder:webhook:secret=test-system:webhook-secret
+// +kubebuilder:webhook:mutating-webhook-config-name=mutating-webhook-configuration
+// +kubebuilder:webhook:validating-webhook-config-name=validating-webhook-configuration
 func Add(mgr manager.Manager) error {
 	selectors, err := labels.ConvertSelectorToLabelsMap(options.WebhookServiceSelector)
 	if err != nil {
