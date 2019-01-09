@@ -21,9 +21,6 @@ run:
 build:
 	NODE_ENV=$(NODE_ENV) $(REACT) build
 
-generate:
-	$(MAKE) -C ../proto
-
 test:
 	# NODE_ENV=$(NODE_ENV) $(REACT) test --env=jsdom
 

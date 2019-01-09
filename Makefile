@@ -82,7 +82,6 @@ vet:
 # Generate code
 generate:
 	go generate ./pkg/... ./cmd/...
-	$(MAKE) -C proto build
 
 # Build the docker image
 .PHONY: images
@@ -112,4 +111,3 @@ dependencies:
 	GOBIN=$(BINDIR) go install ./vendor/github.com/gobuffalo/packr/packr
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
 	$(MAKE) -C app dependencies
-	$(MAKE) -C proto dependencies

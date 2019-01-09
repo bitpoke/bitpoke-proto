@@ -20,7 +20,7 @@ import (
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	// nolint: golint
-	. "github.com/presslabs/dashboard/pkg/api/organizations/v1"
+	. "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 )

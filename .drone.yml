@@ -19,13 +19,11 @@ pipeline:
     image: quay.io/presslabs/bfc:latest
     commands:
       - make fmt generate manifests
-      - make -C app generate
       - git diff --exit-code
 
   lint:
     image: quay.io/presslabs/bfc:latest
     commands:
-      - make -C proto lint
       - make -C app lint
       - make lint
       - helm lint chart/dashboard

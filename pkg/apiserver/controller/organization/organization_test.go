@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	// logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
-	orgv1 "github.com/presslabs/dashboard/pkg/api/organizations/v1"
+	orgv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
