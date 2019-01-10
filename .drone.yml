@@ -1,6 +1,8 @@
+branches: master
+
 workspace:
   base: /root/go
-  path: src/github.com/presslabs/dashboard
+  path: src/github.com/${DRONE_REPO}
 
 clone:
   git:
@@ -24,3 +26,51 @@ pipeline:
     image: quay.io/presslabs/bfc:latest
     commands:
       - make build
+
+  publish-go:
+    group: publish
+    image: quay.io/presslabs/bfc:latest
+    environment:
+      - SRC_DIR=/root/go/src/github.com/${DRONE_REPO}/build/go
+      - REPO_URL=https://github.com/presslabs/dashboard-go
+      - CLONE_DIR=/root/go/src/github.com/presslabs/dashboard-go
+      - DEST_DIR=pkg/proto
+    commands:
+      - git config --global user.name "Igor Debot"
+      - git config --global user.email "bot@presslabs.com"
+      - git clone "$REPO_URL" "$CLONE_DIR"
+      - rm -rf "$CLONE_DIR/$DEST_DIR" && mkdir -p "$CLONE_DIR/$DEST_DIR"
+      - cd "$CLONE_DIR" && cp -a $SRC_DIR/* $DEST_DIR
+      - if [ -n "$(git status -s)" ] ; then
+          git add pkg/proto ;
+          git commit --author "${DRONE_COMMIT_AUTHOR} <${DRONE_COMMIT_AUTHOR_EMAIL}>"
+            -m "Updated generated files to ${DRONE_REPO}@${DRONE_COMMIT_SHA:0:8}" ;
+          git push ;
+        fi
+    when:
+      branch: master
+      event: push
+
+  publish-js:
+    group: publish
+    image: quay.io/presslabs/bfc:latest
+    environment:
+      - SRC_DIR=/root/go/src/github.com/${DRONE_REPO}/build/js
+      - REPO_URL=https://github.com/presslabs/dashboard-js
+      - CLONE_DIR=/root/go/src/github.com/presslabs/dashboard-js
+      - DEST_DIR=lib/proto
+    commands:
+      - git config --global user.name "Igor Debot"
+      - git config --global user.email "bot@presslabs.com"
+      - git clone "$REPO_URL" "$CLONE_DIR"
+      - rm -rf "$CLONE_DIR/$DEST_DIR" && mkdir -p "$CLONE_DIR/$DEST_DIR"
+      - cd "$CLONE_DIR" && cp -a $SRC_DIR/* $DEST_DIR
+      - if [ -n "$(git status -s)" ] ; then
+          git add pkg/proto ;
+          git commit --author "${DRONE_COMMIT_AUTHOR} <${DRONE_COMMIT_AUTHOR_EMAIL}>"
+            -m "Updated generated files to ${DRONE_REPO}@${DRONE_COMMIT_SHA:0:8}" ;
+          git push ;
+        fi
+    when:
+      branch: master
+      event: push
