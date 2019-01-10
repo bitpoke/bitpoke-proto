@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package presslabs.dashboard.projects.v1;
+
+option go_package = "v1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+
+// Projects represents an project within the presslabs dashboard
+// context
+message Project {
+  // The fully qualified project name in the form proj/{project_name}.
+  // The `project_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  // The name is read-only
+  string name = 1;
+  // The display_name for the project
+  string display_name = 2;
+  // The organization name. The organization is immutable.
+  // This field is read-only
+  string organization = 3;
+}
+
+message GetProjectRequest {
+  // The resource name of the project to fetch in the form proj/{project_name}
+  // The `project_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1;
+}
+
+message ListProjectsRequest {
+  // The maximum number of items to return.
+  int32 page_size = 1;
+  // The next_page_token value returned from a previous List request, if
+  // any.
+  string page_token = 2;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1;
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message CreateProjectRequest {
+  // The parent resource name where the project is to be created
+  // The parent is a required parameter
+  string parent = 1;
+  // The project name to assign
+  string project_id = 2;
+  // The project resource to create
+  Project project = 3;
+}
+
+message UpdateProjectRequest {
+  // The new definition of the Folder. It must include
+  // a `name` , `organization` and `display_name` field. 
+  // The other fields will be ignored.
+  Project project = 1;
+  // Fields to be updated.
+  // Only the `display_name` can be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message DeleteProjectRequest {
+  // The resource name of the project to delete in the form projs/{project_name}
+  // The `project_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1;
+}
+
+// ProjectsService allow managingprojects 
+service ProjectsService {
+  // CreateProject creates a new project 
+  rpc CreateProject(CreateProjectRequest) returns (Project);
+  // GetProject fetches an project by it's name
+  rpc GetProject(GetProjectRequest) returns (Project);
+  // UpdateProject updates an project details
+  rpc UpdateProject(UpdateProjectRequest) returns (Project);
+  // DeleteProject deletes an project by it's name
+  rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty);
+  // ListProjects list projects
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+}
