@@ -42,7 +42,7 @@ pipeline:
       - rm -rf "$CLONE_DIR/$DEST_DIR" && mkdir -p "$CLONE_DIR/$DEST_DIR"
       - cd "$CLONE_DIR" && cp -a $SRC_DIR/* $DEST_DIR
       - if [ -n "$(git status -s)" ] ; then
-          git add pkg/proto ;
+          git add "$DEST_DIR" ;
           git commit --author "${DRONE_COMMIT_AUTHOR} <${DRONE_COMMIT_AUTHOR_EMAIL}>"
             -m "Updated generated files to ${DRONE_REPO}@${DRONE_COMMIT_SHA:0:8}" ;
           git push ;
@@ -66,7 +66,7 @@ pipeline:
       - rm -rf "$CLONE_DIR/$DEST_DIR" && mkdir -p "$CLONE_DIR/$DEST_DIR"
       - cd "$CLONE_DIR" && cp -a $SRC_DIR/* $DEST_DIR
       - if [ -n "$(git status -s)" ] ; then
-          git add pkg/proto ;
+          git add "$DEST_DIR" ;
           git commit --author "${DRONE_COMMIT_AUTHOR} <${DRONE_COMMIT_AUTHOR_EMAIL}>"
             -m "Updated generated files to ${DRONE_REPO}@${DRONE_COMMIT_SHA:0:8}" ;
           git push ;
