@@ -48,8 +48,6 @@ message CreateProjectRequest {
   // The parent resource name where the project is to be created
   // The parent is a required parameter
   string parent = 1;
-  // The project name to assign
-  string project_id = 2;
   // The project resource to create
   Project project = 3;
 }
