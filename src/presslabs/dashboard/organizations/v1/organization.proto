@@ -40,8 +40,6 @@ message ListOrganizationsResponse {
 }
 
 message CreateOrganizationRequest {
-  // The organization name to assign
-  string organization_id = 1;
   // The organization resource to create
   Organization organization = 2;
 }
