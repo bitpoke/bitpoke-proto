@@ -19,11 +19,14 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
+	grpcstatus "google.golang.org/grpc/status"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
@@ -62,17 +65,34 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 	// logged using the zapLogger as well.
 	grpc_zap.ReplaceGrpcLogger(zap.L())
 
+	// create recovery function which keeps the eventula grpc error code
+	recoveryOpts := []grpc_recovery.Option{
+		grpc_recovery.WithRecoveryHandler(func(p interface{}) (err error) {
+			type grpcStatus interface {
+				GRPCStatus() *grpcstatus.Status
+			}
+			switch v := p.(type) {
+			case grpcStatus:
+				return v.GRPCStatus().Err()
+			default:
+				return grpcstatus.Errorf(codes.Unknown, "panic triggered: %v", v)
+			}
+		}),
+	}
+
 	// Create the gRPC server
 	grpcServer := grpc.NewServer(
 		grpc_middleware.WithUnaryServerChain(
 			grpc_auth.UnaryServerInterceptor(opts.AuthFunc),
 			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
 			grpc_zap.UnaryServerInterceptor(zap.L()),
+			grpc_recovery.UnaryServerInterceptor(recoveryOpts...),
 		),
 		grpc_middleware.WithStreamServerChain(
 			grpc_auth.StreamServerInterceptor(opts.AuthFunc),
 			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
 			grpc_zap.StreamServerInterceptor(zap.L()),
+			grpc_recovery.StreamServerInterceptor(recoveryOpts...),
 		),
 	)
 	// register reflection service on gRPC server

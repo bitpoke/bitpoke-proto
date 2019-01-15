@@ -14,10 +14,13 @@ import (
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"github.com/gosimple/slug"
+	"google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
@@ -30,23 +33,59 @@ import (
 
 type organizationsService struct {
 	client client.Client
+	cfg    *rest.Config
 }
 
-// resolves an fully-qualified resource name to a k8s object name
+// resolve resolves an fully-qualified resource name to a k8s object name
 func resolve(path string) (string, error) {
 	if !strings.HasPrefix(path, "orgs/") {
-		return "", fmt.Errorf("organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
+		return "", grpcstatus.Errorf(codes.InvalidArgument,
+			"organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
 	}
 	name := path[5:]
 	if len(name) == 0 {
-		return "", fmt.Errorf("organization name cannot be empty")
+		return "", grpcstatus.Errorf(codes.InvalidArgument, "organization name cannot be empty")
 	}
 	return name, nil
 }
 
+// getCreatedBy returns created-by field from AuthTokenContextKey
+func getCreatedBy(ctx context.Context) (string, error) {
+	cl := ctx.Value(middleware.AuthTokenContextKey)
+	if cl == nil {
+		return "", grpcstatus.Errorf(codes.Unauthenticated, "no auth-token value in context")
+	}
+	createdBy := cl.(middleware.Claims).Subject
+	return createdBy, nil
+}
+
+func (s *organizationsService) impersonateClient(userName string) client.Client {
+	if len(userName) <= 0 {
+		panic(grpcstatus.Errorf(codes.Internal, "empty impersonation user"))
+	}
+	mcfg := rest.CopyConfig(s.cfg)
+	mcfg.Impersonate = rest.ImpersonationConfig{
+		UserName: userName,
+	}
+	c, err := client.New(mcfg, client.Options{})
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
+func (s *organizationsService) getImpersonatedClient(ctx context.Context) (client.Client, string, error) {
+	createdBy, err := getCreatedBy(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+	return s.impersonateClient(createdBy), createdBy, nil
+}
+
 // Add creates a new Organization Controller and adds it to the API Server
 func Add(server *apiserver.APIServer) error {
-	RegisterOrganizationsServiceServer(server.GRPCServer, NewOrganizationsServiceServer(server.Manager.GetClient()))
+	RegisterOrganizationsServiceServer(server.GRPCServer,
+		NewOrganizationsServiceServer(server.Manager.GetClient(), rest.CopyConfig(server.Manager.GetConfig())))
 
 	err := server.Manager.GetFieldIndexer().IndexField(&rbacv1.ClusterRoleBinding{}, "subject.user", func(in runtime.Object) []string {
 		crb := in.(*rbacv1.ClusterRoleBinding)
@@ -80,9 +119,12 @@ func Add(server *apiserver.APIServer) error {
 }
 
 func (s *organizationsService) CreateOrganization(ctx context.Context, r *CreateOrganizationRequest) (*Organization, error) {
-	cl := ctx.Value(middleware.AuthTokenContextKey)
+	c, createdBy, err := s.getImpersonatedClient(ctx)
+	if err != nil {
+		return nil, status.Error(err)
+	}
+
 	var name string
-	var err error
 	if len(r.Organization.Name) > 0 {
 		if name, err = resolve(r.Organization.Name); err != nil {
 			return nil, status.Error(err)
@@ -90,15 +132,9 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 	} else {
 		name = slug.Make(r.Organization.DisplayName)
 	}
-
 	if len(name) == 0 {
 		return nil, status.Error(fmt.Errorf("organization name cannot be empty"))
 	}
-
-	if cl == nil {
-		return nil, status.Error(fmt.Errorf("no auth-token value in context"))
-	}
-	createdBy := cl.(middleware.Claims).Subject
 
 	org := organization.New(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -114,7 +150,7 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 	})
 	org.UpdateDisplayName(r.Organization.DisplayName)
 
-	if err := s.client.Create(context.TODO(), org.Unwrap()); err != nil {
+	if err := c.Create(context.TODO(), org.Unwrap()); err != nil {
 		return nil, status.Error(err)
 	}
 
@@ -122,17 +158,21 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 }
 
 func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrganizationRequest) (*Organization, error) {
-	var org corev1.Namespace
-	name, err := resolve(r.Name)
+	c, _, err := s.getImpersonatedClient(ctx)
 	if err != nil {
 		return nil, status.Error(err)
 	}
 
+	name, err := resolve(r.Name)
+	if err != nil {
+		return nil, status.Error(err)
+	}
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(name),
 	}
 
-	if err := s.client.Get(ctx, key, &org); err != nil {
+	var org corev1.Namespace
+	if err := c.Get(ctx, key, &org); err != nil {
 		return nil, status.Error(err)
 	}
 
@@ -140,23 +180,27 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrgani
 }
 
 func (s *organizationsService) UpdateOrganization(ctx context.Context, r *UpdateOrganizationRequest) (*Organization, error) {
-	var org corev1.Namespace
-	name, err := resolve(r.Organization.Name)
+	c, _, err := s.getImpersonatedClient(ctx)
 	if err != nil {
 		return nil, status.Error(err)
 	}
 
+	name, err := resolve(r.Organization.Name)
+	if err != nil {
+		return nil, status.Error(err)
+	}
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(name),
 	}
 
+	var org corev1.Namespace
 	if err := s.client.Get(ctx, key, &org); err != nil {
 		return nil, status.Error(err)
 	}
 
 	organization.New(&org).UpdateDisplayName(r.Organization.DisplayName)
 
-	if err := s.client.Update(ctx, &org); err != nil {
+	if err := c.Update(ctx, &org); err != nil {
 		return nil, status.Error(err)
 	}
 
@@ -164,21 +208,25 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *Update
 }
 
 func (s *organizationsService) DeleteOrganization(ctx context.Context, r *DeleteOrganizationRequest) (*empty.Empty, error) {
-	var org corev1.Namespace
-	name, err := resolve(r.Name)
+	c, _, err := s.getImpersonatedClient(ctx)
 	if err != nil {
 		return nil, status.Error(err)
 	}
 
+	name, err := resolve(r.Name)
+	if err != nil {
+		return nil, status.Error(err)
+	}
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(name),
 	}
 
-	if err := s.client.Get(ctx, key, &org); err != nil {
+	var org corev1.Namespace
+	if err := c.Get(ctx, key, &org); err != nil {
 		return nil, status.Error(err)
 	}
 
-	if err := s.client.Delete(ctx, &org); err != nil {
+	if err := c.Delete(ctx, &org); err != nil {
 		return nil, status.Error(err)
 	}
 
@@ -186,15 +234,17 @@ func (s *organizationsService) DeleteOrganization(ctx context.Context, r *Delete
 }
 
 func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrganizationsRequest) (*ListOrganizationsResponse, error) {
-	cl := ctx.Value(middleware.AuthTokenContextKey)
-	if cl == nil {
-		return nil, status.Error(fmt.Errorf("no auth-token value in context"))
-	}
-	userID := cl.(middleware.Claims).Subject
+	var (
+		userID string
+		err    error
+	)
 
+	if userID, err = getCreatedBy(ctx); err != nil {
+		return nil, status.Error(err)
+	}
 	memberLists := &rbacv1.RoleBindingList{}
 	opts := client.MatchingField("subject.user", userID)
-	if err := s.client.List(context.TODO(), opts, memberLists); err != nil {
+	if err = s.client.List(context.TODO(), opts, memberLists); err != nil {
 		return nil, status.Error(err)
 	}
 
@@ -207,7 +257,7 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrg
 
 	orgs := &corev1.NamespaceList{}
 	opts = &client.ListOptions{}
-	err := opts.SetLabelSelector(fmt.Sprintf("presslabs.com/kind=organization, presslabs.com/organization in (%s)", strings.Join(orgNames, ", ")))
+	err = opts.SetLabelSelector(fmt.Sprintf("presslabs.com/kind=organization, presslabs.com/organization in (%s)", strings.Join(orgNames, ", ")))
 	if err != nil {
 		return nil, status.Error(err)
 	}
@@ -227,9 +277,10 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrg
 }
 
 // NewOrganizationsServiceServer creates a new gRPC organizations service server
-func NewOrganizationsServiceServer(client client.Client) OrganizationsServiceServer {
+func NewOrganizationsServiceServer(client client.Client, cfg *rest.Config) OrganizationsServiceServer {
 	return &organizationsService{
 		client: client,
+		cfg:    cfg,
 	}
 }
 
