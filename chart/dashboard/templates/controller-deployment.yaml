@@ -32,7 +32,7 @@ spec:
             - --webhook-port={{ .Values.webhook.service.port }}
             - --webhook-cert-dir={{ include "dashboard.webhook.certDir" . }}
             - --webhook-disable-bootstrapping=true
-            - --webhook-service-name={{ include "dashboard.webhook.serviceName" . | quote}}
+            - --webhook-service-name={{ include "dashboard.webhook.serviceName" . | quote }}
           volumeMount:
             - name: webhook-certs
               mountPath: {{ include "dashboard.webhook.certDir" . }}
