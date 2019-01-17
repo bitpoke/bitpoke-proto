@@ -24,7 +24,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	// logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	orgv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
@@ -79,8 +78,6 @@ func expectProperNamespace(c client.Client, name, displayName, createdBy string)
 	Expect(ns.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", displayName))
 	Expect(ns.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", createdBy))
 }
-
-// var log = logf.Log.WithName("apiserver")
 
 var _ = Describe("API server", func() {
 	var (

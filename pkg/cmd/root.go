@@ -24,13 +24,13 @@ import (
 	// homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	// "github.com/spf13/viper"
-
 	"github.com/go-logr/logr"
 	// enable GKE cluster login
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+
+	logf "github.com/presslabs/dashboard/pkg/internal/log"
 )
 
 var cfg *rest.Config

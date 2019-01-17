@@ -16,14 +16,18 @@ import (
 	"reflect"
 
 	"github.com/gobuffalo/packr"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
+	logf "github.com/presslabs/dashboard/pkg/internal/log"
 )
 
 // APIServerOptions contains manager, GRPC address, HTTP address and AuthFunc
@@ -54,10 +58,22 @@ var log = logf.Log.WithName("apiserver")
 
 // NewAPIServer creates a new API Server
 func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
+	// Make sure that log statements internal to gRPC library are
+	// logged using the zapLogger as well.
+	grpc_zap.ReplaceGrpcLogger(zap.L())
+
 	// Create the gRPC server
 	grpcServer := grpc.NewServer(
-		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(opts.AuthFunc)),
-		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(opts.AuthFunc)),
+		grpc_middleware.WithUnaryServerChain(
+			grpc_auth.UnaryServerInterceptor(opts.AuthFunc),
+			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
+			grpc_zap.UnaryServerInterceptor(zap.L()),
+		),
+		grpc_middleware.WithStreamServerChain(
+			grpc_auth.StreamServerInterceptor(opts.AuthFunc),
+			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
+			grpc_zap.StreamServerInterceptor(zap.L()),
+		),
 	)
 	// register reflection service on gRPC server
 	reflection.Register(grpcServer)

@@ -35,11 +35,11 @@ type organizationsService struct {
 // resolves an fully-qualified resource name to a k8s object name
 func resolve(path string) (string, error) {
 	if !strings.HasPrefix(path, "orgs/") {
-		return "", fmt.Errorf("Organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
+		return "", fmt.Errorf("organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
 	}
 	name := path[5:]
 	if len(name) == 0 {
-		return "", fmt.Errorf("Organization name cannot be empty")
+		return "", fmt.Errorf("organization name cannot be empty")
 	}
 	return name, nil
 }
@@ -92,11 +92,11 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 	}
 
 	if len(name) == 0 {
-		return nil, status.Error(fmt.Errorf("You should provide a name for the organization"))
+		return nil, status.Error(fmt.Errorf("organization name cannot be empty"))
 	}
 
 	if cl == nil {
-		return nil, fmt.Errorf("No auth-token value in context")
+		return nil, status.Error(fmt.Errorf("no auth-token value in context"))
 	}
 	createdBy := cl.(middleware.Claims).Subject
 
@@ -188,7 +188,7 @@ func (s *organizationsService) DeleteOrganization(ctx context.Context, r *Delete
 func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrganizationsRequest) (*ListOrganizationsResponse, error) {
 	cl := ctx.Value(middleware.AuthTokenContextKey)
 	if cl == nil {
-		return nil, fmt.Errorf("No auth-token value in context")
+		return nil, status.Error(fmt.Errorf("no auth-token value in context"))
 	}
 	userID := cl.(middleware.Claims).Subject
 

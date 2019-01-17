@@ -20,24 +20,26 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/testing_frameworks/integration/addr"
-	// logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	"github.com/presslabs/dashboard/pkg/apis"
 	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
+	logf "github.com/presslabs/dashboard/pkg/internal/log"
 )
 
 var cfg *rest.Config
 var t *envtest.Environment
 
 func TestAPIServer(t *testing.T) {
-	// logf.SetLogger(logf.ZapLogger(true))
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "API Server", []Reporter{envtest.NewlineReporter{}})
 }
 
 var _ = BeforeSuite(func() {
 	var err error
+
+	logf.SetLogger(logf.ZapLoggerTo(GinkgoWriter, true))
+
 	t = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "..", "..", "config", "crds"),
