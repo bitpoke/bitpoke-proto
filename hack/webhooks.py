@@ -17,14 +17,11 @@ for num, doc in enumerate(loaded_webhooks):
     if num == 0:
         # secret
         doc['data']['ca-cert.pem'] = '{{ $cert.Cert | b64enc }}'
-        doc['data']['ca-key.pem'] = '{{ $cert.Key | b64enc }}'
         doc['data']['cert.pem'] = '{{ $cert.Cert | b64enc }}'
         doc['data']['key.pem'] = '{{ $cert.Key | b64enc }}'
         doc['metadata']['name'] = '{{ include "dashboard.webhook.secretName" . }}'
         doc['metadata']['namespace'] = '{{ .Release.Namespace }}'
         doc['metadata']['annotations'] = doc['metadata'].get('annotations', {})
-        doc['metadata']['annotations']['helm.sh/hook'] = 'pre-install'
-        doc['metadata']['annotations']['helm.sh/hook-delete-policy'] = 'before-hook-creation'
     elif num == 1:
         # service
         doc['metadata']['name'] = '{{ include "dashboard.fullname" . }}-webhook'

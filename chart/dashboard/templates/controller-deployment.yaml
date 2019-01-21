@@ -21,6 +21,8 @@ spec:
         app: {{ include "dashboard.name" . }}
         release: {{ .Release.Name }}
         component: controller
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/webhook.yaml") . | sha256sum }}
     spec:
       serviceAccount: {{ template "dashboard.controller.serviceAccountName" . }}
       containers:
