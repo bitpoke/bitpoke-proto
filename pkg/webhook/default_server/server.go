@@ -38,6 +38,7 @@ var (
 func Add(mgr manager.Manager) error {
 	selectors, err := labels.ConvertSelectorToLabelsMap(options.WebhookServiceSelector)
 	if err != nil {
+		log.Error(err, "error while starting webhook server")
 		return err
 	}
 
@@ -69,6 +70,7 @@ func Add(mgr manager.Manager) error {
 	}
 	srv, err := webhook.NewServer("presslabs-dashboard-admission-server", mgr, opts)
 	if err != nil {
+		log.Error(err, "error while starting webhook server")
 		return err
 	}
 
@@ -85,6 +87,7 @@ func Add(mgr manager.Manager) error {
 			WithManager(mgr).
 			Build()
 		if err != nil {
+			log.Error(err, "error while starting webhook server")
 			return err
 		}
 		webhooks[i] = wh

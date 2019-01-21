@@ -8,6 +8,7 @@ which is part of this source code package.
 package organization
 
 import (
+	"errors"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
@@ -139,6 +140,12 @@ func (o *Organization) ValidateMetadata() error {
 			errorList = append(errorList, fmt.Errorf("required label \"%s\" is missing", label))
 		}
 	}
+
+	// This case should not be reachable in normal circumstances
+	if o.Namespace.Labels["presslabs.com/kind"] != "organization" {
+		errorList = append(errorList, errors.New("label \"presslabs.com/kind\" should be \"organization\""))
+	}
+
 	for _, annotation := range RequiredAnnotations {
 		if value, exists := o.Namespace.Annotations[annotation]; !exists || value == "" {
 			errorList = append(errorList, fmt.Errorf("required annotation \"%s\" is missing", annotation))

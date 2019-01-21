@@ -24,16 +24,16 @@ spec:
     spec:
       serviceAccount: {{ template "dashboard.controller.serviceAccountName" . }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: controller
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           args:
             - controller-manager
-            - --webhook-port={{ .Values.webhook.service.port }}
+            - --webhook-port={{ .Values.webhook.service.targetPort }}
             - --webhook-cert-dir={{ include "dashboard.webhook.certDir" . }}
             - --webhook-disable-bootstrapping=true
             - --webhook-service-name={{ include "dashboard.webhook.serviceName" . | quote }}
-          volumeMount:
+          volumeMounts:
             - name: webhook-certs
               mountPath: {{ include "dashboard.webhook.certDir" . }}
           # livenessProbe:
@@ -49,7 +49,7 @@ spec:
       volumes:
         - name: webhook-certs
           secret:
-            secretName: {{ include "dashboard.webhook.secretName" . | quote}}
+            secretName: {{ include "dashboard.webhook.secretName" . | quote }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
         {{ toYaml . | nindent 8 }}

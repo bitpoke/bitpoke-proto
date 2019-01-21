@@ -62,7 +62,7 @@ manifests:
 	rm $(CHARTDIR)/templates/_rbac.yaml
 	# Webhooks
 	  # generate chart/dashboard/templates/webhook.yaml
-	python hack/webhooks.py
+	python3 hack/webhooks.py
 	  # prepend some stuff to chart/dashboard/templates/webhook.yaml
 	cat hack/generated-by-makefile.yaml \
 		hack/certificate-globals.yaml \
@@ -122,3 +122,5 @@ dependencies:
 	GOBIN=$(BINDIR) go install ./vendor/github.com/gobuffalo/packr/packr
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
 	$(MAKE) -C app dependencies
+
+	if ! pip3 freeze | grep pyyaml -i; then pip install PyYAML==3.13; fi

@@ -24,7 +24,7 @@ spec:
     spec:
       serviceAccount: {{ template "dashboard.apiserver.serviceAccountName" . }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: apiserver
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           args: [apiserver, --http-addr, ":80", --grpc-addr, ":9000" ]

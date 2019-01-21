@@ -72,7 +72,8 @@ controller:
 webhook:
   service:
     type: ClusterIP
-    port: 4433
+    port: 443
+    targetPort: 4433
   # use a custom TLS secret for webhook
   # secretName: ""
   # use a custom certificates directory for webhook

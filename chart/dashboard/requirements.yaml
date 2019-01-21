@@ -1,12 +1,12 @@
 dependencies:
   - name: mysql-operator
     repository: https://presslabs.github.io/charts/
-    version: ~0.2.1
+    version: ~0.2.2
     condition: mysql-operator.enabled
 
   - name: wordpress-operator
     repository: https://presslabs.github.io/charts/
-    version: ~0.2.0
+    version: ~0.2.2
     condition: wordpress-operator.enabled
 
   - name: nginx-ingress

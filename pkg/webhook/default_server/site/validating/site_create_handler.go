@@ -36,6 +36,10 @@ type WordpressCreateHandler struct {
 }
 
 func (h *WordpressCreateHandler) validatingWordpressFn(obj *site.Site) (bool, string, error) {
+	if obj.Wordpress.Labels["presslabs.com/kind"] != "site" {
+		return true, "not a site, skipping validation", nil
+	}
+
 	if err := obj.ValidateMetadata(); err != nil {
 		return false, "validation failed", err
 	}

@@ -8,6 +8,7 @@ which is part of this source code package.
 package site
 
 import (
+	"errors"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -23,7 +24,7 @@ type Site struct {
 
 var (
 	// RequiredLabels is a list of required Site labels
-	RequiredLabels = []string{"presslabs.com/organization", "presslabs.com/project", "presslabs.com/site"}
+	RequiredLabels = []string{"presslabs.com/organization", "presslabs.com/project", "presslabs.com/site", "presslabs.com/kind"}
 	// RequiredAnnotations is a list of required Site annotations
 	RequiredAnnotations = []string{"presslabs.com/created-by"}
 )
@@ -111,6 +112,12 @@ func (o *Site) ValidateMetadata() error {
 			errorList = append(errorList, fmt.Errorf("required label \"%s\" is missing", label))
 		}
 	}
+
+	// This case should not be reachable in normal circumstances
+	if o.Wordpress.Labels["presslabs.com/kind"] != "site" {
+		errorList = append(errorList, errors.New("label \"presslabs.com/kind\" should be \"site\""))
+	}
+
 	for _, annotation := range RequiredAnnotations {
 		if value, exists := o.Wordpress.Annotations[annotation]; !exists || value == "" {
 			errorList = append(errorList, fmt.Errorf("required annotation \"%s\" is missing", annotation))

@@ -36,6 +36,10 @@ type NamespaceCreateHandler struct {
 }
 
 func (h *NamespaceCreateHandler) validatingNamespaceFn(obj *organization.Organization) (bool, string, error) {
+	if obj.Namespace.Labels["presslabs.com/kind"] != "organization" {
+		return true, "not an organization, skipping validation", nil
+	}
+
 	if err := obj.ValidateMetadata(); err != nil {
 		return false, "validation failed", err
 	}

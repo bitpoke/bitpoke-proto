@@ -1,4 +1,3 @@
-{{ $domain := include "dashboard.name" . }}
-{{ $ca := genCA "dashboard-webhook-ca" 365 }}
-{{ $cert := genSignedCert $domain nil nil 365 $ca }}
+{{ $domain := printf "%s-webhook.%s.svc" (include "dashboard.name" .) .Release.Namespace }}
+{{ $cert := genSelfSignedCert $domain nil nil 365 }}
 

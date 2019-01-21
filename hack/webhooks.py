@@ -16,10 +16,10 @@ for num, doc in enumerate(loaded_webhooks):
 
     if num == 0:
         # secret
-        doc['data']['ca-cert.pem'] = '{{ $ca.Cert | b64enc }}'
-        doc['data']['key.pem'] = '{{ $cert.Cert | b64enc }}'
-        doc['data']['cert.pem'] = '{{ $cert.Key | b64enc }}'
-        doc['data'].pop('ca-key.pem')
+        doc['data']['ca-cert.pem'] = '{{ $cert.Cert | b64enc }}'
+        doc['data']['ca-key.pem'] = '{{ $cert.Key | b64enc }}'
+        doc['data']['cert.pem'] = '{{ $cert.Cert | b64enc }}'
+        doc['data']['key.pem'] = '{{ $cert.Key | b64enc }}'
         doc['metadata']['name'] = '{{ include "dashboard.webhook.secretName" . }}'
         doc['metadata']['namespace'] = '{{ .Release.Namespace }}'
         doc['metadata']['annotations'] = doc['metadata'].get('annotations', {})
@@ -31,7 +31,7 @@ for num, doc in enumerate(loaded_webhooks):
         doc['metadata']['namespace'] = '{{ .Release.Namespace }}'
         doc['spec']['type'] = '{{ .Values.webhook.service.type }}'
         doc['spec']['ports'][0]['port'] = '{{ .Values.webhook.service.port }}'
-        doc['spec']['ports'][0]['targetPort'] = 'http'
+        doc['spec']['ports'][0]['targetPort'] = '{{ .Values.webhook.service.targetPort }}'
         doc['spec']['ports'][0]['protocol'] = 'TCP'
         doc['spec']['ports'][0]['name'] = 'http'
         doc['spec']['selector']['app'] = '{{ include "dashboard.name" . }}'
@@ -39,7 +39,7 @@ for num, doc in enumerate(loaded_webhooks):
     elif num == 2:
         # webhooks
         for webhook in doc['webhooks']:
-            webhook['clientConfig']['caBundle'] = '{{ $ca.Cert | b64enc }}'
+            webhook['clientConfig']['caBundle'] = '{{ $cert.Cert | b64enc }}'
             webhook['clientConfig']['service']['name'] = '{{ include "dashboard.fullname" . }}-webhook'
             webhook['clientConfig']['service']['namespace'] = '{{ .Release.Namespace }}'
 
@@ -50,4 +50,6 @@ parsed_webhooks.close()
 # overrides
 with fileinput.FileInput("chart/dashboard/templates/webhook.yaml", inplace=True) as file:
     for line in file:
-        print(line.replace("'{{ .Values.webhook.service.port }}'", "{{ .Values.webhook.service.port }}"), end='')
+        line = line.replace("'{{ .Values.webhook.service.port }}'", "{{ .Values.webhook.service.port }}")
+        line = line.replace("'{{ .Values.webhook.service.targetPort }}'", "{{ .Values.webhook.service.targetPort }}")
+        print(line, end='')

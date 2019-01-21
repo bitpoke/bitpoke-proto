@@ -13,10 +13,15 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/types"
 
 	"github.com/presslabs/dashboard/pkg/internal/project"
+)
+
+var (
+	log = logf.Log.WithName("default_server")
 )
 
 func init() {
@@ -36,6 +41,11 @@ type NamespaceCreateHandler struct {
 }
 
 func (h *NamespaceCreateHandler) validatingNamespaceFn(obj *project.Project) (bool, string, error) {
+	log.Info("validatingNamespaceFn called")
+	if obj.Namespace.Labels["presslabs.com/kind"] != "project" {
+		return true, "not a project, skipping validation", nil
+	}
+
 	if err := obj.ValidateMetadata(); err != nil {
 		return false, "validation failed", err
 	}
@@ -46,6 +56,8 @@ var _ admission.Handler = &NamespaceCreateHandler{}
 
 // Handle handles admission requests.
 func (h *NamespaceCreateHandler) Handle(ctx context.Context, req types.Request) types.Response {
+	log.Info("Handle called")
+
 	proj := project.New(&corev1.Namespace{})
 
 	err := h.Decoder.Decode(req, proj.Unwrap())

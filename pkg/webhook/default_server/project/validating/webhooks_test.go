@@ -67,28 +67,43 @@ var _ = Describe("Project webhook", func() {
 	})
 
 	It("returns error when metadata is missing", func() {
+		proj.SetLabels(map[string]string{
+			"presslabs.com/kind": "project",
+		})
+
 		allowed, reason, err := webhook.validatingNamespaceFn(proj)
 
 		Expect(allowed).To(Equal(false))
 		Expect(reason).To(Equal("validation failed"))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/organization\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/project\" is missing")))
-		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/kind\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required annotation \"presslabs.com/created-by\" is missing")))
+	})
+	It("doesn't validate when kind is not a project", func() {
+		proj.SetLabels(map[string]string{
+			"presslabs.com/kind": "not-a-project",
+		})
+
+		allowed, reason, err := webhook.validatingNamespaceFn(proj)
+
+		Expect(allowed).To(Equal(true))
+		Expect(reason).To(Equal("not a project, skipping validation"))
+		Expect(err).To(BeNil())
 	})
 	It("doesn't return error if metadata is provided", func() {
 		proj.SetLabels(map[string]string{
 			"presslabs.com/organization": organizationName,
 			"presslabs.com/project":      proj.Name,
-			"presslabs.com/kind":         proj.Name,
+			"presslabs.com/kind":         "project",
 		})
 
 		proj.SetAnnotations(map[string]string{
 			"presslabs.com/created-by": "Andi",
 		})
 
-		allowed, _, err := webhook.validatingNamespaceFn(proj)
+		allowed, reason, err := webhook.validatingNamespaceFn(proj)
 		Expect(allowed).To(Equal(true))
+		Expect(reason).To(Equal("allowed to be admitted"))
 		Expect(err).To(BeNil())
 	})
 })

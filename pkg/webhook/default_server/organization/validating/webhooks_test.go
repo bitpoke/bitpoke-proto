@@ -62,13 +62,27 @@ var _ = Describe("Organization webhook", func() {
 	})
 
 	It("returns error when metadata is missing", func() {
+		org.Namespace.SetLabels(map[string]string{
+			"presslabs.com/kind": "organization",
+		})
+
 		allowed, reason, err := webhook.validatingNamespaceFn(org)
 
 		Expect(allowed).To(Equal(false))
 		Expect(reason).To(Equal("validation failed"))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/organization\" is missing")))
-		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/kind\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required annotation \"presslabs.com/created-by\" is missing")))
+	})
+	It("doesn't validate when kind is not organization", func() {
+		org.SetLabels(map[string]string{
+			"presslabs.com/kind": "not-an-organization",
+		})
+
+		allowed, reason, err := webhook.validatingNamespaceFn(org)
+
+		Expect(allowed).To(Equal(true))
+		Expect(reason).To(Equal("not an organization, skipping validation"))
+		Expect(err).To(BeNil())
 	})
 	It("doesn't return error when metadata is set", func() {
 		org.Namespace.SetLabels(map[string]string{
@@ -80,8 +94,9 @@ var _ = Describe("Organization webhook", func() {
 			"presslabs.com/created-by": "Andi",
 		})
 
-		allowed, _, err := webhook.validatingNamespaceFn(org)
+		allowed, reason, err := webhook.validatingNamespaceFn(org)
 		Expect(allowed).To(Equal(true))
+		Expect(reason).To(Equal("allowed to be admitted"))
 		Expect(err).To(BeNil())
 	})
 })
