@@ -5,7 +5,8 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
     namespace: 'default',
 
     versions+:: {
-      prometheusOperator: 'v0.23.2',
+      prometheusOperator: 'v0.27.0',
+      prometheusConfigReloader: self.prometheusOperator,
       configmapReloader: 'v0.0.1',
     },
 
@@ -98,7 +99,7 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
                             policyRule.withResources([
                               'namespaces',
                             ]) +
-                            policyRule.withVerbs(['list', 'watch']);
+                            policyRule.withVerbs(['get', 'list', 'watch']);
 
       local rules = [apiExtensionsRule, monitoringRule, appsRule, coreRule, podRule, routingRule, nodeRule, namespaceRule];
 
@@ -123,7 +124,7 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
           // default glog saves logfiles to /tmp. Make it log to stderr instead.
           '--logtostderr=true',
           '--config-reloader-image=' + $._config.imageRepos.configmapReloader + ':' + $._config.versions.configmapReloader,
-          '--prometheus-config-reloader=' + $._config.imageRepos.prometheusConfigReloader + ':' + $._config.versions.prometheusOperator,
+          '--prometheus-config-reloader=' + $._config.imageRepos.prometheusConfigReloader + ':' + $._config.versions.prometheusConfigReloader,
         ]) +
         container.mixin.securityContext.withAllowPrivilegeEscalation(false) +
         container.mixin.securityContext.withReadOnlyRootFilesystem(true) +

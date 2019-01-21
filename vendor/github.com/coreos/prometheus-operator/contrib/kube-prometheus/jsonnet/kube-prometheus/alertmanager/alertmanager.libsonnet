@@ -5,7 +5,7 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
     namespace: 'default',
 
     versions+:: {
-      alertmanager: 'v0.15.0',
+      alertmanager: 'v0.15.3',
     },
 
     imageRepos+:: {
@@ -14,22 +14,31 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
 
     alertmanager+:: {
       name: $._config.alertmanager.name,
-      config: |||
-        global:
-          resolve_timeout: 5m
-        route:
-          group_by: ['job']
-          group_wait: 30s
-          group_interval: 5m
-          repeat_interval: 12h
-          receiver: 'null'
-          routes:
-          - match:
-              alertname: DeadMansSwitch
-            receiver: 'null'
-        receivers:
-        - name: 'null'
-      |||,
+      config: {
+        global: {
+          resolve_timeout: '5m',
+        },
+        route: {
+          group_by: ['job'],
+          group_wait: '30s',
+          group_interval: '5m',
+          repeat_interval: '12h',
+          receiver: 'null',
+          routes: [
+            {
+              receiver: 'null',
+              match: {
+                alertname: 'DeadMansSwitch',
+              },
+            },
+          ],
+        },
+        receivers: [
+          {
+            name: 'null',
+          },
+        ],
+      },
       replicas: 3,
     },
   },
@@ -38,8 +47,12 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
     secret:
       local secret = k.core.v1.secret;
 
-      secret.new('alertmanager-' + $._config.alertmanager.name, { 'alertmanager.yaml': std.base64($._config.alertmanager.config) }) +
-      secret.mixin.metadata.withNamespace($._config.namespace),
+      if std.type($._config.alertmanager.config) == 'object' then
+        secret.new('alertmanager-' + $._config.alertmanager.name, { 'alertmanager.yaml': std.base64(std.manifestYamlDoc($._config.alertmanager.config)) }) +
+        secret.mixin.metadata.withNamespace($._config.namespace)
+      else
+        secret.new('alertmanager-' + $._config.alertmanager.name, { 'alertmanager.yaml': std.base64($._config.alertmanager.config) }) +
+        secret.mixin.metadata.withNamespace($._config.namespace),
 
     serviceAccount:
       local serviceAccount = k.core.v1.serviceAccount;
@@ -100,6 +113,11 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
           baseImage: $._config.imageRepos.alertmanager,
           nodeSelector: { 'beta.kubernetes.io/os': 'linux' },
           serviceAccountName: 'alertmanager-' + $._config.alertmanager.name,
+          securityContext: {
+            runAsUser: 1000,
+            runAsNonRoot: true,
+            fsGroup: 2000,
+          },
         },
       },
   },

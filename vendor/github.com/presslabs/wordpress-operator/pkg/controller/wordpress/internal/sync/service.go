@@ -17,21 +17,28 @@ limitations under the License.
 package sync
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/appscode/mergo"
 
 	"github.com/presslabs/controller-util/syncer"
 
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
-	"github.com/presslabs/wordpress-operator/pkg/controller/internal/wordpress"
+	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
+)
+
+const (
+	wordpressHTTPPort = 80
 )
 
 // NewServiceSyncer returns a new sync.Interface for reconciling web Service
-func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := wp.ComponentLabels(wordpress.WordpressDeployment)
+
 	obj := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.Name,
@@ -39,24 +46,26 @@ func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Wor
 		},
 	}
 
-	return syncer.NewObjectSyncer("Service", wp, obj, c, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Service", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Service)
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
-		clusterIP := out.Spec.ClusterIP
-
-		out.Labels = wordpress.WebPodLabels(wp)
-
-		err := mergo.Merge(&out.Spec, *rt.Spec.ServiceSpec, mergo.WithOverride)
-		if err != nil {
-			return err
+		selector := wp.WebPodLabels()
+		if !labels.Equals(selector, out.Spec.Selector) {
+			if out.ObjectMeta.CreationTimestamp.IsZero() {
+				out.Spec.Selector = selector
+			} else {
+				return fmt.Errorf("service selector is immutable")
+			}
 		}
 
-		// Spec.ClusterIP of an service is immutable
-		if len(clusterIP) > 0 {
-			out.Spec.ClusterIP = clusterIP
+		if len(out.Spec.Ports) != 1 {
+			out.Spec.Ports = make([]corev1.ServicePort, 1)
 		}
 
-		out.Spec.Selector = wordpress.WebPodLabels(wp)
+		out.Spec.Ports[0].Name = "http"
+		out.Spec.Ports[0].Port = int32(80)
+		out.Spec.Ports[0].TargetPort = intstr.FromInt(wordpressHTTPPort)
 
 		return nil
 	})

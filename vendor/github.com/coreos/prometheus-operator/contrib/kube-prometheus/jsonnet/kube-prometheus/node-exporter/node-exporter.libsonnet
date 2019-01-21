@@ -5,8 +5,8 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
     namespace: 'default',
 
     versions+:: {
-      nodeExporter: 'v0.15.2',
-      kubeRbacProxy: 'v0.3.1',
+      nodeExporter: 'v0.16.0',
+      kubeRbacProxy: 'v0.4.0',
     },
 
     imageRepos+:: {
@@ -58,6 +58,7 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
       local containerVolumeMount = container.volumeMountsType;
       local podSelector = daemonset.mixin.spec.template.spec.selectorType;
       local toleration = daemonset.mixin.spec.template.spec.tolerationsType;
+      local containerEnv = container.envType;
 
       local podLabels = { app: 'node-exporter' };
 
@@ -73,26 +74,48 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
       local sysVolume = volume.fromHostPath(sysVolumeName, '/sys');
       local sysVolumeMount = containerVolumeMount.new(sysVolumeName, '/host/sys');
 
+      local rootVolumeName = 'root';
+      local rootVolume = volume.fromHostPath(rootVolumeName, '/');
+      local rootVolumeMount = containerVolumeMount.new(rootVolumeName, '/host/root').
+        withMountPropagation('HostToContainer').
+        withReadOnly(true);
+
       local nodeExporter =
         container.new('node-exporter', $._config.imageRepos.nodeExporter + ':' + $._config.versions.nodeExporter) +
         container.withArgs([
-          '--web.listen-address=127.0.0.1:9101',
+          '--web.listen-address=127.0.0.1:9100',
           '--path.procfs=/host/proc',
           '--path.sysfs=/host/sys',
-        ]) +
-        container.withVolumeMounts([procVolumeMount, sysVolumeMount]) +
-        container.mixin.resources.withRequests({ cpu: '102m', memory: '180Mi' }) +
-        container.mixin.resources.withLimits({ cpu: '102m', memory: '180Mi' });
 
+          // The following settings have been taken from
+          // https://github.com/prometheus/node_exporter/blob/0662673/collector/filesystem_linux.go#L30-L31
+          // Once node exporter is being released with those settings, this can be removed.
+          '--collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+)($|/)',
+          '--collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$',
+        ]) +
+        container.withVolumeMounts([procVolumeMount, sysVolumeMount, rootVolumeMount]) +
+        container.mixin.resources.withRequests({ cpu: '102m', memory: '180Mi' }) +
+        container.mixin.resources.withLimits({ cpu: '250m', memory: '180Mi' });
+
+      local ip = containerEnv.fromFieldPath('IP', 'status.podIP');
       local proxy =
         container.new('kube-rbac-proxy', $._config.imageRepos.kubeRbacProxy + ':' + $._config.versions.kubeRbacProxy) +
         container.withArgs([
-          '--secure-listen-address=:9100',
-          '--upstream=http://127.0.0.1:9101/',
+          '--secure-listen-address=$(IP):9100',
+          '--upstream=http://127.0.0.1:9100/',
         ]) +
+        // Keep `hostPort` here, rather than in the node-exporter container
+        // because Kubernetes mandates that if you define a `hostPort` then
+        // `containerPort` must match. In our case, we are splitting the
+        // host port and container port between the two containers.
+        // We'll keep the port specification here so that the named port
+        // used by the service is tied to the proxy container. We *could*
+        // forgo declaring the host port, however it is important to declare
+        // it so that the scheduler can decide if the pod is schedulable.
         container.withPorts(containerPort.new(9100) + containerPort.withHostPort(9100) + containerPort.withName('https')) +
         container.mixin.resources.withRequests({ cpu: '10m', memory: '20Mi' }) +
-        container.mixin.resources.withLimits({ cpu: '20m', memory: '40Mi' });
+        container.mixin.resources.withLimits({ cpu: '20m', memory: '40Mi' }) +
+        container.withEnv([ip]);
 
       local c = [nodeExporter, proxy];
 
@@ -105,7 +128,7 @@ local k = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
       daemonset.mixin.spec.template.spec.withTolerations([masterToleration]) +
       daemonset.mixin.spec.template.spec.withNodeSelector({ 'beta.kubernetes.io/os': 'linux' }) +
       daemonset.mixin.spec.template.spec.withContainers(c) +
-      daemonset.mixin.spec.template.spec.withVolumes([procVolume, sysVolume]) +
+      daemonset.mixin.spec.template.spec.withVolumes([procVolume, sysVolume, rootVolume]) +
       daemonset.mixin.spec.template.spec.securityContext.withRunAsNonRoot(true) +
       daemonset.mixin.spec.template.spec.securityContext.withRunAsUser(65534) +
       daemonset.mixin.spec.template.spec.withServiceAccountName('node-exporter') +

@@ -26,7 +26,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -134,7 +134,6 @@ var _ = Describe("Site controller", func() {
 					Namespace: projectNamespace,
 				},
 				Spec: wordpressv1alpha1.WordpressSpec{
-					Runtime: "runtime-example",
 					Domains: []wordpressv1alpha1.Domain{
 						"domain.com",
 					},

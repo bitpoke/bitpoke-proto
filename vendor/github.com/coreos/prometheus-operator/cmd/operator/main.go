@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net"
@@ -26,18 +27,19 @@ import (
 	"strings"
 	"syscall"
 
+	alertmanagercontroller "github.com/coreos/prometheus-operator/pkg/alertmanager"
+	"github.com/coreos/prometheus-operator/pkg/api"
+	monitoring "github.com/coreos/prometheus-operator/pkg/apis/monitoring"
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
+	prometheuscontroller "github.com/coreos/prometheus-operator/pkg/prometheus"
+	"github.com/coreos/prometheus-operator/pkg/version"
+
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/api/core/v1"
-
-	"github.com/coreos/prometheus-operator/pkg/alertmanager"
-	"github.com/coreos/prometheus-operator/pkg/api"
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
-	prometheuscontroller "github.com/coreos/prometheus-operator/pkg/prometheus"
-	"github.com/coreos/prometheus-operator/pkg/version"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 )
 
 const (
@@ -53,6 +55,40 @@ const (
 	logFormatLogfmt = "logfmt"
 	logFormatJson   = "json"
 )
+
+var (
+	ns = namespaces{}
+)
+
+type namespaces map[string]struct{}
+
+// Set implements the flagset.Value interface.
+func (n namespaces) Set(value string) error {
+	if n == nil {
+		return errors.New("expected n of type namespaces to be initialized")
+	}
+	ns := strings.Split(value, ",")
+	for i := range ns {
+		n[ns[i]] = struct{}{}
+	}
+	return nil
+}
+
+// String implements the flagset.Value interface.
+func (n namespaces) String() string {
+	return strings.Join(n.asSlice(), ",")
+}
+
+func (n namespaces) asSlice() []string {
+	var ns []string
+	for k := range n {
+		ns = append(ns, k)
+	}
+	if len(ns) == 0 {
+		ns = append(ns, v1.NamespaceAll)
+	}
+	return ns
+}
 
 var (
 	cfg                prometheuscontroller.Config
@@ -88,18 +124,17 @@ func init() {
 	flagset.StringVar(&cfg.AlertmanagerDefaultBaseImage, "alertmanager-default-base-image", "quay.io/prometheus/alertmanager", "Alertmanager default base image")
 	flagset.StringVar(&cfg.PrometheusDefaultBaseImage, "prometheus-default-base-image", "quay.io/prometheus/prometheus", "Prometheus default base image")
 	flagset.StringVar(&cfg.ThanosDefaultBaseImage, "thanos-default-base-image", "improbable/thanos", "Thanos default base image")
-	flagset.StringVar(&cfg.Namespace, "namespace", v1.NamespaceAll, "Namespace to scope the interaction of the Prometheus Operator and the apiserver.")
+	flagset.Var(ns, "namespaces", "Namespaces to scope the interaction of the Prometheus Operator and the apiserver.")
 	flagset.Var(&cfg.Labels, "labels", "Labels to be add to all resources created by the operator")
-	flagset.StringVar(&cfg.CrdGroup, "crd-apigroup", monitoringv1.Group, "prometheus CRD  API group name")
+	flagset.StringVar(&cfg.CrdGroup, "crd-apigroup", monitoring.GroupName, "prometheus CRD  API group name")
 	flagset.Var(&cfg.CrdKinds, "crd-kinds", " - EXPERIMENTAL (could be removed in future releases) - customize CRD kind names")
 	flagset.BoolVar(&cfg.EnableValidation, "with-validation", true, "Include the validation spec in the CRD")
-	flagset.BoolVar(&cfg.DisableAutoUserGroup, "disable-auto-user-group", false, "Disables the Prometheus Operator setting the `runAsUser` and `fsGroup` fields in Pods.")
 	flagset.StringVar(&cfg.LocalHost, "localhost", "localhost", "EXPERIMENTAL (could be removed in future releases) - Host used to communicate between local services on a pod. Fixes issues where localhost resolves incorrectly.")
 	flagset.StringVar(&cfg.LogLevel, "log-level", logLevelInfo, fmt.Sprintf("Log level to use. Possible values: %s", strings.Join(availableLogLevels, ", ")))
 	flagset.StringVar(&cfg.LogFormat, "log-format", logFormatLogfmt, fmt.Sprintf("Log format to use. Possible values: %s", strings.Join(availableLogFormats, ", ")))
 	flagset.BoolVar(&cfg.ManageCRDs, "manage-crds", true, "Manage all CRDs with the Prometheus Operator.")
 	flagset.Parse(os.Args[1:])
-
+	cfg.Namespaces = ns.asSlice()
 }
 
 func Main() int {
@@ -129,19 +164,13 @@ func Main() int {
 
 	logger.Log("msg", fmt.Sprintf("Starting Prometheus Operator version '%v'.", version.Version))
 
-	r := prometheus.NewRegistry()
-	r.MustRegister(
-		prometheus.NewGoCollector(),
-		prometheus.NewProcessCollector(os.Getpid(), ""),
-	)
-
 	po, err := prometheuscontroller.New(cfg, log.With(logger, "component", "prometheusoperator"))
 	if err != nil {
 		fmt.Fprint(os.Stderr, "instantiating prometheus controller failed: ", err)
 		return 1
 	}
 
-	ao, err := alertmanager.New(cfg, log.With(logger, "component", "alertmanageroperator"))
+	ao, err := alertmanagercontroller.New(cfg, log.With(logger, "component", "alertmanageroperator"))
 	if err != nil {
 		fmt.Fprint(os.Stderr, "instantiating alertmanager controller failed: ", err)
 		return 1
@@ -161,8 +190,39 @@ func Main() int {
 		return 1
 	}
 
-	po.RegisterMetrics(r)
-	ao.RegisterMetrics(r)
+	reconcileErrorsCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "prometheus_operator_reconcile_errors_total",
+		Help: "Number of errors that occurred while reconciling the alertmanager statefulset",
+	}, []string{"controller"})
+
+	triggerByCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "prometheus_operator_triggered_total",
+		Help: "Number of times a Kubernetes object add, delete or update event" +
+			" triggered the Prometheus Operator to reconcile an object",
+	}, []string{"controller", "triggered_by", "action"})
+
+	r := prometheus.NewRegistry()
+	r.MustRegister(
+		prometheus.NewGoCollector(),
+		prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
+		reconcileErrorsCounter,
+		triggerByCounter,
+	)
+
+	prometheusLabels := prometheus.Labels{"controller": "prometheus"}
+	po.RegisterMetrics(
+		prometheus.WrapRegistererWith(prometheusLabels, r),
+		reconcileErrorsCounter.MustCurryWith(prometheusLabels),
+		triggerByCounter.MustCurryWith(prometheusLabels),
+	)
+
+	alertmanagerLabels := prometheus.Labels{"controller": "alertmanager"}
+	ao.RegisterMetrics(
+		prometheus.WrapRegistererWith(alertmanagerLabels, r),
+		reconcileErrorsCounter.MustCurryWith(alertmanagerLabels),
+		triggerByCounter.MustCurryWith(alertmanagerLabels),
+	)
+
 	mux.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
 	mux.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
 	mux.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))

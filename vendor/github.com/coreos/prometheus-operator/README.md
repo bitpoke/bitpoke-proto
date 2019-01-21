@@ -21,8 +21,6 @@ Once installed, the Prometheus Operator provides the following features:
 For an introduction to the Prometheus Operator, see the initial [blog
 post](https://coreos.com/blog/the-prometheus-operator.html).
 
-**Documentation is hosted on [coreos.com](https://coreos.com/operators/prometheus/docs/latest/)**
-
 ## Prometheus Operator vs. kube-prometheus
 
 The Prometheus Operator makes the Prometheus configuration Kubernetes native
@@ -63,15 +61,17 @@ The Operator acts on the following [custom resource definitions (CRDs)](https://
 To learn more about the CRDs introduced by the Prometheus Operator have a look
 at the [design doc](Documentation/design.md).
 
-## Installation
+## Quickstart
 
-Install the Operator inside a cluster by running the following command:
+Note that this quickstart does not provision an entire monitoring stack; if that is what you are looking for see the [kube-prometheus](contrib/kube-prometheus) sub-project. If you want the whole stack, but have already applied the `bundle.yaml`, delete the bundle first (`kubectl delete -f bundle.yaml`).
+
+To quickly try out _just_ the Prometheus Operator inside a cluster, run the following command:
 
 ```sh
 kubectl apply -f bundle.yaml
 ```
 
-> Note: make sure to adapt the namespace in the ClusterRoleBinding if deploying in another namespace than the default namespace.
+> Note: make sure to adapt the namespace in the ClusterRoleBinding if deploying in a namespace other than the default namespace.
 
 To run the Operator outside of a cluster:
 
@@ -83,7 +83,7 @@ hack/run-external.sh <kubectl cluster name>
 ## Removal
 
 To remove the operator and Prometheus, first delete any custom resources you created in each namespace. The
-operator will automatically shut down and remove Prometheus and Alertmanager pods, and associated configmaps.
+operator will automatically shut down and remove Prometheus and Alertmanager pods, and associated ConfigMaps.
 
 ```sh
 for n in $(kubectl get namespaces -o jsonpath={..metadata.name}); do
@@ -127,15 +127,16 @@ kubectl delete --ignore-not-found customresourcedefinitions \
 > pull against your local coreos checkout before running tests.
 
 #### Running *unit tests*:
+
 `make test-unit`
 
 #### Running *end-to-end* tests on local minikube cluster:
+
 1. `minikube start --kubernetes-version=v1.10.0 --memory=4096
     --extra-config=apiserver.Authorization.Mode=RBAC`
 2. `eval $(minikube docker-env) && make image` - build Prometheus Operator
     docker image on minikube's docker
 3. `make test-e2e`
-
 
 ## Contributing
 

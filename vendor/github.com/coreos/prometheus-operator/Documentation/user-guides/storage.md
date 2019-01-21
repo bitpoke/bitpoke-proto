@@ -9,7 +9,7 @@ To maintain data across deployments and version upgrades, the data must be persi
 
 Kubernetes supports several kinds of storage volumes. The Prometheus Operator works with PersistentVolumeClaims, which support the underlying PersistentVolume to be provisioned when requested.
 
-This document assumes a basic understanding of PersisentVolumes, PersisentVolumeClaims, and their [provisioning][pv-provisioning].
+This document assumes a basic understanding of PersistentVolumes, PersistentVolumeClaims, and their [provisioning][pv-provisioning].
 
 ## Storage Provisioning on AWS
 
@@ -30,7 +30,7 @@ parameters:
 
 For best results, use volumes that have high I/O throughput. These examples use SSD EBS volumes. Read the Kubernetes [Persistent Volumes][persistent-volumes] documentation to adapt this `StorageClass` to your needs.
 
-The `StorageClass` that was created can be specified in the `storage` section in the `Prometheus` resource.
+The `StorageClass` that was created can be specified in the `storage` section in the `Prometheus` resource (note that if you're using [kube-prometheus](../../contrib/kube-prometheus/), then instead of making the following change to your `Prometheus` resource, see the [prometheus-pvc.jsonnet](../../contrib/kube-prometheus/examples/prometheus-pvc.jsonnet) example).
 
 [embedmd]:# (../../example/storage/persisted-prometheus.yaml)
 ```yaml
@@ -101,7 +101,7 @@ spec:
 
 To manually provision volumes (as of Kubernetes 1.6.0), you may need to disable the default StorageClass that is automatically created for certain Cloud Providers. Default StorageClasses are pre-installed on Azure, AWS, GCE, OpenStack, and vSphere.
 
-The default StorageClass behavior will override manual storage provisioning, preventing PerisistentVolumeClaims from automatically binding to manually created PersistentVolumes.
+The default StorageClass behavior will override manual storage provisioning, preventing PersistentVolumeClaims from automatically binding to manually created PersistentVolumes.
 
 To override this behavior, you must explicitly create the same resource, but set it to *not* be default. (See the [changelog][volumes-changelog] for more information.)
 

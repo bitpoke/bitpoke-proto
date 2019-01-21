@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -143,7 +143,7 @@ func (c *Operator) selectRuleNamespaces(p *monitoringv1.Prometheus) ([]string, e
 			return namespaces, errors.Wrap(err, "convert rule namespace label selector to selector")
 		}
 
-		namespaces, err = c.listNamespaces(ruleNamespaceSelector)
+		namespaces, err = c.listMatchingNamespaces(ruleNamespaceSelector)
 		if err != nil {
 			return nil, err
 		}

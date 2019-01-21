@@ -18,10 +18,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 	"time"
 
 	crdutils "github.com/ant31/crd-validation/pkg"
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	version "github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 	"k8s.io/api/core/v1"
@@ -29,11 +31,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	clientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 )
+
+var invalidDNS1123Characters = regexp.MustCompile("[^-a-z0-9]+")
 
 // CustomResourceDefinitionTypeMeta set the default kind/apiversion of CRD
 var CustomResourceDefinitionTypeMeta metav1.TypeMeta = metav1.TypeMeta{
@@ -128,6 +133,7 @@ func CreateOrUpdateService(sclient clientv1.ServiceInterface, svc *v1.Service) e
 		}
 	} else {
 		svc.ResourceVersion = service.ResourceVersion
+		svc.SetOwnerReferences(mergeOwnerReferences(service.GetOwnerReferences(), svc.GetOwnerReferences()))
 		_, err := sclient.Update(svc)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return errors.Wrap(err, "updating service object failed")
@@ -186,4 +192,28 @@ func NewCustomResourceDefinition(crdKind monitoringv1.CrdKind, group string, lab
 		Plural:                crdKind.Plural,
 		GetOpenAPIDefinitions: monitoringv1.GetOpenAPIDefinitions,
 	})
+}
+
+// SanitizeVolumeName ensures that the given volume name is a valid DNS-1123 label
+// accepted by Kubernetes.
+func SanitizeVolumeName(name string) string {
+	name = strings.ToLower(name)
+	name = invalidDNS1123Characters.ReplaceAllString(name, "-")
+	if len(name) > validation.DNS1123LabelMaxLength {
+		name = name[0:validation.DNS1123LabelMaxLength]
+	}
+	return strings.Trim(name, "-")
+}
+
+func mergeOwnerReferences(old []metav1.OwnerReference, new []metav1.OwnerReference) []metav1.OwnerReference {
+	existing := make(map[metav1.OwnerReference]bool)
+	for _, ownerRef := range old {
+		existing[ownerRef] = true
+	}
+	for _, ownerRef := range new {
+		if _, ok := existing[ownerRef]; !ok {
+			old = append(old, ownerRef)
+		}
+	}
+	return old
 }
