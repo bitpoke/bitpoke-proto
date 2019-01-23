@@ -5,19 +5,16 @@
 apiVersion: v1
 data:
   ca-cert.pem: '{{ $cert.Cert | b64enc }}'
-  ca-key.pem: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBc2xNSVp6OFZnVUJKVExLNmpKdzVrTmJsR1lWMHcwS0lmTTV0ZlUzaWZFYWRWRnhOCkZqRVBhUmZxSllsR20ydERSSDJFN3dVSGFiV3IxWEJKR05vV0dSMzR0UTg0eG8yeU9iM2hnUTgxOVZqeVJlTGoKRU1BRlpTQ0dJWE9LTml3VVZwaVZOaEFPa3ZQNHBMZ2o2Y2ZpM2l3ZW5KWVlUa2xkcXNaR2xKZ3R0U0xzc2VZTwp3S0hINXlmZmlZbytHaE1YSy9QYm15bDBXUURSNVEwNk5qNzkvTHUvK1FFUHJLUzIyM2pZV0tsUG01bW1YYy96ClovZUZqOVhRejdHN21tRHZDYm5vSkErRFJIQnpBOC95MTg2czl4ajVycGZvOGFFUFhoZXUyODhoakhxNS9pUzgKVHlKQWpkR1ZWcmxrTGpWVnQ1ZittSGI0S1lLc2JlOFBBcU1JbFFJREFRQUJBb0lCQUVIcVlXUFF0TUZISXhFZgp5OGNvQkR0ZXcrYXdKeDM2SFB1TlRubVA3WlVrZ1FscTZPKzRDTXMvRk1UMVBrMDYwKzJnUENBaUNzQnZiK29BCmpIU01RTGplRkUzUko1cDFUQmo5OERwRmhodC8ybVlzM09RWEpxZGY0MVRBSWFtdWw0SCsrc0MySkx6N1E4Q1gKZEdiNUJRbzg0ci9jMTNVd3QxZmwzTGNXbldhanVKaEpSZng3eTNDZ0xpLzVkSFNqYnIwYjVnV21meUM2VUFWVgo0WnhjbEU1S1FabmV5cjh0eExXS0JPNTNORU1aREE3SUJKWGQrMzJBQkp0cS8rcWNiVUlDMGlHS3JhdGQ5eUpJCnFGR3JCd0ZjUWExR1lVdXE2aDIzVU9zVWc0aWYwbWRhdUN5M3d4ZDArZ21NSlh2UDVsMTVUaWROb2prZHZqTUIKV1MwQTF5RUNnWUVBNm42b1BYdWgwSURCOTVBUmJoTDJaT2M2Tm1xeG5MOGxsY21BeWdlT3lUSll0UW41WmRKRQpNa3JqQWJGRDFqQ2hQbjZ0Uk1IaXhhM1hzWHpvMzBoSVYvVVIvdzdYQjcwbWgra25ycEZURWd5NVJpOCt1UEJYCnZ4aEppUGxOSlBuS1dNaExpRGptVng5SHN4T1QvWWhWM3pqQ0NHRS9oVThXODhBUlZjeFpyN2tDZ1lFQXdxMmoKQW9jVTArQzdpWS9jOTcxa3k0cFpMQnhQYkdsWXNpbDA0alJFRjdoeW50alZkZnpTYXFPa1BMWHFNaEtrb29DZwo4S0pRSUFXTUdNeHVydzJmL29CSk9TdStBSHFaMWZkZjBjaFZjdkhkRGJmTXhSVGpGYjRma3o2aHFXcEdWV2VMCjZzT21JUFpTSjlyYzliT3c5cTBxNkhYNEh6NjZrQm90bk5Mak5iMENnWUVBbVREUlBBbE9kdVlHMFhJZTBPZzIKYTBqYnNMMFc5eTJ3b2lBWHNPUXJGYWw4WmhqMEF0N1Fpb0o5dHBkVmw5SUJKTkNnNVRBOHM2T1VLM0ZNdU1HQgo4V1E2czRQQVdsL3BraFJ4Umd2T1Z4WlUyMUwyQ04rS2sxNk1lNTFTRm52UkF4c21yUUZ2Q1M5NEtiYjZrVURGCnlLUk5yaWZKMVk4TGtZWENUV2pJbHBFQ2dZQlZxUnVTRUNnYzlzVHVTYXdjSW0wSWxxNllGempuWmc5T0Rhbk4Kb3R2WGFDU2ZPcC9xazcxdWlPVEtoZTB2N1Q0ZDl1VmFITUdPNVlING8zT01lVDFPT2RwK1duMzNMZnNreC8yVQpqRWIxRmZHRGlMMkVkcVZaT3RnZjdTNHJJb1VpTFRiR3JTSWJYT2RYZkJrL3o3cHRRRk1pQ0U2T1NRYkVRNUNRCmNjYmlMUUtCZ1FEalJhNWxEaDFpaVZ5Ni8xL2gvQk5xRS9TaVh3VHRJUHRhS1hYdU9YVFhQK214UWoyUDltL0IKZENOMkxucmc4ZTRZdU5TNXI3MFZQWXNiQytBKzZjVUFScHU4U052SHJVMG5IUDdCSUdxYTFnOEgwMFNqN1pFVApLTUEwUldUOVVlTGNKNWJjcTE2MWtiY1hEV2NpZGpWZWZ1cU9MRTduamZGd2VnY0lLZUhNSEE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
   cert.pem: '{{ $cert.Cert | b64enc }}'
   key.pem: '{{ $cert.Key | b64enc }}'
 kind: Secret
 metadata:
-  annotations: {}
   labels:
     app: '{{ include "dashboard.name" . }}'
     chart: '{{ include "dashboard.chart" . }}'
     heritage: '{{ .Release.Service }}'
     release: '{{ .Release.Name }}'
   name: '{{ include "dashboard.webhook.secretName" . }}'
-  namespace: '{{ .Release.Namespace }}'
 ---
 apiVersion: v1
 kind: Service
@@ -28,13 +25,12 @@ metadata:
     heritage: '{{ .Release.Service }}'
     release: '{{ .Release.Name }}'
   name: '{{ include "dashboard.fullname" . }}-webhook'
-  namespace: '{{ .Release.Namespace }}'
 spec:
   ports:
-  - name: http
-    port: {{ .Values.webhook.service.port }}
-    protocol: TCP
+  - port: {{ .Values.webhook.service.port }}
     targetPort: {{ .Values.webhook.service.targetPort }}
+    protocol: TCP
+    name: http
   selector:
     app: '{{ include "dashboard.name" . }}'
     release: '{{ .Release.Name }}'
@@ -60,9 +56,13 @@ webhooks:
       path: /validating-create-organization
   failurePolicy: Fail
   name: validating-create-organization.presslabs.com
+  namespaceSelector:
+    matchExpressions:
+    - key: control-plane
+      operator: DoesNotExist
   rules:
   - apiGroups:
-    - ''
+    - ""
     apiVersions:
     - v1
     operations:
@@ -77,6 +77,10 @@ webhooks:
       path: /validating-create-project
   failurePolicy: Fail
   name: validating-create-project.presslabs.com
+  namespaceSelector:
+    matchExpressions:
+    - key: control-plane
+      operator: DoesNotExist
   rules:
   - apiGroups:
     - wordpress.presslabs.org
@@ -94,9 +98,13 @@ webhooks:
       path: /validating-create-site
   failurePolicy: Fail
   name: validating-create-site.presslabs.com
+  namespaceSelector:
+    matchExpressions:
+    - key: control-plane
+      operator: DoesNotExist
   rules:
   - apiGroups:
-    - ''
+    - ""
     apiVersions:
     - v1
     operations:

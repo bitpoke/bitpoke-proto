@@ -61,13 +61,41 @@ manifests:
 	echo '{{- end }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
 	rm $(CHARTDIR)/templates/_rbac.yaml
 	# Webhooks
-	  # generate chart/dashboard/templates/webhook.yaml
-	python3 hack/webhooks.py
-	  # prepend some stuff to chart/dashboard/templates/webhook.yaml
+	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go webhook
+	cp config/webhook/webhook.yaml chart/dashboard/templates/webhook.yaml
+	yq m -d'*' -i $(CHARTDIR)/templates/webhook.yaml hack/chart-metadata.yaml
+	yq d -d'*' -i $(CHARTDIR)/templates/webhook.yaml metadata.creationTimestamp
+	yq d -d'*' -i $(CHARTDIR)/templates/webhook.yaml metadata.namespace
+	#   secret
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml 'data[ca-cert.pem]' '{{ $$cert.Cert | b64enc }}'
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml 'data[key.pem]' '{{ $$cert.Key | b64enc }}'
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml 'data[cert.pem]' '{{ $$cert.Cert | b64enc }}'
+	yq d -d0 -i $(CHARTDIR)/templates/webhook.yaml 'data[ca-key.pem]'
+	yq w -d0 -i $(CHARTDIR)/templates/webhook.yaml metadata.name '{{ include "dashboard.webhook.secretName" . }}'
+	#   service
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml metadata.name '{{ include "dashboard.fullname" . }}-webhook'
+	yq d -d1 -i $(CHARTDIR)/templates/webhook.yaml metadata.namespace '{{ .Release.Namespace }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml spec.type '{{ .Values.webhook.service.type }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml spec.type '{{ .Values.webhook.service.type }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml 'spec.ports[0].port' '{{ .Values.webhook.service.port }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml 'spec.ports[0].targetPort' '{{ .Values.webhook.service.targetPort }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml 'spec.ports[0].protocol' TCP
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml 'spec.ports[0].name' http
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml spec.selector.app '{{ include "dashboard.name" . }}'
+	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml spec.selector.release '{{ .Release.Name }}'
+	#   configurations
+	number=0 ; while [ "$$(yq r -d2 config/webhook/webhook.yaml webhooks[$$number])" != "null" ] ; do \
+		yq w -d2 -i $(CHARTDIR)/templates/webhook.yaml webhooks[$$number].clientConfig.caBundle '{{ $$cert.Cert | b64enc }}' ;\
+		yq w -d2 -i $(CHARTDIR)/templates/webhook.yaml webhooks[$$number].clientConfig.service.name '{{ include "dashboard.fullname" . }}-webhook' ;\
+		yq w -d2 -i $(CHARTDIR)/templates/webhook.yaml webhooks[$$number].clientConfig.service.namespace '{{ .Release.Namespace }}' ;\
+		number=`expr $$number + 1` ; \
+	done
 	cat hack/generated-by-makefile.yaml \
 		hack/certificate-globals.yaml \
 		chart/dashboard/templates/webhook.yaml \
 		> chart/dashboard/templates/_webhook.yaml
+	sed -i "s/'{{ \.Values\.webhook\.service\.targetPort }}'/{{ \.Values\.webhook\.service\.targetPort }}/g" chart/dashboard/templates/_webhook.yaml
+	sed -i "s/'{{ \.Values\.webhook\.service\.port }}'/{{ \.Values\.webhook\.service\.port }}/g" chart/dashboard/templates/_webhook.yaml
 	mv chart/dashboard/templates/_webhook.yaml chart/dashboard/templates/webhook.yaml
 
 .PHONY: chart
@@ -122,5 +150,3 @@ dependencies:
 	GOBIN=$(BINDIR) go install ./vendor/github.com/gobuffalo/packr/packr
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
 	$(MAKE) -C app dependencies
-
-	if ! pip3 freeze | grep pyyaml -i; then pip install PyYAML==3.13; fi

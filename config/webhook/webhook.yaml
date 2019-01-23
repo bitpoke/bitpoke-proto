@@ -39,6 +39,10 @@ webhooks:
       path: /validating-create-organization
   failurePolicy: Fail
   name: validating-create-organization.presslabs.com
+  namespaceSelector:
+    matchExpressions:
+    - key: control-plane
+      operator: DoesNotExist
   rules:
   - apiGroups:
     - ""
@@ -56,6 +60,10 @@ webhooks:
       path: /validating-create-project
   failurePolicy: Fail
   name: validating-create-project.presslabs.com
+  namespaceSelector:
+    matchExpressions:
+    - key: control-plane
+      operator: DoesNotExist
   rules:
   - apiGroups:
     - wordpress.presslabs.org
@@ -73,6 +81,10 @@ webhooks:
       path: /validating-create-site
   failurePolicy: Fail
   name: validating-create-site.presslabs.com
+  namespaceSelector:
+    matchExpressions:
+    - key: control-plane
+      operator: DoesNotExist
   rules:
   - apiGroups:
     - ""
