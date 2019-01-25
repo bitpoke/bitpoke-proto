@@ -23,7 +23,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/presslabs/dashboard/pkg/internal/site"
@@ -34,8 +33,6 @@ var _ = Describe("Organization webhook", func() {
 	var (
 		// stop channel for controller manager
 		stop chan struct{}
-		// controller k8s client
-		c client.Client
 
 		webhook          *siteValidation
 		wp               *site.Site
@@ -59,8 +56,8 @@ var _ = Describe("Organization webhook", func() {
 
 		mgr, err := manager.New(cfg, manager.Options{})
 		Expect(err).NotTo(HaveOccurred())
-		c = mgr.GetClient()
-		webhook.InjectClient(c)
+
+		webhook.InjectClient(mgr.GetClient())
 		webhook.InjectDecoder(mgr.GetAdmissionDecoder())
 
 		stop = StartTestManager(mgr)

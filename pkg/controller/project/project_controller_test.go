@@ -59,7 +59,10 @@ var _ = Describe("Project controller", func() {
 
 		mgr, err := manager.New(cfg, manager.Options{})
 		Expect(err).NotTo(HaveOccurred())
-		c = mgr.GetClient()
+
+		// create new k8s client
+		c, err = client.New(cfg, client.Options{})
+		Expect(err).To(Succeed())
 
 		recFn, requests = SetupTestReconcile(newReconciler(mgr))
 		Expect(add(mgr, recFn)).To(Succeed())

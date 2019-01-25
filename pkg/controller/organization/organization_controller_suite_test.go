@@ -36,7 +36,7 @@ var t *envtest.Environment
 
 func TestProjectController(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Project Controller Suite", []Reporter{envtest.NewlineReporter{}})
+	RunSpecsWithDefaultAndCustomReporters(t, "Organization Controller Suite", []Reporter{envtest.NewlineReporter{}})
 }
 
 var _ = BeforeSuite(func() {

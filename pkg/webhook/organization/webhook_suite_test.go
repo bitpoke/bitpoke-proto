@@ -36,7 +36,7 @@ var t *envtest.Environment
 
 func TestProjectListing(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Webhook Server Suite", []Reporter{envtest.NewlineReporter{}})
+	RunSpecsWithDefaultAndCustomReporters(t, "Organization Webhook Server Suite", []Reporter{envtest.NewlineReporter{}})
 }
 
 var _ = BeforeSuite(func() {

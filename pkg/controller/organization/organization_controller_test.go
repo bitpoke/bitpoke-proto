@@ -38,7 +38,7 @@ import (
 
 const timeout = time.Second * 1
 
-var _ = Describe("Project controller", func() {
+var _ = Describe("Organization controller", func() {
 	var (
 		// channel for incoming reconcile requests
 		requests chan reconcile.Request
@@ -53,7 +53,10 @@ var _ = Describe("Project controller", func() {
 
 		mgr, err := manager.New(cfg, manager.Options{})
 		Expect(err).NotTo(HaveOccurred())
-		c = mgr.GetClient()
+
+		// create new k8s client
+		c, err = client.New(cfg, client.Options{})
+		Expect(err).To(Succeed())
 
 		recFn, requests = SetupTestReconcile(newReconciler(mgr))
 		Expect(add(mgr, recFn)).To(Succeed())

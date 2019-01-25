@@ -106,7 +106,9 @@ var _ = Describe("API server", func() {
 		// add ourselves to the server
 		Add(server)
 
-		c = mgr.GetClient()
+		// create new k8s client
+		c, err = client.New(cfg, client.Options{})
+		Expect(err).To(Succeed())
 
 		// Add controllers for testing side effects
 		Expect(controller.AddToManager(mgr)).To(Succeed())

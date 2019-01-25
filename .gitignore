@@ -17,7 +17,9 @@
 .idea
 bin/*
 proto/bin/*
+
 *.swp
+*.swo
 
 build
 .gometalinter-*

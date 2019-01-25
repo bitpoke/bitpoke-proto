@@ -24,7 +24,6 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	organization "github.com/presslabs/dashboard/pkg/internal/organization"
@@ -34,8 +33,6 @@ var _ = Describe("Organization webhook", func() {
 	var (
 		// stop channel for controller manager
 		stop chan struct{}
-		// controller k8s client
-		c client.Client
 
 		webhook *organizationValidation
 
@@ -56,8 +53,8 @@ var _ = Describe("Organization webhook", func() {
 
 		mgr, err := manager.New(cfg, manager.Options{})
 		Expect(err).NotTo(HaveOccurred())
-		c = mgr.GetClient()
-		webhook.InjectClient(c)
+
+		webhook.InjectClient(mgr.GetClient())
 		webhook.InjectDecoder(mgr.GetAdmissionDecoder())
 
 		stop = StartTestManager(mgr)
