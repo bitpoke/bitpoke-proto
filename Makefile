@@ -39,6 +39,8 @@ run: generate fmt vet
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
+	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go webhook
+
 	# CRDs
 	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(CHARTDIR)/templates/_crds.yaml
 	yq m -d'*' -i $(CHARTDIR)/templates/_crds.yaml hack/chart-metadata.yaml
@@ -61,7 +63,6 @@ manifests:
 	echo '{{- end }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
 	rm $(CHARTDIR)/templates/_rbac.yaml
 	# Webhooks
-	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go webhook
 	cp config/webhook/webhook.yaml chart/dashboard/templates/webhook.yaml
 	yq m -d'*' -i $(CHARTDIR)/templates/webhook.yaml hack/chart-metadata.yaml
 	yq d -d'*' -i $(CHARTDIR)/templates/webhook.yaml metadata.creationTimestamp

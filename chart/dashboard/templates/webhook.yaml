@@ -67,6 +67,7 @@ webhooks:
     - v1
     operations:
     - CREATE
+    - UPDATE
     resources:
     - namespaces
 - clientConfig:
@@ -83,13 +84,14 @@ webhooks:
       operator: DoesNotExist
   rules:
   - apiGroups:
-    - wordpress.presslabs.org
+    - ""
     apiVersions:
-    - v1alpha1
+    - v1
     operations:
     - CREATE
+    - UPDATE
     resources:
-    - wordpresses
+    - namespaces
 - clientConfig:
     caBundle: '{{ $cert.Cert | b64enc }}'
     service:
@@ -104,10 +106,11 @@ webhooks:
       operator: DoesNotExist
   rules:
   - apiGroups:
-    - ""
+    - wordpress.presslabs.org
     apiVersions:
-    - v1
+    - v1alpha1
     operations:
     - CREATE
+    - UPDATE
     resources:
-    - namespaces
+    - wordpresses

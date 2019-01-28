@@ -1,10 +1,9 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: proj-sample-project
+  name: org-sample-organization
   labels:
     presslabs.com/organization: sample-organization
-    presslabs.com/project: sample-project
-    presslabs.com/kind: project
+    presslabs.com/kind: organization
   annotations:
     presslabs.com/created-by: user

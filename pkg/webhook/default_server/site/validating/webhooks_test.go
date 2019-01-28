@@ -65,36 +65,18 @@ var _ = Describe("Organization webhook", func() {
 	})
 
 	It("returns error when metadata is missing", func() {
-		wp.SetLabels(map[string]string{
-			"presslabs.com/kind": "site",
-		})
-
 		allowed, reason, err := webhook.validatingWordpressFn(wp)
 
 		Expect(allowed).To(Equal(false))
 		Expect(reason).To(Equal("validation failed"))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/organization\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/project\" is missing")))
-		Expect(err).To(MatchError(ContainSubstring("required label \"presslabs.com/site\" is missing")))
 		Expect(err).To(MatchError(ContainSubstring("required annotation \"presslabs.com/created-by\" is missing")))
-	})
-	It("doesn't validate when kind is not a site", func() {
-		wp.SetLabels(map[string]string{
-			"presslabs.com/kind": "not-a-site",
-		})
-
-		allowed, reason, err := webhook.validatingWordpressFn(wp)
-
-		Expect(allowed).To(Equal(true))
-		Expect(reason).To(Equal("not a site, skipping validation"))
-		Expect(err).To(BeNil())
 	})
 	It("doesn't return error when metadata is set", func() {
 		wp.SetLabels(map[string]string{
 			"presslabs.com/organization": organizationName,
 			"presslabs.com/project":      projectName,
-			"presslabs.com/site":         siteName,
-			"presslabs.com/kind":         "site",
 		})
 
 		wp.SetAnnotations(map[string]string{

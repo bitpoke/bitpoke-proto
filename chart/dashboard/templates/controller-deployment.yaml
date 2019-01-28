@@ -29,6 +29,9 @@ spec:
         - name: controller
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports:
+            - name: webhook
+              containerPort: 4433
           args:
             - controller-manager
             - --webhook-port={{ .Values.webhook.service.targetPort }}

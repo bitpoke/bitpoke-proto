@@ -21,7 +21,7 @@ spec:
   - port: 443
     targetPort: 7890
   selector:
-    app: webhook-server
+    app: dashboard-webhook
 status:
   loadBalancer: {}
 ---
@@ -50,6 +50,7 @@ webhooks:
     - v1
     operations:
     - CREATE
+    - UPDATE
     resources:
     - namespaces
 - clientConfig:
@@ -66,13 +67,14 @@ webhooks:
       operator: DoesNotExist
   rules:
   - apiGroups:
-    - wordpress.presslabs.org
+    - ""
     apiVersions:
-    - v1alpha1
+    - v1
     operations:
     - CREATE
+    - UPDATE
     resources:
-    - wordpresses
+    - namespaces
 - clientConfig:
     caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMwakNDQWJxZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFhTVJnd0ZnWURWUVFERXc5M1pXSm8KYjI5ckxXTmxjblF0WTJFd0hoY05NVGt3TVRBNU1UTTBOVEkxV2hjTk1qa3dNVEEyTVRNME5USTFXakFhTVJndwpGZ1lEVlFRREV3OTNaV0pvYjI5ckxXTmxjblF0WTJFd2dnRWlNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0SUJEd0F3CmdnRUtBb0lCQVFDeVV3aG5QeFdCUUVsTXNycU1uRG1RMXVVWmhYVERRb2g4em0xOVRlSjhScDFVWEUwV01ROXAKRitvbGlVYWJhME5FZllUdkJRZHB0YXZWY0VrWTJoWVpIZmkxRHpqR2piSTV2ZUdCRHpYMVdQSkY0dU1Rd0FWbApJSVloYzRvMkxCUldtSlUyRUE2UzgvaWt1Q1BweCtMZUxCNmNsaGhPU1YycXhrYVVtQzIxSXV5eDVnN0FvY2ZuCko5K0ppajRhRXhjcjg5dWJLWFJaQU5IbERUbzJQdjM4dTcvNUFRK3NwTGJiZU5oWXFVK2JtYVpkei9Objk0V1AKMWREUHNidWFZTzhKdWVna0Q0TkVjSE1Eei9MWHpxejNHUG11bCtqeG9ROWVGNjdienlHTWVybitKTHhQSWtDTgowWlZXdVdRdU5WVzNsLzZZZHZncGdxeHQ3dzhDb3dpVkFnTUJBQUdqSXpBaE1BNEdBMVVkRHdFQi93UUVBd0lDCnBEQVBCZ05WSFJNQkFmOEVCVEFEQVFIL01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQkx2Qlg1ZWlGZ2N3LzAKRHNUd0VOZldVNUN5SVM5Ykh5OTQ0dS9ncGhNbW92c3haQ2h0N3EvTWNhbzNyRkREQXFSb0hoeTZlSy9kU1pydgpqcW9ZTnM5VGREbC9VM2xaOGhOcWRNcTA1Ty91emc5OFdaemNJNTBmVTlRK2dSQzVWbFZGMFlrS3ZHYVE4NWU1CmhvQmZPN2ZneXo4Z2hob0hsTWJQTFdVUndXQVhlM1E2b2xwMk1LTndPVjhkQjFTcHFWb0libGxBZFpIcHZwUUsKZU5XNjJqbkc0SHc2SWhCQ0NScW9MOXNBRnkreU42azJiU1o5bHpsTzJ1SW1RVEJXakNPWWNSVmxRejFaalNOYQpiT1VQWWd5Y214RWJ4ZzREdFZlQjM1UFkrVGdyU2k4bDNpckQ3bjJtK2tHcGdDaUROZ1BVMm9xWUsyN1l0cUJWCmtSbHlEU0pECi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
     service:
@@ -87,10 +89,11 @@ webhooks:
       operator: DoesNotExist
   rules:
   - apiGroups:
-    - ""
+    - wordpress.presslabs.org
     apiVersions:
-    - v1
+    - v1alpha1
     operations:
     - CREATE
+    - UPDATE
     resources:
-    - namespaces
+    - wordpresses

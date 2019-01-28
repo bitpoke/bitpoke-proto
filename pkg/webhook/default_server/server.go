@@ -31,10 +31,10 @@ var (
 
 // Add adds itself to the manager
 // +kubebuilder:webhook:port=7890,cert-dir=/path/to/cert
-// +kubebuilder:webhook:service=test-system:webhook-service,selector=app:webhook-server
-// +kubebuilder:webhook:secret=test-system:webhook-secret
-// +kubebuilder:webhook:mutating-webhook-config-name=mutating-webhook-configuration
-// +kubebuilder:webhook:validating-webhook-config-name=validating-webhook-configuration
+// +kubebuilder:webhook:service=test-system:webhook-service,selector=app:dashboard-webhook
+// +kubebuilder:webhook:secret=test-system:dashboard-webhook-secret
+// +kubebuilder:webhook:mutating-webhook-config-name=dashboard
+// +kubebuilder:webhook:validating-webhook-config-name=dashboard
 func Add(mgr manager.Manager) error {
 	selectors, err := labels.ConvertSelectorToLabelsMap(options.WebhookServiceSelector)
 	if err != nil {

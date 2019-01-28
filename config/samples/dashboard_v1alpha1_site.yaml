@@ -1,10 +1,9 @@
-apiVersion: v1
-kind: Namespace
+apiVersion: wordpress.presslabs.org/v1alpha1
+kind: Wordpress
 metadata:
-  name: proj-sample-project
+  name: sample-site
   labels:
     presslabs.com/organization: sample-organization
     presslabs.com/project: sample-project
-    presslabs.com/kind: project
   annotations:
     presslabs.com/created-by: user

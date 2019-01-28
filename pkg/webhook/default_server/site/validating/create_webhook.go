@@ -14,7 +14,7 @@ import (
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-// +kubebuilder:webhook:groups=,versions=v1,resources=namespaces,verbs=create
+// +kubebuilder:webhook:groups=wordpress.presslabs.org,versions=v1alpha1,resources=wordpresses,verbs=create;update
 // +kubebuilder:webhook:name=validating-create-site.presslabs.com
 // +kubebuilder:webhook:path=/validating-create-site
 // +kubebuilder:webhook:type=validating,failure-policy=fail
