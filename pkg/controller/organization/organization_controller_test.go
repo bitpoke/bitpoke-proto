@@ -162,7 +162,7 @@ var _ = Describe("Organization controller", func() {
 			}))
 			Expect(cr.Rules).To(Equal([]rbacv1.PolicyRule{
 				{
-					Verbs:         []string{"delete"},
+					Verbs:         []string{"delete", "update"},
 					APIGroups:     []string{""},
 					Resources:     []string{"namespaces"},
 					ResourceNames: []string{orgName},

@@ -45,6 +45,7 @@ func NewOwnerClusterRoleSyncer(org *organization.Organization, cl client.Client,
 				},
 				Verbs: []string{
 					"delete",
+					"update",
 				},
 				APIGroups: []string{""},
 			},

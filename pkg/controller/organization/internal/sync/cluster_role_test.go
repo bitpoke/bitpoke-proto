@@ -66,6 +66,7 @@ var _ = Describe("The OwnerClusterRoleSyncer transform func T", func() {
 				},
 				Verbs: []string{
 					"delete",
+					"update",
 				},
 				APIGroups: []string{""},
 			},
