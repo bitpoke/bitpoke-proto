@@ -14,6 +14,12 @@ APP_BIN_PATH := $(CURDIR)/app/node_modules/.bin
 PATH := $(APP_BIN_PATH):$(BINDIR):$(PATH)
 SHELL := env 'PATH=$(PATH)' /bin/sh
 
+ifeq ($(shell uname -s | tr '[:upper:]' '[:lower:]'),darwin)
+	SEDI = sed -i ''
+else
+	SEDI = sed -i
+endif
+
 # Run tests
 test: generate manifests
 	ginkgo \
@@ -41,17 +47,6 @@ manifests:
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go webhook
 
-	# CRDs
-	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(CHARTDIR)/templates/_crds.yaml
-	yq m -d'*' -i $(CHARTDIR)/templates/_crds.yaml hack/chart-metadata.yaml
-	yq w -d'*' -i $(CHARTDIR)/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
-	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml metadata.creationTimestamp
-	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml status metadata.creationTimestamp
-	cat hack/generated-by-makefile.yaml > $(CHARTDIR)/templates/crds.yaml
-	echo '{{- if .Values.crd.install }}' >> $(CHARTDIR)/templates/crds.yaml
-	cat $(CHARTDIR)/templates/_crds.yaml >> $(CHARTDIR)/templates/crds.yaml
-	echo '{{- end }}' >> $(CHARTDIR)/templates/crds.yaml
-	rm $(CHARTDIR)/templates/_crds.yaml
 	# RBAC
 	cp config/rbac/rbac_role.yaml $(CHARTDIR)/templates/_rbac.yaml
 	yq m -d'*' -i $(CHARTDIR)/templates/_rbac.yaml hack/chart-metadata.yaml
@@ -96,8 +91,8 @@ manifests:
 		hack/certificate-globals.yaml \
 		chart/dashboard/templates/webhook.yaml \
 		> chart/dashboard/templates/_webhook.yaml
-	sed -i "s/'{{ \.Values\.webhook\.service\.targetPort }}'/{{ \.Values\.webhook\.service\.targetPort }}/g" chart/dashboard/templates/_webhook.yaml
-	sed -i "s/'{{ \.Values\.webhook\.service\.port }}'/{{ \.Values\.webhook\.service\.port }}/g" chart/dashboard/templates/_webhook.yaml
+	$(SEDI) "s/'{{ \.Values\.webhook\.service\.targetPort }}'/{{ \.Values\.webhook\.service\.targetPort }}/g" chart/dashboard/templates/_webhook.yaml
+	$(SEDI) "s/'{{ \.Values\.webhook\.service\.port }}'/{{ \.Values\.webhook\.service\.port }}/g" chart/dashboard/templates/_webhook.yaml
 	mv chart/dashboard/templates/_webhook.yaml chart/dashboard/templates/webhook.yaml
 
 .PHONY: chart

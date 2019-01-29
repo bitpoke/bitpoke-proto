@@ -32,3 +32,5 @@ protoc.zip
 **/node_modules
 
 k8s-webhook-server/
+
+chart/dashboard/templates/_crds.yaml
