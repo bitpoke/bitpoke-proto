@@ -4,6 +4,9 @@ imagePullPolicy: IfNotPresent
 nameOverride: ""
 fullnameOverride: ""
 
+defaults:
+  installRoles: true
+
 apiserver:
   replicaCount: 1
   service:
