@@ -45,9 +45,9 @@ var HTTPAddr = ":8080"
 
 // AddToFlagSet add options to a FlagSet
 func AddToFlagSet(flag *pflag.FlagSet) {
-	flag.StringVar(&ClientID, "oidc-client-id", "", "OpenID Cliet ID")
-	flag.StringVar(&ClientSecret, "oidc-client-secret", "", "OpenID Cliet Secret")
-	flag.StringVar(&OIDCIssuer, "oidc-issuer", "", "The audience to validate JWT against")
+	flag.StringVar(&ClientID, "oidc-client-id", os.Getenv("OIDC_CLIENT_ID"), "OpenID Cliet ID")
+	flag.StringVar(&ClientSecret, "oidc-client-secret", os.Getenv("OIDC_CLIENT_SECRET"), "OpenID Cliet Secret")
+	flag.StringVar(&OIDCIssuer, "oidc-issuer", os.Getenv("OIDC_ISSUER"), "The audience to validate JWT against")
 	flag.StringVar(&BaseURL, "base-url", BaseURL, "Base URL for the webapp")
 	flag.StringVar(&GRPCProxyURL, "grpc-proxy-url", GRPCProxyURL, "URL for the gRPC proxy")
 	flag.StringVar(&GRPCAddr, "grpc-addr", GRPCAddr, "gRPC server address")
