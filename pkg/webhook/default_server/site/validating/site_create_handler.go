@@ -11,6 +11,7 @@ import (
 	"context"
 	"net/http"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/types"
@@ -29,7 +30,7 @@ func init() {
 
 // WordpressCreateHandler handles Wordpress
 type WordpressCreateHandler struct {
-	// Client  client.Client
+	Client client.Client
 
 	// Decoder decodes objects
 	Decoder types.Decoder
@@ -60,13 +61,13 @@ func (h *WordpressCreateHandler) Handle(ctx context.Context, req types.Request) 
 	return admission.ValidationResponse(allowed, reason)
 }
 
-//var _ inject.Client = &WordpressCreateHandler{}
-//
-//// InjectClient injects the client into the WordpressCreateHandler
-//func (h *WordpressCreateHandler) InjectClient(c client.Client) error {
-//	h.Client = c
-//	return nil
-//}
+var _ inject.Client = &WordpressCreateHandler{}
+
+// InjectClient injects the client into the WordpressCreateHandler
+func (h *WordpressCreateHandler) InjectClient(c client.Client) error {
+	h.Client = c
+	return nil
+}
 
 var _ inject.Decoder = &WordpressCreateHandler{}
 

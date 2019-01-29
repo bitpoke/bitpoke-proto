@@ -12,6 +12,7 @@ import (
 	"net/http"
 
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -34,7 +35,7 @@ func init() {
 
 // NamespaceCreateHandler handles Namespace
 type NamespaceCreateHandler struct {
-	// Client  client.Client
+	Client client.Client
 
 	// Decoder decodes objects
 	Decoder types.Decoder
@@ -70,6 +71,14 @@ func (h *NamespaceCreateHandler) Handle(ctx context.Context, req types.Request) 
 		return admission.ErrorResponse(http.StatusInternalServerError, err)
 	}
 	return admission.ValidationResponse(allowed, reason)
+}
+
+var _ inject.Client = &NamespaceCreateHandler{}
+
+// InjectClient injects the client into the NamespaceCreateHandler
+func (h *NamespaceCreateHandler) InjectClient(c client.Client) error {
+	h.Client = c
+	return nil
 }
 
 var _ inject.Decoder = &NamespaceCreateHandler{}
