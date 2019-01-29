@@ -14,8 +14,6 @@ import (
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"github.com/gosimple/slug"
-	"google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,12 +37,11 @@ type organizationsService struct {
 // resolve resolves an fully-qualified resource name to a k8s object name
 func resolve(path string) (string, error) {
 	if !strings.HasPrefix(path, "orgs/") {
-		return "", grpcstatus.Errorf(codes.InvalidArgument,
-			"organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
+		return "", status.InvalidArgumentf("organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
 	}
 	name := path[5:]
 	if len(name) == 0 {
-		return "", grpcstatus.Errorf(codes.InvalidArgument, "organization name cannot be empty")
+		return "", status.InvalidArgumentf("organization name cannot be empty")
 	}
 	return name, nil
 }
@@ -53,7 +50,7 @@ func resolve(path string) (string, error) {
 func getCreatedBy(ctx context.Context) (string, error) {
 	cl := ctx.Value(middleware.AuthTokenContextKey)
 	if cl == nil {
-		return "", grpcstatus.Errorf(codes.Unauthenticated, "no auth-token value in context")
+		return "", status.Unauthenticatedf("no auth-token value in context")
 	}
 	createdBy := cl.(middleware.Claims).Subject
 	return createdBy, nil
@@ -61,7 +58,7 @@ func getCreatedBy(ctx context.Context) (string, error) {
 
 func (s *organizationsService) impersonateClient(userName string) client.Client {
 	if len(userName) <= 0 {
-		panic(grpcstatus.Errorf(codes.Internal, "empty impersonation user"))
+		panic(status.InternalErrorf("empty impersonation user"))
 	}
 	mcfg := rest.CopyConfig(s.cfg)
 	mcfg.Impersonate = rest.ImpersonationConfig{
@@ -121,19 +118,19 @@ func Add(server *apiserver.APIServer) error {
 func (s *organizationsService) CreateOrganization(ctx context.Context, r *CreateOrganizationRequest) (*Organization, error) {
 	c, createdBy, err := s.getImpersonatedClient(ctx)
 	if err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 
 	var name string
 	if len(r.Organization.Name) > 0 {
 		if name, err = resolve(r.Organization.Name); err != nil {
-			return nil, status.Error(err)
+			return nil, status.FromError(err)
 		}
 	} else {
 		name = slug.Make(r.Organization.DisplayName)
 	}
 	if len(name) == 0 {
-		return nil, status.Error(fmt.Errorf("organization name cannot be empty"))
+		return nil, status.FromError(fmt.Errorf("organization name cannot be empty"))
 	}
 
 	org := organization.New(&corev1.Namespace{
@@ -151,7 +148,7 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 	org.UpdateDisplayName(r.Organization.DisplayName)
 
 	if err := c.Create(context.TODO(), org.Unwrap()); err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 
 	return newOrganizationFromK8s(org), nil
@@ -160,12 +157,12 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrganizationRequest) (*Organization, error) {
 	c, _, err := s.getImpersonatedClient(ctx)
 	if err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 
 	name, err := resolve(r.Name)
 	if err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(name),
@@ -173,7 +170,7 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrgani
 
 	var org corev1.Namespace
 	if err := c.Get(ctx, key, &org); err != nil {
-		return nil, status.Error(err)
+		return nil, status.NotFoundf("organization %s not found", r.Name).Because(err)
 	}
 
 	return newOrganizationFromK8s(organization.New(&org)), nil
@@ -182,12 +179,12 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrgani
 func (s *organizationsService) UpdateOrganization(ctx context.Context, r *UpdateOrganizationRequest) (*Organization, error) {
 	c, _, err := s.getImpersonatedClient(ctx)
 	if err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 
 	name, err := resolve(r.Organization.Name)
 	if err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(name),
@@ -195,13 +192,13 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *Update
 
 	var org corev1.Namespace
 	if err := s.client.Get(ctx, key, &org); err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 
 	organization.New(&org).UpdateDisplayName(r.Organization.DisplayName)
 
 	if err := c.Update(ctx, &org); err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 
 	return newOrganizationFromK8s(organization.New(&org)), nil
@@ -210,12 +207,12 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *Update
 func (s *organizationsService) DeleteOrganization(ctx context.Context, r *DeleteOrganizationRequest) (*empty.Empty, error) {
 	c, _, err := s.getImpersonatedClient(ctx)
 	if err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 
 	name, err := resolve(r.Name)
 	if err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(name),
@@ -223,11 +220,11 @@ func (s *organizationsService) DeleteOrganization(ctx context.Context, r *Delete
 
 	var org corev1.Namespace
 	if err := c.Get(ctx, key, &org); err != nil {
-		return nil, status.Error(err)
+		return nil, status.NotFound().Because(err)
 	}
 
 	if err := c.Delete(ctx, &org); err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 
 	return &empty.Empty{}, nil
@@ -240,12 +237,12 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrg
 	)
 
 	if userID, err = getCreatedBy(ctx); err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 	memberLists := &rbacv1.RoleBindingList{}
 	opts := client.MatchingField("subject.user", userID)
 	if err = s.client.List(context.TODO(), opts, memberLists); err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 
 	var orgNames []string
@@ -259,12 +256,12 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrg
 	opts = &client.ListOptions{}
 	err = opts.SetLabelSelector(fmt.Sprintf("presslabs.com/kind=organization, presslabs.com/organization in (%s)", strings.Join(orgNames, ", ")))
 	if err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 	resp := &ListOrganizationsResponse{}
 
 	if err := s.client.List(context.TODO(), opts, orgs); err != nil {
-		return nil, status.Error(err)
+		return nil, status.FromError(err)
 	}
 
 	// TODO: implement pagination

@@ -83,15 +83,15 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 	// Create the gRPC server
 	grpcServer := grpc.NewServer(
 		grpc_middleware.WithUnaryServerChain(
-			grpc_auth.UnaryServerInterceptor(opts.AuthFunc),
 			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
 			grpc_zap.UnaryServerInterceptor(zap.L()),
+			grpc_auth.UnaryServerInterceptor(opts.AuthFunc),
 			grpc_recovery.UnaryServerInterceptor(recoveryOpts...),
 		),
 		grpc_middleware.WithStreamServerChain(
-			grpc_auth.StreamServerInterceptor(opts.AuthFunc),
 			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
 			grpc_zap.StreamServerInterceptor(zap.L()),
+			grpc_auth.StreamServerInterceptor(opts.AuthFunc),
 			grpc_recovery.StreamServerInterceptor(recoveryOpts...),
 		),
 	)
