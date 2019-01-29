@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package presslabs.dashboard.sites.v1;
+
+option go_package = "v1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+
+// Site represents an site within the presslabs dashboard
+// context
+message Site {
+  // The fully qualified site name in the form
+  // project/super-awesome/site/{site_name}.
+  // The `site_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  // The name is read-only
+  string name = 1;
+  // The primary domain for site
+  string primary_domain = 2;
+  // The wordpress image
+  string wordpress_image = 3;
+}
+
+message CreateSiteRequest {
+  // The parent resource name where the site is to be created
+  // The parent is a required parameter
+  string parent = 1;
+  // The site resource to create
+  Site site = 2;
+}
+
+message GetSiteRequest {
+  // The resource name of the site to fetch in the form
+  // project/super-awesome/site/{site_name}.
+  // The `site_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1;
+}
+
+message UpdateSiteRequest {
+  // The new definition of the Folder. It must include a `name` 
+  Site site = 1;
+  // Fields to be updated.
+  // Only the `display_name` can be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message DeleteSiteRequest {
+  // The resource name of the site to delete in the form
+  // project/super-awesome/site/{site_name}.
+  // The `site_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1;
+}
+
+message ListSitesRequest {
+  // The maximum number of items to return.
+  int32 page_size = 1;
+  // The next_page_token value returned from a previous List request, if
+  // any.
+  string page_token = 2;
+}
+
+message ListSitesResponse {
+  repeated Site sites = 1;
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+// SitesService allow managing sites 
+service SitesService {
+  // CreateSite creates a new site
+  rpc CreateSite(CreateSiteRequest) returns (Site);
+  // GetSite fetches an site by it's name
+  rpc GetSite(GetSiteRequest) returns (Site);
+  // UpdateSite updates an site details
+  rpc UpdateSite(UpdateSiteRequest) returns (Site);
+  // DeleteSite deletes an site by it's name
+  rpc DeleteSite(DeleteSiteRequest) returns (google.protobuf.Empty);
+  // ListSites list sites
+  rpc ListSites(ListSitesRequest) returns (ListSitesResponse);
+}
