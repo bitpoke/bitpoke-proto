@@ -46,7 +46,7 @@ metadata:
     chart: '{{ include "dashboard.chart" . }}'
     heritage: '{{ .Release.Service }}'
     release: '{{ .Release.Name }}'
-  name: validating-webhook-configuration
+  name: '{{ include "dashboard.fullname" . }}'
 webhooks:
 - clientConfig:
     caBundle: '{{ $cert.Cert | b64enc }}'

@@ -85,6 +85,7 @@ manifests:
 	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml spec.selector.app '{{ include "dashboard.name" . }}'
 	yq w -d1 -i $(CHARTDIR)/templates/webhook.yaml spec.selector.release '{{ .Release.Name }}'
 	#   configurations
+	yq w -d2 -i $(CHARTDIR)/templates/webhook.yaml metadata.name '{{ include "dashboard.fullname" . }}'
 	number=0 ; while [ "$$(yq r -d2 config/webhook/webhook.yaml webhooks[$$number])" != "null" ] ; do \
 		yq w -d2 -i $(CHARTDIR)/templates/webhook.yaml webhooks[$$number].clientConfig.caBundle '{{ $$cert.Cert | b64enc }}' ;\
 		yq w -d2 -i $(CHARTDIR)/templates/webhook.yaml webhooks[$$number].clientConfig.service.name '{{ include "dashboard.fullname" . }}-webhook' ;\
