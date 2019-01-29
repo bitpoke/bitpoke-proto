@@ -116,7 +116,7 @@ func Add(server *apiserver.APIServer) error {
 }
 
 func (s *organizationsService) CreateOrganization(ctx context.Context, r *CreateOrganizationRequest) (*Organization, error) {
-	c, createdBy, err := s.getImpersonatedClient(ctx)
+	_, createdBy, err := s.getImpersonatedClient(ctx)
 	if err != nil {
 		return nil, status.FromError(err)
 	}
@@ -147,7 +147,7 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 	})
 	org.UpdateDisplayName(r.Organization.DisplayName)
 
-	if err := c.Create(context.TODO(), org.Unwrap()); err != nil {
+	if err := s.client.Create(context.TODO(), org.Unwrap()); err != nil {
 		return nil, status.FromError(err)
 	}
 
