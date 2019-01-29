@@ -1,4 +1,4 @@
-apiVersion: skaffold/v1beta2
+apiVersion: skaffold/v1beta3
 kind: Config
 build:
   tagPolicy:
@@ -10,17 +10,9 @@ deploy:
     releases:
     - name: dashboard
       chartPath: chart/dashboard
-      #wait: true
-      #valuesFiles:
-      #- helm-skaffold-values.yaml
       values:
         image: quay.io/presslabs/dashboard
-      #recreatePods will pass --recreate-pods to helm upgrade
-      #recreatePods: true
-      #overrides builds an override values.yaml file to run with the helm deploy
-      #overrides:
-      # some:
-      #   key: someValue
-      #setValues get appended to the helm deploy with --set.
-      #setValues:
-      #some.key: someValue
+      setValues:
+        apiserver.oidc.client_id: "TgYj4aR1ttmiZ0YexSwtHVKYSAOza2Vn"
+        apiserver.oidc.client_secret: "Nmro5jF1Yx78RdHB5hHiYc-TvdNF96Dd1VR0Uo_3yM26AlLzIQ2TsU0oLWafnyvO"
+        apiserver.oidc.issuer: "https://presslabs.auth0.com/"
