@@ -36,7 +36,6 @@ spec:
             - controller-manager
             - --webhook-port={{ .Values.webhook.service.targetPort }}
             - --webhook-cert-dir={{ include "dashboard.webhook.certDir" . }}
-            - --webhook-disable-bootstrapping=true
             - --webhook-service-name={{ include "dashboard.webhook.serviceName" . | quote }}
           volumeMounts:
             - name: webhook-certs

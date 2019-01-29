@@ -28,8 +28,8 @@ var GitBaseDomainURL = "git.presslabs.net"
 var (
 	// WebhookNamespace is the namespace for webhooks
 	WebhookNamespace = "default"
-	// WebhookDisableBootstrapping decides whether or not to disable the webhook bootstrapping (true means disabled)
-	WebhookDisableBootstrapping = false
+	// WebhookDisableBootstrapping decides whether or not to disable the webhook bootstrapping (false means enabled)
+	WebhookDisableBootstrapping = true
 	// WebhookSecretName is the secret for webhooks
 	// nolint: gosec
 	WebhookSecretName = "presslabs-dashboard-admission-webhook-cert"
