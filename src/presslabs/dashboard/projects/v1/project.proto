@@ -69,7 +69,7 @@ message DeleteProjectRequest {
   string name = 1;
 }
 
-// ProjectsService allow managingprojects 
+// ProjectsService allow managing projects 
 service ProjectsService {
   // CreateProject creates a new project 
   rpc CreateProject(CreateProjectRequest) returns (Project);
