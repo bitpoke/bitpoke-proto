@@ -14,6 +14,10 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    - port: {{ .Values.apiserver.service.grpcPort }}
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
   selector:
     app: {{ include "dashboard.name" . }}
     release: {{ .Release.Name }}

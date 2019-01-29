@@ -21,24 +21,26 @@ spec:
         app: {{ include "dashboard.name" . }}
         release: {{ .Release.Name }}
         component: apiserver
+      annotations:
+        checksum/oidc-config: {{ include (print $.Template.BasePath "/apiserver-oidc-secret.yaml") . | sha256sum }}
     spec:
       serviceAccount: {{ template "dashboard.apiserver.serviceAccountName" . }}
       containers:
         - name: apiserver
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-          args: [apiserver, --http-addr, ":80", --grpc-addr, ":9000" ]
+          envFrom:
+            - secretRef:
+                name: {{ include "dashboard.fullname" . }}-oidc
+              prefix: OIDC_
+          args: [apiserver, --http-addr, ":8080", --grpc-addr, ":9000" ]
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8080
               protocol: TCP
             - name: grpc
               containerPort: 9000
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
           resources:
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}

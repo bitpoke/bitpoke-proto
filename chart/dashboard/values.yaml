@@ -12,6 +12,12 @@ apiserver:
   service:
     type: ClusterIP
     port: 80
+    grpcPort: 9000
+
+  oidc:
+    client_id: ""
+    client_secret: ""
+    client_issuer: ""
 
   ingress:
     enabled: false
