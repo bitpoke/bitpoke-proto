@@ -29,6 +29,7 @@ import (
 	grpcstatus "google.golang.org/grpc/status"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 	logf "github.com/presslabs/dashboard/pkg/internal/log"
 )
@@ -36,7 +37,7 @@ import (
 // APIServerOptions contains manager, GRPC address, HTTP address and AuthFunc
 // nolint: golint
 type APIServerOptions struct {
-	manager.Manager
+	Manager  manager.Manager
 	GRPCAddr string
 	HTTPAddr string
 	AuthFunc grpc_auth.AuthFunc
@@ -59,8 +60,17 @@ type config struct {
 
 var log = logf.Log.WithName("apiserver")
 
+func defaultOpts(opts *APIServerOptions) *APIServerOptions {
+	if opts.AuthFunc == nil {
+		opts.AuthFunc = auth.Auth
+	}
+	return opts
+}
+
 // NewAPIServer creates a new API Server
 func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
+	opts = defaultOpts(opts)
+
 	// Make sure that log statements internal to gRPC library are
 	// logged using the zapLogger as well.
 	grpc_zap.ReplaceGrpcLogger(zap.L())

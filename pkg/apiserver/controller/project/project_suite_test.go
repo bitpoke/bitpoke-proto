@@ -23,7 +23,7 @@ import (
 
 	"github.com/presslabs/dashboard/pkg/apis"
 	"github.com/presslabs/dashboard/pkg/apiserver"
-	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
 	logf "github.com/presslabs/dashboard/pkg/internal/log"
 )
 
@@ -69,7 +69,7 @@ func SetupAPIServer(mgr manager.Manager) *apiserver.APIServer {
 		Manager:  mgr,
 		HTTPAddr: fmt.Sprintf(":%d", httpPort),
 		GRPCAddr: fmt.Sprintf(":%d", grpcPort),
-		AuthFunc: middleware.FakeAuth,
+		AuthFunc: auth.FakeAuth,
 	}
 
 	server, err := apiserver.NewAPIServer(opts)

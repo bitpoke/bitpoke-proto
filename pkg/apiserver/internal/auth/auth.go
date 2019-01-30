@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package middleware
+package auth
 
 import (
 	"context"
@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	apiserverstatus "github.com/presslabs/dashboard/pkg/apiserver/internal/status"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
@@ -37,6 +38,15 @@ type Claims struct {
 	Subject  string `json:"sub"`
 	Email    string `json:"email"`
 	Verified bool   `json:"email_verified"`
+}
+
+// UserID returns user ID from context
+func UserID(ctx context.Context) string {
+	cl := ctx.Value(AuthTokenContextKey)
+	if cl == nil {
+		panic(apiserverstatus.Unauthenticatedf("no auth-token value in context"))
+	}
+	return cl.(Claims).Subject
 }
 
 // Auth verifies the authentication token present in the gRPC request

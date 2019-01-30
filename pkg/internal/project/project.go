@@ -131,7 +131,7 @@ func (p *Project) ValidateMetadata() error {
 	}
 
 	// This case should not be reachable in normal circumstances
-	if o.Namespace.Labels["presslabs.com/kind"] != "project" {
+	if p.Namespace.Labels["presslabs.com/kind"] != "project" {
 		errorList = append(errorList, errors.New("label \"presslabs.com/kind\" should be \"project\""))
 	}
 

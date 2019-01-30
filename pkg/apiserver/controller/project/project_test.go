@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	projv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1"
-	"github.com/presslabs/dashboard/pkg/apiserver/middleware"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
 	"github.com/presslabs/dashboard/pkg/controller"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
@@ -125,12 +125,12 @@ var _ = Describe("API server", func() {
 		projClient = projv1.NewProjectsServiceClient(conn)
 
 		name = fmt.Sprintf("%d", rand.Int31())
-		id = fmt.Sprintf("proj/%s", name)
-		displayName = fmt.Sprintf("Proj %s", name)
+		id = fmt.Sprintf("project/%s", name)
+		displayName = fmt.Sprintf("Project %s", name)
 		autoName = slug.Make(displayName)
-		autoId = fmt.Sprintf("proj/%s", autoName)
+		autoId = fmt.Sprintf("project/%s", autoName)
 		createdBy = fmt.Sprintf("user#%s", name)
-		middleware.FakeSubject = createdBy
+		auth.FakeSubject = createdBy
 		organization = fmt.Sprintf("%d", rand.Int31())
 	})
 
@@ -318,7 +318,7 @@ var _ = Describe("API server", func() {
 		It("returns NotFound when project does not exist", func() {
 			req := projv1.UpdateProjectRequest{
 				Project: &projv1.Project{
-					Name: "proj/inexistent",
+					Name: "project/inexistent",
 				},
 			}
 			_, err := projClient.UpdateProject(context.TODO(), &req)
