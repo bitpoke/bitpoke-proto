@@ -152,6 +152,34 @@ var _ = Describe("API server", func() {
 			Expect(status.Convert(err).Code()).To(Equal(codes.AlreadyExists))
 		})
 
+		It("returns error when no name is given", func() {
+			req := orgv1.CreateOrganizationRequest{
+				Organization: &orgv1.Organization{},
+			}
+			_, err := orgClient.CreateOrganization(context.TODO(), &req)
+			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+		})
+
+		It("returns error when name is not fully qualified", func() {
+			req := orgv1.CreateOrganizationRequest{
+				Organization: &orgv1.Organization{
+					Name: "not-fully-qualified",
+				},
+			}
+			_, err := orgClient.CreateOrganization(context.TODO(), &req)
+			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+		})
+
+		It("returns error when name is empty", func() {
+			req := orgv1.CreateOrganizationRequest{
+				Organization: &orgv1.Organization{
+					Name: "orgs/",
+				},
+			}
+			_, err := orgClient.CreateOrganization(context.TODO(), &req)
+			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+		})
+
 		It("creates organization when no organization name is given", func() {
 			req := orgv1.CreateOrganizationRequest{
 				Organization: &orgv1.Organization{
@@ -164,7 +192,7 @@ var _ = Describe("API server", func() {
 			expectProperNamespace(c, slug.Make(displayName), displayName, createdBy)
 		})
 
-		It("creates organization when organizatio_id is given", func() {
+		It("creates organization when name is given", func() {
 			req := orgv1.CreateOrganizationRequest{
 				Organization: &orgv1.Organization{
 					Name:        id,

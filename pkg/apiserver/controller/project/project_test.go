@@ -177,6 +177,28 @@ var _ = Describe("API server", func() {
 			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
 		})
 
+		It("returns error when name is not fully qualified", func() {
+			req := projv1.CreateProjectRequest{
+				Parent: organization,
+				Project: &projv1.Project{
+					Name: "not-fully-qualified-name",
+				},
+			}
+			_, err := projClient.CreateProject(context.TODO(), &req)
+			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+		})
+
+		It("returns error when name is empty", func() {
+			req := projv1.CreateProjectRequest{
+				Parent: organization,
+				Project: &projv1.Project{
+					Name: "project/",
+				},
+			}
+			_, err := projClient.CreateProject(context.TODO(), &req)
+			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+		})
+
 		It("creates project when no project name is given", func() {
 			req := projv1.CreateProjectRequest{
 				Parent: organization,
