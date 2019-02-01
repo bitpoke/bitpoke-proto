@@ -14,6 +14,7 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"sync"
 
 	"github.com/gobuffalo/packr"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -67,15 +68,20 @@ func defaultOpts(opts *APIServerOptions) *APIServerOptions {
 	return opts
 }
 
+var setupGrpcLogOnce sync.Once
+
 // NewAPIServer creates a new API Server
 func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 	opts = defaultOpts(opts)
 
 	// Make sure that log statements internal to gRPC library are
 	// logged using the zapLogger as well.
-	grpc_zap.ReplaceGrpcLogger(zap.L())
+	// TODO: redo this ugly hack once we get https://github.com/kubernetes-sigs/controller-runtime/issues/301
+	setupGrpcLogOnce.Do(func() {
+		grpc_zap.ReplaceGrpcLogger(zap.L())
+	})
 
-	// create recovery function which keeps the eventula grpc error code
+	// create recovery function which keeps the eventual grpc error code
 	recoveryOpts := []grpc_recovery.Option{
 		grpc_recovery.WithRecoveryHandler(func(p interface{}) (err error) {
 			type grpcStatus interface {
