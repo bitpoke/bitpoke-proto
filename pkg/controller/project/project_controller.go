@@ -20,10 +20,10 @@ import (
 	"context"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/presslabs/dashboard/pkg/internal/predicate"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -37,6 +37,7 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
+	"github.com/presslabs/dashboard/pkg/internal/predicate"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
@@ -83,6 +84,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		&appsv1.Deployment{},
 		&extv1beta1.Ingress{},
 		&monitoringv1.Prometheus{},
+		&rbacv1.RoleBinding{},
 	}
 
 	for _, subresource := range subresources {
@@ -136,6 +138,8 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 		sync.NewGiteaServiceSyncer(proj, r.Client, r.scheme),
 		sync.NewGiteaIngressSyncer(proj, r.Client, r.scheme),
 		sync.NewPrometheusSyncer(proj, r.Client, r.scheme),
+		sync.NewMemberRoleBindingSyncer(proj, r.Client, r.scheme),
+		sync.NewOwnerRoleBindingSyncer(proj, r.Client, r.scheme),
 	}
 
 	return reconcile.Result{}, r.sync(syncers)

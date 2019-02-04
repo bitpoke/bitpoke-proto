@@ -12,7 +12,10 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 )
 
@@ -29,10 +32,13 @@ var (
 )
 
 type component struct {
-	name       string // eg. web, database, cache
-	app        string // eg. mysql, memcached
-	objNameFmt string
-	objName    string
+	name            string // eg. web, database, cache
+	app             string // eg. mysql, memcached
+	objNameFmt      string
+	objName         string
+	objNamespaceFmt string
+	objNamespace    string
+	kind            runtime.Object
 }
 
 var (
@@ -54,6 +60,18 @@ var (
 	GiteaPVC = component{name: "web", app: "gitea", objName: "gitea"}
 	// GiteaSecret component
 	GiteaSecret = component{name: "web", app: "gitea", objName: "gitea-conf"}
+	// OwnerRoleBinding component
+	OwnerRoleBinding = component{
+		kind:            &rbacv1.RoleBinding{},
+		objName:         "owner",
+		objNamespaceFmt: "%s",
+	}
+	// MemberRoleBinding component
+	MemberRoleBinding = component{
+		kind:            &rbacv1.RoleBinding{},
+		objName:         "member",
+		objNamespaceFmt: "%s",
+	}
 )
 
 // NamespaceName returns the name of the project's namespace
@@ -115,9 +133,25 @@ func (p *Project) ComponentName(component component) string {
 	return fmt.Sprintf(component.objNameFmt, p.GetLabels()["presslabs.com/project"])
 }
 
+// ComponentNamespace returns the object namespace for a component
+func (p *Project) ComponentNamespace(component component) string {
+	if len(component.objNamespaceFmt) == 0 {
+		return component.objNamespace
+	}
+	return fmt.Sprintf(component.objNamespaceFmt, p.ObjectMeta.Name)
+}
+
 // Domain returns the project's subdomain label
 func (p *Project) Domain() string {
 	return p.Name
+}
+
+// ComponentObject returns a default object for the component
+func (p *Project) ComponentObject(component component) runtime.Object {
+	obj := component.kind.DeepCopyObject().(metav1.Object)
+	obj.SetName(p.ComponentName(component))
+	obj.SetNamespace(p.ComponentNamespace(component))
+	return obj.(runtime.Object)
 }
 
 // ValidateMetadata validates the metadata of a Project

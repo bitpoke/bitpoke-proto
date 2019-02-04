@@ -30,6 +30,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -80,8 +81,11 @@ var _ = Describe("Project controller", func() {
 			expectedRequest         reconcile.Request
 			organization            *corev1.Namespace
 			project                 *corev1.Namespace
+			memberClusterRole       *rbacv1.ClusterRole
+			ownerClusterRole        *rbacv1.ClusterRole
 			projectNamespace        string
 			projectName             string
+			projectCreatedBy        string
 			organizationDisplayName string
 			organizationName        string
 			componentsLabels        map[string]map[string]string
@@ -96,11 +100,14 @@ var _ = Describe("Project controller", func() {
 			Entry("reconciles gitea ingress", "gitea", "gitea%.0s", &extv1beta1.Ingress{}),
 			Entry("reconciles gitea pvc", "gitea", "gitea%.0s", &corev1.PersistentVolumeClaim{}),
 			Entry("reconciles gitea secret", "gitea", "gitea-conf%.0s", &corev1.Secret{}),
+			Entry("reconciles member role binding", "member", "member", &rbacv1.RoleBinding{}),
+			Entry("reconciles owner role binding", "owner", "owner", &rbacv1.RoleBinding{}),
 		}
 
 		BeforeEach(func() {
 			projectName = fmt.Sprintf("awesome-%d", rand.Int31())
 			projectNamespace = fmt.Sprintf("proj-%s", projectName)
+			projectCreatedBy = fmt.Sprintf("Dorel %d", rand.Int31())
 
 			orgRand := rand.Int31()
 			organizationName = fmt.Sprintf("acme-%d", orgRand)
@@ -128,8 +135,22 @@ var _ = Describe("Project controller", func() {
 						"presslabs.com/project":      projectName,
 						"presslabs.com/kind":         "project",
 					},
+					Annotations: map[string]string{
+						"presslabs.com/created-by": projectCreatedBy,
+					},
 				},
 			}
+			memberClusterRole = &rbacv1.ClusterRole{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "dashboard.presslabs.com:project::member",
+				},
+			}
+			ownerClusterRole = &rbacv1.ClusterRole{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "dashboard.presslabs.com:project::owner",
+				},
+			}
+
 			componentsLabels = map[string]map[string]string{
 				"default": {
 					"presslabs.com/project":        projectName,
@@ -158,11 +179,28 @@ var _ = Describe("Project controller", func() {
 					"app.kubernetes.io/component":  "web",
 					"app.kubernetes.io/version":    "1.5.2",
 				},
+				"member": {
+					"presslabs.com/project":        projectName,
+					"presslabs.com/organization":   organizationName,
+					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"presslabs.com/kind":           "project-member-list",
+				},
+				"owner": {
+					"presslabs.com/project":        projectName,
+					"presslabs.com/organization":   organizationName,
+					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"presslabs.com/kind":           "project-owner-list",
+				},
 			}
+
 			// Create the Organization in which the Project will live
 			Expect(c.Create(context.TODO(), organization)).To(Succeed())
 			// Create the Project object and expect the Reconcile and Namespace to be created
 			Expect(c.Create(context.TODO(), project)).To(Succeed())
+			// Create the members cluster role
+			Expect(c.Create(context.TODO(), memberClusterRole)).To(Succeed())
+			// Create the owners cluster role
+			Expect(c.Create(context.TODO(), ownerClusterRole)).To(Succeed())
 
 			if firstTest {
 				firstTest = false
@@ -188,6 +226,8 @@ var _ = Describe("Project controller", func() {
 		AfterEach(func() {
 			c.Delete(context.TODO(), project)
 			c.Delete(context.TODO(), organization)
+			c.Delete(context.TODO(), memberClusterRole)
+			c.Delete(context.TODO(), ownerClusterRole)
 
 			// GC created objects
 			for _, e := range entries {
