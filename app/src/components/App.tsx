@@ -30,7 +30,7 @@ class App extends React.Component<Props & ReduxProps> {
         }
 
         return (
-            <div className="App_container">
+            <div>
                 <NavBar />
                 <Router />
             </div>

@@ -2,6 +2,8 @@ import * as React from 'react'
 import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 
+import { Navbar as BlueprintNavBar, Alignment } from '@blueprintjs/core'
+
 import { RootState, auth, routing } from '../redux'
 
 import Link from '../components/Link'
@@ -17,14 +19,20 @@ type ReduxProps = {
     currentUser: auth.User
 }
 
+const { Group, Heading } = BlueprintNavBar
+
 const NavBar: React.SFC<Props & ReduxProps> = ({ dispatch, currentUser }) => {
     return (
-        <div className={ styles.container }>
-            <h2 className={ styles.logo }>
-                <Link to={ routing.routeFor('dashboard') }>Dashboard</Link>
-            </h2>
-            <UserCard entry={ currentUser } />
-        </div>
+        <BlueprintNavBar>
+            <Group align={ Alignment.LEFT }>
+                <Heading>
+                    <Link to={ routing.routeFor('dashboard') }></Link>
+                </Heading>
+            </Group>
+            <Group align={ Alignment.RIGHT }>
+                <UserCard entry={ currentUser } />
+            </Group>
+        </BlueprintNavBar>
     )
 }
 

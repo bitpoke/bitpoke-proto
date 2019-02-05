@@ -2,7 +2,7 @@ import { createStore as createReduxStore, applyMiddleware, compose, combineReduc
 import { createLogger } from 'redux-logger'
 import { persistStore, persistReducer } from 'redux-persist'
 import localForage from 'localforage'
-import createSagaMiddleware from 'redux-saga'
+import createSagaMiddleware, { SagaIterator } from 'redux-saga'
 import { fork, all } from 'redux-saga/effects'
 
 import { map, reduce, compact, has } from 'lodash'
@@ -28,7 +28,7 @@ const rootReducer = persistReducer({
 const initialState = rootReducer(undefined, {} as any)
 const sagas = compact(map(reduxModules, 'saga'))
 
-function* rootSaga() {
+function* rootSaga(): SagaIterator {
     yield all(map(sagas, (saga) => fork(saga)))
 }
 

@@ -6,7 +6,13 @@
     <meta name="theme-color" content="#000000">
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
-    <script type="text/javascript" src="%PUBLIC_URL%/env.js"></script>
+    <script type="text/javascript">
+      env = {
+          REACT_APP_API_URL: "%REACT_APP_API_URL%",
+          REACT_APP_OIDC_ISSUER: "%REACT_APP_OIDC_ISSUER%",
+          REACT_APP_OIDC_CLIENT_ID: "%REACT_APP_OIDC_CLIENT_ID%"
+      }
+    </script>
     <title>PressLabs Dashboard</title>
   </head>
   <body>

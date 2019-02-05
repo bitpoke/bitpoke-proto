@@ -1,22 +1,24 @@
 {
-  "name": "new-app",
+  "name": "presslabs-dashboard",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@blueprintjs/core": "^3.10.0",
+    "@presslabs/dashboard-proto": "git+ssh://git@github.com:presslabs/dashboard-js.git#master",
     "google-protobuf": "^3.6.1",
-    "grpc-web-client": "^0.6.3",
+    "grpc-web-client": "^0.7",
     "history": "^4.7.2",
     "localforage": "^1.7.2",
     "lodash": "^4.17.11",
     "node-sass": "^4.9.3",
     "oidc-client": "^1.5.3-beta.1",
     "path-to-regexp": "^2.4.0",
-    "react": "^16.5.2",
-    "react-dom": "^16.5.2",
-    "react-redux": "^5.0.7",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "react-redux": "^6",
     "react-router": "^4.3.1",
     "react-router-dom": "^4.3.1",
-    "react-scripts-ts": "^4",
+    "react-scripts": "^2.1.1",
     "redux": "^4.0.0",
     "redux-logger": "^3.0.6",
     "redux-persist": "^5.10.0",
@@ -26,10 +28,10 @@
     "urijs": "^1.19.1"
   },
   "scripts": {
-    "start": "react-scripts-ts start",
-    "build": "react-scripts-ts build",
-    "test": "react-scripts-ts test",
-    "eject": "react-scripts-ts eject"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "browserslist": [
     ">0.2%",
@@ -43,7 +45,7 @@
     "@types/jest": "^23.3.5",
     "@types/lodash": "^4.14.117",
     "@types/node": "^10.11.6",
-    "@types/react": "^16.4.16",
+    "@types/react": "16.7.13",
     "@types/react-dom": "^16.0.9",
     "@types/react-redux": "^6.0.9",
     "@types/react-router-dom": "^4.3.1",
@@ -53,8 +55,10 @@
     "@types/urijs": "^1.15.38",
     "@types/webpack": "^4.4.16",
     "ts-protoc-gen": "^0.8.0",
-    "tslint-config-airbnb": "^5.11.0",
-    "tslint-eslint-rules": "^5.4.0",
+    "tslint": "^5.11.0",
+    "tslint-config-airbnb": "^5.11.1",
+    "tslint-config-prettier": "^1.17.0",
+    "tslint-react": "^3.6.0",
     "tslint-react-recommended": "^1.0.15",
     "typescript": "^3.1.2"
   }

@@ -4,10 +4,9 @@ import { channel as createChannel } from 'redux-saga'
 import { User as Token, UserManager } from 'oidc-client'
 import { createSelector } from 'reselect'
 
+import { join, pick } from 'lodash'
 
 import config from '../config'
-
-import { join, pick } from 'lodash'
 
 import { RootState, app, routing } from '../redux'
 import { watchChannel } from '../utils'
@@ -83,7 +82,7 @@ export function* saga() {
     yield watchChannel(channel)
 }
 
-function* ensureAuthentication(action: ActionType<typeof app.initialize>) {
+function* ensureAuthentication(action: ActionType<typeof routing.updateRoute>) {
     const userIsAuthenticated = yield select(isAuthenticated)
     const route = yield select(routing.getCurrentRoute)
 

@@ -9,7 +9,7 @@ import registerServiceWorker from './registerServiceWorker'
 
 import App from './components/App'
 
-import './index.css'
+import './index.scss'
 
 const { store, persistor } = createStore()
 
