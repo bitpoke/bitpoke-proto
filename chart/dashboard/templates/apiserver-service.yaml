@@ -21,3 +21,4 @@ spec:
   selector:
     app: {{ include "dashboard.name" . }}
     release: {{ .Release.Name }}
+    component: apiserver

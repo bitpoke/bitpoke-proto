@@ -34,6 +34,7 @@ spec:
   selector:
     app: '{{ include "dashboard.name" . }}'
     release: '{{ .Release.Name }}'
+    component: controller
   type: '{{ .Values.webhook.service.type }}'
 status:
   loadBalancer: {}
