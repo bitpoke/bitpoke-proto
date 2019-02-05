@@ -11,6 +11,18 @@ metadata:
   name: '{{ template "dashboard.fullname" . }}-controller'
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
   - rbac.authorization.k8s.io
   resources:
   - clusterroles
@@ -32,6 +44,7 @@ rules:
   - resourcequotas
   - namespaces
   - limitranges
+  - events
   verbs:
   - get
   - list
@@ -79,6 +92,7 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - events
   - services
   - secrets
   verbs:

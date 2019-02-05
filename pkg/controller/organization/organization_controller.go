@@ -103,6 +103,7 @@ type ReconcileOrganization struct {
 
 // Reconcile reads that state of the cluster for a Organization object and makes changes based on the state read
 // and what is in the Organization.Spec
+// +kubebuilder:rbac:groups=,resources=events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;clusterrolebindings;rolebindings,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileOrganization) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Organization instance
