@@ -55,8 +55,8 @@ export const get = () =>
     createAction(GET_REQUESTED)
 export const getSuccess = (organization: Organization) =>
     createAction(GET_SUCCEEDED, organization)
-export const list = () =>
-    createAction(LIST_REQUESTED)
+export const list = (request: ListOrganizationsRequest) =>
+    createAction(LIST_REQUESTED, request)
 export const listSuccess = (response: ListOrganizationsResponse) =>
     createAction(LIST_SUCCEEDED, response)
 export const create = (request: CreateOrganizationRequest) =>
@@ -162,14 +162,23 @@ export function* saga() {
 }
 
 function* performRequest(action: Actions) {
-    const { service, request } = getHandlerForAction(action)
+    const { service } = getHandlerForAction(action)
     const authorization = yield select(auth.getAuthorizationHeader)
     const metadata = { authorization }
+
+    console.log('REQUEST>>', _get(action, 'payload'))
+
+    const organization = new Organization()
+    organization.setDisplayName('A New Organization')
+    const request = new CreateOrganizationRequest()
+    request.setOrganization(organization)
+
 
     grpc.invoke(service, {
         host,
         metadata,
-        request: new request(_get(action, 'payload')),
+        request,
+        // request: _get(action, 'payload'),
         onMessage: (response: ListOrganizationsResponse) =>
             channel.put(listSuccess(response)),
         onEnd: (response) => {

@@ -8,6 +8,7 @@ import styles from './UserCard.module.scss'
 
 import {
     Organization,
+    ListOrganizationsRequest,
     CreateOrganizationRequest
 } from '@presslabs/dashboard-proto'
 
@@ -26,7 +27,7 @@ const UserCard: React.SFC<Props> = ({ entry, dispatch }) => {
             <img className={ styles.avatar } src={ entry.avatarURL } />
             <strong className={ styles.email }>{ entry.email }</strong>
             <button onClick={ () => dispatch(auth.refreshToken()) }>Refresh Token</button>
-            <button onClick={ () => dispatch(organizations.list()) }>List orgs</button>
+            <button onClick={ () => dispatch(organizations.list(new ListOrganizationsRequest())) }>List orgs</button>
             <button onClick={ () => {
                 const organization = new Organization()
                 organization.setDisplayName('A New Organization')
