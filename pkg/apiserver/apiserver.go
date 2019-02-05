@@ -118,7 +118,7 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 	sMux := http.NewServeMux()
 	wrappedGrpc := grpcweb.WrapServer(grpcServer)
 	handler := func(resp http.ResponseWriter, req *http.Request) {
-		if wrappedGrpc.IsGrpcWebRequest(req) {
+		if wrappedGrpc.IsGrpcWebRequest(req) || wrappedGrpc.IsAcceptableGrpcCorsRequest(req) {
 			wrappedGrpc.ServeHTTP(resp, req)
 		} else if req.URL.Path == "/env.js" {
 			serveConfig(resp, req)
