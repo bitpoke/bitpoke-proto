@@ -2,8 +2,20 @@ syntax = "proto3";
 
 package presslabs.dashboard.organizations.v1;
 
-option go_package = "v1";
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "v1pb";
+option java_multiple_files = true;
+option java_outer_classname = "OrganizationProto";
+option java_package = "com.presslabs.dashboard.organizations.v1";
 
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 
@@ -33,7 +45,7 @@ message ListOrganizationsRequest {
 }
 
 message ListOrganizationsResponse {
-  repeated Organization organizations = 1;
+  repeated Organization organizations = 1 [(gogoproto.nullable) = false];
   // Token to retrieve the next page of results, or empty if there are no
   // more results in the list.
   string next_page_token = 2;
@@ -41,17 +53,26 @@ message ListOrganizationsResponse {
 
 message CreateOrganizationRequest {
   // The organization resource to create
-  Organization organization = 2;
+  Organization organization = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message UpdateOrganizationRequest {
   // The new definition of the Folder. It must include
   // a `name` and `display_name` field. The other fields
   // will be ignored.
-  Organization organization = 1;
+  Organization organization = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
   // Fields to be updated.
   // Only the `display_name` can be updated.
-  google.protobuf.FieldMask update_mask = 2;
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message DeleteOrganizationRequest {

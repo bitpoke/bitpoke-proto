@@ -25,13 +25,14 @@ pipeline:
   build:
     image: quay.io/presslabs/bfc:latest
     commands:
+      - make test clean
       - make build
 
   publish-go:
     group: publish
     image: quay.io/presslabs/bfc:latest
     environment:
-      - SRC_DIR=/root/go/src/github.com/${DRONE_REPO}/build/go
+      - SRC_DIR=/root/go/src/github.com/${DRONE_REPO}/build/go/src/github.com/presslabs/dashboard-go/pkg/proto
       - REPO_URL=https://github.com/presslabs/dashboard-go
       - CLONE_DIR=/root/go/src/github.com/presslabs/dashboard-go
       - DEST_DIR=pkg/proto

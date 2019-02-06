@@ -22,8 +22,9 @@ lint:
 	$(BINDIR)/prototool lint src
 
 .PHONY: test
-test:
-	$(BINDIR)/prototool compile src
+test: build
+	test -e "$(PWD)/build/go/src/github.com/presslabs/dashboard-go/vendor" || ln -s "$(PWD)/vendor" "$(PWD)/build/go/src/github.com/presslabs/dashboard-go"
+	GOPATH="$(PWD)/build/go" go test ./build/go/src/github.com/presslabs/dashboard-go/pkg/...
 
 .PHONY: dependencies
 dependencies:
