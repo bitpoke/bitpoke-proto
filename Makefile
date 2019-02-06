@@ -1,7 +1,7 @@
 BINDIR                   ?= $(CURDIR)/bin
 PROTOTOOL_VERSION        := 1.3.0
 PROTOC_VERSION           := 3.6.1
-PROTOC_GEN_GO_VERSION    := 1.2.0
+PROTOC_GEN_GOGO_VERSION  := 1.2.0
 GRPC_VERSION             := 1.17.0
 PROTOC_GEN_LINT_VERSION  := 0.2.1
 
@@ -44,17 +44,9 @@ dependencies:
 	$(BINDIR)/prototool compile /tmp/prototool-bootstrap
 	rm -rf /tmp/prototool-bootstrap
 
-	go get -d -u github.com/ckaznocha/protoc-gen-lint
-	git -C "$(GOPATH)"/src/github.com/ckaznocha/protoc-gen-lint checkout v$(PROTOC_GEN_LINT_VERSION) --quiet
-	GOBIN=$(BINDIR) go install github.com/ckaznocha/protoc-gen-lint
-	git -C "$(GOPATH)"/src/github.com/ckaznocha/protoc-gen-lint checkout master --quiet
-
-	go get -d -u github.com/golang/protobuf/protoc-gen-go
-	git -C "$(GOPATH)"/src/github.com/golang/protobuf checkout v$(PROTOC_GEN_GO_VERSION) --quiet
-	GOBIN=$(BINDIR) go install github.com/golang/protobuf/protoc-gen-go
-	git -C "$(GOPATH)"/src/github.com/golang/protobuf checkout master --quiet
-
-	go get -d -u google.golang.org/grpc
-	git -C "$(GOPATH)"/src/google.golang.org/grpc checkout v$(GRPC_VERSION) --quiet
-	GOBIN=$(BINDIR) go install google.golang.org/grpc
-	git -C "$(GOPATH)"/src/google.golang.org/grpc checkout master --quiet
+	GOBIN=$(BINDIR) go install ./vendor/github.com/ckaznocha/protoc-gen-lint
+	GOBIN=$(BINDIR) go install ./vendor/github.com/gogo/protobuf/proto
+	GOBIN=$(BINDIR) go install ./vendor/github.com/gogo/protobuf/jsonpb
+	GOBIN=$(BINDIR) go install ./vendor/github.com/gogo/protobuf/protoc-gen-gogo
+	GOBIN=$(BINDIR) go install ./vendor/github.com/gogo/protobuf/gogoproto
+	GOBIN=$(BINDIR) go install ./vendor/google.golang.org/grpc

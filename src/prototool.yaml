@@ -1,5 +1,7 @@
 protoc:
   version: 3.6.1
+  includes:
+    - ../vendor
 lint:
   # we are using Google API Design guide so we need to enable/disable some
   # linting options accordingly
@@ -21,7 +23,8 @@ generate:
   go_options:
     import_path: github.com/presslabs/dashboard-go
   plugins:
-    - name: go
+    - name: gogo
+      type: gogo
       flags: plugins=grpc
       output: ../build/go
     - name: ts
