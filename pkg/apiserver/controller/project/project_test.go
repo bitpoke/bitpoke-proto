@@ -94,7 +94,7 @@ var _ = Describe("API server", func() {
 	)
 
 	var (
-		id, autoId     string
+		id, autoID     string
 		name, autoName string
 		displayName    string
 		createdBy      string
@@ -128,7 +128,7 @@ var _ = Describe("API server", func() {
 		id = fmt.Sprintf("project/%s", name)
 		displayName = fmt.Sprintf("Project %s", name)
 		autoName = slug.Make(displayName)
-		autoId = fmt.Sprintf("project/%s", autoName)
+		autoID = fmt.Sprintf("project/%s", autoName)
 		createdBy = fmt.Sprintf("user#%s", name)
 		auth.FakeSubject = createdBy
 		organization = fmt.Sprintf("%d", rand.Int31())
@@ -147,7 +147,7 @@ var _ = Describe("API server", func() {
 			Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 			req := projv1.CreateProjectRequest{
 				Parent: organization,
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					Name:        id,
 					DisplayName: displayName,
 				},
@@ -159,7 +159,7 @@ var _ = Describe("API server", func() {
 
 		It("returns error when no parent is given", func() {
 			req := projv1.CreateProjectRequest{
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					Name:        id,
 					DisplayName: displayName,
 				},
@@ -171,7 +171,7 @@ var _ = Describe("API server", func() {
 		It("returns error when no name is given", func() {
 			req := projv1.CreateProjectRequest{
 				Parent:  organization,
-				Project: &projv1.Project{},
+				Project: projv1.Project{},
 			}
 			_, err := projClient.CreateProject(context.TODO(), &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
@@ -180,7 +180,7 @@ var _ = Describe("API server", func() {
 		It("returns error when name is not fully qualified", func() {
 			req := projv1.CreateProjectRequest{
 				Parent: organization,
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					Name: "not-fully-qualified-name",
 				},
 			}
@@ -191,7 +191,7 @@ var _ = Describe("API server", func() {
 		It("returns error when name is empty", func() {
 			req := projv1.CreateProjectRequest{
 				Parent: organization,
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					Name: "project/",
 				},
 			}
@@ -202,21 +202,21 @@ var _ = Describe("API server", func() {
 		It("creates project when no project name is given", func() {
 			req := projv1.CreateProjectRequest{
 				Parent: organization,
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					DisplayName: displayName,
 				},
 			}
 
 			resp, err := projClient.CreateProject(context.TODO(), &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Name).To(Equal(autoId))
+			Expect(resp.Name).To(Equal(autoID))
 			expectProperNamespace(c, slug.Make(displayName), displayName, createdBy, organization)
 		})
 
 		It("creates project when project name is given", func() {
 			req := projv1.CreateProjectRequest{
 				Parent: organization,
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					Name:        id,
 					DisplayName: displayName,
 				},
@@ -231,7 +231,7 @@ var _ = Describe("API server", func() {
 		It("fills display_name when no one is gven", func() {
 			req := projv1.CreateProjectRequest{
 				Parent: organization,
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					Name: id,
 				},
 			}
@@ -302,7 +302,7 @@ var _ = Describe("API server", func() {
 		It("updates dispplay_name of existing project", func() {
 			newDisplayName := "The New Display Name"
 			req := projv1.UpdateProjectRequest{
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					Name:        id,
 					DisplayName: newDisplayName,
 				},
@@ -321,7 +321,7 @@ var _ = Describe("API server", func() {
 
 		It("sets display_name to default when no one is given", func() {
 			req := projv1.UpdateProjectRequest{
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					Name: id,
 				},
 			}
@@ -339,7 +339,7 @@ var _ = Describe("API server", func() {
 
 		It("returns NotFound when project does not exist", func() {
 			req := projv1.UpdateProjectRequest{
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					Name: "project/inexistent",
 				},
 			}
@@ -349,7 +349,7 @@ var _ = Describe("API server", func() {
 
 		It("does not update the organization", func() {
 			req := projv1.UpdateProjectRequest{
-				Project: &projv1.Project{
+				Project: projv1.Project{
 					Name:         id,
 					Organization: "the-new-organization",
 				},
@@ -382,7 +382,7 @@ var _ = Describe("API server", func() {
 
 		It("returns only my orgnanizations", func() {
 			req := projv1.ListProjectsRequest{}
-			Eventually(func() ([]*projv1.Project, error) {
+			Eventually(func() ([]projv1.Project, error) {
 				resp, err := projClient.ListProjects(context.TODO(), &req)
 				return resp.Projects, err
 			}).Should(HaveLen(projsCount))

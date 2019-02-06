@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"strings"
 
-	empty "github.com/golang/protobuf/ptypes/empty"
+	"github.com/gogo/protobuf/types"
 	"github.com/gosimple/slug"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -90,6 +90,7 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 
 	var err error
 	var name string
+
 	if len(r.Organization.Name) > 0 {
 		if name, err = resolve(r.Organization.Name); err != nil {
 			return nil, status.FromError(err)
@@ -172,7 +173,7 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *Update
 	return newOrganizationFromK8s(organization.New(&org)), nil
 }
 
-func (s *organizationsService) DeleteOrganization(ctx context.Context, r *DeleteOrganizationRequest) (*empty.Empty, error) {
+func (s *organizationsService) DeleteOrganization(ctx context.Context, r *DeleteOrganizationRequest) (*types.Empty, error) {
 	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
 	if err != nil {
 		return nil, status.FromError(err)
@@ -195,18 +196,13 @@ func (s *organizationsService) DeleteOrganization(ctx context.Context, r *Delete
 		return nil, status.FromError(err)
 	}
 
-	return &empty.Empty{}, nil
+	return &types.Empty{}, nil
 }
 
 func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrganizationsRequest) (*ListOrganizationsResponse, error) {
-	var (
-		userID string
-		err    error
-	)
+	var err error
+	userID := auth.UserID(ctx)
 
-	if userID = auth.UserID(ctx); err != nil {
-		return nil, status.FromError(err)
-	}
 	memberLists := &rbacv1.RoleBindingList{}
 	opts := client.MatchingField("subject.user", userID)
 	if err = s.client.List(context.TODO(), opts, memberLists); err != nil {
@@ -233,9 +229,9 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrg
 	}
 
 	// TODO: implement pagination
-	resp.Organizations = []*Organization{} //make([]*Organization, len(orgs.Items))
+	resp.Organizations = []Organization{} //make([]*Organization, len(orgs.Items))
 	for i := range orgs.Items {
-		resp.Organizations = append(resp.Organizations, newOrganizationFromK8s(organization.New(&orgs.Items[i])))
+		resp.Organizations = append(resp.Organizations, *newOrganizationFromK8s(organization.New(&orgs.Items[i])))
 	}
 
 	return resp, nil

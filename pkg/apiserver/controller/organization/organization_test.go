@@ -92,7 +92,7 @@ var _ = Describe("API server", func() {
 	)
 
 	var (
-		id, autoId     string
+		id, autoID     string
 		name, autoName string
 		displayName    string
 		createdBy      string
@@ -125,7 +125,7 @@ var _ = Describe("API server", func() {
 		id = fmt.Sprintf("orgs/%s", name)
 		displayName = fmt.Sprintf("Org %s Inc", name)
 		autoName = slug.Make(displayName)
-		autoId = fmt.Sprintf("orgs/%s", autoName)
+		autoID = fmt.Sprintf("orgs/%s", autoName)
 		createdBy = fmt.Sprintf("user#%s", name)
 		auth.FakeSubject = createdBy
 	})
@@ -142,7 +142,7 @@ var _ = Describe("API server", func() {
 			org := createOrganization(name, displayName, createdBy)
 			Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			req := orgv1.CreateOrganizationRequest{
-				Organization: &orgv1.Organization{
+				Organization: orgv1.Organization{
 					Name:        id,
 					DisplayName: displayName,
 				},
@@ -154,7 +154,7 @@ var _ = Describe("API server", func() {
 
 		It("returns error when no name is given", func() {
 			req := orgv1.CreateOrganizationRequest{
-				Organization: &orgv1.Organization{},
+				Organization: orgv1.Organization{},
 			}
 			_, err := orgClient.CreateOrganization(context.TODO(), &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
@@ -162,7 +162,7 @@ var _ = Describe("API server", func() {
 
 		It("returns error when name is not fully qualified", func() {
 			req := orgv1.CreateOrganizationRequest{
-				Organization: &orgv1.Organization{
+				Organization: orgv1.Organization{
 					Name: "not-fully-qualified",
 				},
 			}
@@ -172,7 +172,7 @@ var _ = Describe("API server", func() {
 
 		It("returns error when name is empty", func() {
 			req := orgv1.CreateOrganizationRequest{
-				Organization: &orgv1.Organization{
+				Organization: orgv1.Organization{
 					Name: "orgs/",
 				},
 			}
@@ -182,19 +182,19 @@ var _ = Describe("API server", func() {
 
 		It("creates organization when no organization name is given", func() {
 			req := orgv1.CreateOrganizationRequest{
-				Organization: &orgv1.Organization{
+				Organization: orgv1.Organization{
 					DisplayName: displayName,
 				},
 			}
 			resp, err := orgClient.CreateOrganization(context.TODO(), &req)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(resp.Name).To(Equal(autoId))
+			Expect(resp.Name).To(Equal(autoID))
 			expectProperNamespace(c, slug.Make(displayName), displayName, createdBy)
 		})
 
 		It("creates organization when name is given", func() {
 			req := orgv1.CreateOrganizationRequest{
-				Organization: &orgv1.Organization{
+				Organization: orgv1.Organization{
 					Name:        id,
 					DisplayName: displayName,
 				},
@@ -207,7 +207,7 @@ var _ = Describe("API server", func() {
 
 		It("fills display_name when no one is given", func() {
 			req := orgv1.CreateOrganizationRequest{
-				Organization: &orgv1.Organization{
+				Organization: orgv1.Organization{
 					Name: id,
 				},
 			}
@@ -276,7 +276,7 @@ var _ = Describe("API server", func() {
 		It("updates display_name of existing organization", func() {
 			newDisplayName := "The New Display Name"
 			req := orgv1.UpdateOrganizationRequest{
-				Organization: &orgv1.Organization{
+				Organization: orgv1.Organization{
 					Name:        id,
 					DisplayName: newDisplayName,
 				},
@@ -294,7 +294,7 @@ var _ = Describe("API server", func() {
 		It("sets display_name to default when no one is given", func() {
 			newDisplayName := ""
 			req := orgv1.UpdateOrganizationRequest{
-				Organization: &orgv1.Organization{
+				Organization: orgv1.Organization{
 					Name:        id,
 					DisplayName: newDisplayName,
 				},
@@ -312,7 +312,7 @@ var _ = Describe("API server", func() {
 
 		It("returns NotFound when organization does not exist", func() {
 			req := orgv1.UpdateOrganizationRequest{
-				Organization: &orgv1.Organization{
+				Organization: orgv1.Organization{
 					Name: "orgs/inexistent",
 				},
 			}
@@ -335,7 +335,7 @@ var _ = Describe("API server", func() {
 		})
 		It("returns only my organizations", func() {
 			req := orgv1.ListOrganizationsRequest{}
-			Eventually(func() ([]*orgv1.Organization, error) {
+			Eventually(func() ([]orgv1.Organization, error) {
 				resp, err := orgClient.ListOrganizations(context.TODO(), &req)
 				return resp.Organizations, err
 			}).Should(HaveLen(myOrgsCount))

@@ -156,15 +156,18 @@
   version = "v1.13.7"
 
 [[projects]]
-  digest = "1:da39f4a22829ca95e63566208e0ea42d6f055f41dff1b14fdab88d88f62df653"
+  digest = "1:f5ccd717b5f093cbabc51ee2e7a5979b92f17d217f9031d6d64f337101c408e4"
   name = "github.com/gogo/protobuf"
   packages = [
+    "gogoproto",
     "proto",
+    "protoc-gen-gogo/descriptor",
     "sortkeys",
+    "types",
   ]
   pruneopts = "T"
-  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
-  version = "v1.1.1"
+  revision = "4cbf7e384e768b4e01799441fdf2a706a5635ae7"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -192,7 +195,6 @@
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
-    "ptypes/empty",
     "ptypes/struct",
     "ptypes/timestamp",
   ]
@@ -270,6 +272,7 @@
     "logging",
     "logging/zap",
     "logging/zap/ctxzap",
+    "recovery",
     "tags",
     "tags/zap",
     "util/metautils",
@@ -512,14 +515,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0f5c7a92dce44c102b6533068b99cbb7902043a31efb6d86ea33aafa9f15545b"
+  digest = "1:90a9551747a432b75054db94915207b1f6536428bf124966fdf266991d76aa44"
   name = "github.com/presslabs/dashboard-go"
   packages = [
     "pkg/proto/presslabs/dashboard/organizations/v1",
     "pkg/proto/presslabs/dashboard/projects/v1",
   ]
   pruneopts = "T"
-  revision = "5563d9a30d194a74cabf19761ad1db921d8094b9"
+  revision = "61048e2afaf47eddcfed59c9f652b1d58c16e05a"
 
 [[projects]]
   digest = "1:02cb434138ce852c640634af161c47f9776cfe8c2aef94be729cedf6e6b60656"
@@ -796,10 +799,7 @@
   branch = "master"
   digest = "1:e43f1cb3f488a0c2be85939c2a594636f60b442a12a196c778bd2d6c9aca3df7"
   name = "google.golang.org/genproto"
-  packages = [
-    "googleapis/rpc/status",
-    "protobuf/field_mask",
-  ]
+  packages = ["googleapis/rpc/status"]
   pruneopts = "T"
   revision = "11092d34479b07829b72e10713b159248caf5dad"
 
@@ -1194,11 +1194,12 @@
     "github.com/go-logr/zapr",
     "github.com/gobuffalo/packr",
     "github.com/gobuffalo/packr/packr",
-    "github.com/golang/protobuf/ptypes/empty",
+    "github.com/gogo/protobuf/types",
     "github.com/gosimple/slug",
     "github.com/grpc-ecosystem/go-grpc-middleware",
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",
     "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap",
+    "github.com/grpc-ecosystem/go-grpc-middleware/recovery",
     "github.com/grpc-ecosystem/go-grpc-middleware/tags",
     "github.com/imdario/mergo",
     "github.com/improbable-eng/grpc-web/go/grpcweb",

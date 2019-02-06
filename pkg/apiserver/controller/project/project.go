@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/gogo/protobuf/types"
 	"github.com/gosimple/slug"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -147,7 +147,7 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequ
 	return newProjectFromK8s(project.New(&proj)), nil
 }
 
-func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequest) (*empty.Empty, error) {
+func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequest) (*types.Empty, error) {
 	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
 	if err != nil {
 		return nil, status.FromError(err)
@@ -170,7 +170,7 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 		return nil, status.FromError(err)
 	}
 
-	return &empty.Empty{}, nil
+	return &types.Empty{}, nil
 }
 
 func (s *projectsServer) ListProjects(ctx context.Context, r *ListProjectsRequest) (*ListProjectsResponse, error) {
@@ -192,10 +192,10 @@ func (s *projectsServer) ListProjects(ctx context.Context, r *ListProjectsReques
 	}
 
 	// TODO: implement pagination
-	resp.Projects = []*Project{}
+	resp.Projects = []Project{}
 	for i := range projs.Items {
 		if projs.Items[i].ObjectMeta.Annotations["presslabs.com/created-by"] == userID {
-			resp.Projects = append(resp.Projects, newProjectFromK8s(project.New(&projs.Items[i])))
+			resp.Projects = append(resp.Projects, *newProjectFromK8s(project.New(&projs.Items[i])))
 		}
 	}
 
