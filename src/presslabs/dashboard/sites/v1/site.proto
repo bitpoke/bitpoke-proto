@@ -2,8 +2,17 @@ syntax = "proto3";
 
 package presslabs.dashboard.sites.v1;
 
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
 option go_package = "v1";
 
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 
@@ -27,7 +36,10 @@ message CreateSiteRequest {
   // The parent is a required parameter
   string parent = 1;
   // The site resource to create
-  Site site = 2;
+  Site site = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message GetSiteRequest {
@@ -40,10 +52,16 @@ message GetSiteRequest {
 
 message UpdateSiteRequest {
   // The new definition of the Folder. It must include a `name`
-  Site site = 1;
+  Site site = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
   // Fields to be updated.
   // Only the `primary_domain` and `wordpress_image` can be updated
-  google.protobuf.FieldMask update_mask = 2;
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message DeleteSiteRequest {
@@ -63,7 +81,7 @@ message ListSitesRequest {
 }
 
 message ListSitesResponse {
-  repeated Site sites = 1;
+  repeated Site sites = 1 [(gogoproto.nullable) = false];
   // Token to retrieve the next page of results, or empty if there are no
   // more results in the list.
   string next_page_token = 2;
