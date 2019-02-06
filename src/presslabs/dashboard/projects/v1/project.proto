@@ -2,8 +2,17 @@ syntax = "proto3";
 
 package presslabs.dashboard.projects.v1;
 
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
 option go_package = "v1";
 
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 
@@ -38,7 +47,7 @@ message ListProjectsRequest {
 }
 
 message ListProjectsResponse {
-  repeated Project projects = 1;
+  repeated Project projects = 1 [(gogoproto.nullable) = false];
   // Token to retrieve the next page of results, or empty if there are no
   // more results in the list.
   string next_page_token = 2;
@@ -49,17 +58,26 @@ message CreateProjectRequest {
   // The parent is a required parameter
   string parent = 1;
   // The project resource to create
-  Project project = 3;
+  Project project = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message UpdateProjectRequest {
   // The new definition of the Folder. It must include
   // a `name` , `organization` and `display_name` field. 
   // The other fields will be ignored.
-  Project project = 1;
+  Project project = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
   // Fields to be updated.
   // Only the `display_name` can be updated.
-  google.protobuf.FieldMask update_mask = 2;
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message DeleteProjectRequest {
