@@ -39,10 +39,10 @@ message GetSiteRequest {
 }
 
 message UpdateSiteRequest {
-  // The new definition of the Folder. It must include a `name` 
+  // The new definition of the Folder. It must include a `name`
   Site site = 1;
   // Fields to be updated.
-  // Only the `display_name` can be updated.
+  // Only the `primary_domain` and `wordpress_image` can be updated
   google.protobuf.FieldMask update_mask = 2;
 }
 
@@ -69,7 +69,7 @@ message ListSitesResponse {
   string next_page_token = 2;
 }
 
-// SitesService allow managing sites 
+// SitesService allow managing sites
 service SitesService {
   // CreateSite creates a new site
   rpc CreateSite(CreateSiteRequest) returns (Site);
