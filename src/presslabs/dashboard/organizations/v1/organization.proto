@@ -10,10 +10,7 @@ option (gogoproto.protosizer_all) = true;
 option (gogoproto.testgen_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.verbose_equal_all) = true;
-option go_package = "v1pb";
-option java_multiple_files = true;
-option java_outer_classname = "OrganizationProto";
-option java_package = "com.presslabs.dashboard.organizations.v1";
+option go_package = "v1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
