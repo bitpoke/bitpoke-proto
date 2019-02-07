@@ -9,6 +9,7 @@ package sync
 
 import (
 	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,7 +21,12 @@ import (
 // NewMemberRoleBindingSyncer returns a new syncer.Interface for reconciling
 // member RoleBinding
 func NewMemberRoleBindingSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	obj := proj.ComponentObject(project.MemberRoleBinding)
+	obj := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      proj.ComponentName(project.MemberRoleBinding),
+			Namespace: proj.ComponentName(project.Namespace),
+		},
+	}
 
 	return syncer.NewObjectSyncer("MemberRoleBinding", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*rbacv1.RoleBinding)
