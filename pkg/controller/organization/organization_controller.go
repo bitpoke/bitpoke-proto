@@ -84,10 +84,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		err = c.Watch(&source.Kind{Type: subresource}, &handler.EnqueueRequestForOwner{
 			IsController: true,
 			OwnerType:    &corev1.Namespace{},
-		},
-			predicate.NewKindPredicate("organization"),
-			predicate.ResourceNotDeleted,
-		)
+		})
 		if err != nil {
 			return err
 		}
@@ -121,6 +118,16 @@ func (r *ReconcileOrganization) Reconcile(request reconcile.Request) (reconcile.
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
+	}
+
+	if err := org.ValidateMetadata(); err != nil {
+		log.Error(err, "skip reconcile for invalid organization", "obj", org.Unwrap())
+		return reconcile.Result{}, nil
+	}
+
+	if !org.DeletionTimestamp.IsZero() {
+		log.Info("skip reconcile for deleted organization", "obj", org.Unwrap())
+		return reconcile.Result{}, nil
 	}
 
 	syncers := []syncer.Interface{

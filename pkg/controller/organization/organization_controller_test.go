@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/presslabs/dashboard/pkg/internal/organization"
+	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 )
 
 const timeout = time.Second * 1
@@ -129,15 +129,12 @@ var _ = Describe("Organization controller", func() {
 		})
 
 		AfterEach(func() {
-			c.Delete(context.TODO(), org)
-			orgWrapper := organization.New(org)
-			for _, component := range []organization.Component{
-				organization.MemberRoleBinding,
-				organization.OwnerClusterRoleBinding,
-				organization.OwnerClusterRole,
-			} {
-				c.Delete(context.TODO(), orgWrapper.ComponentObject(component))
-			}
+			Expect(c.Delete(context.TODO(), org)).To(Succeed())
+			Eventually(func() corev1.Namespace {
+				ns := corev1.Namespace{}
+				c.Get(context.TODO(), client.ObjectKey{Name: orgName}, &ns)
+				return ns
+			}).Should(BeInPhase(corev1.NamespaceTerminating))
 		})
 
 		It("reconciles the owner cluster role", func() {
