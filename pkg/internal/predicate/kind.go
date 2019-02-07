@@ -19,6 +19,7 @@ package predicate
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // KindPredicate allows filtering only the organization namespaces
@@ -26,32 +27,33 @@ type KindPredicate struct {
 	kind string
 }
 
+var _ predicate.Predicate = &KindPredicate{}
+
 // NewKindPredicate return a new KindPredicate
 func NewKindPredicate(kind string) *KindPredicate {
 	return &KindPredicate{kind}
 }
 
-// IsObjectOrganization checks that the given meta Object is an Organization
-func (p *KindPredicate) IsObjectOrganization(resource metav1.Object) bool {
+func (p *KindPredicate) isOfKind(resource metav1.Object) bool {
 	return resource.GetLabels()["presslabs.com/kind"] == p.kind
 }
 
 // Create returns true if the Create event should be processed
 func (p *KindPredicate) Create(e event.CreateEvent) bool {
-	return p.IsObjectOrganization(e.Meta)
+	return p.isOfKind(e.Meta)
 }
 
 // Delete returns true if the Delete event should be processed
 func (p *KindPredicate) Delete(e event.DeleteEvent) bool {
-	return p.IsObjectOrganization(e.Meta)
+	return p.isOfKind(e.Meta)
 }
 
 // Update returns true if the Update event should be processed
 func (p *KindPredicate) Update(e event.UpdateEvent) bool {
-	return p.IsObjectOrganization(e.MetaNew)
+	return p.isOfKind(e.MetaNew)
 }
 
 // Generic returns true if the Generic event should be processed
 func (p *KindPredicate) Generic(e event.GenericEvent) bool {
-	return p.IsObjectOrganization(e.Meta)
+	return p.isOfKind(e.Meta)
 }
