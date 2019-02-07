@@ -22,8 +22,12 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"golang.org/x/net/context"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -52,6 +56,15 @@ var _ = BeforeSuite(func() {
 
 	cfg, err = t.Start()
 	Expect(err).NotTo(HaveOccurred())
+
+	c, err := client.New(cfg, client.Options{})
+	Expect(err).NotTo(HaveOccurred())
+
+	Expect(c.Create(context.TODO(), &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "dashboard.presslabs.com:organization::member",
+		},
+	})).To(Succeed())
 })
 
 var _ = AfterSuite(func() {

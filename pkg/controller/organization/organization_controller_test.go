@@ -92,11 +92,6 @@ var _ = Describe("Organization controller", func() {
 				},
 			}
 
-			Expect(c.Create(context.TODO(), &rbacv1.ClusterRole{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "dashboard.presslabs.com:organization::member",
-				},
-			}))
 			org = &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: orgName,
