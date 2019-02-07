@@ -71,6 +71,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		&source.Kind{Type: &corev1.Namespace{}},
 		&handler.EnqueueRequestForObject{},
 		predicate.NewKindPredicate("project"),
+		predicate.ResourceNotDeleted,
 	)
 	if err != nil {
 		return err
@@ -93,7 +94,10 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		err = c.Watch(&source.Kind{Type: subresource}, &handler.EnqueueRequestForOwner{
 			IsController: true,
 			OwnerType:    &corev1.Namespace{},
-		})
+		},
+			predicate.NewKindPredicate("project"),
+			predicate.ResourceNotDeleted,
+		)
 		if err != nil {
 			return err
 		}
