@@ -17,19 +17,29 @@ limitations under the License.
 package project
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/presslabs/dashboard/pkg/apis"
 	logf "github.com/presslabs/dashboard/pkg/internal/log"
+)
+
+const (
+	organizationDisplayName = "ACME Inc."
+	organizationName        = "acme"
 )
 
 var cfg *rest.Config
@@ -54,6 +64,34 @@ var _ = BeforeSuite(func() {
 
 	cfg, err = t.Start()
 	Expect(err).NotTo(HaveOccurred())
+
+	c, err := client.New(cfg, client.Options{})
+	Expect(err).NotTo(HaveOccurred())
+
+	Expect(c.Create(context.TODO(), &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "dashboard.presslabs.com:project::member",
+		},
+	})).To(Succeed())
+
+	Expect(c.Create(context.TODO(), &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "dashboard.presslabs.com:project::owner",
+		},
+	})).To(Succeed())
+
+	Expect(c.Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: organizationName,
+			Labels: map[string]string{
+				"presslabs.com/organization": organizationName,
+				"presslabs.com/kind":         "organization",
+			},
+			Annotations: map[string]string{
+				"org.dashboard.presslabs.net/display-name": organizationDisplayName,
+			},
+		},
+	})).To(Succeed())
 })
 
 var _ = AfterSuite(func() {

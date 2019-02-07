@@ -39,6 +39,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
+
+	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 )
 
 const timeout = time.Second * 1
@@ -51,8 +53,6 @@ var _ = Describe("Project controller", func() {
 		stop chan struct{}
 		// controller k8s client
 		c client.Client
-		// in the first test, wait for the creation of the project and the organization
-		firstTest = true
 	)
 
 	BeforeEach(func() {
@@ -72,23 +72,17 @@ var _ = Describe("Project controller", func() {
 	})
 
 	AfterEach(func() {
-		time.Sleep(1 * time.Second)
 		close(stop)
 	})
 
 	When("creating a new Project object", func() {
 		var (
-			expectedRequest         reconcile.Request
-			organization            *corev1.Namespace
-			project                 *corev1.Namespace
-			memberClusterRole       *rbacv1.ClusterRole
-			ownerClusterRole        *rbacv1.ClusterRole
-			projectNamespace        string
-			projectName             string
-			projectCreatedBy        string
-			organizationDisplayName string
-			organizationName        string
-			componentsLabels        map[string]map[string]string
+			expectedRequest  reconcile.Request
+			project          *corev1.Namespace
+			projectNamespace string
+			projectName      string
+			projectCreatedBy string
+			componentsLabels map[string]map[string]string
 		)
 
 		entries := []TableEntry{
@@ -114,24 +108,8 @@ var _ = Describe("Project controller", func() {
 			projectNamespace = fmt.Sprintf("proj-%s", projectName)
 			projectCreatedBy = fmt.Sprintf("Dorel %d", rand.Int31())
 
-			orgRand := rand.Int31()
-			organizationName = fmt.Sprintf("acme-%d", orgRand)
-			organizationDisplayName = fmt.Sprintf("ACME %d Inc.", orgRand)
-
 			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: projectNamespace}}
 
-			organization = &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: organizationName,
-					Labels: map[string]string{
-						"presslabs.com/organization": organizationName,
-						"presslabs.com/kind":         "organization",
-					},
-					Annotations: map[string]string{
-						"org.dashboard.presslabs.net/display-name": organizationDisplayName,
-					},
-				},
-			}
 			project = &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: projectNamespace,
@@ -143,16 +121,6 @@ var _ = Describe("Project controller", func() {
 					Annotations: map[string]string{
 						"presslabs.com/created-by": projectCreatedBy,
 					},
-				},
-			}
-			memberClusterRole = &rbacv1.ClusterRole{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "dashboard.presslabs.com:project::member",
-				},
-			}
-			ownerClusterRole = &rbacv1.ClusterRole{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "dashboard.presslabs.com:project::owner",
 				},
 			}
 
@@ -204,19 +172,8 @@ var _ = Describe("Project controller", func() {
 				},
 			}
 
-			// Create the Organization in which the Project will live
-			Expect(c.Create(context.TODO(), organization)).To(Succeed())
 			// Create the Project object and expect the Reconcile and Namespace to be created
 			Expect(c.Create(context.TODO(), project)).To(Succeed())
-			// Create the members cluster role
-			Expect(c.Create(context.TODO(), memberClusterRole)).To(Succeed())
-			// Create the owners cluster role
-			Expect(c.Create(context.TODO(), ownerClusterRole)).To(Succeed())
-
-			if firstTest {
-				firstTest = false
-				time.Sleep(time.Second)
-			}
 
 			// Wait for initial reconciliation
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
@@ -235,20 +192,12 @@ var _ = Describe("Project controller", func() {
 		})
 
 		AfterEach(func() {
-			c.Delete(context.TODO(), project)
-			c.Delete(context.TODO(), organization)
-			c.Delete(context.TODO(), memberClusterRole)
-			c.Delete(context.TODO(), ownerClusterRole)
-
-			// GC created objects
-			for _, e := range entries {
-				obj := e.Parameters[2].(runtime.Object)
-				nameFmt := e.Parameters[1].(string)
-				mo := obj.(metav1.Object)
-				mo.SetName(fmt.Sprintf(nameFmt, projectName))
-				mo.SetNamespace(projectNamespace)
-				c.Delete(context.TODO(), obj)
-			}
+			Expect(c.Delete(context.TODO(), project)).To(Succeed())
+			Eventually(func() corev1.Namespace {
+				ns := corev1.Namespace{}
+				c.Get(context.TODO(), client.ObjectKey{Name: projectNamespace}, &ns)
+				return ns
+			}).Should(BeInPhase(corev1.NamespaceTerminating))
 		})
 
 		DescribeTable("the reconciler", func(component string, nameFmt string, obj runtime.Object) {
