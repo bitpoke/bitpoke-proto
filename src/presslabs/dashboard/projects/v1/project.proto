@@ -39,11 +39,13 @@ message GetProjectRequest {
 }
 
 message ListProjectsRequest {
+  // The parent resource name, for example, "org/{organization_name}".
+  string parent = 1;
   // The maximum number of items to return.
-  int32 page_size = 1;
+  int32 page_size = 2;
   // The next_page_token value returned from a previous List request, if
   // any.
-  string page_token = 2;
+  string page_token = 3;
 }
 
 message ListProjectsResponse {
