@@ -27,9 +27,3 @@ generate:
       type: gogo
       flags: plugins=grpc
       output: ../build/go/src/github.com/presslabs/dashboard-go/pkg/proto
-    - name: ts
-      flags: service=true
-      output: ../build/js
-    - name: js
-      flags: import_style=commonjs,binary
-      output: ../build/js

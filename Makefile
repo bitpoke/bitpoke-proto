@@ -4,13 +4,19 @@ PROTOC_VERSION           := 3.6.1
 PROTOC_GEN_GOGO_VERSION  := 1.2.0
 GRPC_VERSION             := 1.17.0
 PROTOC_GEN_LINT_VERSION  := 0.2.1
+PROTO_FILES              := $(shell find $(CURDIR)/src -name "*.proto")
 
 PATH := $(BINDIR):$(CURDIR)/node_modules/.bin:$(PATH)
 SHELL := env 'PATH=$(PATH)' /bin/sh
 
 .PHONY: build
 build:
+	test -d $(PWD)/build/js/lib/proto || mkdir -p $(PWD)/build/js/lib/proto
 	$(BINDIR)/prototool generate src
+	pbjs --es6 -t static-module -w es6  -p $(CURDIR)/vendor \
+		-o $(PWD)/build/js/lib/proto/index.js \
+		$(PROTO_FILES)
+	pbts -o $(PWD)/build/js/lib/proto/index.d.ts $(PWD)/build/js/lib/proto/index.js
 
 .PHONY: clean
 clean:
@@ -30,7 +36,7 @@ test: build
 dependencies:
 	test -d $(BINDIR) || mkdir $(BINDIR)
 
-	npm install ts-protoc-gen@0.8.0
+	npm install protobufjs@6.8.6
 
 	curl -sSL https://github.com/uber/prototool/releases/download/v$(PROTOTOOL_VERSION)/prototool-$(shell uname -s)-$(shell uname -m) \
 		-o $(BINDIR)/prototool && \
