@@ -19,7 +19,7 @@ import "google/protobuf/field_mask.proto";
 // Projects represents an project within the presslabs dashboard
 // context
 message Project {
-  // The fully qualified project name in the form proj/{project_name}.
+  // The fully qualified project name in the form project/{project_name}.
   // The `project_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // The name is read-only
@@ -32,14 +32,15 @@ message Project {
 }
 
 message GetProjectRequest {
-  // The resource name of the project to fetch in the form proj/{project_name}
+  // The resource name of the project to fetch in the form project/{project_name}
   // The `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1;
 }
 
 message ListProjectsRequest {
-  // The parent resource name, for example, "org/{organization_name}".
+  // The parent organization, for example "org/{organization_name}".
+  // The parent is a required parameter
   string parent = 1;
   // The maximum number of items to return.
   int32 page_size = 2;
@@ -83,7 +84,7 @@ message UpdateProjectRequest {
 }
 
 message DeleteProjectRequest {
-  // The resource name of the project to delete in the form projs/{project_name}
+  // The resource name of the project to delete in the form project/{project_name}
   // The `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1;
