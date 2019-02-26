@@ -99,6 +99,7 @@ var _ = Describe("API server", func() {
 		displayName    string
 		createdBy      string
 		organization   string
+		parent         string
 	)
 
 	BeforeEach(func() {
@@ -132,6 +133,7 @@ var _ = Describe("API server", func() {
 		createdBy = fmt.Sprintf("user#%s", name)
 		auth.FakeSubject = createdBy
 		organization = fmt.Sprintf("%d", rand.Int31())
+		parent = fmt.Sprintf("orgs/%s", organization)
 	})
 
 	AfterEach(func() {
@@ -146,7 +148,7 @@ var _ = Describe("API server", func() {
 			proj := createProject(name, displayName, createdBy, organization)
 			Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 			req := projv1.CreateProjectRequest{
-				Parent: organization,
+				Parent: parent,
 				Project: projv1.Project{
 					Name:        id,
 					DisplayName: displayName,
@@ -165,43 +167,55 @@ var _ = Describe("API server", func() {
 				},
 			}
 			_, err := projClient.CreateProject(context.TODO(), &req)
-			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
+		})
+
+		It("returns error when parent is not fully-qualified", func() {
+			req := projv1.CreateProjectRequest{
+				Parent: "not-fully-qualified-parent",
+				Project: projv1.Project{
+					Name:        id,
+					DisplayName: displayName,
+				},
+			}
+			_, err := projClient.CreateProject(context.TODO(), &req)
+			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
 		It("returns error when no name is given", func() {
 			req := projv1.CreateProjectRequest{
-				Parent:  organization,
+				Parent:  parent,
 				Project: projv1.Project{},
 			}
 			_, err := projClient.CreateProject(context.TODO(), &req)
-			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
 		It("returns error when name is not fully qualified", func() {
 			req := projv1.CreateProjectRequest{
-				Parent: organization,
+				Parent: parent,
 				Project: projv1.Project{
 					Name: "not-fully-qualified-name",
 				},
 			}
 			_, err := projClient.CreateProject(context.TODO(), &req)
-			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
 		It("returns error when name is empty", func() {
 			req := projv1.CreateProjectRequest{
-				Parent: organization,
+				Parent: parent,
 				Project: projv1.Project{
 					Name: "project/",
 				},
 			}
 			_, err := projClient.CreateProject(context.TODO(), &req)
-			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
 		It("creates project when no project name is given", func() {
 			req := projv1.CreateProjectRequest{
-				Parent: organization,
+				Parent: parent,
 				Project: projv1.Project{
 					DisplayName: displayName,
 				},
@@ -215,7 +229,7 @@ var _ = Describe("API server", func() {
 
 		It("creates project when project name is given", func() {
 			req := projv1.CreateProjectRequest{
-				Parent: organization,
+				Parent: parent,
 				Project: projv1.Project{
 					Name:        id,
 					DisplayName: displayName,
@@ -230,7 +244,7 @@ var _ = Describe("API server", func() {
 
 		It("fills display_name when no one is gven", func() {
 			req := projv1.CreateProjectRequest{
-				Parent: organization,
+				Parent: parent,
 				Project: projv1.Project{
 					Name: id,
 				},

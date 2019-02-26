@@ -34,16 +34,31 @@ type projectsServer struct {
 	cfg    *rest.Config
 }
 
-const prefix = "project/"
+const (
+	projPrefix = "project/"
+	orgPrefix  = "orgs/"
+)
 
-// resolves an fully-qualified resource name to a k8s object name
-func resolve(path string) (string, error) {
-	if !strings.HasPrefix(path, prefix) {
-		return "", status.InvalidArgumentf("project resources fully-qualified name must be in form project/PROJECT-NAME")
+// resolveName resolves a fully-qualified project name to a k8s object name
+func resolveName(path string) (string, error) {
+	if !strings.HasPrefix(path, projPrefix) {
+		return "", status.InvalidArgumentf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", path)
 	}
-	name := path[len(prefix):]
+	name := path[len(projPrefix):]
 	if len(name) == 0 {
-		return "", status.InvalidArgumentf("project name cannot be empty")
+		return "", status.InvalidArgumentf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", path)
+	}
+	return name, nil
+}
+
+// resolveParent resolves a fully qualified parent name to a k8s object name
+func resolveParent(path string) (string, error) {
+	if !strings.HasPrefix(path, orgPrefix) {
+		return "", status.InvalidArgumentf("parent organization fully-qualified name must be in form orgs/ORGANIZATION-NAME")
+	}
+	name := path[len(orgPrefix):]
+	if len(name) == 0 {
+		return "", status.InvalidArgumentf("parent organization fully-qualified name must be in form orgs/ORGANIZATION_NAME, '%s' given", path)
 	}
 	return name, nil
 }
@@ -61,19 +76,19 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequ
 	var err error
 	var name string
 	if len(r.Project.Name) > 0 {
-		if name, err = resolve(r.Project.Name); err != nil {
-			return nil, status.FromError(err)
+		if name, err = resolveName(r.Project.Name); err != nil {
+			return nil, err
 		}
 	} else {
 		name = slug.Make(r.Project.DisplayName)
 	}
 	if len(name) == 0 {
-		return nil, status.FromError(fmt.Errorf("project name cannot be empty"))
+		return nil, status.InvalidArgumentf("project name cannot be empty")
 	}
-	if len(r.Parent) <= 0 {
-		return nil, status.FromError(fmt.Errorf("parent cannot be empty"))
+	parent, err := resolveParent(r.Parent)
+	if err != nil {
+		return nil, err
 	}
-	org := r.Parent
 
 	proj := project.New(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -81,7 +96,7 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequ
 			Labels: map[string]string{
 				"presslabs.com/kind":         "project",
 				"presslabs.com/project":      name,
-				"presslabs.com/organization": org,
+				"presslabs.com/organization": parent,
 			},
 			Annotations: map[string]string{
 				"presslabs.com/created-by": userID,
@@ -103,7 +118,7 @@ func (s *projectsServer) GetProject(ctx context.Context, r *GetProjectRequest) (
 		return nil, status.FromError(err)
 	}
 
-	name, err := resolve(r.Name)
+	name, err := resolveName(r.Name)
 	if err != nil {
 		return nil, status.FromError(err)
 	}
@@ -125,7 +140,7 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequ
 		return nil, status.FromError(err)
 	}
 
-	name, err := resolve(r.Project.Name)
+	name, err := resolveName(r.Project.Name)
 	if err != nil {
 		return nil, status.FromError(err)
 	}
@@ -153,7 +168,7 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 		return nil, status.FromError(err)
 	}
 
-	name, err := resolve(r.Name)
+	name, err := resolveName(r.Name)
 	if err != nil {
 		return nil, status.FromError(err)
 	}
@@ -212,7 +227,7 @@ func NewProjectsServiceServer(client client.Client, cfg *rest.Config) ProjectsSe
 
 func newProjectFromK8s(p *project.Project) *Project {
 	return &Project{
-		Name:         fmt.Sprintf("%s%s", prefix, p.Namespace.ObjectMeta.Labels["presslabs.com/project"]),
+		Name:         fmt.Sprintf("%s%s", projPrefix, p.Namespace.ObjectMeta.Labels["presslabs.com/project"]),
 		Organization: p.Namespace.ObjectMeta.Labels["presslabs.com/organization"],
 		DisplayName:  p.Annotations["presslabs.com/display-name"],
 	}
