@@ -135,6 +135,14 @@
   version = "0.16.0"
 
 [[projects]]
+  digest = "1:7f89e0c888fb99c61055c646f5678aae645b0b0a1443d9b2dcd9964d850827ce"
+  name = "github.com/go-test/deep"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "6592d9cc0a499ad2d5f574fde80a2b5c5cc3b4f5"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:011e8eca01fb5af3497e6f1b79d670bb6b8519b4b0c287b710f984b364aaafb8"
   name = "github.com/gobuffalo/envy"
   packages = ["."]
@@ -502,7 +510,7 @@
   revision = "1555304b9b35fdd2b425bccf1a5613677705e7d0"
 
 [[projects]]
-  digest = "1:fcc286d1ff906e54e4e6fbfa269f80f2c9e7fd76436a404fac2f34b1114f6373"
+  digest = "1:0018931fa4284edacbbfc104fbd34c7a560edee63a1375188c8627e3c000c6c6"
   name = "github.com/presslabs/controller-util"
   packages = [
     "mergo/transformers",
@@ -510,8 +518,8 @@
     "syncer",
   ]
   pruneopts = "T"
-  revision = "af2d04e882caebcecff8ad641bf839e361ce5cc0"
-  version = "v0.1.7"
+  revision = "3df98a3c1e2b9cfe8cd1b1960dc5067845035d91"
+  version = "v0.1.10"
 
 [[projects]]
   branch = "master"
@@ -1252,6 +1260,7 @@
     "sigs.k8s.io/controller-runtime/pkg/event",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
+    "sigs.k8s.io/controller-runtime/pkg/predicate",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
     "sigs.k8s.io/controller-runtime/pkg/runtime/inject",
     "sigs.k8s.io/controller-runtime/pkg/runtime/log",

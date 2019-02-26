@@ -21,10 +21,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/testing_frameworks/integration/addr"
 
+	logf "github.com/presslabs/controller-util/log"
 	"github.com/presslabs/dashboard/pkg/apis"
 	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
-	logf "github.com/presslabs/dashboard/pkg/internal/log"
 )
 
 var cfg *rest.Config

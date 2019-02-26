@@ -30,9 +30,9 @@ import (
 	grpcstatus "google.golang.org/grpc/status"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	logf "github.com/presslabs/controller-util/log"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
-	logf "github.com/presslabs/dashboard/pkg/internal/log"
 )
 
 // APIServerOptions contains manager, GRPC address, HTTP address and AuthFunc

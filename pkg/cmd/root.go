@@ -30,7 +30,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	logf "github.com/presslabs/dashboard/pkg/internal/log"
+	logf "github.com/presslabs/controller-util/log"
 )
 
 var cfg *rest.Config

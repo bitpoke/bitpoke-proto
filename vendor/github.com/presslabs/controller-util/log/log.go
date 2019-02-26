@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Pressinfra SRL.
+Copyright 2019 Pressinfra SRL
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package log
 import (
 	"io"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -30,29 +29,42 @@ import (
 )
 
 var (
-	// Zap exposes the set zap logger for downstream use
-	restoreLogger      = func() {}
-	restoreLoggerMutex = &sync.Mutex{}
-
-	// SetLogger is an alias for compatibility with sigs.k8s.io/controller-runtime/pkg/runtime/log
-	SetLogger = logf.SetLogger
-
-	// Log is an alias for compatibility with sigs.k8s.io/controller-runtime/pkg/runtime/log
+	// Log is the base logger used by kubebuilder.  It delegates
+	// to another logr.Logger.  You *must* call SetLogger to
+	// get any actual logging.
 	Log = logf.Log
 
-	// KBLog is an alias for compatibility with sigs.k8s.io/controller-runtime/pkg/runtime/log
+	// KBLog is a base parent logger.
 	KBLog = logf.KBLog
+
+	// SetLogger sets a concrete logging implementation for all deferred Loggers.
+	SetLogger = logf.SetLogger
 )
 
-// ZapLogger is rewritten to allow exposing the underlying zap logger
-// It should be compatible wit the one in sigs.k8s.io/controller-runtime/pkg/runtime/log
-func ZapLogger(development bool, opts ...zap.Option) logr.Logger {
+// KubeAwareEncoder is a Kubernetes-aware Zap Encoder.
+// Instead of trying to force Kubernetes objects to implement
+// ObjectMarshaller, we just implement a wrapper around a normal
+// ObjectMarshaller that checks for Kubernetes objects.
+type KubeAwareEncoder = logf.KubeAwareEncoder
+
+// ZapLogger is a Logger implementation.
+// If development is true, a Zap development config will be used
+// (stacktraces on warnings, no sampling), otherwise a Zap production
+// config will be used (stacktraces on errors, sampling).
+func ZapLogger(development bool) logr.Logger {
 	return ZapLoggerTo(os.Stderr, development)
 }
 
-// ZapLoggerTo is rewritten to allow exposing the underlying zap logger
-// It should be compatible wit the one in sigs.k8s.io/controller-runtime/pkg/runtime/log
-func ZapLoggerTo(destWriter io.Writer, development bool, opts ...zap.Option) logr.Logger {
+// ZapLoggerTo returns a new Logger implementation using Zap which logs
+// to the given destination, instead of stderr.  It otherise behaves like
+// ZapLogger.
+func ZapLoggerTo(destWriter io.Writer, development bool) logr.Logger {
+	return zapr.NewLogger(RawZapLoggerTo(destWriter, development))
+}
+
+// RawZapLoggerTo returns a new zap.Logger configured with KubeAwareEncoder
+// which logs to a given destination
+func RawZapLoggerTo(destWriter io.Writer, development bool, opts ...zap.Option) *zap.Logger {
 	// this basically mimics New<type>Config, but with a custom sink
 	sink := zapcore.AddSync(destWriter)
 
@@ -73,11 +85,8 @@ func ZapLoggerTo(destWriter io.Writer, development bool, opts ...zap.Option) log
 			}))
 	}
 	opts = append(opts, zap.AddCallerSkip(1), zap.ErrorOutput(sink))
-	log := zap.New(zapcore.NewCore(&logf.KubeAwareEncoder{Encoder: enc, Verbose: development}, sink, lvl))
+	log := zap.New(zapcore.NewCore(&KubeAwareEncoder{Encoder: enc, Verbose: development}, sink, lvl))
 	log = log.WithOptions(opts...)
-	restoreLoggerMutex.Lock()
-	defer restoreLoggerMutex.Unlock()
-	restoreLogger()
-	restoreLogger = zap.ReplaceGlobals(log)
-	return zapr.NewLogger(log)
+
+	return log
 }

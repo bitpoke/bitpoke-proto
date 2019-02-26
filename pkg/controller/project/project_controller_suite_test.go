@@ -33,8 +33,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	logf "github.com/presslabs/controller-util/log"
 	"github.com/presslabs/dashboard/pkg/apis"
-	logf "github.com/presslabs/dashboard/pkg/internal/log"
 )
 
 const (
@@ -51,8 +51,10 @@ func TestProjectController(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	logf.SetLogger(logf.ZapLoggerTo(GinkgoWriter, true))
 	var err error
+
+	logf.SetLogger(logf.ZapLoggerTo(GinkgoWriter, true))
+
 	t = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "..", "config", "crds"),
