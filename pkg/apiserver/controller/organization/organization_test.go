@@ -135,6 +135,29 @@ var _ = Describe("API server", func() {
 		conn.Close()
 		// stop the manager and API server
 		close(stop)
+
+		// delete k8s resources
+		orgs := &corev1.NamespaceList{}
+		opts := &client.ListOptions{}
+		err := opts.SetLabelSelector(fmt.Sprintf("presslabs.com/kind=organization"))
+		Expect(err).To(Succeed())
+
+		err = c.List(context.TODO(), opts, orgs)
+		Expect(err).To(Succeed())
+
+		for _, org := range orgs.Items {
+			if org.Status.Phase == corev1.NamespaceTerminating {
+				continue
+			}
+
+			err = c.Delete(context.TODO(), &org)
+			Expect(err).To(Succeed())
+
+			key, err := client.ObjectKeyFromObject(&org)
+			Expect(err).To(Succeed())
+			Eventually(getNamespaceFn(context.TODO(), c, key), deleteTimeout).Should(
+				BeInPhase(corev1.NamespaceTerminating))
+		}
 	})
 
 	Describe("at Create request", func() {
