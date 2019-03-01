@@ -31,7 +31,7 @@ test: generate manifests
 apiserver-test:
 	ginkgo \
 		--randomizeAllSpecs --randomizeSuites --failOnPending \
-		--cover --coverprofile cover.out --trace --race -v \
+		--cover --coverprofile cover.out --trace --race \
 		./pkg/apiserver/...
 
 # Build dashboard binary
