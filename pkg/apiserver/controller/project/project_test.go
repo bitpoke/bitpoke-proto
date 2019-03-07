@@ -34,8 +34,8 @@ import (
 
 const (
 	ctxTimeout    = time.Second * 3
-	deleteTimeout = time.Second
 	updateTimeout = time.Second
+	deleteTimeout = time.Second
 )
 
 // createProject is a helper func that creates a project
@@ -58,12 +58,12 @@ func createProject(name, displayName, createdBy, organization string) *projectns
 	return proj
 }
 
-// getNamespaceFn is a helper func that returns an project
-func getNamespaceFn(ctx context.Context, c client.Client, key client.ObjectKey) func() corev1.Namespace {
+// getProjectNamespaceFn is a helper func that returns a project namespace
+func getProjectNamespaceFn(ctx context.Context, c client.Client, key client.ObjectKey) func() corev1.Namespace {
 	return func() corev1.Namespace {
-		var projNs corev1.Namespace
-		Expect(c.Get(ctx, key, &projNs)).To(Succeed())
-		return projNs
+		var p corev1.Namespace
+		c.Get(ctx, key, &p)
+		return p
 	}
 }
 
@@ -294,7 +294,7 @@ var _ = Describe("API server", func() {
 			key := client.ObjectKey{
 				Name: projectns.NamespaceName(name),
 			}
-			Eventually(getNamespaceFn(context.TODO(), c, key), deleteTimeout).Should(
+			Eventually(getProjectNamespaceFn(context.TODO(), c, key), deleteTimeout).Should(
 				BeInPhase(corev1.NamespaceTerminating))
 		})
 
@@ -329,7 +329,7 @@ var _ = Describe("API server", func() {
 			key := client.ObjectKey{
 				Name: projectns.NamespaceName(name),
 			}
-			Eventually(getNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
+			Eventually(getProjectNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveAnnotation("presslabs.com/display-name", newDisplayName))
 		})
 
@@ -347,7 +347,7 @@ var _ = Describe("API server", func() {
 			key := client.ObjectKey{
 				Name: projectns.NamespaceName(name),
 			}
-			Eventually(getNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
+			Eventually(getProjectNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveAnnotation("presslabs.com/display-name", name))
 		})
 
@@ -375,7 +375,7 @@ var _ = Describe("API server", func() {
 			key := client.ObjectKey{
 				Name: projectns.NamespaceName(name),
 			}
-			Eventually(getNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
+			Eventually(getProjectNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveLabel("presslabs.com/organization", organization))
 		})
 	})
