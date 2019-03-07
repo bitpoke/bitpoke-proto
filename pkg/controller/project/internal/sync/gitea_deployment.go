@@ -10,6 +10,7 @@ package sync
 import (
 	"fmt"
 
+	"github.com/imdario/mergo"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -19,11 +20,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/imdario/mergo"
-
 	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 var (
@@ -32,13 +31,13 @@ var (
 )
 
 // NewGiteaDeploymentSyncer returns a new syncer.Interface for reconciling Gitea Deployment
-func NewGiteaDeploymentSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := proj.ComponentLabels(project.GiteaDeployment)
+func NewGiteaDeploymentSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(projectns.GiteaDeployment)
 
 	obj := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.ComponentName(project.GiteaDeployment),
-			Namespace: proj.ComponentName(project.Namespace),
+			Name:      proj.ComponentName(projectns.GiteaDeployment),
+			Namespace: proj.ComponentName(projectns.Namespace),
 		},
 	}
 
@@ -64,7 +63,7 @@ func NewGiteaDeploymentSyncer(proj *project.Project, cl client.Client, scheme *r
 					Name: "config-secret",
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
-							SecretName: proj.ComponentName(project.GiteaSecret),
+							SecretName: proj.ComponentName(projectns.GiteaSecret),
 						},
 					},
 				},
@@ -78,7 +77,7 @@ func NewGiteaDeploymentSyncer(proj *project.Project, cl client.Client, scheme *r
 					Name: "data",
 					VolumeSource: corev1.VolumeSource{
 						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: proj.ComponentName(project.GiteaPVC),
+							ClaimName: proj.ComponentName(projectns.GiteaPVC),
 						},
 					},
 				},

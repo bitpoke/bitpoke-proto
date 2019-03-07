@@ -38,7 +38,7 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
 	"github.com/presslabs/dashboard/pkg/internal/predicate"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 var log = logf.Log.WithName("project-controller")
@@ -122,7 +122,7 @@ type ReconcileProject struct {
 // +kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses;servicemonitors,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Project instance
-	proj := project.New(&corev1.Namespace{})
+	proj := projectns.New(&corev1.Namespace{})
 	err := r.Get(context.TODO(), request.NamespacedName, proj.Unwrap())
 	if err != nil {
 		if errors.IsNotFound(err) {

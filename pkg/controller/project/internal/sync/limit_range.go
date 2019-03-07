@@ -16,18 +16,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 // NewLimitRangeSyncer returns a new syncer.Interface for reconciling Gitea Secret
-func NewLimitRangeSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := proj.ComponentLabels(project.LimitRange)
+func NewLimitRangeSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(projectns.LimitRange)
 
 	obj := &corev1.LimitRange{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.ComponentName(project.LimitRange),
-			Namespace: proj.ComponentName(project.Namespace),
+			Name:      proj.ComponentName(projectns.LimitRange),
+			Namespace: proj.ComponentName(projectns.Namespace),
 		},
 	}
 

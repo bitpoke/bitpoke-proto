@@ -16,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 var (
@@ -24,13 +24,13 @@ var (
 )
 
 // NewGiteaPVCSyncer returns a new syncer.Interface for reconciling Gitea PVC
-func NewGiteaPVCSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := proj.ComponentLabels(project.GiteaPVC)
+func NewGiteaPVCSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(projectns.GiteaPVC)
 
 	obj := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.ComponentName(project.GiteaPVC),
-			Namespace: proj.ComponentName(project.Namespace),
+			Name:      proj.ComponentName(projectns.GiteaPVC),
+			Namespace: proj.ComponentName(projectns.Namespace),
 		},
 	}
 

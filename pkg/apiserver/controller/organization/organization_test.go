@@ -13,10 +13,10 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/gosimple/slug"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/gosimple/slug"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,11 +25,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
+
 	orgv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
 	"github.com/presslabs/dashboard/pkg/controller"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
-	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 )
 
 const (

@@ -28,7 +28,7 @@ import (
 	projv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
 	"github.com/presslabs/dashboard/pkg/controller"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 )
 
@@ -39,10 +39,10 @@ const (
 )
 
 // createProject is a helper func that creates a project
-func createProject(name, displayName, createdBy, organization string) *project.Project {
-	proj := project.New(&corev1.Namespace{
+func createProject(name, displayName, createdBy, organization string) *projectns.ProjectNamespace {
+	proj := projectns.New(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: project.NamespaceName(name),
+			Name: projectns.NamespaceName(name),
 			Labels: map[string]string{
 				"presslabs.com/kind":         "project",
 				"presslabs.com/project":      name,
@@ -70,7 +70,7 @@ func getNamespaceFn(ctx context.Context, c client.Client, key client.ObjectKey) 
 func expectProperNamespace(c client.Client, name, displayName, createdBy, organization string) {
 	var ns corev1.Namespace
 	key := client.ObjectKey{
-		Name: project.NamespaceName(name),
+		Name: projectns.NamespaceName(name),
 	}
 	Expect(c.Get(context.TODO(), key, &ns)).To(Succeed())
 	Expect(ns.Name).To(Equal(fmt.Sprintf("proj-%s", name)))
@@ -242,7 +242,7 @@ var _ = Describe("API server", func() {
 			expectProperNamespace(c, name, displayName, createdBy, organization)
 		})
 
-		It("fills display_name when no one is gven", func() {
+		It("fills display_name when no one is given", func() {
 			req := projv1.CreateProjectRequest{
 				Parent: parent,
 				Project: projv1.Project{
@@ -292,7 +292,7 @@ var _ = Describe("API server", func() {
 			_, err := projClient.DeleteProject(context.TODO(), &req)
 			Expect(err).To(Succeed())
 			key := client.ObjectKey{
-				Name: project.NamespaceName(name),
+				Name: projectns.NamespaceName(name),
 			}
 			Eventually(getNamespaceFn(context.TODO(), c, key), deleteTimeout).Should(
 				BeInPhase(corev1.NamespaceTerminating))
@@ -327,7 +327,7 @@ var _ = Describe("API server", func() {
 			Expect(resp.DisplayName).To(Equal(newDisplayName))
 
 			key := client.ObjectKey{
-				Name: project.NamespaceName(name),
+				Name: projectns.NamespaceName(name),
 			}
 			Eventually(getNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveAnnotation("presslabs.com/display-name", newDisplayName))
@@ -345,7 +345,7 @@ var _ = Describe("API server", func() {
 			Expect(resp.DisplayName).To(Equal(name))
 
 			key := client.ObjectKey{
-				Name: project.NamespaceName(name),
+				Name: projectns.NamespaceName(name),
 			}
 			Eventually(getNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveAnnotation("presslabs.com/display-name", name))
@@ -373,7 +373,7 @@ var _ = Describe("API server", func() {
 			Expect(resp.Organization).To(Equal(organization))
 
 			key := client.ObjectKey{
-				Name: project.NamespaceName(name),
+				Name: projectns.NamespaceName(name),
 			}
 			Eventually(getNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveLabel("presslabs.com/organization", organization))

@@ -5,7 +5,7 @@ This file is subject to the terms and conditions defined in file LICENSE,
 which is part of this source code package.
 */
 
-package project
+package projectns
 
 import (
 	"errors"
@@ -16,8 +16,8 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 )
 
-// Project embeds dashboardv1alpha1.Project and adds utility functions
-type Project struct {
+// ProjectNamespace embeds corev1.Namespace and adds utility functions
+type ProjectNamespace struct {
 	*corev1.Namespace
 }
 
@@ -76,26 +76,26 @@ func NamespaceName(name string) string {
 }
 
 // UpdateDisplayName updates the display-name annotation
-func (p *Project) UpdateDisplayName(displayName string) {
+func (p *ProjectNamespace) UpdateDisplayName(displayName string) {
 	if len(displayName) == 0 {
-		p.Namespace.ObjectMeta.Annotations["presslabs.com/display-name"] = p.Namespace.ObjectMeta.Labels["presslabs.com/project"]
+		p.ObjectMeta.Annotations["presslabs.com/display-name"] = p.ObjectMeta.Labels["presslabs.com/project"]
 	} else {
-		p.Namespace.ObjectMeta.Annotations["presslabs.com/display-name"] = displayName
+		p.ObjectMeta.Annotations["presslabs.com/display-name"] = displayName
 	}
 }
 
 // New wraps a dashboardv1alpha1.Project into a Project object
-func New(obj *corev1.Namespace) *Project {
-	return &Project{obj}
+func New(p *corev1.Namespace) *ProjectNamespace {
+	return &ProjectNamespace{p}
 }
 
 // Unwrap returns the wrapped dashboardv1alpha1.Project object
-func (p *Project) Unwrap() *corev1.Namespace {
+func (p *ProjectNamespace) Unwrap() *corev1.Namespace {
 	return p.Namespace
 }
 
 // Labels returns default label set for dashboardv1alpha1.Project
-func (p *Project) Labels() labels.Set {
+func (p *ProjectNamespace) Labels() labels.Set {
 	labels := labels.Set{
 		"presslabs.com/project": p.GetLabels()["presslabs.com/project"],
 	}
@@ -110,7 +110,7 @@ func (p *Project) Labels() labels.Set {
 }
 
 // ComponentLabels returns labels for a label set for a dashboardv1alpha1.Project component
-func (p *Project) ComponentLabels(component component) labels.Set {
+func (p *ProjectNamespace) ComponentLabels(component component) labels.Set {
 	labels := p.Labels()
 	if len(component.app) > 0 {
 		labels["app.kubernetes.io/name"] = component.app
@@ -122,7 +122,7 @@ func (p *Project) ComponentLabels(component component) labels.Set {
 }
 
 // ComponentName returns the object name for a component
-func (p *Project) ComponentName(component component) string {
+func (p *ProjectNamespace) ComponentName(component component) string {
 	if len(component.objNameFmt) == 0 {
 		return component.objName
 	}
@@ -130,12 +130,12 @@ func (p *Project) ComponentName(component component) string {
 }
 
 // Domain returns the project's subdomain label
-func (p *Project) Domain() string {
+func (p *ProjectNamespace) Domain() string {
 	return p.Name
 }
 
 // ValidateMetadata validates the metadata of a Project
-func (p *Project) ValidateMetadata() error {
+func (p *ProjectNamespace) ValidateMetadata() error {
 	errorList := []error{}
 	// Check for some required Project Labels and Annotations
 	for _, label := range RequiredLabels {
@@ -150,7 +150,7 @@ func (p *Project) ValidateMetadata() error {
 	}
 
 	for _, annotation := range RequiredAnnotations {
-		if value, exists := p.Namespace.Annotations[annotation]; !exists || value == "" {
+		if value, exists := p.Annotations[annotation]; !exists || value == "" {
 			errorList = append(errorList, fmt.Errorf("required annotation \"%s\" is missing", annotation))
 		}
 	}

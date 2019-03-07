@@ -21,12 +21,12 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 var _ = Describe("The OwnerRoleSyncer transform func T", func() {
 	var (
-		proj             *project.Project
+		proj             *projectns.ProjectNamespace
 		ownerRoleBinding *rbacv1.RoleBinding
 		organizationName string
 		projectName      string
@@ -37,7 +37,7 @@ var _ = Describe("The OwnerRoleSyncer transform func T", func() {
 		organizationName = fmt.Sprintf("org-%d", projRand)
 		projectName = fmt.Sprintf("proj-%d", projRand)
 
-		proj = project.New(&corev1.Namespace{
+		proj = projectns.New(&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: projectName,
 				Labels: map[string]string{

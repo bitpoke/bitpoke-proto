@@ -22,11 +22,12 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 var _ = Describe("Project webhook", func() {
@@ -36,7 +37,7 @@ var _ = Describe("Project webhook", func() {
 
 		webhook *NamespaceCreateHandler
 
-		proj *project.Project
+		proj *projectns.ProjectNamespace
 
 		organizationName string
 	)
@@ -45,7 +46,7 @@ var _ = Describe("Project webhook", func() {
 		organizationName = fmt.Sprintf("organization%d", rand.Int31())
 		projectName := fmt.Sprintf("project%d", rand.Int31())
 
-		proj = project.New(
+		proj = projectns.New(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: projectName,

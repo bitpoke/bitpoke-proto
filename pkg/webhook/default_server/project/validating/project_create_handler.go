@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/types"
 
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 var (
@@ -41,7 +41,7 @@ type NamespaceCreateHandler struct {
 	Decoder types.Decoder
 }
 
-func (h *NamespaceCreateHandler) validatingNamespaceFn(obj *project.Project) (bool, string, error) {
+func (h *NamespaceCreateHandler) validatingNamespaceFn(obj *projectns.ProjectNamespace) (bool, string, error) {
 	log.Info("validatingNamespaceFn called")
 	if obj.Namespace.Labels["presslabs.com/kind"] != "project" {
 		return true, "not a project, skipping validation", nil
@@ -59,7 +59,7 @@ var _ admission.Handler = &NamespaceCreateHandler{}
 func (h *NamespaceCreateHandler) Handle(ctx context.Context, req types.Request) types.Response {
 	log.Info("Handle called")
 
-	proj := project.New(&corev1.Namespace{})
+	proj := projectns.New(&corev1.Namespace{})
 
 	err := h.Decoder.Decode(req, proj.Unwrap())
 	if err != nil {

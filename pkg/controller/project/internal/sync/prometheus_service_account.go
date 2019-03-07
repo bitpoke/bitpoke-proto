@@ -15,18 +15,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 // NewPrometheusServiceAccountSyncer returns a new syncer.Interface for reconciling Prometheus ServiceAccount
-func NewPrometheusServiceAccountSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := proj.ComponentLabels(project.PrometheusServiceAccount)
+func NewPrometheusServiceAccountSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(projectns.PrometheusServiceAccount)
 
 	obj := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.ComponentName(project.PrometheusServiceAccount),
-			Namespace: proj.ComponentName(project.Namespace),
+			Name:      proj.ComponentName(projectns.PrometheusServiceAccount),
+			Namespace: proj.ComponentName(projectns.Namespace),
 		},
 	}
 

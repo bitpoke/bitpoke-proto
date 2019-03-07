@@ -15,18 +15,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 // NewPrometheusRoleBindingSyncer returns a new syncer.Interface for reconciling Prometheus ServiceAccount
-func NewPrometheusRoleBindingSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := proj.ComponentLabels(project.PrometheusRoleBinding)
+func NewPrometheusRoleBindingSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(projectns.PrometheusRoleBinding)
 
 	obj := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.ComponentName(project.PrometheusRoleBinding),
-			Namespace: proj.ComponentName(project.Namespace),
+			Name:      proj.ComponentName(projectns.PrometheusRoleBinding),
+			Namespace: proj.ComponentName(projectns.Namespace),
 		},
 	}
 
@@ -45,7 +44,7 @@ func NewPrometheusRoleBindingSyncer(proj *project.Project, cl client.Client, sch
 		out.Subjects = []rbacv1.Subject{
 			{
 				Kind: rbacv1.ServiceAccountKind,
-				Name: proj.ComponentName(project.PrometheusServiceAccount),
+				Name: proj.ComponentName(projectns.PrometheusServiceAccount),
 			},
 		}
 

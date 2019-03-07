@@ -26,7 +26,7 @@ import (
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 type projectsServer struct {
@@ -90,9 +90,9 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequ
 		return nil, err
 	}
 
-	proj := project.New(&corev1.Namespace{
+	proj := projectns.New(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: project.NamespaceName(name),
+			Name: projectns.NamespaceName(name),
 			Labels: map[string]string{
 				"presslabs.com/kind":         "project",
 				"presslabs.com/project":      name,
@@ -123,7 +123,7 @@ func (s *projectsServer) GetProject(ctx context.Context, r *GetProjectRequest) (
 		return nil, status.FromError(err)
 	}
 	key := client.ObjectKey{
-		Name: project.NamespaceName(name),
+		Name: projectns.NamespaceName(name),
 	}
 
 	var proj corev1.Namespace
@@ -131,7 +131,7 @@ func (s *projectsServer) GetProject(ctx context.Context, r *GetProjectRequest) (
 		return nil, status.NotFoundf("project %s not found", r.Name).Because(err)
 	}
 
-	return newProjectFromK8s(project.New(&proj)), nil
+	return newProjectFromK8s(projectns.New(&proj)), nil
 }
 
 func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequest) (*Project, error) {
@@ -145,7 +145,7 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequ
 		return nil, status.FromError(err)
 	}
 	key := client.ObjectKey{
-		Name: project.NamespaceName(name),
+		Name: projectns.NamespaceName(name),
 	}
 
 	var proj corev1.Namespace
@@ -153,13 +153,13 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequ
 		return nil, status.NotFound().Because(err)
 	}
 
-	project.New(&proj).UpdateDisplayName(r.Project.DisplayName)
+	projectns.New(&proj).UpdateDisplayName(r.Project.DisplayName)
 
 	if err = c.Update(ctx, &proj); err != nil {
 		return nil, status.NotFound().Because(err)
 	}
 
-	return newProjectFromK8s(project.New(&proj)), nil
+	return newProjectFromK8s(projectns.New(&proj)), nil
 }
 
 func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequest) (*types.Empty, error) {
@@ -173,7 +173,7 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 		return nil, status.FromError(err)
 	}
 	key := client.ObjectKey{
-		Name: project.NamespaceName(name),
+		Name: projectns.NamespaceName(name),
 	}
 
 	var proj corev1.Namespace
@@ -210,7 +210,7 @@ func (s *projectsServer) ListProjects(ctx context.Context, r *ListProjectsReques
 	resp.Projects = []Project{}
 	for i := range projs.Items {
 		if projs.Items[i].ObjectMeta.Annotations["presslabs.com/created-by"] == userID {
-			resp.Projects = append(resp.Projects, *newProjectFromK8s(project.New(&projs.Items[i])))
+			resp.Projects = append(resp.Projects, *newProjectFromK8s(projectns.New(&projs.Items[i])))
 		}
 	}
 
@@ -225,7 +225,7 @@ func NewProjectsServiceServer(client client.Client, cfg *rest.Config) ProjectsSe
 	}
 }
 
-func newProjectFromK8s(p *project.Project) *Project {
+func newProjectFromK8s(p *projectns.ProjectNamespace) *Project {
 	return &Project{
 		Name:         fmt.Sprintf("%s%s", projPrefix, p.Namespace.ObjectMeta.Labels["presslabs.com/project"]),
 		Organization: p.Namespace.ObjectMeta.Labels["presslabs.com/organization"],

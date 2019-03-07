@@ -12,8 +12,7 @@ import (
 	"strconv"
 
 	"github.com/go-ini/ini"
-
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 const (
@@ -28,7 +27,7 @@ const (
 	giteaRequestsStorage = "10Gi"
 )
 
-func createGiteaConfig(project *project.Project, data map[string][]byte) (*ini.File, error) {
+func createGiteaConfig(project *projectns.ProjectNamespace, data map[string][]byte) (*ini.File, error) {
 	cfg := ini.Empty()
 
 	config := map[string]map[string]string{

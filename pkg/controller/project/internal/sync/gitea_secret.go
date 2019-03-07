@@ -16,20 +16,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/internal/project"
-
 	"github.com/presslabs/controller-util/rand"
+	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 // NewGiteaSecretSyncer returns a new syncer.Interface for reconciling Gitea Secret
-func NewGiteaSecretSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := proj.ComponentLabels(project.GiteaSecret)
+func NewGiteaSecretSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(projectns.GiteaSecret)
 
 	obj := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.ComponentName(project.GiteaSecret),
-			Namespace: proj.ComponentName(project.Namespace),
+			Name:      proj.ComponentName(projectns.GiteaSecret),
+			Namespace: proj.ComponentName(projectns.Namespace),
 		},
 	}
 

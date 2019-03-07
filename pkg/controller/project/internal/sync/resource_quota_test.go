@@ -24,7 +24,7 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 var defaultQuotaValues = corev1.ResourceList{
@@ -37,7 +37,7 @@ var defaultQuotaValues = corev1.ResourceList{
 
 var _ = Describe("The ResourceQuotaSyncer transform func T", func() {
 	Context("finds no existing ResourceQuota", func() {
-		proj := project.New(&corev1.Namespace{})
+		proj := projectns.New(&corev1.Namespace{})
 		rq := &corev1.ResourceQuota{}
 		rqSyncer := sync.NewResourceQuotaSyncer(proj, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
 
@@ -49,7 +49,7 @@ var _ = Describe("The ResourceQuotaSyncer transform func T", func() {
 	})
 
 	Context("finds existing ResourceQuota with overridden values", func() {
-		proj := project.New(&corev1.Namespace{})
+		proj := projectns.New(&corev1.Namespace{})
 		var rq *corev1.ResourceQuota
 
 		biggerResourceRequestsCPU := defaultQuotaValues[corev1.ResourceRequestsMemory].DeepCopy()

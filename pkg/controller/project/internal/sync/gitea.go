@@ -11,9 +11,9 @@ import (
 	"fmt"
 
 	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
-func giteaDomain(o *project.Project) string {
+func giteaDomain(o *projectns.ProjectNamespace) string {
 	return fmt.Sprintf("%s.%s", o.Domain(), options.GitBaseDomainURL)
 }

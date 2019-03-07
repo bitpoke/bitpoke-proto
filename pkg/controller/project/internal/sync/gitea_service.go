@@ -18,17 +18,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 // NewGiteaServiceSyncer returns a new syncer.Interface for reconciling Gitea Service
-func NewGiteaServiceSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := proj.ComponentLabels(project.GiteaService)
+func NewGiteaServiceSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(projectns.GiteaService)
 
 	obj := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.ComponentName(project.GiteaService),
-			Namespace: proj.ComponentName(project.Namespace),
+			Name:      proj.ComponentName(projectns.GiteaService),
+			Namespace: proj.ComponentName(projectns.Namespace),
 		},
 	}
 
@@ -36,7 +36,7 @@ func NewGiteaServiceSyncer(proj *project.Project, cl client.Client, scheme *runt
 		out := existing.(*corev1.Service)
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
-		selectorLabels := proj.ComponentLabels(project.GiteaDeployment)
+		selectorLabels := proj.ComponentLabels(projectns.GiteaDeployment)
 		if !labels.Equals(selectorLabels, out.Spec.Selector) {
 			if out.ObjectMeta.CreationTimestamp.IsZero() {
 				out.Spec.Selector = selectorLabels

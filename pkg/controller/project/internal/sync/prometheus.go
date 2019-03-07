@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 const (
@@ -26,13 +26,13 @@ const (
 )
 
 // NewPrometheusSyncer returns a new syncer.Interface for reconciling Prometheus
-func NewPrometheusSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := proj.ComponentLabels(project.Prometheus)
+func NewPrometheusSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := proj.ComponentLabels(projectns.Prometheus)
 
 	obj := &monitoringv1.Prometheus{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.ComponentName(project.Prometheus),
-			Namespace: proj.ComponentName(project.Namespace),
+			Name:      proj.ComponentName(projectns.Prometheus),
+			Namespace: proj.ComponentName(projectns.Namespace),
 		},
 	}
 
@@ -43,7 +43,7 @@ func NewPrometheusSyncer(proj *project.Project, cl client.Client, scheme *runtim
 
 		out.Spec = monitoringv1.PrometheusSpec{
 			ServiceMonitorSelector:          &metav1.LabelSelector{},
-			ServiceAccountName:              proj.ComponentName(project.PrometheusServiceAccount),
+			ServiceAccountName:              proj.ComponentName(projectns.PrometheusServiceAccount),
 			ScrapeInterval:                  defaultScrapeInterval,
 			EvaluationInterval:              defaultEvaluationInterval,
 			Version:                         prometheusVersion,

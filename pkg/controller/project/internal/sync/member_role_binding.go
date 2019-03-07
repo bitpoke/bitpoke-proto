@@ -15,16 +15,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 // NewMemberRoleBindingSyncer returns a new syncer.Interface for reconciling
 // member RoleBinding
-func NewMemberRoleBindingSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewMemberRoleBindingSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      proj.ComponentName(project.MemberRoleBinding),
-			Namespace: proj.ComponentName(project.Namespace),
+			Name:      proj.ComponentName(projectns.MemberRoleBinding),
+			Namespace: proj.ComponentName(projectns.Namespace),
 		},
 	}
 

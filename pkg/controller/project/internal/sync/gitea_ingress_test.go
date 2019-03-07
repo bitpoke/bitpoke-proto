@@ -27,15 +27,15 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
-	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 var _ = Describe("The GiteaIngressSyncer transform func T", func() {
 	var giteaIngress *extv1beta1.Ingress
-	var proj *project.Project
+	var proj *projectns.ProjectNamespace
 
 	BeforeEach(func() {
-		proj = project.New(&corev1.Namespace{
+		proj = projectns.New(&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("proj-%d", rand.Int31()),
 				Namespace: fmt.Sprintf("org-%d", rand.Int31()),
