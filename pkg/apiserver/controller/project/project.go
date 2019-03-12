@@ -14,7 +14,6 @@ import (
 
 	"github.com/gogo/protobuf/types"
 	"github.com/gosimple/slug"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
@@ -22,11 +21,13 @@ import (
 
 	// nolint: golint
 	. "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1"
+	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/header"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
-	"github.com/presslabs/dashboard/pkg/internal/projectns"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 type projectsServer struct {
@@ -89,10 +90,15 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequ
 	if err != nil {
 		return nil, err
 	}
+	ns := header.OrgFromContext(ctx)
+	if len(ns) == 0 {
+		return nil, status.InvalidArgumentf("organization cannot be empty")
+	}
 
-	proj := projectns.New(&corev1.Namespace{
+	proj := project.New(&dashboardv1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: projectns.NamespaceName(name),
+			Name:      name,
+			Namespace: ns,
 			Labels: map[string]string{
 				"presslabs.com/kind":         "project",
 				"presslabs.com/project":      name,
@@ -122,16 +128,21 @@ func (s *projectsServer) GetProject(ctx context.Context, r *GetProjectRequest) (
 	if err != nil {
 		return nil, status.FromError(err)
 	}
+	ns := header.OrgFromContext(ctx)
+	if ns == "" {
+		return nil, status.InvalidArgumentf("organization id cannot be empty")
+	}
 	key := client.ObjectKey{
-		Name: projectns.NamespaceName(name),
+		Name:      name,
+		Namespace: ns,
 	}
 
-	var proj corev1.Namespace
+	var proj dashboardv1alpha1.Project
 	if err := c.Get(ctx, key, &proj); err != nil {
 		return nil, status.NotFoundf("project %s not found", r.Name).Because(err)
 	}
 
-	return newProjectFromK8s(projectns.New(&proj)), nil
+	return newProjectFromK8s(project.New(&proj)), nil
 }
 
 func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequest) (*Project, error) {
@@ -144,22 +155,27 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequ
 	if err != nil {
 		return nil, status.FromError(err)
 	}
+	ns := header.OrgFromContext(ctx)
+	if ns == "" {
+		return nil, status.InvalidArgumentf("organization id cannot be empty")
+	}
 	key := client.ObjectKey{
-		Name: projectns.NamespaceName(name),
+		Name:      name,
+		Namespace: ns,
 	}
 
-	var proj corev1.Namespace
+	var proj dashboardv1alpha1.Project
 	if err = c.Get(ctx, key, &proj); err != nil {
 		return nil, status.NotFound().Because(err)
 	}
 
-	projectns.New(&proj).UpdateDisplayName(r.Project.DisplayName)
+	project.New(&proj).UpdateDisplayName(r.Project.DisplayName)
 
 	if err = c.Update(ctx, &proj); err != nil {
 		return nil, status.NotFound().Because(err)
 	}
 
-	return newProjectFromK8s(projectns.New(&proj)), nil
+	return newProjectFromK8s(project.New(&proj)), nil
 }
 
 func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequest) (*types.Empty, error) {
@@ -172,11 +188,16 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 	if err != nil {
 		return nil, status.FromError(err)
 	}
+	ns := header.OrgFromContext(ctx)
+	if ns == "" {
+		return nil, status.InvalidArgumentf("organization id cannot be empty")
+	}
 	key := client.ObjectKey{
-		Name: projectns.NamespaceName(name),
+		Name:      name,
+		Namespace: ns,
 	}
 
-	var proj corev1.Namespace
+	var proj dashboardv1alpha1.Project
 	if err := c.Get(ctx, key, &proj); err != nil {
 		return nil, status.NotFound().Because()
 	}
@@ -191,7 +212,7 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 func (s *projectsServer) ListProjects(ctx context.Context, r *ListProjectsRequest) (*ListProjectsResponse, error) {
 	userID := auth.UserID(ctx)
 
-	projs := &corev1.NamespaceList{}
+	projs := &dashboardv1alpha1.ProjectList{}
 	resp := &ListProjectsResponse{}
 
 	listOptions := &client.ListOptions{
@@ -210,7 +231,7 @@ func (s *projectsServer) ListProjects(ctx context.Context, r *ListProjectsReques
 	resp.Projects = []Project{}
 	for i := range projs.Items {
 		if projs.Items[i].ObjectMeta.Annotations["presslabs.com/created-by"] == userID {
-			resp.Projects = append(resp.Projects, *newProjectFromK8s(projectns.New(&projs.Items[i])))
+			resp.Projects = append(resp.Projects, *newProjectFromK8s(project.New(&projs.Items[i])))
 		}
 	}
 
@@ -225,10 +246,10 @@ func NewProjectsServiceServer(client client.Client, cfg *rest.Config) ProjectsSe
 	}
 }
 
-func newProjectFromK8s(p *projectns.ProjectNamespace) *Project {
+func newProjectFromK8s(p *project.Project) *Project {
 	return &Project{
-		Name:         fmt.Sprintf("%s%s", projPrefix, p.Namespace.ObjectMeta.Labels["presslabs.com/project"]),
-		Organization: p.Namespace.ObjectMeta.Labels["presslabs.com/organization"],
+		Name:         fmt.Sprintf("%s%s", projPrefix, p.Project.ObjectMeta.Labels["presslabs.com/project"]),
+		Organization: p.Project.ObjectMeta.Labels["presslabs.com/organization"],
 		DisplayName:  p.Annotations["presslabs.com/display-name"],
 	}
 }

@@ -13,6 +13,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/presslabs/dashboard/pkg/internal/project"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -20,7 +22,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -28,10 +29,10 @@ import (
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 
 	projv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1"
+	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/header"
 	"github.com/presslabs/dashboard/pkg/controller"
-	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
 const (
@@ -41,10 +42,11 @@ const (
 )
 
 // createProject is a helper func that creates a project
-func createProject(name, displayName, createdBy, organization string) *projectns.ProjectNamespace {
-	proj := projectns.New(&corev1.Namespace{
+func createProject(name, displayName, createdBy, organization string) *project.Project {
+	proj := project.New(&dashboardv1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: projectns.NamespaceName(name),
+			Name:      name,
+			Namespace: organization,
 			Labels: map[string]string{
 				"presslabs.com/kind":         "project",
 				"presslabs.com/project":      name,
@@ -60,27 +62,28 @@ func createProject(name, displayName, createdBy, organization string) *projectns
 	return proj
 }
 
-// getProjectNamespaceFn is a helper func that returns a project namespace
-func getProjectNamespaceFn(ctx context.Context, c client.Client, key client.ObjectKey) func() corev1.Namespace {
-	return func() corev1.Namespace {
-		var p corev1.Namespace
+// getProjectFn is a helper func that returns a project
+func getProjectFn(ctx context.Context, c client.Client, key client.ObjectKey) func() dashboardv1alpha1.Project {
+	return func() dashboardv1alpha1.Project {
+		var p dashboardv1alpha1.Project
 		c.Get(ctx, key, &p)
 		return p
 	}
 }
 
-func expectProperNamespace(c client.Client, name, displayName, createdBy, organization string) {
-	var ns corev1.Namespace
+func expectProperProject(c client.Client, name, displayName, createdBy, organization string) {
+	var p dashboardv1alpha1.Project
 	key := client.ObjectKey{
-		Name: projectns.NamespaceName(name),
+		Name:      name,
+		Namespace: organization,
 	}
-	Expect(c.Get(context.TODO(), key, &ns)).To(Succeed())
-	Expect(ns.Name).To(Equal(fmt.Sprintf("proj-%s", name)))
-	Expect(ns.Labels).To(HaveKeyWithValue("presslabs.com/kind", "project"))
-	Expect(ns.Labels).To(HaveKeyWithValue("presslabs.com/project", name))
-	Expect(ns.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", displayName))
-	Expect(ns.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", createdBy))
-	Expect(ns.Labels).To(HaveKeyWithValue("presslabs.com/organization", organization))
+	Expect(c.Get(context.TODO(), key, &p)).To(Succeed())
+	Expect(p.Name).To(Equal(fmt.Sprintf("%s", name)))
+	Expect(p.Labels).To(HaveKeyWithValue("presslabs.com/kind", "project"))
+	Expect(p.Labels).To(HaveKeyWithValue("presslabs.com/project", name))
+	Expect(p.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", displayName))
+	Expect(p.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", createdBy))
+	Expect(p.Labels).To(HaveKeyWithValue("presslabs.com/organization", organization))
 }
 
 var _ = Describe("API server", func() {
@@ -230,7 +233,7 @@ var _ = Describe("API server", func() {
 			resp, err := projClient.CreateProject(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(autoID))
-			expectProperNamespace(c, slug.Make(displayName), displayName, createdBy, organization)
+			expectProperProject(c, slug.Make(displayName), displayName, createdBy, organization)
 		})
 
 		It("creates project when project name is given", func() {
@@ -245,7 +248,7 @@ var _ = Describe("API server", func() {
 			resp, err := projClient.CreateProject(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
-			expectProperNamespace(c, name, displayName, createdBy, organization)
+			expectProperProject(c, name, displayName, createdBy, organization)
 		})
 
 		It("fills display_name when no one is given", func() {
@@ -258,7 +261,7 @@ var _ = Describe("API server", func() {
 			resp, err := projClient.CreateProject(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
-			expectProperNamespace(c, name, name, createdBy, organization)
+			expectProperProject(c, name, name, createdBy, organization)
 		})
 	})
 
@@ -298,10 +301,12 @@ var _ = Describe("API server", func() {
 			_, err := projClient.DeleteProject(ctx, &req)
 			Expect(err).To(Succeed())
 			key := client.ObjectKey{
-				Name: projectns.NamespaceName(name),
+				Name:      name,
+				Namespace: organization,
 			}
-			Eventually(getProjectNamespaceFn(context.TODO(), c, key), deleteTimeout).Should(
-				BeInPhase(corev1.NamespaceTerminating))
+			var p dashboardv1alpha1.Project
+			err = c.Get(ctx, key, &p)
+			Expect(status.Code(err)).To(Equal(codes.Unknown))
 		})
 
 		It("returns NotFound when project does not exists", func() {
@@ -333,9 +338,10 @@ var _ = Describe("API server", func() {
 			Expect(resp.DisplayName).To(Equal(newDisplayName))
 
 			key := client.ObjectKey{
-				Name: projectns.NamespaceName(name),
+				Name:      name,
+				Namespace: organization,
 			}
-			Eventually(getProjectNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
+			Eventually(getProjectFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveAnnotation("presslabs.com/display-name", newDisplayName))
 		})
 
@@ -351,9 +357,10 @@ var _ = Describe("API server", func() {
 			Expect(resp.DisplayName).To(Equal(name))
 
 			key := client.ObjectKey{
-				Name: projectns.NamespaceName(name),
+				Name:      name,
+				Namespace: organization,
 			}
-			Eventually(getProjectNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
+			Eventually(getProjectFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveAnnotation("presslabs.com/display-name", name))
 		})
 
@@ -379,9 +386,10 @@ var _ = Describe("API server", func() {
 			Expect(resp.Organization).To(Equal(organization))
 
 			key := client.ObjectKey{
-				Name: projectns.NamespaceName(name),
+				Name:      name,
+				Namespace: organization,
 			}
-			Eventually(getProjectNamespaceFn(context.TODO(), c, key), updateTimeout).Should(
+			Eventually(getProjectFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveLabel("presslabs.com/organization", organization))
 		})
 	})

@@ -84,41 +84,41 @@ func (p *ProjectNamespace) UpdateDisplayName(displayName string) {
 	}
 }
 
-// New wraps a dashboardv1alpha1.Project into a Project object
+// New wraps a Namespace into a ProjectNamespace object
 func New(p *corev1.Namespace) *ProjectNamespace {
 	return &ProjectNamespace{p}
 }
 
-// Unwrap returns the wrapped dashboardv1alpha1.Project object
+// Unwrap returns the wrapped ProjectNamespace object
 func (p *ProjectNamespace) Unwrap() *corev1.Namespace {
 	return p.Namespace
 }
 
-// Labels returns default label set for dashboardv1alpha1.Project
+// Labels returns default label set for ProjectNamespace
 func (p *ProjectNamespace) Labels() labels.Set {
-	labels := labels.Set{
+	l := labels.Set{
 		"presslabs.com/project": p.GetLabels()["presslabs.com/project"],
 	}
 
 	if p.ObjectMeta.Labels != nil {
 		if org, ok := p.ObjectMeta.Labels["presslabs.com/organization"]; ok {
-			labels["presslabs.com/organization"] = org
+			l["presslabs.com/organization"] = org
 		}
 	}
 
-	return labels
+	return l
 }
 
-// ComponentLabels returns labels for a label set for a dashboardv1alpha1.Project component
+// ComponentLabels returns labels for a label set for a ProjectNamespace component
 func (p *ProjectNamespace) ComponentLabels(component component) labels.Set {
-	labels := p.Labels()
+	l := p.Labels()
 	if len(component.app) > 0 {
-		labels["app.kubernetes.io/name"] = component.app
+		l["app.kubernetes.io/name"] = component.app
 	}
 	if len(component.name) > 0 {
-		labels["app.kubernetes.io/component"] = component.name
+		l["app.kubernetes.io/component"] = component.name
 	}
-	return labels
+	return l
 }
 
 // ComponentName returns the object name for a component
@@ -134,7 +134,7 @@ func (p *ProjectNamespace) Domain() string {
 	return p.Name
 }
 
-// ValidateMetadata validates the metadata of a Project
+// ValidateMetadata validates the metadata of a ProjectNamespace
 func (p *ProjectNamespace) ValidateMetadata() error {
 	errorList := []error{}
 	// Check for some required Project Labels and Annotations
