@@ -4,14 +4,14 @@ This file is subject to the terms and conditions defined in file LICENSE,
 which is part of this source code package.
 */
 
-package header
+package metadata
 
 import (
 	"context"
 
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
-
 	"google.golang.org/grpc/metadata"
+
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
 )
 
 var (
@@ -26,14 +26,17 @@ func AddOrgInContext(ctx context.Context, org string) context.Context {
 	return newCtx
 }
 
-// OrgFromContext returns organzation id from context
-func OrgFromContext(ctx context.Context) string {
+// RequireOrganizationNamespace returns organzation id from context
+func RequireOrganizationNamespace(ctx context.Context) string {
 	md, hasMD := metadata.FromIncomingContext(ctx)
 	if !hasMD {
 		panic(status.InvalidArgumentf("no organization id value in context"))
 	}
-	if val, ok := md[organizationTokenContextKey]; ok {
-		return val[0]
+
+	val, ok := md[organizationTokenContextKey]
+	if !ok || val[0] == "" {
+		panic(status.InvalidArgumentf("no organization id value in context"))
 	}
-	panic(status.InvalidArgumentf("no organization id value in context"))
+
+	return val[0]
 }

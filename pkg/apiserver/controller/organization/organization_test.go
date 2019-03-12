@@ -28,7 +28,7 @@ import (
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 
 	orgv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1"
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/controller"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 )
@@ -128,7 +128,7 @@ var _ = Describe("API server", func() {
 		autoName = slug.Make(displayName)
 		autoID = fmt.Sprintf("orgs/%s", autoName)
 		createdBy = fmt.Sprintf("user#%s", name)
-		auth.FakeSubject = createdBy
+		metadata.FakeSubject = createdBy
 	})
 
 	AfterEach(func() {

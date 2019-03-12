@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	logf "github.com/presslabs/controller-util/log"
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
@@ -63,7 +63,7 @@ var log = logf.Log.WithName("apiserver")
 
 func defaultOpts(opts *APIServerOptions) *APIServerOptions {
 	if opts.AuthFunc == nil {
-		opts.AuthFunc = auth.Auth
+		opts.AuthFunc = metadata.Auth
 	}
 	return opts
 }

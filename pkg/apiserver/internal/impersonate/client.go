@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	auth "github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
 )
 
@@ -36,6 +36,6 @@ func Client(userName string, cfg *rest.Config) client.Client {
 
 // ClientFromContext returns user ID from context and impersonated client
 func ClientFromContext(ctx context.Context, cfg *rest.Config) (client.Client, string, error) {
-	userID := auth.UserID(ctx)
+	userID := metadata.RequireUserID(ctx)
 	return Client(userID, cfg), userID, nil
 }

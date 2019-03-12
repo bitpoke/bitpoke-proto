@@ -23,9 +23,8 @@ import (
 	. "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/apiserver"
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/header"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 )
@@ -72,7 +71,7 @@ func Add(server *apiserver.APIServer) error {
 }
 
 func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequest) (*Project, error) {
-	userID := auth.UserID(ctx)
+	userID := metadata.RequireUserID(ctx)
 
 	var err error
 	var name string
@@ -90,10 +89,7 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequ
 	if err != nil {
 		return nil, err
 	}
-	ns := header.OrgFromContext(ctx)
-	if len(ns) == 0 {
-		return nil, status.InvalidArgumentf("organization cannot be empty")
-	}
+	ns := metadata.RequireOrganizationNamespace(ctx)
 
 	proj := project.New(&dashboardv1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
@@ -128,10 +124,7 @@ func (s *projectsServer) GetProject(ctx context.Context, r *GetProjectRequest) (
 	if err != nil {
 		return nil, status.FromError(err)
 	}
-	ns := header.OrgFromContext(ctx)
-	if ns == "" {
-		return nil, status.InvalidArgumentf("organization id cannot be empty")
-	}
+	ns := metadata.RequireOrganizationNamespace(ctx)
 	key := client.ObjectKey{
 		Name:      name,
 		Namespace: ns,
@@ -155,10 +148,7 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequ
 	if err != nil {
 		return nil, status.FromError(err)
 	}
-	ns := header.OrgFromContext(ctx)
-	if ns == "" {
-		return nil, status.InvalidArgumentf("organization id cannot be empty")
-	}
+	ns := metadata.RequireOrganizationNamespace(ctx)
 	key := client.ObjectKey{
 		Name:      name,
 		Namespace: ns,
@@ -188,10 +178,7 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 	if err != nil {
 		return nil, status.FromError(err)
 	}
-	ns := header.OrgFromContext(ctx)
-	if ns == "" {
-		return nil, status.InvalidArgumentf("organization id cannot be empty")
-	}
+	ns := metadata.RequireOrganizationNamespace(ctx)
 	key := client.ObjectKey{
 		Name:      name,
 		Namespace: ns,
@@ -210,16 +197,14 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 }
 
 func (s *projectsServer) ListProjects(ctx context.Context, r *ListProjectsRequest) (*ListProjectsResponse, error) {
-	userID := auth.UserID(ctx)
-	ns := header.OrgFromContext(ctx)
-	if ns == "" {
-		return nil, status.InvalidArgumentf("organization id cannot be empty")
-	}
+	userID := metadata.RequireUserID(ctx)
+	ns := metadata.RequireOrganizationNamespace(ctx)
 
 	projs := &dashboardv1alpha1.ProjectList{}
 	resp := &ListProjectsResponse{}
 
 	listOptions := &client.ListOptions{
+		Namespace: ns,
 		LabelSelector: labels.SelectorFromSet(
 			labels.Set{
 				"presslabs.com/kind": "project",

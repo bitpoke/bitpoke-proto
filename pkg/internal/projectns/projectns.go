@@ -89,7 +89,7 @@ func New(p *corev1.Namespace) *ProjectNamespace {
 	return &ProjectNamespace{p}
 }
 
-// Unwrap returns the wrapped ProjectNamespace object
+// Unwrap returns the wrapped Namespace object
 func (p *ProjectNamespace) Unwrap() *corev1.Namespace {
 	return p.Namespace
 }

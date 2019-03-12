@@ -24,8 +24,8 @@ import (
 	// nolint: golint
 	. "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver"
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 )
@@ -86,7 +86,7 @@ func Add(server *apiserver.APIServer) error {
 }
 
 func (s *organizationsService) CreateOrganization(ctx context.Context, r *CreateOrganizationRequest) (*Organization, error) {
-	userID := auth.UserID(ctx)
+	userID := metadata.RequireUserID(ctx)
 
 	var err error
 	var name string
@@ -201,7 +201,7 @@ func (s *organizationsService) DeleteOrganization(ctx context.Context, r *Delete
 
 func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrganizationsRequest) (*ListOrganizationsResponse, error) {
 	var err error
-	userID := auth.UserID(ctx)
+	userID := metadata.RequireUserID(ctx)
 
 	memberLists := &rbacv1.RoleBindingList{}
 	opts := client.MatchingField("subject.user", userID)

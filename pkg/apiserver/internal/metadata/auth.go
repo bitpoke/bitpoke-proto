@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package auth
+package metadata
 
 import (
 	"context"
@@ -40,8 +40,8 @@ type Claims struct {
 	Verified bool   `json:"email_verified"`
 }
 
-// UserID returns user ID from context
-func UserID(ctx context.Context) string {
+// RequireUserID returns user ID from context
+func RequireUserID(ctx context.Context) string {
 	cl := ctx.Value(AuthTokenContextKey)
 	if cl == nil {
 		panic(apiserverstatus.Unauthenticatedf("no auth-token value in context"))

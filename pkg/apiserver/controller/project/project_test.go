@@ -13,8 +13,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/presslabs/dashboard/pkg/internal/project"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -30,9 +28,9 @@ import (
 
 	projv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/header"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/controller"
+	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 const (
@@ -137,11 +135,11 @@ var _ = Describe("API server", func() {
 		autoName = slug.Make(displayName)
 		autoID = fmt.Sprintf("project/%s", autoName)
 		createdBy = fmt.Sprintf("user#%s", name)
-		auth.FakeSubject = createdBy
+		metadata.FakeSubject = createdBy
 		organization = fmt.Sprintf("%d", rand.Int31())
 		parent = fmt.Sprintf("orgs/%s", organization)
 
-		ctx = header.AddOrgInContext(context.Background(), organization)
+		ctx = metadata.AddOrgInContext(context.Background(), organization)
 	})
 
 	AfterEach(func() {
@@ -437,8 +435,7 @@ var _ = Describe("API server", func() {
 			for i := 1; i <= projsCount; i++ {
 				_name := fmt.Sprintf("%s-%02d", name, i)
 				_displayName := fmt.Sprintf("%s %02d Inc.", name, i)
-				_organization := fmt.Sprintf("%s-%02d", organization, i)
-				proj := createProject(_name, _displayName, createdBy, _organization)
+				proj := createProject(_name, _displayName, createdBy, organization)
 				Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 			}
 			proj := createProject(name, displayName, "user#anoter", organization)
