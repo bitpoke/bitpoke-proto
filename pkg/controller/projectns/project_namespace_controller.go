@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package project
+package projectns
 
 import (
 	"context"
@@ -36,12 +36,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
+	"github.com/presslabs/dashboard/pkg/controller/projectns/internal/sync"
 	"github.com/presslabs/dashboard/pkg/internal/predicate"
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
-var log = logf.Log.WithName("project-controller")
+var log = logf.Log.WithName("project-namespace-controller")
 
 // Add creates a new Project Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -54,14 +54,14 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileProject{
 		Client:   mgr.GetClient(),
 		scheme:   mgr.GetScheme(),
-		recorder: mgr.GetRecorder("project-controller"),
+		recorder: mgr.GetRecorder("project-namespace-controller"),
 	}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New("project-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New("project-namespace-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}
@@ -135,12 +135,12 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	if err := proj.ValidateMetadata(); err != nil {
-		log.Info("skip reconcile for invalid project", "obj", proj.Unwrap(), "error", err)
+		log.Info("skip reconcile for invalid project namespace", "obj", proj.Unwrap(), "error", err)
 		return reconcile.Result{}, nil
 	}
 
 	if !proj.DeletionTimestamp.IsZero() {
-		log.Info("skip reconcile for deleted project", "obj", proj.Unwrap())
+		log.Info("skip reconcile for deleted project namespace", "obj", proj.Unwrap())
 		return reconcile.Result{}, nil
 	}
 

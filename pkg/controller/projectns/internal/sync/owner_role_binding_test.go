@@ -20,7 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/controller/project/internal/sync"
+	"github.com/presslabs/dashboard/pkg/controller/projectns/internal/sync"
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
@@ -65,7 +65,7 @@ var _ = Describe("The OwnerRoleSyncer transform func T", func() {
 		expectedLabels := map[string]string{
 			"presslabs.com/project":        projectName,
 			"presslabs.com/organization":   organizationName,
-			"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+			"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 			"presslabs.com/kind":           "project-owner-list",
 		}
 		Expect(ownerRoleBinding.Labels).To(Equal(expectedLabels))

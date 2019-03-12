@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package project
+package projectns
 
 import (
 	"fmt"
@@ -44,7 +44,7 @@ import (
 
 const timeout = time.Second * 1
 
-var _ = Describe("Project controller", func() {
+var _ = Describe("Project Namespace controller", func() {
 	var (
 		// channel for incoming reconcile requests
 		requests chan reconcile.Request
@@ -74,7 +74,7 @@ var _ = Describe("Project controller", func() {
 		close(stop)
 	})
 
-	When("creating a new Project object", func() {
+	When("creating a new Project Namespace object", func() {
 		var (
 			expectedRequest  reconcile.Request
 			project          *corev1.Namespace
@@ -127,32 +127,32 @@ var _ = Describe("Project controller", func() {
 				"default": {
 					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
-					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 				},
 				"prometheus-instance": {
 					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
-					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "prometheus",
 					"app.kubernetes.io/version":    "v2.3.2",
 				},
 				"prometheus": {
 					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
-					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "prometheus",
 				},
 				"gitea": {
 					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
-					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "gitea",
 					"app.kubernetes.io/component":  "web",
 				},
 				"gitea-deployment": {
 					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
-					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "gitea",
 					"app.kubernetes.io/component":  "web",
 					"app.kubernetes.io/version":    "1.5.2",
@@ -160,13 +160,13 @@ var _ = Describe("Project controller", func() {
 				"member": {
 					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
-					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 					"presslabs.com/kind":           "project-member-list",
 				},
 				"owner": {
 					"presslabs.com/project":        projectName,
 					"presslabs.com/organization":   organizationName,
-					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
+					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 					"presslabs.com/kind":           "project-owner-list",
 				},
 			}

@@ -63,7 +63,7 @@ func NewGiteaSecretSyncer(proj *projectns.ProjectNamespace, cl client.Client, sc
 
 		var buf bytes.Buffer
 		if _, err := cfg.WriteTo(&buf); err != nil {
-			log.Error(err, "unable to load existing Gitea settings", "project", proj.Name)
+			log.Error(err, "unable to load existing Gitea settings", "project-namespace", proj.Name)
 		}
 		out.Data["app.ini"] = buf.Bytes()
 

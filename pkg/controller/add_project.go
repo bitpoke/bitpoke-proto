@@ -17,10 +17,10 @@ limitations under the License.
 package controller
 
 import (
-	"github.com/presslabs/dashboard/pkg/controller/project"
+	"github.com/presslabs/dashboard/pkg/controller/projectns"
 )
 
 func init() {
 	// AddToManagerFuncs is a list of functions to create controllers and add them to a manager.
-	AddToManagerFuncs = append(AddToManagerFuncs, project.Add)
+	AddToManagerFuncs = append(AddToManagerFuncs, projectns.Add)
 }
