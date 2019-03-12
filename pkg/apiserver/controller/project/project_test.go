@@ -13,10 +13,10 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/gosimple/slug"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/gosimple/slug"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,11 +25,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
+
 	projv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/auth"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/header"
 	"github.com/presslabs/dashboard/pkg/controller"
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
-	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 )
 
 const (
@@ -91,6 +93,8 @@ var _ = Describe("API server", func() {
 		conn *grpc.ClientConn
 		// projClient
 		projClient projv1.ProjectsServiceClient
+		// context for requests
+		ctx context.Context
 	)
 
 	var (
@@ -134,6 +138,8 @@ var _ = Describe("API server", func() {
 		auth.FakeSubject = createdBy
 		organization = fmt.Sprintf("%d", rand.Int31())
 		parent = fmt.Sprintf("orgs/%s", organization)
+
+		ctx = header.AddOrgInContext(context.Background(), organization)
 	})
 
 	AfterEach(func() {
@@ -155,7 +161,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			_, err := projClient.CreateProject(context.TODO(), &req)
+			_, err := projClient.CreateProject(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.AlreadyExists))
 		})
 
@@ -166,7 +172,7 @@ var _ = Describe("API server", func() {
 					DisplayName: displayName,
 				},
 			}
-			_, err := projClient.CreateProject(context.TODO(), &req)
+			_, err := projClient.CreateProject(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -178,7 +184,7 @@ var _ = Describe("API server", func() {
 					DisplayName: displayName,
 				},
 			}
-			_, err := projClient.CreateProject(context.TODO(), &req)
+			_, err := projClient.CreateProject(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -187,7 +193,7 @@ var _ = Describe("API server", func() {
 				Parent:  parent,
 				Project: projv1.Project{},
 			}
-			_, err := projClient.CreateProject(context.TODO(), &req)
+			_, err := projClient.CreateProject(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -198,7 +204,7 @@ var _ = Describe("API server", func() {
 					Name: "not-fully-qualified-name",
 				},
 			}
-			_, err := projClient.CreateProject(context.TODO(), &req)
+			_, err := projClient.CreateProject(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -209,7 +215,7 @@ var _ = Describe("API server", func() {
 					Name: "project/",
 				},
 			}
-			_, err := projClient.CreateProject(context.TODO(), &req)
+			_, err := projClient.CreateProject(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -221,7 +227,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := projClient.CreateProject(context.TODO(), &req)
+			resp, err := projClient.CreateProject(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(autoID))
 			expectProperNamespace(c, slug.Make(displayName), displayName, createdBy, organization)
@@ -236,7 +242,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := projClient.CreateProject(context.TODO(), &req)
+			resp, err := projClient.CreateProject(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			expectProperNamespace(c, name, displayName, createdBy, organization)
@@ -249,7 +255,7 @@ var _ = Describe("API server", func() {
 					Name: id,
 				},
 			}
-			resp, err := projClient.CreateProject(context.TODO(), &req)
+			resp, err := projClient.CreateProject(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			expectProperNamespace(c, name, name, createdBy, organization)
@@ -264,7 +270,7 @@ var _ = Describe("API server", func() {
 				Name: id,
 			}
 
-			resp, err := projClient.GetProject(context.TODO(), &req)
+			resp, err := projClient.GetProject(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.DisplayName).To(Equal(displayName))
@@ -275,7 +281,7 @@ var _ = Describe("API server", func() {
 			req := projv1.GetProjectRequest{
 				Name: id,
 			}
-			_, err := projClient.GetProject(context.TODO(), &req)
+			_, err := projClient.GetProject(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 
@@ -289,7 +295,7 @@ var _ = Describe("API server", func() {
 				Name: id,
 			}
 
-			_, err := projClient.DeleteProject(context.TODO(), &req)
+			_, err := projClient.DeleteProject(ctx, &req)
 			Expect(err).To(Succeed())
 			key := client.ObjectKey{
 				Name: projectns.NamespaceName(name),
@@ -302,7 +308,7 @@ var _ = Describe("API server", func() {
 			req := projv1.DeleteProjectRequest{
 				Name: id,
 			}
-			_, err := projClient.DeleteProject(context.TODO(), &req)
+			_, err := projClient.DeleteProject(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 	})
@@ -322,7 +328,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := projClient.UpdateProject(context.TODO(), &req)
+			resp, err := projClient.UpdateProject(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.DisplayName).To(Equal(newDisplayName))
 
@@ -340,7 +346,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := projClient.UpdateProject(context.TODO(), &req)
+			resp, err := projClient.UpdateProject(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.DisplayName).To(Equal(name))
 
@@ -357,7 +363,7 @@ var _ = Describe("API server", func() {
 					Name: "project/inexistent",
 				},
 			}
-			_, err := projClient.UpdateProject(context.TODO(), &req)
+			_, err := projClient.UpdateProject(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 
@@ -368,7 +374,7 @@ var _ = Describe("API server", func() {
 					Organization: "the-new-organization",
 				},
 			}
-			resp, err := projClient.UpdateProject(context.TODO(), &req)
+			resp, err := projClient.UpdateProject(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Organization).To(Equal(organization))
 
@@ -397,7 +403,7 @@ var _ = Describe("API server", func() {
 		It("returns only my orgnanizations", func() {
 			req := projv1.ListProjectsRequest{}
 			Eventually(func() ([]projv1.Project, error) {
-				resp, err := projClient.ListProjects(context.TODO(), &req)
+				resp, err := projClient.ListProjects(ctx, &req)
 				return resp.Projects, err
 			}).Should(HaveLen(projsCount))
 		})
