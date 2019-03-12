@@ -211,6 +211,10 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 
 func (s *projectsServer) ListProjects(ctx context.Context, r *ListProjectsRequest) (*ListProjectsResponse, error) {
 	userID := auth.UserID(ctx)
+	ns := header.OrgFromContext(ctx)
+	if ns == "" {
+		return nil, status.InvalidArgumentf("organization id cannot be empty")
+	}
 
 	projs := &dashboardv1alpha1.ProjectList{}
 	resp := &ListProjectsResponse{}

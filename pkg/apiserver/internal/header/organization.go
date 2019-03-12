@@ -30,10 +30,10 @@ func AddOrgInContext(ctx context.Context, org string) context.Context {
 func OrgFromContext(ctx context.Context) string {
 	md, hasMD := metadata.FromIncomingContext(ctx)
 	if !hasMD {
-		panic(status.Unauthenticatedf("no organization id value in context"))
+		panic(status.InvalidArgumentf("no organization id value in context"))
 	}
 	if val, ok := md[organizationTokenContextKey]; ok {
 		return val[0]
 	}
-	panic(status.Unauthenticatedf("no organization id value in context"))
+	panic(status.InvalidArgumentf("no organization id value in context"))
 }

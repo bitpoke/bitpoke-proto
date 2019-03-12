@@ -38,7 +38,6 @@ import (
 const (
 	ctxTimeout    = time.Second * 3
 	updateTimeout = time.Second
-	deleteTimeout = time.Second
 )
 
 // createProject is a helper func that creates a project
@@ -263,6 +262,19 @@ var _ = Describe("API server", func() {
 			Expect(resp.Name).To(Equal(id))
 			expectProperProject(c, name, name, createdBy, organization)
 		})
+
+		It("returns error when header does not have organization id", func() {
+			req := projv1.CreateProjectRequest{
+				Parent: parent,
+				Project: projv1.Project{
+					Name:        id,
+					DisplayName: displayName,
+				},
+			}
+
+			_, err := projClient.CreateProject(context.TODO(), &req)
+			Expect(status.Code(err)).To(Equal(codes.InvalidArgument))
+		})
 	})
 
 	Describe("at Get request", func() {
@@ -288,6 +300,13 @@ var _ = Describe("API server", func() {
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 
+		It("returns error when header does not have organization id", func() {
+			req := projv1.GetProjectRequest{
+				Name: id,
+			}
+			_, err := projClient.GetProject(context.TODO(), &req)
+			Expect(status.Code(err)).To(Equal(codes.InvalidArgument))
+		})
 	})
 
 	Describe("at Delete request", func() {
@@ -315,6 +334,14 @@ var _ = Describe("API server", func() {
 			}
 			_, err := projClient.DeleteProject(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
+		})
+
+		It("returns error when header does not have organization id", func() {
+			req := projv1.DeleteProjectRequest{
+				Name: id,
+			}
+			_, err := projClient.DeleteProject(context.TODO(), &req)
+			Expect(status.Code(err)).To(Equal(codes.InvalidArgument))
 		})
 	})
 
@@ -392,6 +419,16 @@ var _ = Describe("API server", func() {
 			Eventually(getProjectFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveLabel("presslabs.com/organization", organization))
 		})
+
+		It("returns error when header does not have organization id", func() {
+			req := projv1.UpdateProjectRequest{
+				Project: projv1.Project{
+					Name: id,
+				},
+			}
+			_, err := projClient.UpdateProject(context.TODO(), &req)
+			Expect(status.Code(err)).To(Equal(codes.InvalidArgument))
+		})
 	})
 
 	Describe("at list request", func() {
@@ -414,6 +451,12 @@ var _ = Describe("API server", func() {
 				resp, err := projClient.ListProjects(ctx, &req)
 				return resp.Projects, err
 			}).Should(HaveLen(projsCount))
+		})
+
+		It("returns error when header doesn not have organization id", func() {
+			req := projv1.ListProjectsRequest{}
+			_, err := projClient.ListProjects(context.TODO(), &req)
+			Expect(status.Code(err)).To(Equal(codes.InvalidArgument))
 		})
 	})
 })
