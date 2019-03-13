@@ -32,9 +32,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	logf "github.com/presslabs/controller-util/log"
 	"github.com/presslabs/controller-util/syncer"
 	"github.com/presslabs/dashboard/pkg/controller/projectns/internal/sync"
 	"github.com/presslabs/dashboard/pkg/internal/predicate"
@@ -105,7 +105,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 var _ reconcile.Reconciler = &ReconcileProject{}
 
-// ReconcileProject reconciles a Project object
+// ReconcileProject reconciles a Project Namespace object
 type ReconcileProject struct {
 	client.Client
 	scheme   *runtime.Scheme

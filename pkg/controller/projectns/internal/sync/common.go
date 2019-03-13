@@ -17,10 +17,10 @@ limitations under the License.
 package sync
 
 import (
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "github.com/presslabs/controller-util/log"
 )
 
-var log = logf.Log.WithName("project-controller")
+var log = logf.Log.WithName("project-namespace-controller")
 
 var controllerLabels = map[string]string{
 	"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
