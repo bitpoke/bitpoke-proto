@@ -122,10 +122,10 @@ func (p *Project) ValidateMetadata() error {
 
 // GenerateNamespaceName generates unique name for namespace
 func GenerateNamespaceName() (string, error) {
-	letters := "abcdefghijklmnopqrstuvwxyz"
+	letters := "abcdefghijklmnopqrstuvwxyz0123456789"
 	randomGenerator := rand.NewStringGenerator(letters)
 
-	randomString, err := randomGenerator(12)
+	randomString, err := randomGenerator(6)
 	if err != nil {
 		return "", err
 	}
