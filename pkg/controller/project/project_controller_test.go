@@ -9,10 +9,11 @@ package project
 
 import (
 	"fmt"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"math/rand"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -74,7 +75,7 @@ var _ = Describe("Project Namespace controller", func() {
 
 		entries := []TableEntry{
 			Entry("reconciles namespace when project has namespace reference", "proj-awesome", "namespace", &corev1.Namespace{}),
-			Entry("reconciles namespace when project has namespace reference", "", "namespace", &corev1.Namespace{}),
+			Entry("reconciles namespace when project has no namespace reference", "", "namespace", &corev1.Namespace{}),
 		}
 
 		BeforeEach(func() {
@@ -89,6 +90,7 @@ var _ = Describe("Project Namespace controller", func() {
 
 			componentsLabels = map[string]map[string]string{
 				"namespace": {
+					"presslabs.com/kind":           "project",
 					"presslabs.com/project":        projName,
 					"presslabs.com/organization":   orgName,
 					"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
@@ -155,7 +157,6 @@ var _ = Describe("Project Namespace controller", func() {
 				Name: project.Spec.NamespaceName,
 			}
 			Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
-
 			metaObj := obj.(metav1.Object)
 			Expect(metaObj.GetLabels()).To(Equal(componentsLabels[component]))
 		}, entries...)

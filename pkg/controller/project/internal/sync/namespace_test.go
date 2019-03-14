@@ -65,6 +65,7 @@ var _ = Describe("NamespaceSyncer", func() {
 
 	It("reconciles the Namespace", func() {
 		expectedLabels := map[string]string{
+			"presslabs.com/kind":           "project",
 			"app.kubernetes.io/managed-by": "project-controller.dashboard.presslabs.com",
 			"presslabs.com/organization":   orgName,
 			"presslabs.com/project":        projName,

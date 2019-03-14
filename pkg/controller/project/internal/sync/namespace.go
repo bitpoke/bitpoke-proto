@@ -30,6 +30,7 @@ func NewNamespaceSyncer(proj *project.Project, cl client.Client, scheme *runtime
 		out := existing.(*corev1.Namespace)
 
 		out.Labels = labels.Merge(labels.Merge(out.Labels, proj.Labels()), controllerLabels)
+		out.Labels["presslabs.com/kind"] = "project"
 		out.Annotations = map[string]string{"presslabs.com/created-by": proj.Annotations["presslabs.com/created-by"]}
 
 		return nil
