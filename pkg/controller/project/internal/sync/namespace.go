@@ -20,19 +20,13 @@ import (
 
 // NewNamespaceSyncer returns a new syncer.Interface for reconciling Project Namespace
 func NewNamespaceSyncer(proj *project.Project, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	//name := proj.Spec.NamespaceName
-	//if name == "" {
-	//	randName, _ := rand.AlphaNumericString(12)
-	//	name = projectns.NamespaceName(randName)
-	//}
 	obj := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "aaa",
-			//Name: projectns.NamespaceName(name),
+			Name: proj.Spec.NamespaceName,
 		},
 	}
 
-	return syncer.NewObjectSyncer("Namespace", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Namespace", nil, obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Namespace)
 
 		out.Labels = labels.Merge(labels.Merge(out.Labels, proj.Labels()), controllerLabels)

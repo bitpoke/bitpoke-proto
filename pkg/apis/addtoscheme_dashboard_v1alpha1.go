@@ -7,7 +7,9 @@ which is part of this source code package.
 
 package apis
 
-import dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+import (
+	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+)
 
 func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back

@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
+	"github.com/presslabs/controller-util/rand"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
@@ -117,4 +118,16 @@ func (p *Project) ValidateMetadata() error {
 	}
 
 	return utilerrors.Flatten(utilerrors.NewAggregate(errorList))
+}
+
+// GenerateNamespaceName generates unique name for namespace
+func GenerateNamespaceName() (string, error) {
+	letters := "abcdefghijklmnopqrstuvwxyz"
+	randomGenerator := rand.NewStringGenerator(letters)
+
+	randomString, err := randomGenerator(12)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("proj-%s", randomString), nil
 }

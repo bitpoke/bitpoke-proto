@@ -26,16 +26,18 @@ import (
 
 var _ = Describe("NamespaceSyncer", func() {
 	var (
-		p        *project.Project
-		ns       *corev1.Namespace
-		projName string
-		orgName  string
-		userID   string
+		p             *project.Project
+		ns            *corev1.Namespace
+		projName      string
+		orgName       string
+		userID        string
+		projNamespace string
 	)
 
 	BeforeEach(func() {
 		orgName = fmt.Sprintf("%d", mathrand.Int31())
 		projName = fmt.Sprintf("%d", mathrand.Int31())
+		projNamespace = fmt.Sprintf("proj-%d", mathrand.Int31())
 		userID = fmt.Sprintf("user#%d", mathrand.Int31())
 
 		p = project.New(&dashboardv1alpha1.Project{
@@ -50,9 +52,9 @@ var _ = Describe("NamespaceSyncer", func() {
 					"presslabs.com/created-by": userID,
 				},
 			},
-			//Spec: dashboardv1alpha1.ProjectSpec{
-			//	NamespaceName: projName,
-			//},
+			Spec: dashboardv1alpha1.ProjectSpec{
+				NamespaceName: projNamespace,
+			},
 		})
 		ns = &corev1.Namespace{}
 

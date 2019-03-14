@@ -9,6 +9,7 @@ package project
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/types"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -57,10 +58,23 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to the Project
 	err = c.Watch(
 		&source.Kind{Type: &dashboardv1alpha1.Project{}},
-		&handler.EnqueueRequestForObject{},
+		&handler.EnqueueRequestsFromMapFunc{
+			ToRequests: handler.ToRequestsFunc(
+				func(a handler.MapObject) []reconcile.Request {
+					return []reconcile.Request{
+						// compose reconcile request from project namespace metadata
+						{NamespacedName: types.NamespacedName{
+							Name:      a.Meta.GetLabels()["presslabs.com/project"],
+							Namespace: a.Meta.GetLabels()["presslabs.com/organization"],
+						}},
+					}
+				},
+			),
+		},
+		// watch only for project namespaces
 		predicate.NewKindPredicate("project"),
-		predicate.ResourceNotDeleted,
 	)
+
 	if err != nil {
 		return err
 	}
@@ -117,6 +131,22 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 	if !proj.DeletionTimestamp.IsZero() {
 		log.Info("skip reconcile for deleted project", "obj", proj.Unwrap())
 		return reconcile.Result{}, nil
+	}
+
+	if proj.Spec.NamespaceName == "" {
+		randomName, err := project.GenerateNamespaceName()
+		if err != nil {
+			log.Error(err, "failed to set namespace referecne")
+			return reconcile.Result{}, nil
+		}
+		proj.Spec.NamespaceName = randomName
+
+		// updates project
+		err = r.Update(context.TODO(), proj.Unwrap())
+		if err != nil {
+			log.Error(err, "failed to set namespace reference")
+			return reconcile.Result{}, nil
+		}
 	}
 
 	syncers := []syncer.Interface{
