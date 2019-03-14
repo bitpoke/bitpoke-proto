@@ -9,6 +9,7 @@ package project
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/types"
 
 	corev1 "k8s.io/api/core/v1"
@@ -58,6 +59,14 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to the Project
 	err = c.Watch(
 		&source.Kind{Type: &dashboardv1alpha1.Project{}},
+		&handler.EnqueueRequestForObject{},
+	)
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(
+		&source.Kind{Type: &corev1.Namespace{}},
 		&handler.EnqueueRequestsFromMapFunc{
 			ToRequests: handler.ToRequestsFunc(
 				func(a handler.MapObject) []reconcile.Request {
@@ -74,23 +83,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		// watch only for project namespaces
 		predicate.NewKindPredicate("project"),
 	)
-
 	if err != nil {
 		return err
-	}
-
-	subresources := []runtime.Object{
-		&corev1.Namespace{},
-	}
-
-	for _, subresource := range subresources {
-		err = c.Watch(&source.Kind{Type: subresource}, &handler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    &dashboardv1alpha1.Project{},
-		})
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
