@@ -15,6 +15,13 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for
 // the fields to be serialized.
 
+// ProjectSpec defines the desired state of Project
+type ProjectSpec struct {
+	// Name of ProjectNamespace
+	// +optional
+	NamespaceName string `json:"namespace,omitempty"`
+}
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -23,6 +30,7 @@ import (
 type Project struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Spec              ProjectSpec `json:"spec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
