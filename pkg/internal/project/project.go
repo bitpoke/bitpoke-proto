@@ -138,6 +138,11 @@ func GenerateNamespaceName() (string, error) {
 	return fmt.Sprintf("proj-%s", randomString), nil
 }
 
+// GetPrefix returns prefix for the project
+func GetPrefix() string {
+	return prefix
+}
+
 // FQName returns the fully-qualified project name
 func FQName(name string) string {
 	return fmt.Sprintf("%s%s", prefix, name)

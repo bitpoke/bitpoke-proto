@@ -9,10 +9,12 @@ package site
 
 import (
 	"fmt"
+	"regexp"
 
 	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
+	"github.com/presslabs/dashboard/pkg/internal/project"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -26,6 +28,16 @@ var (
 	RequiredLabels = []string{"presslabs.com/organization", "presslabs.com/project"}
 	// RequiredAnnotations is a list of required Site annotations
 	RequiredAnnotations = []string{"presslabs.com/created-by"}
+	// MysqlCluster component
+	MysqlCluster = component{name: "database", app: "mysql", objNameFmt: "%s"}
+	// MysqlClusterSecret component
+	MysqlClusterSecret = component{name: "database", app: "mysql", objNameFmt: "%s-mysql"}
+	// MemcachedService component
+	MemcachedService = component{name: "cache", app: "memcached", objNameFmt: "%s-memcached"}
+	// MemcachedStatefulSet component
+	MemcachedStatefulSet = component{name: "cache", app: "memcached", objNameFmt: "%s-memcached"}
+	// reFQN is regexp for fully-qualified site name
+	reFQN = regexp.MustCompile(fmt.Sprintf("^%s(.*)%s(.*)$", project.GetPrefix(), prefix))
 )
 
 type component struct {
@@ -35,15 +47,9 @@ type component struct {
 	objName    string
 }
 
-var (
-	// MysqlCluster component
-	MysqlCluster = component{name: "database", app: "mysql", objNameFmt: "%s"}
-	// MysqlClusterSecret component
-	MysqlClusterSecret = component{name: "database", app: "mysql", objNameFmt: "%s-mysql"}
-	// MemcachedService component
-	MemcachedService = component{name: "cache", app: "memcached", objNameFmt: "%s-memcached"}
-	// MemcachedStatefulSet component
-	MemcachedStatefulSet = component{name: "cache", app: "memcached", objNameFmt: "%s-memcached"}
+const (
+	// Prefix for site fully-qualified project name
+	prefix = "/site/"
 )
 
 // New wraps a wordpressv1alpha1.Wordpress into a Site object
@@ -52,65 +58,84 @@ func New(obj *wordpressv1alpha1.Wordpress) *Site {
 }
 
 // Unwrap returns the wrapped wordpressv1alpha1.Wordpress object
-func (o *Site) Unwrap() *wordpressv1alpha1.Wordpress {
-	return o.Wordpress
+func (s *Site) Unwrap() *wordpressv1alpha1.Wordpress {
+	return s.Wordpress
 }
 
 // Labels returns default label set for wordpressv1alpha1.Wordpress
-func (o *Site) Labels() labels.Set {
-	labels := labels.Set{
+func (s *Site) Labels() labels.Set {
+	l := labels.Set{
 		"app.kubernetes.io/part-of":  "wordpress",
-		"app.kubernetes.io/instance": o.ObjectMeta.Name,
+		"app.kubernetes.io/instance": s.ObjectMeta.Name,
 	}
 
-	if o.ObjectMeta.Labels != nil {
-		if org, ok := o.ObjectMeta.Labels["presslabs.com/organization"]; ok {
-			labels["presslabs.com/organization"] = org
+	if s.ObjectMeta.Labels != nil {
+		if org, ok := s.ObjectMeta.Labels["presslabs.com/organization"]; ok {
+			l["presslabs.com/organization"] = org
 		}
 
-		if proj, ok := o.ObjectMeta.Labels["presslabs.com/project"]; ok {
-			labels["presslabs.com/project"] = proj
+		if proj, ok := s.ObjectMeta.Labels["presslabs.com/project"]; ok {
+			l["presslabs.com/project"] = proj
 		}
 	}
 
-	return labels
+	return l
 }
 
 // ComponentLabels returns labels for a label set for a wordpressv1alpha1.Wordpress component
-func (o *Site) ComponentLabels(component component) labels.Set {
-	labels := o.Labels()
+func (s *Site) ComponentLabels(component component) labels.Set {
+	l := s.Labels()
 	if len(component.app) > 0 {
-		labels["app.kubernetes.io/name"] = component.app
+		l["app.kubernetes.io/name"] = component.app
 	}
 	if len(component.name) > 0 {
-		labels["app.kubernetes.io/component"] = component.name
+		l["app.kubernetes.io/component"] = component.name
 	}
-	return labels
+	return l
 }
 
 // ComponentName returns the object name for a component
-func (o *Site) ComponentName(component component) string {
+func (s *Site) ComponentName(component component) string {
 	if len(component.objNameFmt) == 0 {
 		return component.objName
 	}
-	return fmt.Sprintf(component.objNameFmt, o.ObjectMeta.Name)
+	return fmt.Sprintf(component.objNameFmt, s.ObjectMeta.Name)
 }
 
 // ValidateMetadata validates the metadata of a Site
-func (o *Site) ValidateMetadata() error {
+func (s *Site) ValidateMetadata() error {
 	errorList := []error{}
 	// Check for some required Project Labels and Annotations
-	for _, label := range RequiredLabels {
-		if value, exists := o.Wordpress.Labels[label]; !exists || value == "" {
-			errorList = append(errorList, fmt.Errorf("required label \"%s\" is missing", label))
+	for _, l := range RequiredLabels {
+		if value, exists := s.Wordpress.Labels[l]; !exists || value == "" {
+			errorList = append(errorList, fmt.Errorf("required label \"%s\" is missing", l))
 		}
 	}
 
 	for _, annotation := range RequiredAnnotations {
-		if value, exists := o.Wordpress.Annotations[annotation]; !exists || value == "" {
+		if value, exists := s.Wordpress.Annotations[annotation]; !exists || value == "" {
 			errorList = append(errorList, fmt.Errorf("required annotation \"%s\" is missing", annotation))
 		}
 	}
 
 	return utilerrors.Flatten(utilerrors.NewAggregate(errorList))
+}
+
+// FQName returns the fully-qualified site name
+func FQName(projName, siteName string) string {
+	return fmt.Sprintf("%s%s%s", project.FQName(projName), prefix, siteName)
+}
+
+// Resolve resolves an fully-qualified site name to a k8s object name
+func Resolve(path string) (string, string, error) {
+	res := reFQN.FindStringSubmatch(path)
+
+	// res[0] is the fully-qualified site name (given path)
+	// res[1] is the project
+	// res[2] is the site name
+	if len(res) != 3 || len(res[1]) == 0 || len(res[2]) == 0 {
+		return "", "", fmt.Errorf("site resources fully-qualified name must be in form project/PROJECT-NAME/site/SITE-NAME")
+	}
+
+	return res[2], res[1], nil
 }
