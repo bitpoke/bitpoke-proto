@@ -513,6 +513,7 @@
   digest = "1:0018931fa4284edacbbfc104fbd34c7a560edee63a1375188c8627e3c000c6c6"
   name = "github.com/presslabs/controller-util"
   packages = [
+    "log",
     "mergo/transformers",
     "rand",
     "syncer",
@@ -522,15 +523,14 @@
   version = "v0.1.10"
 
 [[projects]]
-  branch = "master"
-  digest = "1:90a9551747a432b75054db94915207b1f6536428bf124966fdf266991d76aa44"
+  digest = "1:4b6e349f9f570b14679f93560735da187b1b0b791b3fd2d363a620c98e06145c"
   name = "github.com/presslabs/dashboard-go"
   packages = [
     "pkg/proto/presslabs/dashboard/organizations/v1",
     "pkg/proto/presslabs/dashboard/projects/v1",
   ]
   pruneopts = "T"
-  revision = "61048e2afaf47eddcfed59c9f652b1d58c16e05a"
+  revision = "55619c430f6fa9b1d6ac98b7f67071d7cc6e2995"
 
 [[projects]]
   digest = "1:02cb434138ce852c640634af161c47f9776cfe8c2aef94be729cedf6e6b60656"
@@ -1199,7 +1199,6 @@
     "github.com/emicklei/go-restful",
     "github.com/go-ini/ini",
     "github.com/go-logr/logr",
-    "github.com/go-logr/zapr",
     "github.com/gobuffalo/packr",
     "github.com/gobuffalo/packr/packr",
     "github.com/gogo/protobuf/types",
@@ -1216,6 +1215,7 @@
     "github.com/onsi/gomega",
     "github.com/onsi/gomega/gstruct",
     "github.com/onsi/gomega/types",
+    "github.com/presslabs/controller-util/log",
     "github.com/presslabs/controller-util/mergo/transformers",
     "github.com/presslabs/controller-util/rand",
     "github.com/presslabs/controller-util/syncer",
@@ -1226,10 +1226,10 @@
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
     "go.uber.org/zap",
-    "go.uber.org/zap/zapcore",
     "golang.org/x/net/context",
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",
+    "google.golang.org/grpc/metadata",
     "google.golang.org/grpc/reflection",
     "google.golang.org/grpc/status",
     "k8s.io/api/admissionregistration/v1beta1",

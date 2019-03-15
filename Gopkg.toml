@@ -49,6 +49,10 @@ name="github.com/gogo/protobuf"
 version="v1.2.0"
 
 [[constraint]]
+name="github.com/presslabs/dashboard-go"
+revision="55619c430f6fa9b1d6ac98b7f67071d7cc6e2995"
+
+[[constraint]]
 name="github.com/coreos/prometheus-operator"
 version="v0.27.0"
 
