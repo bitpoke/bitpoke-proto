@@ -35,20 +35,6 @@ type organizationsService struct {
 	cfg    *rest.Config
 }
 
-const prefix = "orgs/"
-
-// resolve resolves an fully-qualified resource name to a k8s object name
-func resolve(path string) (string, error) {
-	if !strings.HasPrefix(path, prefix) {
-		return "", status.InvalidArgumentf("organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
-	}
-	name := path[len(prefix):]
-	if len(name) == 0 {
-		return "", status.InvalidArgumentf("organization name cannot be empty")
-	}
-	return name, nil
-}
-
 // Add creates a new Organization Controller and adds it to the API Server
 func Add(server *apiserver.APIServer) error {
 	RegisterOrganizationsServiceServer(server.GRPCServer,
@@ -92,8 +78,8 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 	var name string
 
 	if len(r.Organization.Name) > 0 {
-		if name, err = resolve(r.Organization.Name); err != nil {
-			return nil, status.FromError(err)
+		if name, err = organization.Resolve(r.Organization.Name); err != nil {
+			return nil, status.InvalidArgumentf("%s", err)
 		}
 	} else {
 		name = slug.Make(r.Organization.DisplayName)
@@ -129,9 +115,9 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrgani
 		return nil, status.FromError(err)
 	}
 
-	name, err := resolve(r.Name)
+	name, err := organization.Resolve(r.Name)
 	if err != nil {
-		return nil, status.FromError(err)
+		return nil, status.InvalidArgumentf("%s", err)
 	}
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(name),
@@ -151,9 +137,9 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *Update
 		return nil, status.FromError(err)
 	}
 
-	name, err := resolve(r.Organization.Name)
+	name, err := organization.Resolve(r.Organization.Name)
 	if err != nil {
-		return nil, status.FromError(err)
+		return nil, status.InvalidArgumentf("%s", err)
 	}
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(name),
@@ -179,9 +165,9 @@ func (s *organizationsService) DeleteOrganization(ctx context.Context, r *Delete
 		return nil, status.FromError(err)
 	}
 
-	name, err := resolve(r.Name)
+	name, err := organization.Resolve(r.Name)
 	if err != nil {
-		return nil, status.FromError(err)
+		return nil, status.InvalidArgumentf("%s", err)
 	}
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(name),
@@ -247,7 +233,7 @@ func NewOrganizationsServiceServer(client client.Client, cfg *rest.Config) Organ
 
 func newOrganizationFromK8s(o *organization.Organization) *Organization {
 	return &Organization{
-		Name:        fmt.Sprintf("%s%s", prefix, o.Namespace.ObjectMeta.Labels["presslabs.com/organization"]),
+		Name:        organization.FQName(o.Namespace.ObjectMeta.Labels["presslabs.com/organization"]),
 		DisplayName: o.Annotations["presslabs.com/display-name"],
 	}
 }

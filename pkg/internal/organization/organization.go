@@ -10,6 +10,7 @@ package organization
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -30,20 +31,6 @@ var (
 	// RequiredAnnotations is a list of required Organization
 	// annotations
 	RequiredAnnotations = []string{"presslabs.com/created-by"}
-)
-
-// Component is a component type of Organization
-type Component struct {
-	name            string // eg. web, database, cache
-	app             string // eg. mysql, memcached
-	objNameFmt      string
-	objName         string
-	objNamespaceFmt string
-	objNamespace    string
-	kind            runtime.Object
-}
-
-var (
 	// OwnerClusterRole component
 	OwnerClusterRole = Component{
 		kind:       &rbacv1.ClusterRole{},
@@ -61,6 +48,22 @@ var (
 		objNamespaceFmt: "%s",
 	}
 )
+
+const (
+	// Prefix for fully-qualified organization name
+	Prefix = "orgs/"
+)
+
+// Component is a component type of Organization
+type Component struct {
+	name            string // eg. web, database, cache
+	app             string // eg. mysql, memcached
+	objNameFmt      string
+	objName         string
+	objNamespaceFmt string
+	objNamespace    string
+	kind            runtime.Object
+}
 
 // NamespaceName returns the name of the organization's namespace
 func NamespaceName(name string) string {
@@ -153,4 +156,21 @@ func (o *Organization) ValidateMetadata() error {
 	}
 
 	return utilerrors.Flatten(utilerrors.NewAggregate(errorList))
+}
+
+// FQName returns the fully-qualified organization name
+func FQName(name string) string {
+	return fmt.Sprintf("%s%s", Prefix, name)
+}
+
+// Resolve resolves an fully-qualified organization name to a k8s object name
+func Resolve(path string) (string, error) {
+	if !strings.HasPrefix(path, Prefix) {
+		return "", fmt.Errorf("organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
+	}
+	name := path[len(Prefix):]
+	if len(name) == 0 {
+		return "", fmt.Errorf("organization name cannot be empty")
+	}
+	return name, nil
 }

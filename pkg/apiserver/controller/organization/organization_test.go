@@ -191,7 +191,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 			_, err := orgClient.CreateOrganization(context.TODO(), &req)
-			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
 		It("returns error when name is empty", func() {
@@ -201,7 +201,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 			_, err := orgClient.CreateOrganization(context.TODO(), &req)
-			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
 		It("creates organization when no organization name is given", func() {
