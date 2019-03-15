@@ -9,9 +9,6 @@ package project
 
 import (
 	"context"
-	"fmt"
-	"strings"
-
 	"github.com/gogo/protobuf/types"
 	"github.com/gosimple/slug"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,41 +23,13 @@ import (
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
+	"github.com/presslabs/dashboard/pkg/internal/organization"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
 type projectsServer struct {
 	client client.Client
 	cfg    *rest.Config
-}
-
-const (
-	projPrefix = "project/"
-	orgPrefix  = "orgs/"
-)
-
-// resolveName resolves a fully-qualified project name to a k8s object name
-func resolveName(path string) (string, error) {
-	if !strings.HasPrefix(path, projPrefix) {
-		return "", status.InvalidArgumentf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", path)
-	}
-	name := path[len(projPrefix):]
-	if len(name) == 0 {
-		return "", status.InvalidArgumentf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", path)
-	}
-	return name, nil
-}
-
-// resolveParent resolves a fully qualified parent name to a k8s object name
-func resolveParent(path string) (string, error) {
-	if !strings.HasPrefix(path, orgPrefix) {
-		return "", status.InvalidArgumentf("parent organization fully-qualified name must be in form orgs/ORGANIZATION-NAME")
-	}
-	name := path[len(orgPrefix):]
-	if len(name) == 0 {
-		return "", status.InvalidArgumentf("parent organization fully-qualified name must be in form orgs/ORGANIZATION_NAME, '%s' given", path)
-	}
-	return name, nil
 }
 
 // Add creates a new Project Controller and adds it to the API Server
@@ -76,7 +45,7 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequ
 	var err error
 	var name string
 	if len(r.Project.Name) > 0 {
-		if name, err = resolveName(r.Project.Name); err != nil {
+		if name, err = project.Resolve(r.Project.Name); err != nil {
 			return nil, err
 		}
 	} else {
@@ -85,7 +54,7 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequ
 	if len(name) == 0 {
 		return nil, status.InvalidArgumentf("project name cannot be empty")
 	}
-	parent, err := resolveParent(r.Parent)
+	parent, err := organization.Resolve(r.Parent)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +89,7 @@ func (s *projectsServer) GetProject(ctx context.Context, r *GetProjectRequest) (
 		return nil, status.FromError(err)
 	}
 
-	name, err := resolveName(r.Name)
+	name, err := project.Resolve(r.Name)
 	if err != nil {
 		return nil, status.FromError(err)
 	}
@@ -144,7 +113,7 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequ
 		return nil, status.FromError(err)
 	}
 
-	name, err := resolveName(r.Project.Name)
+	name, err := project.Resolve(r.Project.Name)
 	if err != nil {
 		return nil, status.FromError(err)
 	}
@@ -174,7 +143,7 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 		return nil, status.FromError(err)
 	}
 
-	name, err := resolveName(r.Name)
+	name, err := project.Resolve(r.Name)
 	if err != nil {
 		return nil, status.FromError(err)
 	}
@@ -237,7 +206,7 @@ func NewProjectsServiceServer(client client.Client, cfg *rest.Config) ProjectsSe
 
 func newProjectFromK8s(p *project.Project) *Project {
 	return &Project{
-		Name:         fmt.Sprintf("%s%s", projPrefix, p.Project.ObjectMeta.Labels["presslabs.com/project"]),
+		Name:         project.FQName(p.Project.ObjectMeta.Labels["presslabs.com/project"]),
 		Organization: p.Project.ObjectMeta.Labels["presslabs.com/organization"],
 		DisplayName:  p.Annotations["presslabs.com/display-name"],
 	}

@@ -10,6 +10,7 @@ package project
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -28,6 +29,11 @@ var (
 	RequiredLabels = []string{"presslabs.com/organization", "presslabs.com/project", "presslabs.com/kind"}
 	// RequiredAnnotations is a list of required Project annotations
 	RequiredAnnotations = []string{"presslabs.com/created-by"}
+)
+
+const (
+	// Prefix for project fully-qualified name
+	Prefix = "project/"
 )
 
 type component struct {
@@ -130,4 +136,21 @@ func GenerateNamespaceName() (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("proj-%s", randomString), nil
+}
+
+// FQName returns the fully-qualified project name
+func FQName(name string) string {
+	return fmt.Sprintf("%s%s", Prefix, name)
+}
+
+// Resolve resolves a fully-qualified project name to a k8s object name
+func Resolve(path string) (string, error) {
+	if !strings.HasPrefix(path, Prefix) {
+		return "", fmt.Errorf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", path)
+	}
+	name := path[len(Prefix):]
+	if len(name) == 0 {
+		return "", fmt.Errorf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", path)
+	}
+	return name, nil
 }
