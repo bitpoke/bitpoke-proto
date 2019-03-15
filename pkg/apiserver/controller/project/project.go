@@ -9,6 +9,7 @@ package project
 
 import (
 	"context"
+
 	"github.com/gogo/protobuf/types"
 	"github.com/gosimple/slug"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,10 +84,7 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *projs.CreateProje
 }
 
 func (s *projectsServer) GetProject(ctx context.Context, r *projs.GetProjectRequest) (*projs.Project, error) {
-	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
-	if err != nil {
-		return nil, status.FromError(err)
-	}
+	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 
 	name, err := project.Resolve(r.Name)
 	if err != nil {
@@ -107,10 +105,7 @@ func (s *projectsServer) GetProject(ctx context.Context, r *projs.GetProjectRequ
 }
 
 func (s *projectsServer) UpdateProject(ctx context.Context, r *projs.UpdateProjectRequest) (*projs.Project, error) {
-	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
-	if err != nil {
-		return nil, status.FromError(err)
-	}
+	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 
 	name, err := project.Resolve(r.Project.Name)
 	if err != nil {
@@ -137,10 +132,7 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *projs.UpdateProje
 }
 
 func (s *projectsServer) DeleteProject(ctx context.Context, r *projs.DeleteProjectRequest) (*types.Empty, error) {
-	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
-	if err != nil {
-		return nil, status.FromError(err)
-	}
+	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 
 	name, err := project.Resolve(r.Name)
 	if err != nil {

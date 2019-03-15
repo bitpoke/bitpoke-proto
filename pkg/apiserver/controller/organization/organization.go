@@ -109,10 +109,7 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *orgs.C
 }
 
 func (s *organizationsService) GetOrganization(ctx context.Context, r *orgs.GetOrganizationRequest) (*orgs.Organization, error) {
-	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
-	if err != nil {
-		return nil, status.FromError(err)
-	}
+	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 
 	name, err := organization.Resolve(r.Name)
 	if err != nil {
@@ -131,10 +128,7 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *orgs.GetO
 }
 
 func (s *organizationsService) UpdateOrganization(ctx context.Context, r *orgs.UpdateOrganizationRequest) (*orgs.Organization, error) {
-	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
-	if err != nil {
-		return nil, status.FromError(err)
-	}
+	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 
 	name, err := organization.Resolve(r.Organization.Name)
 	if err != nil {
@@ -159,10 +153,7 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *orgs.U
 }
 
 func (s *organizationsService) DeleteOrganization(ctx context.Context, r *orgs.DeleteOrganizationRequest) (*types.Empty, error) {
-	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
-	if err != nil {
-		return nil, status.FromError(err)
-	}
+	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 
 	name, err := organization.Resolve(r.Name)
 	if err != nil {

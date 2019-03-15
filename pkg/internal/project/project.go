@@ -32,7 +32,7 @@ var (
 )
 
 const (
-	// Prefix for project fully-qualified name
+	// Prefix for project fully-qualified project name
 	Prefix = "project/"
 )
 

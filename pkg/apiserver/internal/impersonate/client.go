@@ -7,7 +7,6 @@ which is part of this source code package.
 
 package impersonate
 
-// getCreatedBy returns created-by field from AuthTokenContextKey
 import (
 	"context"
 
@@ -35,7 +34,7 @@ func Client(userName string, cfg *rest.Config) client.Client {
 }
 
 // ClientFromContext returns user ID from context and impersonated client
-func ClientFromContext(ctx context.Context, cfg *rest.Config) (client.Client, string, error) {
+func ClientFromContext(ctx context.Context, cfg *rest.Config) (client.Client, string) {
 	userID := metadata.RequireUserID(ctx)
-	return Client(userID, cfg), userID, nil
+	return Client(userID, cfg), userID
 }
