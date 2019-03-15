@@ -181,7 +181,7 @@ var _ = Describe("API server", func() {
 				Organization: orgv1.Organization{},
 			}
 			_, err := orgClient.CreateOrganization(context.TODO(), &req)
-			Expect(status.Convert(err).Code()).To(Equal(codes.Internal))
+			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
 		It("returns error when name is not fully qualified", func() {

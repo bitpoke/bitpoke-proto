@@ -21,8 +21,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	// nolint: golint
-	. "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1"
+	orgs "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
@@ -37,7 +36,7 @@ type organizationsService struct {
 
 // Add creates a new Organization Controller and adds it to the API Server
 func Add(server *apiserver.APIServer) error {
-	RegisterOrganizationsServiceServer(server.GRPCServer,
+	orgs.RegisterOrganizationsServiceServer(server.GRPCServer,
 		NewOrganizationsServiceServer(server.Manager.GetClient(), rest.CopyConfig(server.Manager.GetConfig())))
 
 	err := server.Manager.GetFieldIndexer().IndexField(&rbacv1.ClusterRoleBinding{}, "subject.user", func(in runtime.Object) []string {
@@ -71,7 +70,7 @@ func Add(server *apiserver.APIServer) error {
 	return nil
 }
 
-func (s *organizationsService) CreateOrganization(ctx context.Context, r *CreateOrganizationRequest) (*Organization, error) {
+func (s *organizationsService) CreateOrganization(ctx context.Context, r *orgs.CreateOrganizationRequest) (*orgs.Organization, error) {
 	userID := metadata.RequireUserID(ctx)
 
 	var err error
@@ -85,7 +84,7 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 		name = slug.Make(r.Organization.DisplayName)
 	}
 	if len(name) == 0 {
-		return nil, status.FromError(fmt.Errorf("organization name cannot be empty"))
+		return nil, status.InvalidArgumentf("organization name cannot be empty")
 	}
 
 	org := organization.New(&corev1.Namespace{
@@ -109,7 +108,7 @@ func (s *organizationsService) CreateOrganization(ctx context.Context, r *Create
 	return newOrganizationFromK8s(org), nil
 }
 
-func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrganizationRequest) (*Organization, error) {
+func (s *organizationsService) GetOrganization(ctx context.Context, r *orgs.GetOrganizationRequest) (*orgs.Organization, error) {
 	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
 	if err != nil {
 		return nil, status.FromError(err)
@@ -131,7 +130,7 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *GetOrgani
 	return newOrganizationFromK8s(organization.New(&org)), nil
 }
 
-func (s *organizationsService) UpdateOrganization(ctx context.Context, r *UpdateOrganizationRequest) (*Organization, error) {
+func (s *organizationsService) UpdateOrganization(ctx context.Context, r *orgs.UpdateOrganizationRequest) (*orgs.Organization, error) {
 	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
 	if err != nil {
 		return nil, status.FromError(err)
@@ -159,7 +158,7 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *Update
 	return newOrganizationFromK8s(organization.New(&org)), nil
 }
 
-func (s *organizationsService) DeleteOrganization(ctx context.Context, r *DeleteOrganizationRequest) (*types.Empty, error) {
+func (s *organizationsService) DeleteOrganization(ctx context.Context, r *orgs.DeleteOrganizationRequest) (*types.Empty, error) {
 	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
 	if err != nil {
 		return nil, status.FromError(err)
@@ -185,7 +184,7 @@ func (s *organizationsService) DeleteOrganization(ctx context.Context, r *Delete
 	return &types.Empty{}, nil
 }
 
-func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrganizationsRequest) (*ListOrganizationsResponse, error) {
+func (s *organizationsService) ListOrganizations(ctx context.Context, r *orgs.ListOrganizationsRequest) (*orgs.ListOrganizationsResponse, error) {
 	var err error
 	userID := metadata.RequireUserID(ctx)
 
@@ -202,37 +201,37 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *ListOrg
 		}
 	}
 
-	orgs := &corev1.NamespaceList{}
+	orgList := &corev1.NamespaceList{}
 	opts = &client.ListOptions{}
 	err = opts.SetLabelSelector(fmt.Sprintf("presslabs.com/kind=organization, presslabs.com/organization in (%s)", strings.Join(orgNames, ", ")))
 	if err != nil {
 		return nil, status.FromError(err)
 	}
-	resp := &ListOrganizationsResponse{}
+	resp := &orgs.ListOrganizationsResponse{}
 
-	if err := s.client.List(context.TODO(), opts, orgs); err != nil {
+	if err := s.client.List(context.TODO(), opts, orgList); err != nil {
 		return nil, status.FromError(err)
 	}
 
 	// TODO: implement pagination
-	resp.Organizations = []Organization{} //make([]*Organization, len(orgs.Items))
-	for i := range orgs.Items {
-		resp.Organizations = append(resp.Organizations, *newOrganizationFromK8s(organization.New(&orgs.Items[i])))
+	resp.Organizations = []orgs.Organization{} //make([]*Organization, len(orgs.Items))
+	for i := range orgList.Items {
+		resp.Organizations = append(resp.Organizations, *newOrganizationFromK8s(organization.New(&orgList.Items[i])))
 	}
 
 	return resp, nil
 }
 
 // NewOrganizationsServiceServer creates a new gRPC organizations service server
-func NewOrganizationsServiceServer(client client.Client, cfg *rest.Config) OrganizationsServiceServer {
+func NewOrganizationsServiceServer(client client.Client, cfg *rest.Config) orgs.OrganizationsServiceServer {
 	return &organizationsService{
 		client: client,
 		cfg:    cfg,
 	}
 }
 
-func newOrganizationFromK8s(o *organization.Organization) *Organization {
-	return &Organization{
+func newOrganizationFromK8s(o *organization.Organization) *orgs.Organization {
+	return &orgs.Organization{
 		Name:        organization.FQName(o.Namespace.ObjectMeta.Labels["presslabs.com/organization"]),
 		DisplayName: o.Annotations["presslabs.com/display-name"],
 	}

@@ -16,8 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	// nolint: golint
-	. "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1"
+	projs "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
@@ -34,19 +33,19 @@ type projectsServer struct {
 
 // Add creates a new Project Controller and adds it to the API Server
 func Add(server *apiserver.APIServer) error {
-	RegisterProjectsServiceServer(server.GRPCServer,
+	projs.RegisterProjectsServiceServer(server.GRPCServer,
 		NewProjectsServiceServer(server.Manager.GetClient(), rest.CopyConfig(server.Manager.GetConfig())))
 	return nil
 }
 
-func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequest) (*Project, error) {
+func (s *projectsServer) CreateProject(ctx context.Context, r *projs.CreateProjectRequest) (*projs.Project, error) {
 	userID := metadata.RequireUserID(ctx)
 
 	var err error
 	var name string
 	if len(r.Project.Name) > 0 {
 		if name, err = project.Resolve(r.Project.Name); err != nil {
-			return nil, err
+			return nil, status.InvalidArgumentf("%s", err)
 		}
 	} else {
 		name = slug.Make(r.Project.DisplayName)
@@ -56,7 +55,7 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequ
 	}
 	parent, err := organization.Resolve(r.Parent)
 	if err != nil {
-		return nil, err
+		return nil, status.InvalidArgumentf("%s", err)
 	}
 	ns := metadata.RequireOrganizationNamespace(ctx)
 
@@ -83,7 +82,7 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *CreateProjectRequ
 	return newProjectFromK8s(proj), nil
 }
 
-func (s *projectsServer) GetProject(ctx context.Context, r *GetProjectRequest) (*Project, error) {
+func (s *projectsServer) GetProject(ctx context.Context, r *projs.GetProjectRequest) (*projs.Project, error) {
 	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
 	if err != nil {
 		return nil, status.FromError(err)
@@ -91,7 +90,7 @@ func (s *projectsServer) GetProject(ctx context.Context, r *GetProjectRequest) (
 
 	name, err := project.Resolve(r.Name)
 	if err != nil {
-		return nil, status.FromError(err)
+		return nil, status.InvalidArgumentf("%s", err)
 	}
 	ns := metadata.RequireOrganizationNamespace(ctx)
 	key := client.ObjectKey{
@@ -107,7 +106,7 @@ func (s *projectsServer) GetProject(ctx context.Context, r *GetProjectRequest) (
 	return newProjectFromK8s(project.New(&proj)), nil
 }
 
-func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequest) (*Project, error) {
+func (s *projectsServer) UpdateProject(ctx context.Context, r *projs.UpdateProjectRequest) (*projs.Project, error) {
 	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
 	if err != nil {
 		return nil, status.FromError(err)
@@ -115,7 +114,7 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequ
 
 	name, err := project.Resolve(r.Project.Name)
 	if err != nil {
-		return nil, status.FromError(err)
+		return nil, status.InvalidArgumentf("%s", err)
 	}
 	ns := metadata.RequireOrganizationNamespace(ctx)
 	key := client.ObjectKey{
@@ -137,7 +136,7 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *UpdateProjectRequ
 	return newProjectFromK8s(project.New(&proj)), nil
 }
 
-func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequest) (*types.Empty, error) {
+func (s *projectsServer) DeleteProject(ctx context.Context, r *projs.DeleteProjectRequest) (*types.Empty, error) {
 	c, _, err := impersonate.ClientFromContext(ctx, s.cfg)
 	if err != nil {
 		return nil, status.FromError(err)
@@ -145,7 +144,7 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 
 	name, err := project.Resolve(r.Name)
 	if err != nil {
-		return nil, status.FromError(err)
+		return nil, status.InvalidArgumentf("%s", err)
 	}
 	ns := metadata.RequireOrganizationNamespace(ctx)
 	key := client.ObjectKey{
@@ -165,12 +164,12 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *DeleteProjectRequ
 	return &types.Empty{}, nil
 }
 
-func (s *projectsServer) ListProjects(ctx context.Context, r *ListProjectsRequest) (*ListProjectsResponse, error) {
+func (s *projectsServer) ListProjects(ctx context.Context, r *projs.ListProjectsRequest) (*projs.ListProjectsResponse, error) {
 	userID := metadata.RequireUserID(ctx)
 	ns := metadata.RequireOrganizationNamespace(ctx)
 
-	projs := &dashboardv1alpha1.ProjectList{}
-	resp := &ListProjectsResponse{}
+	projList := &dashboardv1alpha1.ProjectList{}
+	resp := &projs.ListProjectsResponse{}
 
 	listOptions := &client.ListOptions{
 		Namespace: ns,
@@ -181,15 +180,15 @@ func (s *projectsServer) ListProjects(ctx context.Context, r *ListProjectsReques
 		),
 	}
 
-	if err := s.client.List(context.TODO(), listOptions, projs); err != nil {
+	if err := s.client.List(context.TODO(), listOptions, projList); err != nil {
 		return nil, status.FromError(err)
 	}
 
 	// TODO: implement pagination
-	resp.Projects = []Project{}
-	for i := range projs.Items {
-		if projs.Items[i].ObjectMeta.Annotations["presslabs.com/created-by"] == userID {
-			resp.Projects = append(resp.Projects, *newProjectFromK8s(project.New(&projs.Items[i])))
+	resp.Projects = []projs.Project{}
+	for i := range projList.Items {
+		if projList.Items[i].ObjectMeta.Annotations["presslabs.com/created-by"] == userID {
+			resp.Projects = append(resp.Projects, *newProjectFromK8s(project.New(&projList.Items[i])))
 		}
 	}
 
@@ -197,15 +196,15 @@ func (s *projectsServer) ListProjects(ctx context.Context, r *ListProjectsReques
 }
 
 // NewProjectsServiceServer creates a new gRPC server for projects
-func NewProjectsServiceServer(client client.Client, cfg *rest.Config) ProjectsServiceServer {
+func NewProjectsServiceServer(client client.Client, cfg *rest.Config) projs.ProjectsServiceServer {
 	return &projectsServer{
 		client: client,
 		cfg:    cfg,
 	}
 }
 
-func newProjectFromK8s(p *project.Project) *Project {
-	return &Project{
+func newProjectFromK8s(p *project.Project) *projs.Project {
+	return &projs.Project{
 		Name:         project.FQName(p.Project.ObjectMeta.Labels["presslabs.com/project"]),
 		Organization: p.Project.ObjectMeta.Labels["presslabs.com/organization"],
 		DisplayName:  p.Annotations["presslabs.com/display-name"],
