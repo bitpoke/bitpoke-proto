@@ -51,7 +51,7 @@ var (
 
 const (
 	// Prefix for fully-qualified organization name
-	Prefix = "orgs/"
+	prefix = "orgs/"
 )
 
 // Component is a component type of Organization
@@ -160,15 +160,15 @@ func (o *Organization) ValidateMetadata() error {
 
 // FQName returns the fully-qualified organization name
 func FQName(name string) string {
-	return fmt.Sprintf("%s%s", Prefix, name)
+	return fmt.Sprintf("%s%s", prefix, name)
 }
 
 // Resolve resolves an fully-qualified organization name to a k8s object name
 func Resolve(path string) (string, error) {
-	if !strings.HasPrefix(path, Prefix) {
+	if !strings.HasPrefix(path, prefix) {
 		return "", fmt.Errorf("organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
 	}
-	name := path[len(Prefix):]
+	name := path[len(prefix):]
 	if len(name) == 0 {
 		return "", fmt.Errorf("organization name cannot be empty")
 	}

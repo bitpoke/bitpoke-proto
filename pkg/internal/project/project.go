@@ -33,7 +33,7 @@ var (
 
 const (
 	// Prefix for project fully-qualified project name
-	Prefix = "project/"
+	prefix = "project/"
 )
 
 type component struct {
@@ -140,15 +140,15 @@ func GenerateNamespaceName() (string, error) {
 
 // FQName returns the fully-qualified project name
 func FQName(name string) string {
-	return fmt.Sprintf("%s%s", Prefix, name)
+	return fmt.Sprintf("%s%s", prefix, name)
 }
 
 // Resolve resolves a fully-qualified project name to a k8s object name
 func Resolve(path string) (string, error) {
-	if !strings.HasPrefix(path, Prefix) {
+	if !strings.HasPrefix(path, prefix) {
 		return "", fmt.Errorf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", path)
 	}
-	name := path[len(Prefix):]
+	name := path[len(prefix):]
 	if len(name) == 0 {
 		return "", fmt.Errorf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", path)
 	}
