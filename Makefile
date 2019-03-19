@@ -13,19 +13,10 @@ SHELL := env 'PATH=$(PATH)' /bin/sh
 build:
 	test -d $(PWD)/build/js/lib/proto || mkdir -p $(PWD)/build/js/lib/proto
 	$(BINDIR)/prototool generate src
-	pbjs --es6 -t static -w es6  -p $(CURDIR)/vendor \
-		-o $(PWD)/build/js/lib/proto/index.static.js \
-		$(PROTO_FILES)
 	pbjs --es6 -t static-module -w es6  -p $(CURDIR)/vendor \
-		-o $(PWD)/build/js/lib/proto/index.static-module.js \
-		$(PROTO_FILES)
-	pbjs --es6 -t json -w es6  -p $(CURDIR)/vendor \
-		-o $(PWD)/build/js/lib/proto/index.json.js \
-		$(PROTO_FILES)
-	pbjs --es6 -t json-module -w es6  -p $(CURDIR)/vendor \
 		-o $(PWD)/build/js/lib/proto/index.js \
 		$(PROTO_FILES)
-	pbts -o $(PWD)/build/js/lib/proto/index.d.ts $(PWD)/build/js/lib/proto/index.static.js
+	pbts -o $(PWD)/build/js/lib/proto/index.d.ts $(PWD)/build/js/lib/proto/index.js
 
 .PHONY: clean
 clean:
