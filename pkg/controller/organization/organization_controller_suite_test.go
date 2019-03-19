@@ -39,7 +39,7 @@ import (
 var cfg *rest.Config
 var t *envtest.Environment
 
-func TestProjectController(t *testing.T) {
+func TestOrganizationController(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Organization Controller Suite", []Reporter{envtest.NewlineReporter{}})
 }

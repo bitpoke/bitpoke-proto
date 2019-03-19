@@ -48,16 +48,6 @@ var (
 	PrometheusRoleBinding = component{app: "prometheus", objName: "prometheus"}
 	// Prometheus component
 	Prometheus = component{app: "prometheus", objName: "prometheus"}
-	// GiteaDeployment component
-	GiteaDeployment = component{name: "web", app: "gitea", objName: "gitea"}
-	// GiteaService component
-	GiteaService = component{name: "web", app: "gitea", objName: "gitea"}
-	// GiteaIngress component
-	GiteaIngress = component{name: "web", app: "gitea", objName: "gitea"}
-	// GiteaPVC component
-	GiteaPVC = component{name: "web", app: "gitea", objName: "gitea"}
-	// GiteaSecret component
-	GiteaSecret = component{name: "web", app: "gitea", objName: "gitea-conf"}
 	// OwnerRoleBinding component
 	OwnerRoleBinding = component{objName: "owner"}
 	// MemberRoleBinding component

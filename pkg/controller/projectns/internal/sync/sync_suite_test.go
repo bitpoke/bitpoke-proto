@@ -24,7 +24,7 @@ import (
 	"github.com/presslabs/dashboard/pkg/apis"
 )
 
-func TestProjectGiteaIngress(t *testing.T) {
+func TestProjectNSSync(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Project Namespace Sync Suite", []Reporter{envtest.NewlineReporter{}})
 }

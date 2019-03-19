@@ -19,7 +19,7 @@ import (
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
-// NewLimitRangeSyncer returns a new syncer.Interface for reconciling Gitea Secret
+// NewLimitRangeSyncer returns a new syncer.Interface for reconciling LimitRange
 func NewLimitRangeSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := proj.ComponentLabels(projectns.LimitRange)
 

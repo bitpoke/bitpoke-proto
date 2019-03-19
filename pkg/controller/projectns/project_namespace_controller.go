@@ -147,11 +147,6 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 	syncers := []syncer.Interface{
 		sync.NewLimitRangeSyncer(proj, r.Client, r.scheme),
 		sync.NewResourceQuotaSyncer(proj, r.Client, r.scheme),
-		sync.NewGiteaSecretSyncer(proj, r.Client, r.scheme),
-		sync.NewGiteaPVCSyncer(proj, r.Client, r.scheme),
-		sync.NewGiteaDeploymentSyncer(proj, r.Client, r.scheme),
-		sync.NewGiteaServiceSyncer(proj, r.Client, r.scheme),
-		sync.NewGiteaIngressSyncer(proj, r.Client, r.scheme),
 		sync.NewPrometheusServiceAccountSyncer(proj, r.Client, r.scheme),
 		sync.NewPrometheusRoleBindingSyncer(proj, r.Client, r.scheme),
 		sync.NewPrometheusSyncer(proj, r.Client, r.scheme),

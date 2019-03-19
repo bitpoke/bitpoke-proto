@@ -28,9 +28,7 @@ import (
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"golang.org/x/net/context"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -90,11 +88,6 @@ var _ = Describe("Project Namespace controller", func() {
 			Entry("reconciles prometheus service account", "prometheus", "prometheus", &corev1.ServiceAccount{}),
 			Entry("reconciles prometheus role binding", "prometheus", "prometheus%.0s", &rbacv1.RoleBinding{}),
 			Entry("reconciles prometheus", "prometheus-instance", "prometheus%.0s", &monitoringv1.Prometheus{}),
-			Entry("reconciles gitea deployment", "gitea-deployment", "gitea%.0s", &appsv1.Deployment{}),
-			Entry("reconciles gitea service", "gitea", "gitea%.0s", &corev1.Service{}),
-			Entry("reconciles gitea ingress", "gitea", "gitea%.0s", &extv1beta1.Ingress{}),
-			Entry("reconciles gitea pvc", "gitea", "gitea%.0s", &corev1.PersistentVolumeClaim{}),
-			Entry("reconciles gitea secret", "gitea", "gitea-conf%.0s", &corev1.Secret{}),
 			Entry("reconciles member role binding", "member", "member", &rbacv1.RoleBinding{}),
 			Entry("reconciles owner role binding", "owner", "owner", &rbacv1.RoleBinding{}),
 			Entry("reconciles memcached service monitor", "prometheus", "memcached", &monitoringv1.ServiceMonitor{}),
@@ -141,21 +134,6 @@ var _ = Describe("Project Namespace controller", func() {
 					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 					"app.kubernetes.io/name":       "prometheus",
-				},
-				"gitea": {
-					"presslabs.com/project":        projectName,
-					"presslabs.com/organization":   organizationName,
-					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
-					"app.kubernetes.io/name":       "gitea",
-					"app.kubernetes.io/component":  "web",
-				},
-				"gitea-deployment": {
-					"presslabs.com/project":        projectName,
-					"presslabs.com/organization":   organizationName,
-					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
-					"app.kubernetes.io/name":       "gitea",
-					"app.kubernetes.io/component":  "web",
-					"app.kubernetes.io/version":    "1.5.2",
 				},
 				"member": {
 					"presslabs.com/project":        projectName,
