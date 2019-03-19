@@ -79,14 +79,14 @@ func (p *Project) Labels() labels.Set {
 
 // ComponentLabels returns labels for a label set for a Project component
 func (p *Project) ComponentLabels(component component) labels.Set {
-	labels := p.Labels()
+	l := p.Labels()
 	if len(component.app) > 0 {
-		labels["app.kubernetes.io/name"] = component.app
+		l["app.kubernetes.io/name"] = component.app
 	}
 	if len(component.name) > 0 {
-		labels["app.kubernetes.io/component"] = component.name
+		l["app.kubernetes.io/component"] = component.name
 	}
-	return labels
+	return l
 }
 
 // ComponentName returns the object name for a component

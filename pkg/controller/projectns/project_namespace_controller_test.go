@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 )
 
@@ -50,6 +51,10 @@ var _ = Describe("Project Namespace controller", func() {
 		stop chan struct{}
 		// controller k8s client
 		c client.Client
+		// values for default smtp secret
+		defSMTPHost, defSMTPPort, defSMTPTLS []byte
+		// default smtp secret
+		defSMTPSecret *corev1.Secret
 	)
 
 	BeforeEach(func() {
@@ -66,10 +71,27 @@ var _ = Describe("Project Namespace controller", func() {
 		Expect(add(mgr, recFn)).To(Succeed())
 
 		stop = StartTestManager(mgr)
+
+		defSMTPHost = []byte("localhost")
+		defSMTPPort = []byte("587")
+		defSMTPTLS = []byte("yes")
+		defSMTPSecret = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      options.SMTPSecret,
+				Namespace: "default",
+			},
+			Data: map[string][]byte{
+				"SMTP_HOST": defSMTPHost,
+				"SMTP_PORT": defSMTPPort,
+				"SMTP_TLS":  defSMTPTLS,
+			},
+		}
+		Expect(c.Create(context.TODO(), defSMTPSecret)).To(Succeed())
 	})
 
 	AfterEach(func() {
 		close(stop)
+		Expect(c.Delete(context.TODO(), defSMTPSecret)).To(Succeed())
 	})
 
 	When("creating a new Project Namespace object", func() {
@@ -93,6 +115,7 @@ var _ = Describe("Project Namespace controller", func() {
 			Entry("reconciles memcached service monitor", "prometheus", "memcached", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles mysql service monitor", "prometheus", "mysql", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles wordpress service monitor", "prometheus", "wordpress", &monitoringv1.ServiceMonitor{}),
+			Entry("reconciles smtp secret", "smtp-secret", "smtp", &corev1.Secret{}),
 		}
 
 		BeforeEach(func() {
@@ -146,6 +169,11 @@ var _ = Describe("Project Namespace controller", func() {
 					"presslabs.com/organization":   organizationName,
 					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 					"presslabs.com/kind":           "project-owner-list",
+				},
+				"smtp-secret": {
+					"presslabs.com/kind":                "smtp",
+					"app.kubernetes.io/managed-by":      "project-namespace-controller.dashboard.presslabs.com",
+					"dashboard.presslabs.com/reconcile": "true",
 				},
 			}
 

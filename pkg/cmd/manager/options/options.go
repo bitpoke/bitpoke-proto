@@ -22,10 +22,10 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// GitBaseDomainURL is the the base domain used to obtain the git repo domain for projects
-var GitBaseDomainURL = "git.presslabs.net"
-
 var (
+	// GitBaseDomainURL is the the base domain used to obtain the git repo domain for projects
+	GitBaseDomainURL = "git.presslabs.net"
+
 	// WebhookNamespace is the namespace for webhooks
 	WebhookNamespace = "default"
 	// WebhookDisableBootstrapping decides whether or not to disable the webhook bootstrapping (false means enabled)
@@ -43,6 +43,10 @@ var (
 	WebhookPort = 4433
 	// WebhookCertDir is the directory where the TLS certs are kept
 	WebhookCertDir = "/tmp/webhook-certs"
+
+	// SMTPSecret is the secret name for SMTP
+	// nolint: gosec
+	SMTPSecret = "smtp-defaults"
 )
 
 // AddToFlagSet add options to a FlagSet
@@ -57,6 +61,8 @@ func AddToFlagSet(flag *pflag.FlagSet) {
 	flag.StringVar(&WebhookHost, "webhook-host", WebhookHost, "The webhook server host")
 	flag.IntVar(&WebhookPort, "webhook-port", WebhookPort, "The webhook server port")
 	flag.StringVar(&WebhookCertDir, "webhook-cert-dir", WebhookCertDir, "The webhook server certificates directory")
+
+	flag.StringVar(&SMTPSecret, "smtp-defaults", SMTPSecret, "The SMTP secret name")
 }
 
 // Validate validates the arguments

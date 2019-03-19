@@ -155,6 +155,7 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 		sync.NewMemcachedServiceMonitorSyncer(proj, r.Client, r.scheme),
 		sync.NewMysqlServiceMonitorSyncer(proj, r.Client, r.scheme),
 		sync.NewWordpressServiceMonitorSyncer(proj, r.Client, r.scheme),
+		sync.NewSMTPSecretSyncer(proj, r.Client, r.scheme),
 	}
 
 	return reconcile.Result{}, r.sync(syncers)

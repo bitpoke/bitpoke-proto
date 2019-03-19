@@ -37,7 +37,7 @@ func HaveAnnotation(annKey, annValue string) gomegatypes.GomegaMatcher {
 	})
 }
 
-// HaveLabel is a helper func that returns a mathcer to check for namespace
+// HaveLabel is a helper func that returns a matcher to check for namespace
 // label
 func HaveLabel(labelKey, labelValue string) gomegatypes.GomegaMatcher {
 	return MatchFields(IgnoreExtras, Fields{

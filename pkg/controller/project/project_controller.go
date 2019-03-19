@@ -10,11 +10,10 @@ package project
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/types"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -130,7 +129,7 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 	if proj.Spec.NamespaceName == "" {
 		randomName, err := project.GenerateNamespaceName()
 		if err != nil {
-			log.Error(err, "failed to set namespace referecne")
+			log.Error(err, "failed to set namespace reference")
 			return reconcile.Result{}, nil
 		}
 		proj.Spec.NamespaceName = randomName

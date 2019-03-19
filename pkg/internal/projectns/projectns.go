@@ -58,6 +58,8 @@ var (
 	MysqlServiceMonitor = component{app: "prometheus", objName: "mysql"}
 	// MemcachedServiceMonitor component
 	MemcachedServiceMonitor = component{app: "prometheus", objName: "memcached"}
+	// SMTPSecret component
+	SMTPSecret = component{objName: "smtp"}
 )
 
 // NamespaceName returns the name of the project's namespace
