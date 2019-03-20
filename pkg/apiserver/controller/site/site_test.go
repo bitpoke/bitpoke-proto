@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -61,12 +62,12 @@ func createSite(name, userID, project, image string, domains []wordpressv1alpha1
 }
 
 func expectProperWordpress(c client.Client, name, userID, project, image string, domains []wordpressv1alpha1.Domain) {
-	var wp wordpressv1alpha1.Wordpress
+	wp := &wordpressv1alpha1.Wordpress{}
 	key := client.ObjectKey{
 		Name:      name,
 		Namespace: project,
 	}
-	Expect(c.Get(context.TODO(), key, &wp)).To(Succeed())
+	Expect(c.Get(context.TODO(), key, wp)).To(Succeed())
 	Expect(wp.Name).To(Equal(name))
 	Expect(wp.Labels).To(HaveKeyWithValue("presslabs.com/kind", "site"))
 	Expect(wp.Labels).To(HaveKeyWithValue("presslabs.com/site", name))
@@ -200,7 +201,10 @@ var _ = Describe("API server", func() {
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
-		It("returns error when no name is given", func() {
+		It("creates site and generate a name when no one is given", func() {
+			primaryDomain := "www.presslabs.com"
+			domains[0] = wordpressv1alpha1.Domain(primaryDomain)
+
 			req := sites.CreateSiteRequest{
 				Parent: parent,
 				Site: sites.Site{
@@ -208,8 +212,18 @@ var _ = Describe("API server", func() {
 					WordpressImage: image,
 				},
 			}
-			_, err := siteClient.CreateSite(context.TODO(), &req)
-			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
+			wp, err := siteClient.CreateSite(context.TODO(), &req)
+			Expect(err).To(Succeed())
+			Expect(wp.PrimaryDomain).To(Equal(primaryDomain))
+			Expect(wp.WordpressImage).To(Equal(image))
+
+			// check generated name for the site
+			Expect(wp.Name).Should(Not(BeEmpty()))
+			generatedName, _, err := site.Resolve(wp.Name)
+			Expect(err).To(Succeed())
+			Expect(strings.HasPrefix(generatedName, "presslabs")).To(BeTrue())
+
+			expectProperWordpress(c, generatedName, userID, project, image, domains)
 		})
 
 		It("returns error when name is not fully qualified", func() {

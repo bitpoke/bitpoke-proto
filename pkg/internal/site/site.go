@@ -139,7 +139,6 @@ func Resolve(name string) (string, string, error) {
 	}
 
 	names := strings.Split(name, "/")
-
 	return names[3], names[1], nil
 }
 

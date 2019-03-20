@@ -10,13 +10,14 @@ package site
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/gogo/protobuf/types"
+	"github.com/presslabs/controller-util/rand"
+	"golang.org/x/net/publicsuffix"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 
 	sites "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/sites/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver"
@@ -52,19 +53,43 @@ func Add(server *apiserver.APIServer) error {
 func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteRequest) (*sites.Site, error) {
 	c, userID := impersonate.ClientFromContext(ctx, s.cfg)
 
-	name, proj, err := site.Resolve(r.Site.Name)
-	if err != nil {
-		return nil, status.InvalidArgumentf("%s", err)
-	}
+	var name, proj string
+
 	parent, err := project.Resolve(r.Parent)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
-	if strings.Compare(parent, proj) != 0 {
-		return nil, status.InvalidArgumentf("parent and project are not matching")
-	}
+
 	if len(r.Site.PrimaryDomain) == 0 {
 		return nil, status.InvalidArgumentf("primary domain cannot be empty")
+	}
+
+	// generate a name for the site when no one is given
+	if len(r.Site.Name) == 0 {
+		var etld, randomString string
+
+		etld, err = publicsuffix.EffectiveTLDPlusOne(r.Site.PrimaryDomain)
+		if err != nil {
+			return nil, status.FromError(err)
+		}
+		label := strings.Split(etld, ".")[0]
+
+		gen := rand.NewStringGenerator("abcdefghijklmnopqrstuvwxyz0123456789")
+		randomString, err = gen(5)
+		if err != nil {
+			return nil, status.FromError(err)
+		}
+		name = fmt.Sprintf("%s-%s", label, randomString)
+		proj = parent
+	} else {
+		name, proj, err = site.Resolve(r.Site.Name)
+		if err != nil {
+			return nil, status.InvalidArgumentf("%s", err)
+		}
+	}
+
+	if parent != proj {
+		return nil, status.InvalidArgumentf("parent and project are not matching")
 	}
 
 	wp := site.New(&wordpressv1alpha1.Wordpress{
