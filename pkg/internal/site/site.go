@@ -9,7 +9,8 @@ package site
 
 import (
 	"fmt"
-	"regexp"
+	"path"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -36,8 +37,6 @@ var (
 	MemcachedService = component{name: "cache", app: "memcached", objNameFmt: "%s-memcached"}
 	// MemcachedStatefulSet component
 	MemcachedStatefulSet = component{name: "cache", app: "memcached", objNameFmt: "%s-memcached"}
-	// reFQN is regexp for fully-qualified site name
-	reFQN = regexp.MustCompile(fmt.Sprintf("^%s(.*)%s(.*)$", project.GetPrefix(), prefix))
 )
 
 type component struct {
@@ -49,7 +48,7 @@ type component struct {
 
 const (
 	// Prefix for site fully-qualified project name
-	prefix = "/site/"
+	prefix = "site/"
 )
 
 // New wraps a wordpressv1alpha1.Wordpress into a Site object
@@ -123,19 +122,22 @@ func (s *Site) ValidateMetadata() error {
 
 // FQName returns the fully-qualified site name
 func FQName(projName, siteName string) string {
-	return fmt.Sprintf("%s%s%s", project.FQName(projName), prefix, siteName)
+	return path.Join(project.FQName(projName), prefix, siteName)
 }
 
-// Resolve resolves an fully-qualified site name to a k8s object name
-func Resolve(path string) (string, string, error) {
-	res := reFQN.FindStringSubmatch(path)
-
-	// res[0] is the fully-qualified site name (given path)
-	// res[1] is the project
-	// res[2] is the site name
-	if len(res) != 3 || len(res[1]) == 0 || len(res[2]) == 0 {
+// Resolve resolves an fully-qualified site name to a k8s object name.
+// The function returns site name, project name and error
+func Resolve(fqName string) (string, string, error) {
+	if path.Clean(fqName) != fqName {
 		return "", "", fmt.Errorf("site resources fully-qualified name must be in form project/PROJECT-NAME/site/SITE-NAME")
 	}
 
-	return res[2], res[1], nil
+	matched, err := path.Match("project/*/site/*", fqName)
+	if err != nil || !matched {
+		return "", "", fmt.Errorf("site resources fully-qualified name must be in form project/PROJECT-NAME/site/SITE-NAME")
+	}
+
+	names := strings.Split(fqName, "/")
+
+	return names[3], names[1], nil
 }
