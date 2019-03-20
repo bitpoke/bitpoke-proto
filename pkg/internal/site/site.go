@@ -14,6 +14,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/dashboard/pkg/internal/project"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
@@ -127,17 +128,32 @@ func FQName(projName, siteName string) string {
 
 // Resolve resolves an fully-qualified site name to a k8s object name.
 // The function returns site name, project name and error
-func Resolve(fqName string) (string, string, error) {
-	if path.Clean(fqName) != fqName {
+func Resolve(name string) (string, string, error) {
+	if path.Clean(name) != name {
 		return "", "", fmt.Errorf("site resources fully-qualified name must be in form project/PROJECT-NAME/site/SITE-NAME")
 	}
 
-	matched, err := path.Match("project/*/site/*", fqName)
+	matched, err := path.Match("project/*/site/*", name)
 	if err != nil || !matched {
 		return "", "", fmt.Errorf("site resources fully-qualified name must be in form project/PROJECT-NAME/site/SITE-NAME")
 	}
 
-	names := strings.Split(fqName, "/")
+	names := strings.Split(name, "/")
 
 	return names[3], names[1], nil
+}
+
+// ResolveToObjectKey resolves an fully-qualified site name to a k8s object name.
+// The function returns the object key from FQName and an error
+func ResolveToObjectKey(name string) (client.ObjectKey, error) {
+	siteName, projName, err := Resolve(name)
+	if err != nil {
+		return client.ObjectKey{}, err
+	}
+
+	key := client.ObjectKey{
+		Name:      siteName,
+		Namespace: projName,
+	}
+	return key, nil
 }

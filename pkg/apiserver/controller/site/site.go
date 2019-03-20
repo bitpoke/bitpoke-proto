@@ -96,13 +96,9 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 func (s *sitesService) GetSite(ctx context.Context, r *sites.GetSiteRequest) (*sites.Site, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 
-	name, proj, err := site.Resolve(r.Name)
+	key, err := site.ResolveToObjectKey(r.Name)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
-	}
-	key := client.ObjectKey{
-		Name:      name,
-		Namespace: proj,
 	}
 
 	wp := site.New(&wordpressv1alpha1.Wordpress{})
@@ -136,17 +132,13 @@ func updateWordpressImage(wp *wordpressv1alpha1.Wordpress, image string, fieldMa
 func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteRequest) (*sites.Site, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 
-	name, proj, err := site.Resolve(r.Site.Name)
+	wp := site.New(&wordpressv1alpha1.Wordpress{})
+	key, err := site.ResolveToObjectKey(r.Name)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
 
 	// get the site
-	wp := site.New(&wordpressv1alpha1.Wordpress{})
-	key := client.ObjectKey{
-		Name:      name,
-		Namespace: proj,
-	}
 	if err = c.Get(ctx, key, wp.Unwrap()); err != nil {
 		return nil, status.NotFoundf("site %s not found", r.Site.Name).Because(err)
 	}
@@ -168,13 +160,9 @@ func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteReques
 func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteRequest) (*types.Empty, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 
-	name, proj, err := site.Resolve(r.Name)
+	key, err := site.ResolveToObjectKey(r.Name)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
-	}
-	key := client.ObjectKey{
-		Name:      name,
-		Namespace: proj,
 	}
 
 	wp := site.New(&wordpressv1alpha1.Wordpress{})

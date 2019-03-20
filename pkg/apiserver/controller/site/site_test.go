@@ -10,13 +10,13 @@ package site
 import (
 	"context"
 	"fmt"
-	"github.com/gogo/protobuf/types"
 	"math/rand"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
