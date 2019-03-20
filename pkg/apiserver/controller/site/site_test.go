@@ -10,13 +10,13 @@ package site
 import (
 	"context"
 	"fmt"
+	"github.com/gogo/protobuf/types"
 	"math/rand"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -159,6 +159,20 @@ var _ = Describe("API server", func() {
 			Expect(status.Convert(err).Code()).To(Equal(codes.AlreadyExists))
 		})
 
+		It("returns error when parent and project are not matching", func() {
+			req := sites.CreateSiteRequest{
+				Parent: "another-project",
+				Site: sites.Site{
+					Name:           id,
+					PrimaryDomain:  primaryDomain,
+					WordpressImage: image,
+				},
+			}
+
+			_, err := siteClient.CreateSite(context.TODO(), &req)
+			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
+		})
+
 		It("returns error when no parent is given", func() {
 			req := sites.CreateSiteRequest{
 				Site: sites.Site{
@@ -244,19 +258,6 @@ var _ = Describe("API server", func() {
 					Name:           id,
 					PrimaryDomain:  "",
 					WordpressImage: image,
-				},
-			}
-			_, err := siteClient.CreateSite(context.TODO(), &req)
-			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
-		})
-
-		It("returns error when image is empty", func() {
-			req := sites.CreateSiteRequest{
-				Parent: parent,
-				Site: sites.Site{
-					Name:           id,
-					PrimaryDomain:  primaryDomain,
-					WordpressImage: "",
 				},
 			}
 			_, err := siteClient.CreateSite(context.TODO(), &req)
@@ -349,9 +350,6 @@ var _ = Describe("API server", func() {
 					PrimaryDomain:  primaryDomain,
 					WordpressImage: image,
 				},
-				FieldMask: types.FieldMask{
-					Paths: []string{"site.primary_domain", "site.wordpress_image"},
-				},
 			}
 			_, err := siteClient.UpdateSite(context.TODO(), &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
@@ -378,13 +376,16 @@ var _ = Describe("API server", func() {
 			expectProperWordpress(c, name, userID, project, newImage, domains)
 		})
 
-		It("keeps the old value of the wordpress image when 'site.wordpress_image' is not in r.UpdateMask.GetPaths()", func() {
+		It("keeps the old value of the wordpress image when 'site.wordpress_image' is not in r.UpdateMask.GetPaths() and r.UpdateMask.GetPaths() is not empty", func() {
 			newImage := "new-wordpress-image"
 			req := sites.UpdateSiteRequest{
 				Site: sites.Site{
 					Name:           id,
 					PrimaryDomain:  primaryDomain,
 					WordpressImage: newImage,
+				},
+				FieldMask: types.FieldMask{
+					Paths: []string{"site.primary_domain"},
 				},
 			}
 
@@ -394,21 +395,6 @@ var _ = Describe("API server", func() {
 			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
 			Expect(resp.WordpressImage).To(Equal(image))
 			expectProperWordpress(c, name, userID, project, image, domains)
-		})
-
-		It("returns error when 'site.wordpress_image' is in r.UpdateMask.GetPaths() and wordpressImage field is empty", func() {
-			req := sites.UpdateSiteRequest{
-				Site: sites.Site{
-					Name:          id,
-					PrimaryDomain: primaryDomain,
-				},
-				FieldMask: types.FieldMask{
-					Paths: []string{"site.wordpress_image"},
-				},
-			}
-
-			_, err := siteClient.UpdateSite(context.TODO(), &req)
-			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
 		It("updates the primary domain of existing site when 'site.primary_domain' is in r.UpdateMask.GetPaths()", func() {
@@ -466,13 +452,16 @@ var _ = Describe("API server", func() {
 			expectProperWordpress(c, name, userID, project, image, expectedDomains)
 		})
 
-		It("keeps the old value of the primary domain when 'site.primary_domain' is not in r.UpdateMask.GetPaths()", func() {
+		It("keeps the old value of the primary domain when 'site.primary_domain' is not in r.UpdateMask.GetPaths() and r.UpdateMask.GetPaths() is not empty", func() {
 			newDomain := "new-primary-domain"
 			req := sites.UpdateSiteRequest{
 				Site: sites.Site{
 					Name:           id,
 					PrimaryDomain:  newDomain,
 					WordpressImage: image,
+				},
+				FieldMask: types.FieldMask{
+					Paths: []string{"site.wordpress_image"},
 				},
 			}
 
@@ -511,6 +500,27 @@ var _ = Describe("API server", func() {
 				},
 				FieldMask: types.FieldMask{
 					Paths: []string{"site.primary_domain", "site.wordpress_image"},
+				},
+			}
+
+			resp, err := siteClient.UpdateSite(context.TODO(), &req)
+			Expect(err).To(Succeed())
+			Expect(resp.Name).To(Equal(id))
+			Expect(resp.PrimaryDomain).To(Equal(newPD))
+			Expect(resp.WordpressImage).To(Equal(newWI))
+			expectProperWordpress(c, name, userID, project, newWI, expectedDomains)
+		})
+
+		It("updates primary domain and wordpress image of existing site when r.UpdateMask.GetPaths() is empty", func() {
+			newPD := "new-primary-domain"
+			newWI := "new-wordpress-image"
+			expectedDomains := domains
+			expectedDomains[0] = wordpressv1alpha1.Domain(newPD)
+			req := sites.UpdateSiteRequest{
+				Site: sites.Site{
+					Name:           id,
+					PrimaryDomain:  newPD,
+					WordpressImage: newWI,
 				},
 			}
 

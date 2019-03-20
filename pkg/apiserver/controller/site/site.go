@@ -10,6 +10,7 @@ package site
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/gogo/protobuf/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,11 +60,11 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
+	if strings.Compare(parent, proj) != 0 {
+		return nil, status.InvalidArgumentf("parent and project are not matching")
+	}
 	if len(r.Site.PrimaryDomain) == 0 {
 		return nil, status.InvalidArgumentf("primary domain cannot be empty")
-	}
-	if len(r.Site.WordpressImage) == 0 {
-		return nil, status.InvalidArgumentf("wordpress image cannot be empty")
 	}
 
 	wp := site.New(&wordpressv1alpha1.Wordpress{
@@ -104,17 +105,17 @@ func (s *sitesService) GetSite(ctx context.Context, r *sites.GetSiteRequest) (*s
 		Namespace: proj,
 	}
 
-	var wp wordpressv1alpha1.Wordpress
-	if err := c.Get(ctx, key, &wp); err != nil {
+	wp := site.New(&wordpressv1alpha1.Wordpress{})
+	if err := c.Get(ctx, key, wp.Unwrap()); err != nil {
 		return nil, status.NotFoundf("site %s not found", r.Name).Because(err)
 	}
 
-	return newSiteFromK8s(site.New(&wp)), nil
+	return newSiteFromK8s(site.New(wp.Unwrap())), nil
 }
 
 // updatePrimaryDomain updates the primary domain
 func updatePrimaryDomain(wp *wordpressv1alpha1.Wordpress, domain string, fieldMask types.FieldMask) error {
-	if containsString(fieldMask.Paths, "site.primary_domain") {
+	if len(fieldMask.Paths) == 0 || containsString(fieldMask.Paths, "site.primary_domain") {
 		if len(domain) == 0 {
 			return fmt.Errorf("primary domain cannot be empty")
 		} else if len(domain) > 0 {
@@ -125,13 +126,9 @@ func updatePrimaryDomain(wp *wordpressv1alpha1.Wordpress, domain string, fieldMa
 }
 
 // updateWordpressImage updates the wordpress image
-func updateWordpressImage(wp *wordpressv1alpha1.Wordpress, image string, fieldrMask types.FieldMask) error {
-	if containsString(fieldrMask.Paths, "site.wordpress_image") {
-		if len(image) == 0 {
-			return fmt.Errorf("wordpress image cannot be empty")
-		} else if len(image) > 0 {
-			wp.Spec.Image = image
-		}
+func updateWordpressImage(wp *wordpressv1alpha1.Wordpress, image string, fieldMask types.FieldMask) error {
+	if len(fieldMask.Paths) == 0 || containsString(fieldMask.Paths, "site.wordpress_image") {
+		wp.Spec.Image = image
 	}
 	return nil
 }
@@ -145,27 +142,27 @@ func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteReques
 	}
 
 	// get the site
-	wp := &wordpressv1alpha1.Wordpress{}
+	wp := site.New(&wordpressv1alpha1.Wordpress{})
 	key := client.ObjectKey{
 		Name:      name,
 		Namespace: proj,
 	}
-	if err = c.Get(ctx, key, wp); err != nil {
+	if err = c.Get(ctx, key, wp.Unwrap()); err != nil {
 		return nil, status.NotFoundf("site %s not found", r.Site.Name).Because(err)
 	}
 
 	// update primary domain and wordpress image
-	if err = updatePrimaryDomain(wp, r.PrimaryDomain, r.FieldMask); err != nil {
+	if err = updatePrimaryDomain(wp.Unwrap(), r.PrimaryDomain, r.FieldMask); err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
-	if err = updateWordpressImage(wp, r.WordpressImage, r.FieldMask); err != nil {
+	if err = updateWordpressImage(wp.Unwrap(), r.WordpressImage, r.FieldMask); err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
-	if err = c.Update(ctx, wp); err != nil {
+	if err = c.Update(ctx, wp.Unwrap()); err != nil {
 		return nil, status.FromError(err)
 	}
 
-	return newSiteFromK8s(site.New(wp)), nil
+	return newSiteFromK8s(site.New(wp.Unwrap())), nil
 }
 
 func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteRequest) (*types.Empty, error) {
@@ -180,12 +177,12 @@ func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteReques
 		Namespace: proj,
 	}
 
-	var wp wordpressv1alpha1.Wordpress
-	if err := c.Get(ctx, key, &wp); err != nil {
+	wp := site.New(&wordpressv1alpha1.Wordpress{})
+	if err := c.Get(ctx, key, wp.Unwrap()); err != nil {
 		return nil, status.NotFound().Because(err)
 	}
 
-	if err := c.Delete(ctx, &wp); err != nil {
+	if err := c.Delete(ctx, wp.Unwrap()); err != nil {
 		return nil, status.FromError(err)
 	}
 
@@ -221,9 +218,9 @@ func (s *sitesService) ListSites(ctx context.Context, r *sites.ListSitesRequest)
 	}
 
 	// TODO: implement pagination
-	resp.Sites = []sites.Site{}
+	resp.Sites = make([]sites.Site, len(wpList.Items))
 	for i := range wpList.Items {
-		resp.Sites = append(resp.Sites, *newSiteFromK8s(site.New(&wpList.Items[i])))
+		resp.Sites[i] = *newSiteFromK8s(site.New(&wpList.Items[i]))
 	}
 
 	return resp, nil
