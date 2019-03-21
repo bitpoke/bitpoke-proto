@@ -287,7 +287,7 @@ var _ = Describe("API project controller", func() {
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.DisplayName).To(Equal(displayName))
-			Expect(resp.Organization).To(Equal(org))
+			Expect(resp.Organization).To(Equal(parent))
 		})
 
 		It("returns NotFound when organization does not exist", func() {
@@ -408,7 +408,7 @@ var _ = Describe("API project controller", func() {
 			}
 			resp, err := projClient.UpdateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Organization).To(Equal(org))
+			Expect(resp.Organization).To(Equal(parent))
 
 			key := client.ObjectKey{
 				Name:      name,

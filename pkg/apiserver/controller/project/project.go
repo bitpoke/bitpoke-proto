@@ -203,7 +203,7 @@ func NewProjectsServiceServer(client client.Client, cfg *rest.Config) projs.Proj
 func newProjectFromK8s(p *project.Project) *projs.Project {
 	return &projs.Project{
 		Name:         project.FQName(p.Project.ObjectMeta.Labels["presslabs.com/project"]),
-		Organization: p.Project.ObjectMeta.Labels["presslabs.com/organization"],
+		Organization: organization.FQName(p.Project.ObjectMeta.Labels["presslabs.com/organization"]),
 		DisplayName:  p.Annotations["presslabs.com/display-name"],
 	}
 }
