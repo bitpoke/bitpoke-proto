@@ -23,8 +23,10 @@ import (
 
 	// homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 	// "github.com/spf13/viper"
 	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
 	// enable GKE cluster login
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
@@ -46,7 +48,10 @@ application for managing WordPress deployments at scale.`,
 		var err error
 
 		// setup logging
-		logf.SetLogger(logf.ZapLogger(true))
+		development := true
+		zapLogger := logf.RawZapLoggerTo(os.Stderr, development)
+		logf.SetLogger(zapr.NewLogger(zapLogger))
+		zap.ReplaceGlobals(zapLogger)
 
 		// configure Kubernetes rest.Client
 		cfg, err = config.GetConfig()
