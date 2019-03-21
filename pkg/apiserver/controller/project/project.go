@@ -60,7 +60,7 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *projs.CreateProje
 		parent = metadata.RequireOrganization(ctx)
 	}
 
-	ns, err := organization.Resolve(parent)
+	orgName, err := organization.Resolve(parent)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
@@ -68,11 +68,11 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *projs.CreateProje
 	proj := project.New(&dashboardv1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: ns,
+			Namespace: organization.NamespaceName(orgName),
 			Labels: map[string]string{
 				"presslabs.com/kind":         "project",
 				"presslabs.com/project":      name,
-				"presslabs.com/organization": ns,
+				"presslabs.com/organization": orgName,
 			},
 			Annotations: map[string]string{
 				"presslabs.com/created-by": userID,
@@ -95,10 +95,10 @@ func (s *projectsServer) GetProject(ctx context.Context, r *projs.GetProjectRequ
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
-	ns := metadata.RequireOrganizationNamespace(ctx)
+	orgName := metadata.RequireOrganizationName(ctx)
 	key := client.ObjectKey{
 		Name:      name,
-		Namespace: ns,
+		Namespace: organization.NamespaceName(orgName),
 	}
 
 	var proj dashboardv1alpha1.Project
@@ -116,10 +116,10 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *projs.UpdateProje
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
-	ns := metadata.RequireOrganizationNamespace(ctx)
+	orgName := metadata.RequireOrganizationName(ctx)
 	key := client.ObjectKey{
 		Name:      name,
-		Namespace: ns,
+		Namespace: organization.NamespaceName(orgName),
 	}
 
 	var proj dashboardv1alpha1.Project
@@ -143,10 +143,10 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *projs.DeleteProje
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
-	ns := metadata.RequireOrganizationNamespace(ctx)
+	orgName := metadata.RequireOrganizationName(ctx)
 	key := client.ObjectKey{
 		Name:      name,
-		Namespace: ns,
+		Namespace: organization.NamespaceName(orgName),
 	}
 
 	var proj dashboardv1alpha1.Project
@@ -163,13 +163,13 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *projs.DeleteProje
 
 func (s *projectsServer) ListProjects(ctx context.Context, r *projs.ListProjectsRequest) (*projs.ListProjectsResponse, error) {
 	userID := metadata.RequireUserID(ctx)
-	ns := metadata.RequireOrganizationNamespace(ctx)
+	orgName := metadata.RequireOrganizationName(ctx)
 
 	projList := &dashboardv1alpha1.ProjectList{}
 	resp := &projs.ListProjectsResponse{}
 
 	listOptions := &client.ListOptions{
-		Namespace: ns,
+		Namespace: organization.NamespaceName(orgName),
 		LabelSelector: labels.SelectorFromSet(
 			labels.Set{
 				"presslabs.com/kind": "project",

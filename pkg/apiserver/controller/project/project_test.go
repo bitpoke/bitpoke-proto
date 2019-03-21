@@ -30,6 +30,7 @@ import (
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/controller"
+	"github.com/presslabs/dashboard/pkg/internal/organization"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 )
 
@@ -39,15 +40,15 @@ const (
 )
 
 // createProject is a helper func that creates a project
-func createProject(name, displayName, createdBy, organization string) *project.Project {
+func createProject(name, displayName, createdBy, org string) *project.Project {
 	proj := project.New(&dashboardv1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: organization,
+			Namespace: organization.NamespaceName(org),
 			Labels: map[string]string{
 				"presslabs.com/kind":         "project",
 				"presslabs.com/project":      name,
-				"presslabs.com/organization": organization,
+				"presslabs.com/organization": org,
 			},
 			Annotations: map[string]string{
 				"presslabs.com/created-by": createdBy,
@@ -68,11 +69,11 @@ func getProjectFn(ctx context.Context, c client.Client, key client.ObjectKey) fu
 	}
 }
 
-func expectProperProject(c client.Client, name, displayName, createdBy, organization string) {
+func expectProperProject(c client.Client, name, displayName, createdBy, org string) {
 	var p dashboardv1alpha1.Project
 	key := client.ObjectKey{
 		Name:      name,
-		Namespace: organization,
+		Namespace: organization.NamespaceName(org),
 	}
 	Expect(c.Get(context.TODO(), key, &p)).To(Succeed())
 	Expect(p.Name).To(Equal(fmt.Sprintf("%s", name)))
@@ -80,7 +81,7 @@ func expectProperProject(c client.Client, name, displayName, createdBy, organiza
 	Expect(p.Labels).To(HaveKeyWithValue("presslabs.com/project", name))
 	Expect(p.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", displayName))
 	Expect(p.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", createdBy))
-	Expect(p.Labels).To(HaveKeyWithValue("presslabs.com/organization", organization))
+	Expect(p.Labels).To(HaveKeyWithValue("presslabs.com/organization", org))
 }
 
 var _ = Describe("API project controller", func() {
@@ -102,7 +103,7 @@ var _ = Describe("API project controller", func() {
 		name, autoName string
 		displayName    string
 		createdBy      string
-		organization   string
+		org            string
 		parent         string
 	)
 
@@ -136,8 +137,8 @@ var _ = Describe("API project controller", func() {
 		autoID = fmt.Sprintf("project/%s", autoName)
 		createdBy = fmt.Sprintf("user#%s", name)
 		metadata.FakeSubject = createdBy
-		organization = fmt.Sprintf("%d", rand.Int31())
-		parent = fmt.Sprintf("orgs/%s", organization)
+		org = fmt.Sprintf("%d", rand.Int31())
+		parent = fmt.Sprintf("orgs/%s", org)
 
 		orgCtx = metadata.AddOrgInContext(context.Background(), parent)
 	})
@@ -151,7 +152,7 @@ var _ = Describe("API project controller", func() {
 
 	Describe("at Create request", func() {
 		It("returns AlreadyExists error when project already exists", func() {
-			proj := createProject(name, displayName, createdBy, organization)
+			proj := createProject(name, displayName, createdBy, org)
 			Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 			req := projv1.CreateProjectRequest{
 				Parent: parent,
@@ -230,7 +231,7 @@ var _ = Describe("API project controller", func() {
 			resp, err := projClient.CreateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(autoID))
-			expectProperProject(c, slug.Make(displayName), displayName, createdBy, organization)
+			expectProperProject(c, slug.Make(displayName), displayName, createdBy, org)
 		})
 
 		It("creates project when project name is given", func() {
@@ -245,7 +246,7 @@ var _ = Describe("API project controller", func() {
 			resp, err := projClient.CreateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
-			expectProperProject(c, name, displayName, createdBy, organization)
+			expectProperProject(c, name, displayName, createdBy, org)
 		})
 
 		It("fills display_name when no one is given", func() {
@@ -258,7 +259,7 @@ var _ = Describe("API project controller", func() {
 			resp, err := projClient.CreateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
-			expectProperProject(c, name, name, createdBy, organization)
+			expectProperProject(c, name, name, createdBy, org)
 		})
 
 		It("returns error when no parent is given and no organization is set in metadata", func() {
@@ -276,7 +277,7 @@ var _ = Describe("API project controller", func() {
 
 	Describe("at Get request", func() {
 		It("returns the project", func() {
-			proj := createProject(name, displayName, createdBy, organization)
+			proj := createProject(name, displayName, createdBy, org)
 			Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 			req := projv1.GetProjectRequest{
 				Name: id,
@@ -286,7 +287,7 @@ var _ = Describe("API project controller", func() {
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.DisplayName).To(Equal(displayName))
-			Expect(resp.Organization).To(Equal(organization))
+			Expect(resp.Organization).To(Equal(org))
 		})
 
 		It("returns NotFound when organization does not exist", func() {
@@ -308,7 +309,7 @@ var _ = Describe("API project controller", func() {
 
 	Describe("at Delete request", func() {
 		It("deletes existing project", func() {
-			proj := createProject(name, displayName, createdBy, organization)
+			proj := createProject(name, displayName, createdBy, org)
 			Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 			req := projv1.DeleteProjectRequest{
 				Name: id,
@@ -318,7 +319,7 @@ var _ = Describe("API project controller", func() {
 			Expect(err).To(Succeed())
 			key := client.ObjectKey{
 				Name:      name,
-				Namespace: organization,
+				Namespace: organization.NamespaceName(org),
 			}
 			var p dashboardv1alpha1.Project
 			err = c.Get(orgCtx, key, &p)
@@ -344,7 +345,7 @@ var _ = Describe("API project controller", func() {
 
 	Describe("at update request", func() {
 		BeforeEach(func() {
-			proj := createProject(name, displayName, createdBy, organization)
+			proj := createProject(name, displayName, createdBy, org)
 			Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 		})
 
@@ -363,7 +364,7 @@ var _ = Describe("API project controller", func() {
 
 			key := client.ObjectKey{
 				Name:      name,
-				Namespace: organization,
+				Namespace: organization.NamespaceName(org),
 			}
 			Eventually(getProjectFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveAnnotation("presslabs.com/display-name", newDisplayName))
@@ -382,7 +383,7 @@ var _ = Describe("API project controller", func() {
 
 			key := client.ObjectKey{
 				Name:      name,
-				Namespace: organization,
+				Namespace: organization.NamespaceName(org),
 			}
 			Eventually(getProjectFn(context.TODO(), c, key), updateTimeout).Should(
 				HaveAnnotation("presslabs.com/display-name", name))
@@ -407,14 +408,14 @@ var _ = Describe("API project controller", func() {
 			}
 			resp, err := projClient.UpdateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Organization).To(Equal(organization))
+			Expect(resp.Organization).To(Equal(org))
 
 			key := client.ObjectKey{
 				Name:      name,
-				Namespace: organization,
+				Namespace: organization.NamespaceName(org),
 			}
 			Eventually(getProjectFn(context.TODO(), c, key), updateTimeout).Should(
-				HaveLabel("presslabs.com/organization", organization))
+				HaveLabel("presslabs.com/organization", org))
 		})
 
 		It("returns error when header does not have organization id", func() {
@@ -434,10 +435,10 @@ var _ = Describe("API project controller", func() {
 			for i := 1; i <= projsCount; i++ {
 				_name := fmt.Sprintf("%s-%02d", name, i)
 				_displayName := fmt.Sprintf("%s %02d Inc.", name, i)
-				proj := createProject(_name, _displayName, createdBy, organization)
+				proj := createProject(_name, _displayName, createdBy, org)
 				Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 			}
-			proj := createProject(name, displayName, "user#anoter", organization)
+			proj := createProject(name, displayName, "user#anoter", org)
 			Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 		})
 

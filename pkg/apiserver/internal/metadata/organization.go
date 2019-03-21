@@ -42,8 +42,8 @@ func RequireOrganization(ctx context.Context) string {
 	return val[0]
 }
 
-// RequireOrganizationNamespace return the organization namespace from context
-func RequireOrganizationNamespace(ctx context.Context) string {
+// RequireOrganizationName return the organization name from context
+func RequireOrganizationName(ctx context.Context) string {
 	org := RequireOrganization(ctx)
 	if ns, err := organization.Resolve(org); err != nil {
 		panic(err)
