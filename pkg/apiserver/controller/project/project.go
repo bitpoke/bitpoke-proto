@@ -54,11 +54,16 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *projs.CreateProje
 	if len(name) == 0 {
 		return nil, status.InvalidArgumentf("project name cannot be empty")
 	}
-	parent, err := organization.Resolve(r.Parent)
+
+	parent := r.Parent
+	if len(r.Parent) == 0 {
+		parent = metadata.RequireOrganization(ctx)
+	}
+
+	ns, err := organization.Resolve(parent)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
-	ns := metadata.RequireOrganizationNamespace(ctx)
 
 	proj := project.New(&dashboardv1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
@@ -67,7 +72,7 @@ func (s *projectsServer) CreateProject(ctx context.Context, r *projs.CreateProje
 			Labels: map[string]string{
 				"presslabs.com/kind":         "project",
 				"presslabs.com/project":      name,
-				"presslabs.com/organization": parent,
+				"presslabs.com/organization": ns,
 			},
 			Annotations: map[string]string{
 				"presslabs.com/created-by": userID,

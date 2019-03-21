@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
+	"github.com/presslabs/dashboard/pkg/internal/organization"
 )
 
 var (
@@ -19,15 +20,15 @@ var (
 	organizationTokenContextKey = "organization"
 )
 
-// AddOrgInContext adds organization id in context
+// AddOrgInContext adds organization name in context
 func AddOrgInContext(ctx context.Context, org string) context.Context {
 	md := metadata.New(map[string]string{organizationTokenContextKey: org})
 	newCtx := metadata.NewOutgoingContext(ctx, md)
 	return newCtx
 }
 
-// RequireOrganizationNamespace returns organzation id from context
-func RequireOrganizationNamespace(ctx context.Context) string {
+// RequireOrganization returns organization fully qualified name (eg. orgs/foo) from context
+func RequireOrganization(ctx context.Context) string {
 	md, hasMD := metadata.FromIncomingContext(ctx)
 	if !hasMD {
 		panic(status.InvalidArgumentf("no organization id value in context"))
@@ -39,4 +40,14 @@ func RequireOrganizationNamespace(ctx context.Context) string {
 	}
 
 	return val[0]
+}
+
+// RequireOrganizationNamespace return the organization namespace from context
+func RequireOrganizationNamespace(ctx context.Context) string {
+	org := RequireOrganization(ctx)
+	if ns, err := organization.Resolve(org); err != nil {
+		panic(err)
+	} else {
+		return ns
+	}
 }

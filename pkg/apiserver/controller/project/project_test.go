@@ -83,7 +83,7 @@ func expectProperProject(c client.Client, name, displayName, createdBy, organiza
 	Expect(p.Labels).To(HaveKeyWithValue("presslabs.com/organization", organization))
 }
 
-var _ = Describe("API server", func() {
+var _ = Describe("API project controller", func() {
 	var (
 		// stop channel for apiserver
 		stop chan struct{}
@@ -94,7 +94,7 @@ var _ = Describe("API server", func() {
 		// projClient
 		projClient projv1.ProjectsServiceClient
 		// context for requests
-		ctx context.Context
+		orgCtx context.Context
 	)
 
 	var (
@@ -139,7 +139,7 @@ var _ = Describe("API server", func() {
 		organization = fmt.Sprintf("%d", rand.Int31())
 		parent = fmt.Sprintf("orgs/%s", organization)
 
-		ctx = metadata.AddOrgInContext(context.Background(), organization)
+		orgCtx = metadata.AddOrgInContext(context.Background(), parent)
 	})
 
 	AfterEach(func() {
@@ -161,7 +161,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			_, err := projClient.CreateProject(ctx, &req)
+			_, err := projClient.CreateProject(orgCtx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.AlreadyExists))
 		})
 
@@ -172,7 +172,7 @@ var _ = Describe("API server", func() {
 					DisplayName: displayName,
 				},
 			}
-			_, err := projClient.CreateProject(ctx, &req)
+			_, err := projClient.CreateProject(context.Background(), &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -184,7 +184,7 @@ var _ = Describe("API server", func() {
 					DisplayName: displayName,
 				},
 			}
-			_, err := projClient.CreateProject(ctx, &req)
+			_, err := projClient.CreateProject(orgCtx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -193,7 +193,7 @@ var _ = Describe("API server", func() {
 				Parent:  parent,
 				Project: projv1.Project{},
 			}
-			_, err := projClient.CreateProject(ctx, &req)
+			_, err := projClient.CreateProject(orgCtx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -204,7 +204,7 @@ var _ = Describe("API server", func() {
 					Name: "not-fully-qualified-name",
 				},
 			}
-			_, err := projClient.CreateProject(ctx, &req)
+			_, err := projClient.CreateProject(orgCtx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -215,7 +215,7 @@ var _ = Describe("API server", func() {
 					Name: "project/",
 				},
 			}
-			_, err := projClient.CreateProject(ctx, &req)
+			_, err := projClient.CreateProject(orgCtx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -227,7 +227,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := projClient.CreateProject(ctx, &req)
+			resp, err := projClient.CreateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(autoID))
 			expectProperProject(c, slug.Make(displayName), displayName, createdBy, organization)
@@ -242,7 +242,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := projClient.CreateProject(ctx, &req)
+			resp, err := projClient.CreateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			expectProperProject(c, name, displayName, createdBy, organization)
@@ -255,15 +255,14 @@ var _ = Describe("API server", func() {
 					Name: id,
 				},
 			}
-			resp, err := projClient.CreateProject(ctx, &req)
+			resp, err := projClient.CreateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			expectProperProject(c, name, name, createdBy, organization)
 		})
 
-		It("returns error when header does not have organization id", func() {
+		It("returns error when no parent is given and no organization is set in metadata", func() {
 			req := projv1.CreateProjectRequest{
-				Parent: parent,
 				Project: projv1.Project{
 					Name:        id,
 					DisplayName: displayName,
@@ -283,7 +282,7 @@ var _ = Describe("API server", func() {
 				Name: id,
 			}
 
-			resp, err := projClient.GetProject(ctx, &req)
+			resp, err := projClient.GetProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.DisplayName).To(Equal(displayName))
@@ -294,7 +293,7 @@ var _ = Describe("API server", func() {
 			req := projv1.GetProjectRequest{
 				Name: id,
 			}
-			_, err := projClient.GetProject(ctx, &req)
+			_, err := projClient.GetProject(orgCtx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 
@@ -315,14 +314,14 @@ var _ = Describe("API server", func() {
 				Name: id,
 			}
 
-			_, err := projClient.DeleteProject(ctx, &req)
+			_, err := projClient.DeleteProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			key := client.ObjectKey{
 				Name:      name,
 				Namespace: organization,
 			}
 			var p dashboardv1alpha1.Project
-			err = c.Get(ctx, key, &p)
+			err = c.Get(orgCtx, key, &p)
 			Expect(status.Code(err)).To(Equal(codes.Unknown))
 		})
 
@@ -330,7 +329,7 @@ var _ = Describe("API server", func() {
 			req := projv1.DeleteProjectRequest{
 				Name: id,
 			}
-			_, err := projClient.DeleteProject(ctx, &req)
+			_, err := projClient.DeleteProject(orgCtx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 
@@ -358,7 +357,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := projClient.UpdateProject(ctx, &req)
+			resp, err := projClient.UpdateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.DisplayName).To(Equal(newDisplayName))
 
@@ -377,7 +376,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := projClient.UpdateProject(ctx, &req)
+			resp, err := projClient.UpdateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.DisplayName).To(Equal(name))
 
@@ -395,7 +394,7 @@ var _ = Describe("API server", func() {
 					Name: "project/inexistent",
 				},
 			}
-			_, err := projClient.UpdateProject(ctx, &req)
+			_, err := projClient.UpdateProject(orgCtx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 
@@ -406,7 +405,7 @@ var _ = Describe("API server", func() {
 					Organization: "the-new-organization",
 				},
 			}
-			resp, err := projClient.UpdateProject(ctx, &req)
+			resp, err := projClient.UpdateProject(orgCtx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Organization).To(Equal(organization))
 
@@ -445,7 +444,7 @@ var _ = Describe("API server", func() {
 		It("returns only my orgnanizations", func() {
 			req := projv1.ListProjectsRequest{}
 			Eventually(func() ([]projv1.Project, error) {
-				resp, err := projClient.ListProjects(ctx, &req)
+				resp, err := projClient.ListProjects(orgCtx, &req)
 				return resp.Projects, err
 			}).Should(HaveLen(projsCount))
 		})

@@ -12,8 +12,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/go-logr/zapr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"go.uber.org/zap"
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -38,7 +40,9 @@ func TestAPIServer(t *testing.T) {
 var _ = BeforeSuite(func() {
 	var err error
 
-	logf.SetLogger(logf.ZapLoggerTo(GinkgoWriter, true))
+	zapLogger := logf.RawZapLoggerTo(GinkgoWriter, true)
+	logf.SetLogger(zapr.NewLogger(zapLogger))
+	zap.ReplaceGlobals(zapLogger)
 
 	t = &envtest.Environment{
 		CRDDirectoryPaths: []string{
