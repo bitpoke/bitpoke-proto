@@ -13,7 +13,6 @@ import (
 	"github.com/gogo/protobuf/types"
 	"github.com/gosimple/slug"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -162,31 +161,33 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *projs.DeleteProje
 }
 
 func (s *projectsServer) ListProjects(ctx context.Context, r *projs.ListProjectsRequest) (*projs.ListProjectsResponse, error) {
-	userID := metadata.RequireUserID(ctx)
-	orgName := metadata.RequireOrganizationName(ctx)
+	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 
-	projList := &dashboardv1alpha1.ProjectList{}
-	resp := &projs.ListProjectsResponse{}
-
-	listOptions := &client.ListOptions{
-		Namespace: organization.NamespaceName(orgName),
-		LabelSelector: labels.SelectorFromSet(
-			labels.Set{
-				"presslabs.com/kind": "project",
-			},
-		),
+	parent := r.Parent
+	if len(r.Parent) == 0 {
+		parent = metadata.RequireOrganization(ctx)
 	}
 
-	if err := s.client.List(context.TODO(), listOptions, projList); err != nil {
+	orgName, err := organization.Resolve(parent)
+	if err != nil {
+		return nil, status.InvalidArgumentf("%s", err)
+	}
+
+	projList := &dashboardv1alpha1.ProjectList{}
+	listOptions := &client.ListOptions{
+		Namespace: organization.NamespaceName(orgName),
+	}
+
+	if err := c.List(context.TODO(), listOptions, projList); err != nil {
 		return nil, status.FromError(err)
 	}
 
 	// TODO: implement pagination
-	resp.Projects = []projs.Project{}
+	resp := &projs.ListProjectsResponse{
+		Projects: make([]projs.Project, len(projList.Items)),
+	}
 	for i := range projList.Items {
-		if projList.Items[i].ObjectMeta.Annotations["presslabs.com/created-by"] == userID {
-			resp.Projects = append(resp.Projects, *newProjectFromK8s(project.New(&projList.Items[i])))
-		}
+		resp.Projects[i] = *newProjectFromK8s(project.New(&projList.Items[i]))
 	}
 
 	return resp, nil

@@ -435,14 +435,13 @@ var _ = Describe("API project controller", func() {
 			for i := 1; i <= projsCount; i++ {
 				_name := fmt.Sprintf("%s-%02d", name, i)
 				_displayName := fmt.Sprintf("%s %02d Inc.", name, i)
-				proj := createProject(_name, _displayName, createdBy, org)
+				_createdBy := fmt.Sprintf("user#%d", i)
+				proj := createProject(_name, _displayName, _createdBy, org)
 				Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 			}
-			proj := createProject(name, displayName, "user#anoter", org)
-			Expect(c.Create(context.TODO(), proj.Unwrap())).To(Succeed())
 		})
 
-		It("returns only my orgnanizations", func() {
+		It("returns all projects in organization", func() {
 			req := projv1.ListProjectsRequest{}
 			Eventually(func() ([]projv1.Project, error) {
 				resp, err := projClient.ListProjects(orgCtx, &req)
