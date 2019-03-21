@@ -8,12 +8,14 @@ which is part of this source code package.
 package projectns
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ProjectNamespace embeds corev1.Namespace and adds utility functions
@@ -143,4 +145,24 @@ func (p *ProjectNamespace) ValidateMetadata() error {
 	}
 
 	return utilerrors.Flatten(utilerrors.NewAggregate(errorList))
+}
+
+// Lookup gets the namespace for a project name and organization name
+func Lookup(c client.Client, project, organization string) (*ProjectNamespace, error) {
+	nsList := &corev1.NamespaceList{}
+	listOptions := &client.ListOptions{
+		LabelSelector: labels.SelectorFromSet(
+			labels.Set{
+				"presslabs.com/kind":         "project",
+				"presslabs.com/project":      project,
+				"presslabs.com/organization": organization,
+			},
+		),
+	}
+
+	if err := c.List(context.TODO(), listOptions, nsList); err != nil {
+		return nil, err
+	}
+
+	return New(&nsList.Items[0]), nil
 }

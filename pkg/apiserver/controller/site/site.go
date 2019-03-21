@@ -10,20 +10,23 @@ package site
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/gogo/protobuf/types"
-	"github.com/presslabs/controller-util/rand"
 	"golang.org/x/net/publicsuffix"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 
+	"github.com/presslabs/controller-util/rand"
 	sites "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/sites/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
 	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 	"github.com/presslabs/dashboard/pkg/internal/site"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
@@ -52,6 +55,7 @@ func Add(server *apiserver.APIServer) error {
 
 func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteRequest) (*sites.Site, error) {
 	c, userID := impersonate.ClientFromContext(ctx, s.cfg)
+	org := metadata.RequireOrganizationNamespace(ctx)
 
 	var name, proj string
 
@@ -59,6 +63,12 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
+
+	projNs, err := projectns.Lookup(c, parent, org)
+	if err != nil {
+		return nil, status.FromError(err)
+	}
+	ns := projNs.Name
 
 	if len(r.Site.PrimaryDomain) == 0 {
 		return nil, status.InvalidArgumentf("primary domain cannot be empty")
@@ -95,7 +105,7 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 	wp := site.New(&wordpressv1alpha1.Wordpress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: parent,
+			Namespace: ns,
 			Labels: map[string]string{
 				"presslabs.com/kind":    "site",
 				"presslabs.com/site":    name,
@@ -120,11 +130,18 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 
 func (s *sitesService) GetSite(ctx context.Context, r *sites.GetSiteRequest) (*sites.Site, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
+	org := metadata.RequireOrganizationNamespace(ctx)
 
 	key, err := site.ResolveToObjectKey(r.Name)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
+
+	projNs, err := projectns.Lookup(c, key.Namespace, org)
+	if err != nil {
+		return nil, status.FromError(err)
+	}
+	key.Namespace = projNs.Name
 
 	wp := site.New(&wordpressv1alpha1.Wordpress{})
 	if err := c.Get(ctx, key, wp.Unwrap()); err != nil {
@@ -156,12 +173,19 @@ func updateWordpressImage(wp *wordpressv1alpha1.Wordpress, image string, fieldMa
 
 func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteRequest) (*sites.Site, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
+	org := metadata.RequireOrganizationNamespace(ctx)
 
 	wp := site.New(&wordpressv1alpha1.Wordpress{})
 	key, err := site.ResolveToObjectKey(r.Name)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
+
+	projNs, err := projectns.Lookup(c, key.Namespace, org)
+	if err != nil {
+		return nil, status.FromError(err)
+	}
+	key.Namespace = projNs.Name
 
 	// get the site
 	if err = c.Get(ctx, key, wp.Unwrap()); err != nil {
@@ -184,11 +208,18 @@ func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteReques
 
 func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteRequest) (*types.Empty, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
+	org := metadata.RequireOrganizationNamespace(ctx)
 
 	key, err := site.ResolveToObjectKey(r.Name)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
+
+	projNs, err := projectns.Lookup(c, key.Namespace, org)
+	if err != nil {
+		return nil, status.FromError(err)
+	}
+	key.Namespace = projNs.Name
 
 	wp := site.New(&wordpressv1alpha1.Wordpress{})
 	if err := c.Get(ctx, key, wp.Unwrap()); err != nil {
@@ -204,18 +235,21 @@ func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteReques
 
 func (s *sitesService) ListSites(ctx context.Context, r *sites.ListSitesRequest) (*sites.ListSitesResponse, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
+	org := metadata.RequireOrganizationNamespace(ctx)
 
 	wpList := &wordpressv1alpha1.WordpressList{}
 	resp := &sites.ListSitesResponse{}
 
-	if len(r.Parent) <= 0 {
-		return nil, status.InvalidArgumentf("parent cannot be empty")
-	}
-
-	ns, err := project.Resolve(r.Parent)
+	parent, err := project.Resolve(r.Parent)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
+
+	projNs, err := projectns.Lookup(c, parent, org)
+	if err != nil {
+		return nil, status.FromError(err)
+	}
+	ns := projNs.Name
 
 	listOptions := &client.ListOptions{
 		LabelSelector: labels.SelectorFromSet(

@@ -14,14 +14,16 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/gogo/protobuf/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/apimachinery/pkg/api/errors"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -29,6 +31,7 @@ import (
 	sites "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/sites/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/controller"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 	"github.com/presslabs/dashboard/pkg/internal/site"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
@@ -42,7 +45,7 @@ func createSite(name, userID, project, image string, domains []wordpressv1alpha1
 	wp := site.New(&wordpressv1alpha1.Wordpress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: project,
+			Namespace: projectns.NamespaceName(project),
 			Labels: map[string]string{
 				"presslabs.com/kind":    "site",
 				"presslabs.com/site":    name,
@@ -65,7 +68,7 @@ func expectProperWordpress(c client.Client, name, userID, project, image string,
 	wp := &wordpressv1alpha1.Wordpress{}
 	key := client.ObjectKey{
 		Name:      name,
-		Namespace: project,
+		Namespace: projectns.NamespaceName(project),
 	}
 	Expect(c.Get(context.TODO(), key, wp)).To(Succeed())
 	Expect(wp.Name).To(Equal(name))
@@ -87,17 +90,18 @@ var _ = Describe("API server", func() {
 		conn *grpc.ClientConn
 		// siteClient
 		siteClient sites.SitesServiceClient
+		// context for requests
+		ctx context.Context
 	)
 
 	var (
-		id            string
-		name          string
-		userID        string
-		project       string
-		parent        string
-		image         string
-		primaryDomain string
-		domains       []wordpressv1alpha1.Domain
+		id, name             string
+		userID               string
+		project, parent      string
+		organization         string
+		image, primaryDomain string
+		domains              []wordpressv1alpha1.Domain
+		ns                   *corev1.Namespace
 	)
 
 	BeforeEach(func() {
@@ -134,6 +138,26 @@ var _ = Describe("API server", func() {
 		domains = []wordpressv1alpha1.Domain{
 			wordpressv1alpha1.Domain(primaryDomain),
 		}
+		organization = fmt.Sprintf("%d", rand.Int31())
+
+		ctx = metadata.AddOrgInContext(context.Background(), organization)
+
+		// create ProjectNamespace
+		ns = &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      projectns.NamespaceName(project),
+				Namespace: organization,
+				Labels: map[string]string{
+					"presslabs.com/kind":         "project",
+					"presslabs.com/project":      project,
+					"presslabs.com/organization": organization,
+				},
+				Annotations: map[string]string{
+					"presslabs.com/created-by": userID,
+				},
+			},
+		}
+		Expect(c.Create(context.TODO(), ns)).To(Succeed())
 	})
 
 	AfterEach(func() {
@@ -141,6 +165,8 @@ var _ = Describe("API server", func() {
 		conn.Close()
 		// stop the manager and API server
 		close(stop)
+
+		Expect(c.Delete(context.TODO(), ns))
 	})
 
 	Describe("at Create request", func() {
@@ -156,7 +182,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			_, err := siteClient.CreateSite(context.TODO(), &req)
+			_, err := siteClient.CreateSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.AlreadyExists))
 		})
 
@@ -170,7 +196,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			_, err := siteClient.CreateSite(context.TODO(), &req)
+			_, err := siteClient.CreateSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -183,7 +209,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			_, err := siteClient.CreateSite(context.TODO(), &req)
+			_, err := siteClient.CreateSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -197,7 +223,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			_, err := siteClient.CreateSite(context.TODO(), &req)
+			_, err := siteClient.CreateSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -212,7 +238,7 @@ var _ = Describe("API server", func() {
 					WordpressImage: image,
 				},
 			}
-			wp, err := siteClient.CreateSite(context.TODO(), &req)
+			wp, err := siteClient.CreateSite(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(wp.PrimaryDomain).To(Equal(primaryDomain))
 			Expect(wp.WordpressImage).To(Equal(image))
@@ -235,7 +261,7 @@ var _ = Describe("API server", func() {
 					WordpressImage: image,
 				},
 			}
-			_, err := siteClient.CreateSite(context.TODO(), &req)
+			_, err := siteClient.CreateSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -248,7 +274,7 @@ var _ = Describe("API server", func() {
 					WordpressImage: image,
 				},
 			}
-			_, err := siteClient.CreateSite(context.TODO(), &req)
+			_, err := siteClient.CreateSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -261,7 +287,7 @@ var _ = Describe("API server", func() {
 					WordpressImage: image,
 				},
 			}
-			_, err := siteClient.CreateSite(context.TODO(), &req)
+			_, err := siteClient.CreateSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -274,8 +300,21 @@ var _ = Describe("API server", func() {
 					WordpressImage: image,
 				},
 			}
-			_, err := siteClient.CreateSite(context.TODO(), &req)
+			_, err := siteClient.CreateSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
+		})
+
+		It("returns error when header does not have organization id", func() {
+			req := sites.CreateSiteRequest{
+				Parent: parent,
+				Site: sites.Site{
+					Name:           id,
+					PrimaryDomain:  primaryDomain,
+					WordpressImage: image,
+				},
+			}
+			_, err := siteClient.CreateSite(context.TODO(), &req)
+			Expect(status.Code(err)).To(Equal(codes.InvalidArgument))
 		})
 
 		It("creates site", func() {
@@ -287,7 +326,7 @@ var _ = Describe("API server", func() {
 					WordpressImage: image,
 				},
 			}
-			wp, err := siteClient.CreateSite(context.TODO(), &req)
+			wp, err := siteClient.CreateSite(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(wp.Name).To(Equal(id))
 			Expect(wp.PrimaryDomain).To(Equal(primaryDomain))
@@ -301,8 +340,19 @@ var _ = Describe("API server", func() {
 			req := sites.GetSiteRequest{
 				Name: id,
 			}
-			_, err := siteClient.GetSite(context.TODO(), &req)
+			_, err := siteClient.GetSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
+		})
+
+		It("returns error when header does not have organization id", func() {
+			wp := createSite(name, userID, project, image, domains)
+			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
+			req := sites.GetSiteRequest{
+				Name: id,
+			}
+
+			_, err := siteClient.GetSite(context.TODO(), &req)
+			Expect(status.Code(err)).To(Equal(codes.InvalidArgument))
 		})
 
 		It("returns the site", func() {
@@ -312,7 +362,7 @@ var _ = Describe("API server", func() {
 				Name: id,
 			}
 
-			resp, err := siteClient.GetSite(context.TODO(), &req)
+			resp, err := siteClient.GetSite(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
@@ -326,8 +376,19 @@ var _ = Describe("API server", func() {
 				Name: id,
 			}
 
-			_, err := siteClient.DeleteSite(context.TODO(), &req)
+			_, err := siteClient.DeleteSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
+		})
+
+		It("returns error when header does not have organization id", func() {
+			wp := createSite(name, userID, project, image, domains)
+			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
+			req := sites.DeleteSiteRequest{
+				Name: id,
+			}
+
+			_, err := siteClient.DeleteSite(context.TODO(), &req)
+			Expect(status.Code(err)).To(Equal(codes.InvalidArgument))
 		})
 
 		It("deletes existing site", func() {
@@ -337,7 +398,7 @@ var _ = Describe("API server", func() {
 				Name: id,
 			}
 
-			_, err := siteClient.DeleteSite(context.TODO(), &req)
+			_, err := siteClient.DeleteSite(ctx, &req)
 			Expect(err).To(Succeed())
 
 			var deletedWp wordpressv1alpha1.Wordpress
@@ -365,7 +426,7 @@ var _ = Describe("API server", func() {
 					WordpressImage: image,
 				},
 			}
-			_, err := siteClient.UpdateSite(context.TODO(), &req)
+			_, err := siteClient.UpdateSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 
@@ -382,7 +443,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := siteClient.UpdateSite(context.TODO(), &req)
+			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
@@ -403,7 +464,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := siteClient.UpdateSite(context.TODO(), &req)
+			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
@@ -426,7 +487,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := siteClient.UpdateSite(context.TODO(), &req)
+			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.PrimaryDomain).To(Equal(newPD))
@@ -458,7 +519,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := siteClient.UpdateSite(context.TODO(), &req)
+			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.PrimaryDomain).To(Equal(newPD))
@@ -479,7 +540,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := siteClient.UpdateSite(context.TODO(), &req)
+			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
@@ -497,7 +558,7 @@ var _ = Describe("API server", func() {
 					Paths: []string{"site.primary_domain"},
 				},
 			}
-			_, err := siteClient.UpdateSite(context.TODO(), &req)
+			_, err := siteClient.UpdateSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -517,7 +578,7 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := siteClient.UpdateSite(context.TODO(), &req)
+			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.PrimaryDomain).To(Equal(newPD))
@@ -538,12 +599,24 @@ var _ = Describe("API server", func() {
 				},
 			}
 
-			resp, err := siteClient.UpdateSite(context.TODO(), &req)
+			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
 			Expect(resp.Name).To(Equal(id))
 			Expect(resp.PrimaryDomain).To(Equal(newPD))
 			Expect(resp.WordpressImage).To(Equal(newWI))
 			expectProperWordpress(c, name, userID, project, newWI, expectedDomains)
+		})
+
+		It("returns error when header does not have organization id", func() {
+			req := sites.UpdateSiteRequest{
+				Site: sites.Site{
+					Name:           id,
+					PrimaryDomain:  primaryDomain,
+					WordpressImage: image,
+				},
+			}
+			_, err := siteClient.UpdateSite(context.TODO(), &req)
+			Expect(status.Code(err)).To(Equal(codes.InvalidArgument))
 		})
 	})
 
@@ -573,14 +646,14 @@ var _ = Describe("API server", func() {
 				Parent: parent,
 			}
 			Eventually(func() ([]sites.Site, error) {
-				resp, err := siteClient.ListSites(context.TODO(), &req)
+				resp, err := siteClient.ListSites(ctx, &req)
 				return resp.Sites, err
 			}).Should(HaveLen(sitesCount + 1))
 		})
 
 		It("returns error when no parent is given", func() {
 			req := sites.ListSitesRequest{}
-			_, err := siteClient.ListSites(context.TODO(), &req)
+			_, err := siteClient.ListSites(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
@@ -588,8 +661,16 @@ var _ = Describe("API server", func() {
 			req := sites.ListSitesRequest{
 				Parent: "not-fully-qualified",
 			}
-			_, err := siteClient.ListSites(context.TODO(), &req)
+			_, err := siteClient.ListSites(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
+		})
+
+		It("returns error when header does not have organization id", func() {
+			req := sites.ListSitesRequest{
+				Parent: parent,
+			}
+			_, err := siteClient.ListSites(context.TODO(), &req)
+			Expect(status.Code(err)).To(Equal(codes.InvalidArgument))
 		})
 	})
 })
