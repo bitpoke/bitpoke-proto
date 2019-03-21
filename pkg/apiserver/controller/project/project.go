@@ -100,12 +100,12 @@ func (s *projectsServer) GetProject(ctx context.Context, r *projs.GetProjectRequ
 		Namespace: organization.NamespaceName(orgName),
 	}
 
-	var proj dashboardv1alpha1.Project
-	if err := c.Get(ctx, key, &proj); err != nil {
+	proj := project.New(&dashboardv1alpha1.Project{})
+	if err := c.Get(ctx, key, proj.Unwrap()); err != nil {
 		return nil, status.NotFoundf("project %s not found", r.Name).Because(err)
 	}
 
-	return newProjectFromK8s(project.New(&proj)), nil
+	return newProjectFromK8s(proj), nil
 }
 
 func (s *projectsServer) UpdateProject(ctx context.Context, r *projs.UpdateProjectRequest) (*projs.Project, error) {
@@ -121,18 +121,18 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *projs.UpdateProje
 		Namespace: organization.NamespaceName(orgName),
 	}
 
-	var proj dashboardv1alpha1.Project
-	if err = c.Get(ctx, key, &proj); err != nil {
-		return nil, status.NotFound().Because(err)
+	proj := project.New(&dashboardv1alpha1.Project{})
+	if err = c.Get(ctx, key, proj.Unwrap()); err != nil {
+		return nil, status.FromError(err)
 	}
 
-	project.New(&proj).UpdateDisplayName(r.Project.DisplayName)
+	proj.UpdateDisplayName(r.Project.DisplayName)
 
-	if err = c.Update(ctx, &proj); err != nil {
-		return nil, status.NotFound().Because(err)
+	if err = c.Update(ctx, proj.Unwrap()); err != nil {
+		return nil, status.FromError(err)
 	}
 
-	return newProjectFromK8s(project.New(&proj)), nil
+	return newProjectFromK8s(proj), nil
 }
 
 func (s *projectsServer) DeleteProject(ctx context.Context, r *projs.DeleteProjectRequest) (*types.Empty, error) {
@@ -150,7 +150,7 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *projs.DeleteProje
 
 	var proj dashboardv1alpha1.Project
 	if err := c.Get(ctx, key, &proj); err != nil {
-		return nil, status.NotFound().Because()
+		return nil, status.FromError(err)
 	}
 
 	if err := c.Delete(ctx, &proj); err != nil {
