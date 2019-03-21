@@ -76,7 +76,7 @@ var runAPIServer = func(cmd *cobra.Command, args []string) {
 
 	err = mgr.Add(server)
 	if err != nil {
-		log.Error(err, "unable to add to managaer")
+		log.Error(err, "unable to add to manager")
 		os.Exit(1)
 	}
 

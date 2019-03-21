@@ -14,16 +14,15 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/gogo/protobuf/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -33,6 +32,7 @@ import (
 	"github.com/presslabs/dashboard/pkg/controller"
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
 	"github.com/presslabs/dashboard/pkg/internal/site"
+	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -166,7 +166,13 @@ var _ = Describe("API server", func() {
 		// stop the manager and API server
 		close(stop)
 
-		Expect(c.Delete(context.TODO(), ns))
+		// delete ProjectNamespace
+		Expect(c.Delete(context.TODO(), ns)).To(Succeed())
+		Eventually(func() corev1.Namespace {
+			ns := corev1.Namespace{}
+			c.Get(context.TODO(), client.ObjectKey{Name: projectns.NamespaceName(project), Namespace: organization}, &ns)
+			return ns
+		}).Should(BeInPhase(corev1.NamespaceTerminating))
 	})
 
 	Describe("at Create request", func() {
@@ -304,7 +310,7 @@ var _ = Describe("API server", func() {
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
-		It("returns error when header does not have organization id", func() {
+		It("returns error when no organization is set in metadata", func() {
 			req := sites.CreateSiteRequest{
 				Parent: parent,
 				Site: sites.Site{
@@ -344,7 +350,7 @@ var _ = Describe("API server", func() {
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 
-		It("returns error when header does not have organization id", func() {
+		It("returns error when no organization is set in metadata", func() {
 			wp := createSite(name, userID, project, image, domains)
 			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
 			req := sites.GetSiteRequest{
@@ -380,7 +386,7 @@ var _ = Describe("API server", func() {
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 
-		It("returns error when header does not have organization id", func() {
+		It("returns error when no organization is set in metadata", func() {
 			wp := createSite(name, userID, project, image, domains)
 			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
 			req := sites.DeleteSiteRequest{
@@ -607,7 +613,7 @@ var _ = Describe("API server", func() {
 			expectProperWordpress(c, name, userID, project, newWI, expectedDomains)
 		})
 
-		It("returns error when header does not have organization id", func() {
+		It("returns error when no organization is set in metadata", func() {
 			req := sites.UpdateSiteRequest{
 				Site: sites.Site{
 					Name:           id,
@@ -665,7 +671,7 @@ var _ = Describe("API server", func() {
 			Expect(status.Convert(err).Code()).To(Equal(codes.InvalidArgument))
 		})
 
-		It("returns error when header does not have organization id", func() {
+		It("returns error when no organization is set in metadata", func() {
 			req := sites.ListSitesRequest{
 				Parent: parent,
 			}

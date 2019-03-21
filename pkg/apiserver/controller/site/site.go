@@ -46,6 +46,31 @@ func containsString(s []string, e string) bool {
 	return false
 }
 
+// resolveFromDomain generates site name from primary domain if no one is given
+func resolveFromDomain(name, parent, domain string) (string, string, error) {
+	if len(name) == 0 {
+		etld, err := publicsuffix.EffectiveTLDPlusOne(domain)
+		if err != nil {
+			return "", "", status.FromError(err)
+		}
+		label := strings.Split(etld, ".")[0]
+
+		gen := rand.NewStringGenerator("abcdefghijklmnopqrstuvwxyz0123456789")
+		randomString, err := gen(5)
+		if err != nil {
+			return "", "", status.FromError(err)
+		}
+		return fmt.Sprintf("%s-%s", label, randomString), parent, nil
+	}
+
+	siteName, proj, err := site.Resolve(name)
+	if err != nil {
+		return "", "", status.InvalidArgumentf("%s", err)
+	}
+
+	return siteName, proj, nil
+}
+
 // Add creates a new Site Controller and adds it to the API Server
 func Add(server *apiserver.APIServer) error {
 	sites.RegisterSitesServiceServer(server.GRPCServer,
@@ -55,7 +80,7 @@ func Add(server *apiserver.APIServer) error {
 
 func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteRequest) (*sites.Site, error) {
 	c, userID := impersonate.ClientFromContext(ctx, s.cfg)
-	org := metadata.RequireOrganizationNamespace(ctx)
+	org := metadata.RequireOrganization(ctx)
 
 	var name, proj string
 
@@ -74,28 +99,9 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 		return nil, status.InvalidArgumentf("primary domain cannot be empty")
 	}
 
-	// generate a name for the site when no one is given
-	if len(r.Site.Name) == 0 {
-		var etld, randomString string
-
-		etld, err = publicsuffix.EffectiveTLDPlusOne(r.Site.PrimaryDomain)
-		if err != nil {
-			return nil, status.FromError(err)
-		}
-		label := strings.Split(etld, ".")[0]
-
-		gen := rand.NewStringGenerator("abcdefghijklmnopqrstuvwxyz0123456789")
-		randomString, err = gen(5)
-		if err != nil {
-			return nil, status.FromError(err)
-		}
-		name = fmt.Sprintf("%s-%s", label, randomString)
-		proj = parent
-	} else {
-		name, proj, err = site.Resolve(r.Site.Name)
-		if err != nil {
-			return nil, status.InvalidArgumentf("%s", err)
-		}
+	name, proj, err = resolveFromDomain(r.Name, parent, r.PrimaryDomain)
+	if err != nil {
+		return nil, err
 	}
 
 	if parent != proj {
@@ -130,7 +136,7 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 
 func (s *sitesService) GetSite(ctx context.Context, r *sites.GetSiteRequest) (*sites.Site, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
-	org := metadata.RequireOrganizationNamespace(ctx)
+	org := metadata.RequireOrganization(ctx)
 
 	key, err := site.ResolveToObjectKey(r.Name)
 	if err != nil {
@@ -173,7 +179,7 @@ func updateWordpressImage(wp *wordpressv1alpha1.Wordpress, image string, fieldMa
 
 func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteRequest) (*sites.Site, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
-	org := metadata.RequireOrganizationNamespace(ctx)
+	org := metadata.RequireOrganization(ctx)
 
 	wp := site.New(&wordpressv1alpha1.Wordpress{})
 	key, err := site.ResolveToObjectKey(r.Name)
@@ -208,7 +214,7 @@ func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteReques
 
 func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteRequest) (*types.Empty, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
-	org := metadata.RequireOrganizationNamespace(ctx)
+	org := metadata.RequireOrganization(ctx)
 
 	key, err := site.ResolveToObjectKey(r.Name)
 	if err != nil {
@@ -235,7 +241,7 @@ func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteReques
 
 func (s *sitesService) ListSites(ctx context.Context, r *sites.ListSitesRequest) (*sites.ListSitesResponse, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
-	org := metadata.RequireOrganizationNamespace(ctx)
+	org := metadata.RequireOrganization(ctx)
 
 	wpList := &wordpressv1alpha1.WordpressList{}
 	resp := &sites.ListSitesResponse{}
