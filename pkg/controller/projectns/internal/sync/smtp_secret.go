@@ -25,7 +25,7 @@ import (
 )
 
 func namespace() string {
-	if ns := os.Getenv("KUBE_NAMESPACE"); ns != "" {
+	if ns := os.Getenv("MY_NAMESPACE"); ns != "" {
 		return ns
 	}
 	if data, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
