@@ -119,12 +119,12 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *orgs.GetO
 		Name: organization.NamespaceName(name),
 	}
 
-	var org corev1.Namespace
-	if err := c.Get(ctx, key, &org); err != nil {
+	org := organization.New(&corev1.Namespace{})
+	if err := c.Get(ctx, key, org.Unwrap()); err != nil {
 		return nil, status.NotFoundf("organization %s not found", r.Name).Because(err)
 	}
 
-	return newOrganizationFromK8s(organization.New(&org)), nil
+	return newOrganizationFromK8s(org), nil
 }
 
 func (s *organizationsService) UpdateOrganization(ctx context.Context, r *orgs.UpdateOrganizationRequest) (*orgs.Organization, error) {
@@ -138,18 +138,18 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *orgs.U
 		Name: organization.NamespaceName(name),
 	}
 
-	var org corev1.Namespace
-	if err = c.Get(ctx, key, &org); err != nil {
+	org := organization.New(&corev1.Namespace{})
+	if err = c.Get(ctx, key, org.Unwrap()); err != nil {
 		return nil, status.NotFound().Because(err)
 	}
 
-	organization.New(&org).UpdateDisplayName(r.Organization.DisplayName)
+	org.UpdateDisplayName(r.Organization.DisplayName)
 
-	if err = c.Update(ctx, &org); err != nil {
+	if err = c.Update(ctx, org.Unwrap()); err != nil {
 		return nil, status.FromError(err)
 	}
 
-	return newOrganizationFromK8s(organization.New(&org)), nil
+	return newOrganizationFromK8s(org), nil
 }
 
 func (s *organizationsService) DeleteOrganization(ctx context.Context, r *orgs.DeleteOrganizationRequest) (*types.Empty, error) {
@@ -163,12 +163,12 @@ func (s *organizationsService) DeleteOrganization(ctx context.Context, r *orgs.D
 		Name: organization.NamespaceName(name),
 	}
 
-	var org corev1.Namespace
-	if err := c.Get(ctx, key, &org); err != nil {
+	org := organization.New(&corev1.Namespace{})
+	if err := c.Get(ctx, key, org.Unwrap()); err != nil {
 		return nil, status.NotFound().Because(err)
 	}
 
-	if err := c.Delete(ctx, &org); err != nil {
+	if err := c.Delete(ctx, org.Unwrap()); err != nil {
 		return nil, status.FromError(err)
 	}
 
@@ -198,16 +198,17 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *orgs.Li
 	if err != nil {
 		return nil, status.FromError(err)
 	}
-	resp := &orgs.ListOrganizationsResponse{}
 
 	if err := s.client.List(context.TODO(), opts, orgList); err != nil {
 		return nil, status.FromError(err)
 	}
 
 	// TODO: implement pagination
-	resp.Organizations = []orgs.Organization{} //make([]*Organization, len(orgs.Items))
+	resp := &orgs.ListOrganizationsResponse{
+		Organizations: make([]orgs.Organization, len(orgList.Items)),
+	}
 	for i := range orgList.Items {
-		resp.Organizations = append(resp.Organizations, *newOrganizationFromK8s(organization.New(&orgList.Items[i])))
+		resp.Organizations[i] = *newOrganizationFromK8s(organization.New(&orgList.Items[i]))
 	}
 
 	return resp, nil
