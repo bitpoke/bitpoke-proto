@@ -45,13 +45,13 @@ var (
 	// PrometheusServiceAccount component
 	PrometheusServiceAccount = component{app: "prometheus", objName: "prometheus"}
 	// PrometheusRoleBinding for ServiceAccount component
-	PrometheusRoleBinding = component{app: "prometheus", objName: "prometheus"}
+	PrometheusRoleBinding = component{app: "prometheus", objName: "dashboard.presslabs.com:project:prometheus"}
 	// Prometheus component
 	Prometheus = component{app: "prometheus", objName: "prometheus"}
 	// OwnerRoleBinding component
-	OwnerRoleBinding = component{objName: "owner"}
+	OwnerRoleBinding = component{objName: "dashboard.presslabs.com:project:owners"}
 	// MemberRoleBinding component
-	MemberRoleBinding = component{objName: "member"}
+	MemberRoleBinding = component{objName: "dashboard.presslabs.com:project:members"}
 	// WordpressServiceMonitor component
 	WordpressServiceMonitor = component{app: "prometheus", objName: "wordpress"}
 	// MysqlServiceMonitor component
@@ -59,7 +59,7 @@ var (
 	// MemcachedServiceMonitor component
 	MemcachedServiceMonitor = component{app: "prometheus", objName: "memcached"}
 	// SMTPSecret component
-	SMTPSecret = component{objName: "smtp"}
+	SMTPSecret = component{objName: "default-smtp-credentials"}
 )
 
 // UpdateDisplayName updates the display-name annotation

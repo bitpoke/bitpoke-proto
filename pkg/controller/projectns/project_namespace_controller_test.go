@@ -108,14 +108,14 @@ var _ = Describe("Project Namespace controller", func() {
 			Entry("reconciles limit range", "default", "presslabs-dashboard", &corev1.LimitRange{}),
 			Entry("reconciles resource quota", "default", "presslabs-dashboard", &corev1.ResourceQuota{}),
 			Entry("reconciles prometheus service account", "prometheus", "prometheus", &corev1.ServiceAccount{}),
-			Entry("reconciles prometheus role binding", "prometheus", "prometheus%.0s", &rbacv1.RoleBinding{}),
+			Entry("reconciles prometheus role binding", "prometheus", "dashboard.presslabs.com:project:prometheus", &rbacv1.RoleBinding{}),
 			Entry("reconciles prometheus", "prometheus-instance", "prometheus%.0s", &monitoringv1.Prometheus{}),
-			Entry("reconciles member role binding", "member", "member", &rbacv1.RoleBinding{}),
-			Entry("reconciles owner role binding", "owner", "owner", &rbacv1.RoleBinding{}),
+			Entry("reconciles member role binding", "member", "dashboard.presslabs.com:project:members", &rbacv1.RoleBinding{}),
+			Entry("reconciles owner role binding", "owner", "dashboard.presslabs.com:project:owners", &rbacv1.RoleBinding{}),
 			Entry("reconciles memcached service monitor", "prometheus", "memcached", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles mysql service monitor", "prometheus", "mysql", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles wordpress service monitor", "prometheus", "wordpress", &monitoringv1.ServiceMonitor{}),
-			Entry("reconciles smtp secret", "smtp-secret", "smtp", &corev1.Secret{}),
+			Entry("reconciles smtp secret", "smtp-secret", "default-smtp-credentials", &corev1.Secret{}),
 		}
 
 		BeforeEach(func() {
