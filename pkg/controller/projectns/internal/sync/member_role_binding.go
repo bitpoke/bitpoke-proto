@@ -24,7 +24,7 @@ func NewMemberRoleBindingSyncer(proj *projectns.ProjectNamespace, cl client.Clie
 	obj := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.MemberRoleBinding),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 

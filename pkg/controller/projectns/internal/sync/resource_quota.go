@@ -48,7 +48,7 @@ func NewResourceQuotaSyncer(proj *projectns.ProjectNamespace, cl client.Client, 
 	obj := &corev1.ResourceQuota{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.ResourceQuota),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 

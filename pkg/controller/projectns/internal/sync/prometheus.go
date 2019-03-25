@@ -32,7 +32,7 @@ func NewPrometheusSyncer(proj *projectns.ProjectNamespace, cl client.Client, sch
 	obj := &monitoringv1.Prometheus{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.Prometheus),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 

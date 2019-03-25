@@ -62,11 +62,6 @@ var (
 	SMTPSecret = component{objName: "smtp"}
 )
 
-// NamespaceName returns the name of the project's namespace
-func NamespaceName(name string) string {
-	return fmt.Sprintf("proj-%s", name)
-}
-
 // UpdateDisplayName updates the display-name annotation
 func (p *ProjectNamespace) UpdateDisplayName(displayName string) {
 	if len(displayName) == 0 {

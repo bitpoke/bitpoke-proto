@@ -25,7 +25,7 @@ func NewPrometheusRoleBindingSyncer(proj *projectns.ProjectNamespace, cl client.
 	obj := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.PrometheusRoleBinding),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 

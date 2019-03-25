@@ -34,7 +34,7 @@ func NewWordpressServiceMonitorSyncer(proj *projectns.ProjectNamespace, cl clien
 	obj := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.WordpressServiceMonitor),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 

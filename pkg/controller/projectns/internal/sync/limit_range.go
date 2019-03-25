@@ -26,7 +26,7 @@ func NewLimitRangeSyncer(proj *projectns.ProjectNamespace, cl client.Client, sch
 	obj := &corev1.LimitRange{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.LimitRange),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 

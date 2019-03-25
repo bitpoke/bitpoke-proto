@@ -34,7 +34,7 @@ func NewMysqlServiceMonitorSyncer(proj *projectns.ProjectNamespace, cl client.Cl
 	obj := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.MysqlServiceMonitor),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 

@@ -24,7 +24,7 @@ func NewOwnerRoleBindingSyncer(proj *projectns.ProjectNamespace, cl client.Clien
 	obj := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.OwnerRoleBinding),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 

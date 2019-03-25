@@ -25,7 +25,7 @@ func NewPrometheusServiceAccountSyncer(proj *projectns.ProjectNamespace, cl clie
 	obj := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.PrometheusServiceAccount),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 

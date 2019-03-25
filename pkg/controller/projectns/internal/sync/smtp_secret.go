@@ -46,27 +46,25 @@ func NewSMTPSecretSyncer(proj *projectns.ProjectNamespace, cl client.Client, sch
 	obj := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.SMTPSecret),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 
 	return syncer.NewObjectSyncer("SMTPSecret", proj.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Secret)
 
-		if out.CreationTimestamp.IsZero() {
-			// get default smtp secret
-			defaultSecret := &corev1.Secret{}
-			key := client.ObjectKey{
-				Name:      options.SMTPSecret,
-				Namespace: namespace(),
-			}
-			if err := cl.Get(context.TODO(), key, defaultSecret); err != nil {
-				return err
-			}
-
-			out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
-			out.Data = defaultSecret.Data
+		// get default smtp secret
+		defaultSecret := &corev1.Secret{}
+		key := client.ObjectKey{
+			Name:      options.SMTPSecret,
+			Namespace: namespace(),
 		}
+		if err := cl.Get(context.TODO(), key, defaultSecret); err != nil {
+			return err
+		}
+
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+		out.Data = defaultSecret.Data
 
 		return nil
 	})
