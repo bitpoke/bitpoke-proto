@@ -5,7 +5,7 @@ This file is subject to the terms and conditions defined in file LICENSE,
 which is part of this source code package.
 */
 
-package sync_test
+package sync
 
 import (
 	"fmt"
@@ -20,7 +20,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/presslabs/controller-util/syncer"
-	"github.com/presslabs/dashboard/pkg/controller/projectns/internal/sync"
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
@@ -48,7 +47,7 @@ var _ = Describe("The OwnerRoleSyncer transform func T", func() {
 		})
 
 		ownerRoleBinding = &rbacv1.RoleBinding{}
-		ownerRoleBindingSyncer := sync.NewOwnerRoleBindingSyncer(proj, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
+		ownerRoleBindingSyncer := NewOwnerRoleBindingSyncer(proj, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
 		err := ownerRoleBindingSyncer.SyncFn(ownerRoleBinding)
 		Expect(err).ShouldNot(HaveOccurred())
 	})

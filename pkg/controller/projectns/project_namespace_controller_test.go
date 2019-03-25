@@ -25,9 +25,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	"google.golang.org/api/iam/v1"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"golang.org/x/net/context"
+	"golang.org/x/oauth2/google"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,7 +43,25 @@ import (
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 )
 
-const timeout = time.Second * 1
+const timeout = time.Second * 7
+
+// deleteServiceAccount deletes a service account.
+func deleteServiceAccount(email string) error {
+	client, err := google.DefaultClient(context.Background(), iam.CloudPlatformScope)
+	if err != nil {
+		return fmt.Errorf("google.DefaultClient: %v", err)
+	}
+	service, err := iam.New(client)
+	if err != nil {
+		return fmt.Errorf("iam.New: %v", err)
+	}
+
+	_, err = service.Projects.ServiceAccounts.Delete("projects/-/serviceAccounts/" + email).Do()
+	if err != nil {
+		return fmt.Errorf("Projects.ServiceAccounts.Delete: %v", err)
+	}
+	return nil
+}
 
 var _ = Describe("Project Namespace controller", func() {
 	var (
@@ -116,6 +136,7 @@ var _ = Describe("Project Namespace controller", func() {
 			Entry("reconciles mysql service monitor", "prometheus", "mysql", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles wordpress service monitor", "prometheus", "wordpress", &monitoringv1.ServiceMonitor{}),
 			Entry("reconciles smtp secret", "smtp-secret", "default-smtp-credentials", &corev1.Secret{}),
+			Entry("reconciles gcloud service account secret", "gcloud-service-account", "gcloud-service-account-secret", &corev1.Secret{}),
 		}
 
 		BeforeEach(func() {
@@ -175,6 +196,10 @@ var _ = Describe("Project Namespace controller", func() {
 					"app.kubernetes.io/managed-by":      "project-namespace-controller.dashboard.presslabs.com",
 					"dashboard.presslabs.com/reconcile": "true",
 				},
+				"gcloud-service-account": {
+					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
+					"presslabs.com/kind":           "gcloud-service-account-secret",
+				},
 			}
 
 			// Create the Project object and expect the Reconcile and Namespace to be created
@@ -197,6 +222,17 @@ var _ = Describe("Project Namespace controller", func() {
 		})
 
 		AfterEach(func() {
+
+			saSecret := corev1.Secret{}
+			key := types.NamespacedName{
+				Name:      "gcloud-service-account-secret",
+				Namespace: projectNamespace,
+			}
+			Expect(c.Get(context.TODO(), key, &saSecret)).To(Succeed())
+
+			// delete gcloud service account
+			Expect(deleteServiceAccount(string(saSecret.Data["SERVICE_ACCOUNT_MAIL"]))).To(Succeed())
+
 			Expect(c.Delete(context.TODO(), project)).To(Succeed())
 			Eventually(func() corev1.Namespace {
 				ns := corev1.Namespace{}

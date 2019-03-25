@@ -31,7 +31,12 @@ pipeline:
   test:
     group: test
     image: quay.io/presslabs/bfc:latest
+    secrets:
+      - GCLOUD_CREDENTIALS
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/etc/key.json
     commands:
+      - echo "$GCLOUD_CREDENTIALS" > $GOOGLE_APPLICATION_CREDENTIALS
       - make test
 
   test-webapp:

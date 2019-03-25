@@ -66,6 +66,8 @@ var (
 	MemcachedServiceMonitor = component{app: "prometheus", objName: "memcached"}
 	// SMTPSecret component
 	SMTPSecret = component{objName: "default-smtp-credentials"}
+	// GcloudServiceAccountSecret component
+	GcloudServiceAccountSecret = component{objName: "gcloud-service-account-secret"}
 )
 
 // UpdateDisplayName updates the display-name annotation

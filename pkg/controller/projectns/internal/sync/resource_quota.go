@@ -19,15 +19,13 @@ import (
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
-var (
-	defaultQuotaValues = corev1.ResourceList{
-		corev1.ResourceRequestsCPU:    resource.MustParse("4"),
-		corev1.ResourceRequestsMemory: resource.MustParse("15Gi"),
-		corev1.ResourceLimitsCPU:      resource.MustParse("8"),
-		corev1.ResourceLimitsMemory:   resource.MustParse("32Gi"),
-		corev1.ResourcePods:           resource.MustParse("20"),
-	}
-)
+var defaultQuotaValues = corev1.ResourceList{
+	corev1.ResourceRequestsCPU:    resource.MustParse("4"),
+	corev1.ResourceRequestsMemory: resource.MustParse("15Gi"),
+	corev1.ResourceLimitsCPU:      resource.MustParse("8"),
+	corev1.ResourceLimitsMemory:   resource.MustParse("32Gi"),
+	corev1.ResourcePods:           resource.MustParse("20"),
+}
 
 func defaultOrMaxValue(rl corev1.ResourceList, resource corev1.ResourceName) resource.Quantity {
 	defaultResource := defaultQuotaValues[resource]
