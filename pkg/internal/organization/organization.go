@@ -31,20 +31,16 @@ var (
 	// RequiredAnnotations is a list of required Organization
 	// annotations
 	RequiredAnnotations = []string{"presslabs.com/created-by"}
-	// OwnerClusterRole component
-	OwnerClusterRole = Component{
-		kind:       &rbacv1.ClusterRole{},
-		objNameFmt: "dashboard.presslabs.com:organization:%s:owner",
-	}
-	// OwnerClusterRoleBinding component
-	OwnerClusterRoleBinding = Component{
-		kind:       &rbacv1.ClusterRoleBinding{},
-		objNameFmt: "dashboard.presslabs.com:organization:%s:owners",
+	// OwnerRoleBinding component
+	OwnerRoleBinding = Component{
+		kind:            &rbacv1.RoleBinding{},
+		objName:         "dashboard.presslabs.com:organization:owners",
+		objNamespaceFmt: "%s",
 	}
 	// MemberRoleBinding component
 	MemberRoleBinding = Component{
 		kind:            &rbacv1.RoleBinding{},
-		objName:         "members",
+		objName:         "dashboard.presslabs.com:organization:members",
 		objNamespaceFmt: "%s",
 	}
 )

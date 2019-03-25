@@ -75,8 +75,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	subresources := []runtime.Object{
-		&rbacv1.ClusterRole{},
-		&rbacv1.ClusterRoleBinding{},
 		&rbacv1.RoleBinding{},
 	}
 
@@ -131,8 +129,7 @@ func (r *ReconcileOrganization) Reconcile(request reconcile.Request) (reconcile.
 	}
 
 	syncers := []syncer.Interface{
-		sync.NewOwnerClusterRoleSyncer(org, r.Client, r.scheme),
-		sync.NewOwnerClusterRoleBindingSyncer(org, r.Client, r.scheme),
+		sync.NewOwnerRoleBindingSyncer(org, r.Client, r.scheme),
 		sync.NewMemberRoleBindingSyncer(org, r.Client, r.scheme),
 	}
 

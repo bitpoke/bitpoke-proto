@@ -39,21 +39,7 @@ func Add(server *apiserver.APIServer) error {
 	orgs.RegisterOrganizationsServiceServer(server.GRPCServer,
 		NewOrganizationsServiceServer(server.Manager.GetClient(), rest.CopyConfig(server.Manager.GetConfig())))
 
-	err := server.Manager.GetFieldIndexer().IndexField(&rbacv1.ClusterRoleBinding{}, "subject.user", func(in runtime.Object) []string {
-		crb := in.(*rbacv1.ClusterRoleBinding)
-		var users []string
-		for _, sub := range crb.Subjects {
-			if sub.APIGroup == "rbac.authorization.k8s.io" && sub.Kind == "User" {
-				users = append(users, sub.Name)
-			}
-		}
-		return users
-	})
-	if err != nil {
-		return err
-	}
-
-	err = server.Manager.GetFieldIndexer().IndexField(&rbacv1.RoleBinding{}, "subject.user", func(in runtime.Object) []string {
+	err := server.Manager.GetFieldIndexer().IndexField(&rbacv1.RoleBinding{}, "subject.user", func(in runtime.Object) []string {
 		rb := in.(*rbacv1.RoleBinding)
 		var users []string
 		for _, sub := range rb.Subjects {
@@ -187,7 +173,7 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *orgs.Li
 
 	var orgNames []string
 	for _, list := range memberLists.Items {
-		if list.Name == "members" && len(list.Labels) > 0 && len(list.Labels["presslabs.com/organization"]) > 0 {
+		if list.Name == "dashboard.presslabs.com:organization:members" && len(list.Labels) > 0 && len(list.Labels["presslabs.com/organization"]) > 0 {
 			orgNames = append(orgNames, list.Labels["presslabs.com/organization"])
 		}
 	}

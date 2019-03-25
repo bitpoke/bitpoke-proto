@@ -30,9 +30,9 @@ import (
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 )
 
-var _ = Describe("The OwnerClusterRoleSyncer transform func T", func() {
+var _ = Describe("The OwnerRoleSyncer transform func T", func() {
 	var org *organization.Organization
-	var ownerClusterRole *rbacv1.ClusterRole
+	var ownerRoleBinding *rbacv1.RoleBinding
 	var organizationName string
 
 	BeforeEach(func() {
@@ -48,35 +48,26 @@ var _ = Describe("The OwnerClusterRoleSyncer transform func T", func() {
 				},
 			},
 		})
-		ownerClusterRole = &rbacv1.ClusterRole{}
+		ownerRoleBinding = &rbacv1.RoleBinding{}
 
-		ownerClusterRoleSyncer := sync.NewOwnerClusterRoleSyncer(org, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
-		err := ownerClusterRoleSyncer.SyncFn(ownerClusterRole)
+		ownerRoleBindingSyncer := sync.NewOwnerRoleBindingSyncer(org, fake.NewFakeClient(), scheme.Scheme).(*syncer.ObjectSyncer)
+		err := ownerRoleBindingSyncer.SyncFn(ownerRoleBinding)
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
-	It("reconciles the owner ClusterRole", func() {
-		expectedRules := []rbacv1.PolicyRule{
+	It("reconciles the owner RoleBinding", func() {
+		expectedSubjects := []rbacv1.Subject{
 			{
-				Resources: []string{
-					"namespaces",
-				},
-				ResourceNames: []string{
-					org.Name,
-				},
-				Verbs: []string{
-					"delete",
-					"update",
-				},
-				APIGroups: []string{""},
+				Kind: "User",
+				Name: org.Annotations["created-by"],
 			},
 		}
-		Expect(ownerClusterRole.Rules).To(Equal(expectedRules))
+		Expect(ownerRoleBinding.Subjects).To(Equal(expectedSubjects))
 
 		expectedLabels := map[string]string{
 			"presslabs.com/organization":   organizationName,
 			"app.kubernetes.io/managed-by": "organization-controller.dashboard.presslabs.com",
 		}
-		Expect(ownerClusterRole.Labels).To(Equal(expectedLabels))
+		Expect(ownerRoleBinding.Labels).To(Equal(expectedLabels))
 	})
 })

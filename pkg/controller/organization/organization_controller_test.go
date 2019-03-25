@@ -137,48 +137,25 @@ var _ = Describe("Organization controller", func() {
 			}).Should(BeInPhase(corev1.NamespaceTerminating))
 		})
 
-		It("reconciles the owner cluster role", func() {
-			cr := &rbacv1.ClusterRole{}
-			Eventually(func() error {
-				return c.Get(
-					context.TODO(),
-					types.NamespacedName{
-						Name: fmt.Sprintf("dashboard.presslabs.com:organization:%s:owner", orgNameLabel),
-					},
-					cr)
-			}, timeout).Should(Succeed())
-
-			Expect(cr.Labels).To(Equal(map[string]string{
-				"presslabs.com/organization":   orgNameLabel,
-				"app.kubernetes.io/managed-by": "organization-controller.dashboard.presslabs.com",
-			}))
-			Expect(cr.Rules).To(Equal([]rbacv1.PolicyRule{
-				{
-					Verbs:         []string{"delete", "update"},
-					APIGroups:     []string{""},
-					Resources:     []string{"namespaces"},
-					ResourceNames: []string{orgName},
-				},
-			}))
-		})
 		It("reconciles the owners cluster role binding", func() {
-			crb := &rbacv1.ClusterRoleBinding{}
+			r := &rbacv1.RoleBinding{}
 			Eventually(func() error {
 				return c.Get(
 					context.TODO(),
 					types.NamespacedName{
-						Name: fmt.Sprintf("dashboard.presslabs.com:organization:%s:owners", orgNameLabel),
+						Name:      "dashboard.presslabs.com:organization:owners",
+						Namespace: orgName,
 					},
-					crb)
+					r)
 			}, timeout).Should(Succeed())
-			Expect(crb.Labels).To(Equal(map[string]string{
+			Expect(r.Labels).To(Equal(map[string]string{
 				"presslabs.com/organization":   orgNameLabel,
 				"app.kubernetes.io/managed-by": "organization-controller.dashboard.presslabs.com",
 			}))
-			Expect(crb.RoleRef).To(Equal(rbacv1.RoleRef{
+			Expect(r.RoleRef).To(Equal(rbacv1.RoleRef{
 				APIGroup: "rbac.authorization.k8s.io",
 				Kind:     "ClusterRole",
-				Name:     fmt.Sprintf("dashboard.presslabs.com:organization:%s:owner", orgNameLabel),
+				Name:     "dashboard.presslabs.com:organization::owner",
 			}))
 		})
 		It("reconciles the members role binding", func() {
@@ -187,7 +164,7 @@ var _ = Describe("Organization controller", func() {
 				return c.Get(
 					context.TODO(),
 					types.NamespacedName{
-						Name:      "members",
+						Name:      "dashboard.presslabs.com:organization:members",
 						Namespace: orgName,
 					},
 					r)

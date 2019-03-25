@@ -26,31 +26,28 @@ import (
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 )
 
-// NewOwnerClusterRoleSyncer returns a new syncer.Interface for reconciling owner ClusterRole
-func NewOwnerClusterRoleSyncer(org *organization.Organization, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	obj := org.ComponentObject(organization.OwnerClusterRole)
+// NewOwnerRoleBindingSyncer returns a new syncer.Interface for reconciling owner RoleBinding
+func NewOwnerRoleBindingSyncer(org *organization.Organization, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
+	obj := org.ComponentObject(organization.OwnerRoleBinding)
 
-	return syncer.NewObjectSyncer("OwnerClusterRole", org.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
-		out := existing.(*rbacv1.ClusterRole)
+	return syncer.NewObjectSyncer("OwnerRole", org.Unwrap(), obj, cl, scheme, func(existing runtime.Object) error {
+		out := existing.(*rbacv1.RoleBinding)
 
 		out.Labels = labels.Merge(labels.Merge(out.Labels, org.Labels()), controllerLabels)
 
-		out.Rules = []rbacv1.PolicyRule{
-			{
-				Resources: []string{
-					"namespaces",
-				},
-				ResourceNames: []string{
-					org.Name,
-				},
-				Verbs: []string{
-					"delete",
-					"update",
-				},
-				APIGroups: []string{""},
-			},
+		// only add the organization creator if the subjects list is empty, meaning it's just been created
+		if out.ObjectMeta.CreationTimestamp.IsZero() {
+			owner := rbacv1.Subject{
+				Kind: "User",
+				Name: org.Annotations["presslabs.com/created-by"],
+			}
+			out.Subjects = append(out.Subjects, owner)
 		}
-
+		out.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     "dashboard.presslabs.com:organization::owner",
+		}
 		return nil
 	})
 }
