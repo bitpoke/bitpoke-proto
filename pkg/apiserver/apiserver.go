@@ -105,29 +105,22 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 	reflection.Register(grpcServer)
 
 	// Create the HTTP handler and server
-	sMux := http.NewServeMux()
-	wrappedGrpc := grpcweb.WrapServer(grpcServer)
-	handler := func(resp http.ResponseWriter, req *http.Request) {
-		if wrappedGrpc.IsGrpcWebRequest(req) || wrappedGrpc.IsAcceptableGrpcCorsRequest(req) {
-			wrappedGrpc.ServeHTTP(resp, req)
-		} else if req.URL.Path == "/env.js" {
-			serveConfig(resp, req)
-		} else {
-			sMux.ServeHTTP(resp, req)
-		}
-	}
+	mux := http.NewServeMux()
 	httpServer := &http.Server{
 		Addr:    opts.HTTPAddr,
-		Handler: http.HandlerFunc(handler),
+		Handler: http.HandlerFunc(mux.ServeHTTP),
 	}
 
-	return &APIServer{
+	s := &APIServer{
 		Manager:    opts.Manager,
 		GRPCServer: grpcServer,
 		HTTPServer: httpServer,
-		serverMux:  sMux,
+		serverMux:  mux,
 		grpcAddr:   opts.GRPCAddr,
-	}, nil
+	}
+
+	mux.Handle("/", s)
+	return s, nil
 }
 
 func serveConfig(resp http.ResponseWriter, req *http.Request) {
@@ -176,14 +169,25 @@ func (s *APIServer) startGRPCServer() error {
 	return err
 }
 
-func (s *APIServer) startHTTPServer() error {
+func (s *APIServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	box := packr.NewBox("../../app/build")
 	// if !box.Has("index.html") {
 	// panic("Cannot find 'index.html' web server entry point. You need to build the webapp first.")
 	// }
 
+	wrappedGrpc := grpcweb.WrapServer(s.GRPCServer)
+	if wrappedGrpc.IsGrpcWebRequest(req) || wrappedGrpc.IsAcceptableGrpcCorsRequest(req) {
+		wrappedGrpc.ServeHTTP(resp, req)
+	} else if req.URL.Path == "/env.js" {
+		serveConfig(resp, req)
+	} else {
+		http.FileServer(box).ServeHTTP(resp, req)
+	}
+	log.V(1).Info(fmt.Sprintf("%s %s", req.Method, req.URL))
+}
+
+func (s *APIServer) startHTTPServer() error {
 	log.Info("Web Server listening", "address", s.HTTPServer.Addr)
-	s.serverMux.Handle("/", http.FileServer(box))
 	if err := s.HTTPServer.ListenAndServe(); err != http.ErrServerClosed {
 		return err
 	}

@@ -61,6 +61,10 @@ name="github.com/presslabs/wordpress-operator"
 version="v0.2.3"
 
 [[constraint]]
+name="github.com/improbable-eng/grpc-web"
+version="0.9.1"
+
+[[constraint]]
 name="github.com/presslabs/mysql-operator"
 version="v0.2.2"
 

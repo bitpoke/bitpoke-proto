@@ -322,12 +322,12 @@
   version = "v0.3.6"
 
 [[projects]]
-  digest = "1:a66bc70321b28c751ba2a0eb46e958004b8a3bfb0bc2ee4aab843ad2198df709"
+  digest = "1:63ae8bf9fb67c40ea846ae4bba775d7e060fdcda36f1fff26443673fa1612a9f"
   name = "github.com/improbable-eng/grpc-web"
   packages = ["go/grpcweb"]
   pruneopts = "T"
-  revision = "72eb701d6f320ca324b3347c7925a720b553eae5"
-  version = "0.6.2"
+  revision = "f5a2e82437e4b5cb013a3669efb17dc7bf9ea110"
+  version = "v0.9.1"
 
 [[projects]]
   digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
