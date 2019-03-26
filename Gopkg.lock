@@ -237,6 +237,14 @@
   version = "v0.1.0"
 
 [[projects]]
+  digest = "1:664d37ea261f0fc73dd17f4a1f5f46d01fbb0b0d75f6375af064824424109b7d"
+  name = "github.com/gorilla/handlers"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "7e0847f9db758cdebd26c149d0ae9d5d0b9c98ce"
+  version = "v1.4.0"
+
+[[projects]]
   digest = "1:80f394537967d97fcc0da30762843805c8aaea7d208c43c99d1fe988a8888f0d"
   name = "github.com/gorilla/websocket"
   packages = ["."]
@@ -1194,6 +1202,7 @@
     "github.com/gobuffalo/packr",
     "github.com/gobuffalo/packr/packr",
     "github.com/gogo/protobuf/types",
+    "github.com/gorilla/handlers",
     "github.com/gosimple/slug",
     "github.com/grpc-ecosystem/go-grpc-middleware",
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",

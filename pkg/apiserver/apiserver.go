@@ -10,11 +10,14 @@ package apiserver
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gobuffalo/packr"
+	"github.com/gorilla/handlers"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
@@ -32,34 +35,6 @@ import (
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
-
-type statusWriter struct {
-	http.ResponseWriter
-	status int
-	length int
-}
-
-func (w *statusWriter) WriteHeader(status int) {
-	w.status = status
-	w.ResponseWriter.WriteHeader(status)
-}
-
-func (w *statusWriter) Write(b []byte) (int, error) {
-	if w.status == 0 {
-		w.status = 200
-	}
-	n, err := w.ResponseWriter.Write(b)
-	w.length += n
-	return n, err
-}
-
-func (w *statusWriter) CloseNotify() <-chan bool {
-	return w.ResponseWriter.(http.CloseNotifier).CloseNotify()
-}
-
-func (w *statusWriter) Flush() {
-	w.ResponseWriter.(http.Flusher).Flush()
-}
 
 // APIServerOptions contains manager, GRPC address, HTTP address and AuthFunc
 // nolint: golint
@@ -79,12 +54,6 @@ type APIServer struct {
 	grpcWeb    *grpcweb.WrappedGrpcServer
 	grpcAddr   string
 	packrBox   *packr.Box
-}
-
-type config struct {
-	OIDCIssuer   string `jsenv:"REACT_APP_OIDC_ISSUER"`
-	ClientID     string `jsenv:"REACT_APP_OIDC_CLIENT_ID"`
-	GRPCProxyURL string `jsenv:"REACT_APP_API_URL"`
 }
 
 var log = logf.Log.WithName("apiserver")
@@ -151,8 +120,14 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 	}
 
 	s.grpcWeb = grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(s.allowedOrigin))
-	mux.Handle("/", s)
+	handler := handlers.CustomLoggingHandler(os.Stderr, s, s.logFormatter)
+	mux.Handle("/", handler)
 	return s, nil
+}
+
+func (s *APIServer) logFormatter(_ io.Writer, params handlers.LogFormatterParams) {
+	msg := fmt.Sprintf("%s %s", params.Request.Method, params.Request.URL)
+	log.V(1).Info(msg, "code", params.StatusCode, "length", params.Size, "duration", time.Since(params.TimeStamp))
 }
 
 // GetGRPCAddr returns the GRPC address
@@ -184,15 +159,11 @@ func (s *APIServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	// if !s.packrBox.Has("index.html") {
 	// 	panic("Cannot find 'index.html' web server entry point. You need to build the webapp first.")
 	// }
-	sw := &statusWriter{ResponseWriter: resp}
-	start := time.Now()
 	if s.grpcWeb.IsGrpcWebRequest(req) || s.grpcWeb.IsAcceptableGrpcCorsRequest(req) {
-		s.grpcWeb.ServeHTTP(sw, req)
+		s.grpcWeb.ServeHTTP(resp, req)
 	} else {
-		http.FileServer(s.packrBox).ServeHTTP(sw, req)
+		http.FileServer(s.packrBox).ServeHTTP(resp, req)
 	}
-
-	log.V(1).Info(fmt.Sprintf("%s %s", req.Method, req.URL), "code", sw.status, "length", sw.length, "duration", time.Since(start))
 }
 
 func (s *APIServer) startHTTPServer() error {
