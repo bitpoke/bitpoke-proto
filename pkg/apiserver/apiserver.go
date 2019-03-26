@@ -10,10 +10,9 @@ package apiserver
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"net"
 	"net/http"
-	"reflect"
+	"time"
 
 	"github.com/gobuffalo/packr"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -34,6 +33,26 @@ import (
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+	length int
+}
+
+func (w *statusWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *statusWriter) Write(b []byte) (int, error) {
+	if w.status == 0 {
+		w.status = 200
+	}
+	n, err := w.ResponseWriter.Write(b)
+	w.length += n
+	return n, err
+}
+
 // APIServerOptions contains manager, GRPC address, HTTP address and AuthFunc
 // nolint: golint
 type APIServerOptions struct {
@@ -49,7 +68,9 @@ type APIServer struct {
 	GRPCServer *grpc.Server
 	HTTPServer *http.Server
 	serverMux  *http.ServeMux
+	grpcWeb    *grpcweb.WrappedGrpcServer
 	grpcAddr   string
+	packrBox   *packr.Box
 }
 
 type config struct {
@@ -110,6 +131,7 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 		Addr:    opts.HTTPAddr,
 		Handler: http.HandlerFunc(mux.ServeHTTP),
 	}
+	box := packr.NewBox("../../app/build")
 
 	s := &APIServer{
 		Manager:    opts.Manager,
@@ -117,35 +139,12 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 		HTTPServer: httpServer,
 		serverMux:  mux,
 		grpcAddr:   opts.GRPCAddr,
+		packrBox:   &box,
 	}
 
+	s.grpcWeb = grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(s.allowedOrigin))
 	mux.Handle("/", s)
 	return s, nil
-}
-
-func serveConfig(resp http.ResponseWriter, req *http.Request) {
-	cfg := config{
-		OIDCIssuer:   options.OIDCIssuer,
-		ClientID:     options.ClientID,
-		GRPCProxyURL: options.GRPCProxyURL,
-	}
-
-	resp.Header().Set("Content-Type", "application/javascript")
-	fmt.Fprintf(resp, "window.env = {};\n")
-	_cfg := reflect.ValueOf(cfg)
-	for i := 0; i < _cfg.NumField(); i++ {
-		field := _cfg.Type().Field(i)
-		value := _cfg.Field(i)
-		varName := field.Tag.Get("jsenv")
-		if len(varName) > 0 {
-			switch value.Kind() {
-			case reflect.String:
-				fmt.Fprintf(resp, "window.env.%s = \"%s\";\n", varName, template.JSEscapeString(value.String()))
-			default:
-				panic("jsenv must be strings")
-			}
-		}
-	}
 }
 
 // GetGRPCAddr returns the GRPC address
@@ -169,21 +168,23 @@ func (s *APIServer) startGRPCServer() error {
 	return err
 }
 
-func (s *APIServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	box := packr.NewBox("../../app/build")
-	// if !box.Has("index.html") {
-	// panic("Cannot find 'index.html' web server entry point. You need to build the webapp first.")
-	// }
+func (s *APIServer) allowedOrigin(origin string) bool {
+	return true
+}
 
-	wrappedGrpc := grpcweb.WrapServer(s.GRPCServer)
-	if wrappedGrpc.IsGrpcWebRequest(req) || wrappedGrpc.IsAcceptableGrpcCorsRequest(req) {
-		wrappedGrpc.ServeHTTP(resp, req)
-	} else if req.URL.Path == "/env.js" {
-		serveConfig(resp, req)
+func (s *APIServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	// if !s.packrBox.Has("index.html") {
+	// 	panic("Cannot find 'index.html' web server entry point. You need to build the webapp first.")
+	// }
+	sw := &statusWriter{ResponseWriter: resp}
+	start := time.Now()
+	if s.grpcWeb.IsGrpcWebRequest(req) || s.grpcWeb.IsAcceptableGrpcCorsRequest(req) {
+		s.grpcWeb.ServeHTTP(sw, req)
 	} else {
-		http.FileServer(box).ServeHTTP(resp, req)
+		http.FileServer(s.packrBox).ServeHTTP(sw, req)
 	}
-	log.V(1).Info(fmt.Sprintf("%s %s", req.Method, req.URL))
+
+	log.V(1).Info(fmt.Sprintf("%s %s", req.Method, req.URL), "code", sw.status, "length", sw.length, "duration", time.Since(start))
 }
 
 func (s *APIServer) startHTTPServer() error {
