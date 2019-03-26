@@ -148,14 +148,14 @@ func (p *ProjectNamespace) ValidateMetadata() error {
 }
 
 // Lookup gets the namespace for a project name and organization name
-func Lookup(c client.Client, project, organization string) (*ProjectNamespace, error) {
+func Lookup(c client.Client, projName, orgName string) (*ProjectNamespace, error) {
 	nsList := &corev1.NamespaceList{}
 	listOptions := &client.ListOptions{
 		LabelSelector: labels.SelectorFromSet(
 			labels.Set{
 				"presslabs.com/kind":         "project",
-				"presslabs.com/project":      project,
-				"presslabs.com/organization": organization,
+				"presslabs.com/project":      projName,
+				"presslabs.com/organization": orgName,
 			},
 		),
 	}

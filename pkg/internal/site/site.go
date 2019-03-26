@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/dashboard/pkg/internal/project"
+	"github.com/presslabs/dashboard/pkg/internal/projectns"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -144,15 +145,20 @@ func Resolve(name string) (string, string, error) {
 
 // ResolveToObjectKey resolves an fully-qualified site name to a k8s object name.
 // The function returns the object key from FQName and an error
-func ResolveToObjectKey(name string) (client.ObjectKey, error) {
-	siteName, projName, err := Resolve(name)
+func ResolveToObjectKey(c client.Client, fqSiteName, orgName string) (*client.ObjectKey, error) {
+	siteName, projName, err := Resolve(fqSiteName)
 	if err != nil {
-		return client.ObjectKey{}, err
+		return nil, err
+	}
+
+	ns, err := projectns.Lookup(c, projName, orgName)
+	if err != nil {
+		return nil, err
 	}
 
 	key := client.ObjectKey{
 		Name:      siteName,
-		Namespace: projName,
+		Namespace: ns.Name,
 	}
-	return key, nil
+	return &key, nil
 }
