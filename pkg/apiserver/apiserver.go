@@ -53,6 +53,14 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
+func (w *statusWriter) CloseNotify() <-chan bool {
+	return w.ResponseWriter.(http.CloseNotifier).CloseNotify()
+}
+
+func (w *statusWriter) Flush() {
+	w.ResponseWriter.(http.Flusher).Flush()
+}
+
 // APIServerOptions contains manager, GRPC address, HTTP address and AuthFunc
 // nolint: golint
 type APIServerOptions struct {
