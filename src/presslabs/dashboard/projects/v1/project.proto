@@ -40,7 +40,8 @@ message GetProjectRequest {
 
 message ListProjectsRequest {
   // The parent organization, for example "org/{organization_name}".
-  // The parent is a required parameter
+  // This parameter overrides the organization passed as metadata.
+  // If not specified as metadata, the parent is a required parameter.
   string parent = 1;
   // The maximum number of items to return.
   int32 page_size = 2;
@@ -57,8 +58,9 @@ message ListProjectsResponse {
 }
 
 message CreateProjectRequest {
-  // The parent resource name where the project is to be created
-  // The parent is a required parameter
+  // The parent organization, for example "org/{organization_name}".
+  // This parameter overrides the organization passed as metadata.
+  // If not specified as metadata, the parent is a required parameter.
   string parent = 1;
   // The project resource to create
   Project project = 3 [
