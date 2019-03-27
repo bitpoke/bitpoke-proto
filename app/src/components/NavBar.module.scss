@@ -11,8 +11,12 @@
 }
 
 .logo {
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    text-decoration: none;
+    position: relative;
+    padding-left: 30px;
+}
+
+.spinner {
+    position: absolute;
+    left: 0;
+    top: 0;
 }

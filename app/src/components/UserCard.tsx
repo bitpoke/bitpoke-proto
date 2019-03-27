@@ -2,15 +2,11 @@ import * as React from 'react'
 import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 
+import { Button } from '@blueprintjs/core'
+
 import { auth, organizations } from '../redux'
 
 import styles from './UserCard.module.scss'
-
-import {
-    Organization,
-    ListOrganizationsRequest,
-    CreateOrganizationRequest
-} from '@presslabs/dashboard-proto'
 
 type Props = {
     dispatch: Dispatch,
@@ -26,16 +22,12 @@ const UserCard: React.SFC<Props> = ({ entry, dispatch }) => {
         <div className={ styles.container }>
             <img className={ styles.avatar } src={ entry.avatarURL } />
             <strong className={ styles.email }>{ entry.email }</strong>
-            <button onClick={ () => dispatch(auth.refreshToken()) }>Refresh Token</button>
-            <button onClick={ () => dispatch(organizations.list(new ListOrganizationsRequest())) }>List orgs</button>
-            <button onClick={ () => {
-                const organization = new Organization()
-                organization.setDisplayName('A New Organization')
-                const request = new CreateOrganizationRequest()
-                request.setOrganization(organization)
-                dispatch(organizations.create(request))
-            } }>Create org</button>
-            <button onClick={ () => dispatch(auth.logout()) }>Logout</button>
+            <Button
+                text="Logout"
+                small
+                rightIcon="log-out"
+                onClick={ () => dispatch(auth.logout()) }
+            />
         </div>
     )
 }
