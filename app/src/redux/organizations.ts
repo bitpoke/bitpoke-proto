@@ -127,7 +127,7 @@ const actions = {
     select
 }
 
-const types = api.createActionTypes(resource)
+const apiTypes = api.createActionTypes(resource)
 
 export const {
     LIST_REQUESTED,    LIST_SUCCEEDED,    LIST_FAILED,
@@ -135,13 +135,13 @@ export const {
     CREATE_REQUESTED,  CREATE_SUCCEEDED,  CREATE_FAILED,
     UPDATE_REQUESTED,  UPDATE_SUCCEEDED,  UPDATE_FAILED,
     DESTROY_REQUESTED, DESTROY_SUCCEEDED, DESTROY_FAILED
-} = types
+} = apiTypes
 
 
 //
 //  REDUCER
 
-const apiReducer = api.createReducer(resource, types)
+const apiReducer = api.createReducer(resource, apiTypes)
 
 const initialState = {
     ...api.initialState,
@@ -167,13 +167,18 @@ export function reducer(state: State = initialState, action: Actions) {
 //  SAGA
 
 export function* saga() {
-    yield fork(api.emitResourceActions, resource, types)
-    yield takeEvery(app.INITIALIZED, decideOrganizationContext)
+    yield fork(api.emitResourceActions, resource, apiTypes)
+    yield takeEvery([
+        app.INITIALIZED,
+        routing.ROUTE_CHANGED,
+        CREATE_SUCCEEDED,
+        DESTROY_SUCCEEDED
+    ], decideOrganizationContext)
     yield takeLatest(SELECTED, setGRPCOrganizationMetadata)
     yield takeLatest(SELECTED, updateAddressWithOrganization)
 }
 
-function* decideOrganizationContext() {
+function* decideOrganizationContext(): Iterable<any> {
     const organizations = yield _select(getAll)
     const currentlySelected = yield _select(getCurrent)
 
@@ -183,6 +188,12 @@ function* decideOrganizationContext() {
             success: take(LIST_SUCCEEDED),
             failure: take(LIST_FAILED)
         })
+
+        if (success) {
+            api.isEmptyResponse(success)
+                ? console.log('REDIRECT TO ONBOARDING')
+                : yield decideOrganizationContext()
+        }
     }
     else {
         const params = yield _select(routing.getParams)
@@ -221,8 +232,12 @@ function* updateAddressWithOrganization(action: ActionType<typeof select>) {
     const currentRoute = yield _select(routing.getCurrentRoute)
     const updatedURL = new URI(currentRoute.url)
 
+    updatedURL.removeSearch('org')
     updatedURL.addSearch('org', action.payload.name)
-    routing.replace(updatedURL.toString()) // eslint-disable-line lodash/prefer-lodash-method
+
+    if (updatedURL.toString() !== currentRoute.url) {
+        routing.replace(updatedURL.toString()) // eslint-disable-line lodash/prefer-lodash-method
+    }
 }
 
 

@@ -113,7 +113,7 @@ const actions = {
     destroy
 }
 
-const types = api.createActionTypes(resource)
+const apiTypes = api.createActionTypes(resource)
 
 export const {
     LIST_REQUESTED,    LIST_SUCCEEDED,    LIST_FAILED,
@@ -121,13 +121,13 @@ export const {
     CREATE_REQUESTED,  CREATE_SUCCEEDED,  CREATE_FAILED,
     UPDATE_REQUESTED,  UPDATE_SUCCEEDED,  UPDATE_FAILED,
     DESTROY_REQUESTED, DESTROY_SUCCEEDED, DESTROY_FAILED
-} = types
+} = apiTypes
 
 
 //
 //  REDUCER
 
-const apiReducer = api.createReducer(resource, types)
+const apiReducer = api.createReducer(resource, apiTypes)
 
 export function reducer(state: State = api.initialState, action: Actions) {
     return apiReducer(state, action)
@@ -138,7 +138,7 @@ export function reducer(state: State = api.initialState, action: Actions) {
 //  SAGA
 
 export function* saga() {
-    yield fork(api.emitResourceActions, resource, types)
+    yield fork(api.emitResourceActions, resource, apiTypes)
 }
 
 
@@ -149,7 +149,7 @@ const selectors = api.createSelectors(resource)
 
 export const { getState, getAll, countAll, getByName } = selectors
 
-export const getForProject = (project) => createSelector(
+export const getForProject = (project: string) => createSelector(
     getAll,
     (sites) => pickBy(sites, { project })
 )

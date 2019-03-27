@@ -24,9 +24,10 @@ const UserCard: React.SFC<Props> = ({ entry, dispatch }) => {
             <strong className={ styles.email }>{ entry.email }</strong>
             <Button
                 text="Logout"
-                small
                 rightIcon="log-out"
                 onClick={ () => dispatch(auth.logout()) }
+                small
+                minimal
             />
         </div>
     )
