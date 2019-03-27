@@ -122,19 +122,26 @@ function matchRoute(location: Location<any>): Route {
     )
 
     const routeParams = URI.parseQuery(search) || {}
+    const matchedRoute = head(matched)
+    const params = {
+        ...get(matchedRoute, 'params', {}),
+        ...routeParams
+    }
 
-    const route = isEmpty(matched)
+    const url = new URI(get(matchedRoute, 'url', pathname))
+        .search(params)
+        .toString()
+
+    const route = !matchedRoute
         ? {
-            path   : pathname,
-            url    : pathname,
-            params : routeParams
+            url,
+            params,
+            path: pathname
         }
         : {
-            ...head(matched),
-            params: {
-                ...get(matched, 'params', {}),
-                ...routeParams
-            }
+            ...matchedRoute,
+            url,
+            params
         }
 
     return route as Route
