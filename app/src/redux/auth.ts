@@ -1,14 +1,15 @@
 import { ActionType, action as createAction } from 'typesafe-actions'
-import { takeEvery, select } from 'redux-saga/effects'
+import { takeEvery, select, call, put } from 'redux-saga/effects'
 import { channel as createChannel } from 'redux-saga'
 import { User as Token, UserManager } from 'oidc-client'
 import { createSelector } from 'reselect'
+import axios from 'axios'
 
 import { join, pick } from 'lodash'
 
 import config from '../config'
 
-import { RootState, app, routing } from '../redux'
+import { RootState, app, routing, grpc } from '../redux'
 import { watchChannel } from '../utils'
 
 //
@@ -33,11 +34,13 @@ export const LOGIN_SUCCEEDED         = '@ auth / LOGIN_SUCCEEDED'
 export const LOGIN_FAILED            = '@ auth / LOGIN_FAILED'
 export const LOGOUT_REQUESTED        = '@ auth / LOGOUT_REQUESTED'
 export const TOKEN_REFRESH_REQUESTED = '@ auth / TOKEN_REFRESH_REQUESTED'
+export const ACCESS_GRANTED          = '@ auth / ACCESS_GRANTED'
 
 export const loginSuccess = (token: Token) => createAction(LOGIN_SUCCEEDED, token)
 export const loginFailure = (error: any) => createAction(LOGIN_FAILED, error)
 export const logout = () => createAction(LOGOUT_REQUESTED)
 export const refreshToken = () => createAction(TOKEN_REFRESH_REQUESTED)
+export const grantAccess = () => createAction(ACCESS_GRANTED)
 
 const actions = {
     logout,
@@ -85,8 +88,9 @@ export function* saga() {
 function* ensureAuthentication(action: ActionType<typeof routing.updateRoute>) {
     const userIsAuthenticated = yield select(isAuthenticated)
     const route = yield select(routing.getCurrentRoute)
-
     if (userIsAuthenticated) {
+        yield call(setGRPCAuthorizationMetadata)
+        // yield put(grantAccess())
         provider.startSilentRenew()
         return
     }
@@ -104,7 +108,8 @@ function* ensureAuthentication(action: ActionType<typeof routing.updateRoute>) {
 }
 
 function handleAuthenticationIfRequired(action: ActionType<typeof routing.updateRoute>) {
-    if (hasAuthenticationPayload(action.payload)) {
+    const { pathname } = action.payload
+    if (hasAuthenticationPayload(pathname)) {
         provider.signinRedirectCallback()
     }
 }
@@ -115,6 +120,11 @@ function handleTokenRefresh(action: ActionType<typeof refreshToken>) {
 
 function redirectToDashboard() {
     routing.push(routing.routeFor('dashboard'))
+}
+
+function* setGRPCAuthorizationMetadata() {
+    const token = yield select(getToken)
+    grpc.setMetadata('Authorization', token)
 }
 
 
@@ -131,10 +141,10 @@ const provider = new UserManager({
     automaticSilentRenew : true
 })
 
-provider.events.addUserLoaded((user) => {
-    user && !user.expired
-        ? channel.put(loginSuccess(user))
-        : channel.put(loginFailure(user))
+provider.events.addUserLoaded((token) => {
+    token && !token.expired
+        ? channel.put(loginSuccess(token))
+        : channel.put(loginFailure(token))
 })
 provider.events.addUserUnloaded(() => channel.put(logout()))
 provider.events.addUserSignedOut(() => channel.put(logout()))
@@ -168,7 +178,7 @@ function normalizeProfile(token: Token) {
 //  SELECTORS
 
 export const getState = (state: RootState): State => state.auth
-export const getAuthorizationHeader = createSelector(
+export const getToken = createSelector(
     getState,
     (state) => state ? join([state.token_type, state.id_token], ' ') : null
 )

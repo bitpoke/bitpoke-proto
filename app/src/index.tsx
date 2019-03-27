@@ -4,14 +4,12 @@ import * as ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
 
-import createStore from './redux/store'
+import { store, persistor } from './redux/store'
 import registerServiceWorker from './registerServiceWorker'
 
 import App from './components/App'
 
 import './index.scss'
-
-const { store, persistor } = createStore()
 
 ReactDOM.render(
     <PersistGate persistor={ persistor } loading={ <div /> }>

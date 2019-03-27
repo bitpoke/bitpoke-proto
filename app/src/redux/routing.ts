@@ -1,15 +1,16 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { createHashHistory, createMemoryHistory } from 'history'
+import { createHashHistory, createMemoryHistory, Location } from 'history'
 import pathToRegexp, { Key, compile } from 'path-to-regexp'
 import { matchPath } from 'react-router'
 import { takeEvery, put } from 'redux-saga/effects'
 import { channel as createChannel } from 'redux-saga'
 import { ActionType, action as createAction } from 'typesafe-actions'
+import { createSelector } from 'reselect'
 
 import URI from 'urijs'
 
-import { map, filter, omit, head, has, isEmpty } from 'lodash'
+import { map, filter, omit, get, head, has, isEmpty } from 'lodash'
 
 import { RootState, app } from '../redux'
 import { watchChannel } from '../utils'
@@ -20,11 +21,13 @@ import { watchChannel } from '../utils'
 
 export type State = Route | null
 export type Actions = ActionType<typeof actions>
+export type Params = object
 
 export type Route = {
-    path: string,
-    key?: string,
-    url?: string
+    path   : string,
+    url    : string,
+    params : Params,
+    key?   : string
 }
 
 
@@ -35,6 +38,10 @@ export const ROUTES = {
     dashboard: {
         path      : '/',
         component : 'DashboardContainer'
+    },
+    projects: {
+        path      : '/projects',
+        component : 'ProjectsContainer'
     }
 }
 
@@ -44,7 +51,7 @@ export const ROUTES = {
 
 export const ROUTE_CHANGED = '@ routing / ROUTE_CHANGED'
 
-export const updateRoute = (route: string) => createAction(ROUTE_CHANGED, route)
+export const updateRoute = (route: Location<any>) => createAction(ROUTE_CHANGED, route)
 
 const actions = {
     updateRoute
@@ -58,9 +65,7 @@ const initialState: State = null
 export function reducer(state: State = initialState, action: Actions) {
     switch (action.type) {
         case ROUTE_CHANGED: {
-            return matchRoute(action.payload) || {
-                path: action.payload
-            }
+            return matchRoute(action.payload)
         }
 
         default:
@@ -80,8 +85,8 @@ export function* saga() {
 }
 
 function* bootstrap() {
-    yield put(updateRoute(history.location.pathname))
-    history.listen(({ pathname }) => channel.put((updateRoute(pathname))))
+    yield put(updateRoute(history.location))
+    history.listen((route) => channel.put(updateRoute(route)))
 }
 
 //
@@ -106,7 +111,8 @@ export function routeFor(key: string, params = {}) {
     return url.toString()
 }
 
-function matchRoute(pathname: string): Route | null {
+function matchRoute(location: Location<any>): Route {
+    const { pathname, search } = location
     const matched = filter(
         map(ROUTES, ({ path }, key) => ({
             key,
@@ -115,11 +121,23 @@ function matchRoute(pathname: string): Route | null {
         'isExact'
     )
 
-    if (isEmpty(matched)) {
-        return null
-    }
+    const routeParams = URI.parseQuery(search) || {}
 
-    return head(matched) as Route
+    const route = isEmpty(matched)
+        ? {
+            path   : pathname,
+            url    : pathname,
+            params : routeParams
+        }
+        : {
+            ...head(matched),
+            params: {
+                ...get(matched, 'params', {}),
+                ...routeParams
+            }
+        }
+
+    return route as Route
 }
 
 export const withRouter = (component: React.ComponentType) => connect(getState)(component)
@@ -130,3 +148,7 @@ export const withRouter = (component: React.ComponentType) => connect(getState)(
 
 export const getState = (state: RootState) => state.routing
 export const getCurrentRoute = getState
+export const getParams = createSelector(
+    getCurrentRoute,
+    (route) => get(route, 'params', {}) as Params
+)

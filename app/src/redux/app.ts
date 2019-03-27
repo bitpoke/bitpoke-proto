@@ -47,7 +47,7 @@ export function reducer(state: State = initialState, action: Actions) {
 //
 //  SELECTORS
 
-export const getState = (state: RootState) => state.app
+export const getState = (state: RootState): State => state.app
 export const isInitialized = createSelector(
     getState,
     (state) => state.isInitialized
