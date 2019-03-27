@@ -191,10 +191,12 @@ func (s *organizationsService) ListOrganizations(ctx context.Context, r *orgs.Li
 
 	// TODO: implement pagination
 	resp := &orgs.ListOrganizationsResponse{
-		Organizations: make([]orgs.Organization, len(orgList.Items)),
+		Organizations: []orgs.Organization{},
 	}
 	for i := range orgList.Items {
-		resp.Organizations[i] = *newOrganizationFromK8s(organization.New(&orgList.Items[i]))
+		if orgList.Items[i].Status.Phase == corev1.NamespaceActive {
+			resp.Organizations = append(resp.Organizations, *newOrganizationFromK8s(organization.New(&orgList.Items[i])))
+		}
 	}
 
 	return resp, nil
