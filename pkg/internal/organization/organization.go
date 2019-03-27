@@ -10,6 +10,7 @@ package organization
 import (
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -18,6 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+
+	"github.com/presslabs/dashboard/pkg/apiserver/status"
 )
 
 // Organization embeds dashboardv1alpha1.Organization and adds utility functions
@@ -156,17 +159,17 @@ func (o *Organization) ValidateMetadata() error {
 
 // FQName returns the fully-qualified organization name
 func FQName(name string) string {
-	return fmt.Sprintf("%s%s", prefix, name)
+	return path.Join(prefix, name)
 }
 
 // Resolve resolves an fully-qualified organization name to a k8s object name
-func Resolve(path string) (string, error) {
-	if !strings.HasPrefix(path, prefix) {
-		return "", fmt.Errorf("organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
+func Resolve(name string) (string, error) {
+	if path.Clean(name) != name {
+		return "", status.InvalidArgumentf("organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
 	}
-	name := path[len(prefix):]
-	if len(name) == 0 {
-		return "", fmt.Errorf("organization name cannot be empty")
+	if matched, err := path.Match("orgs/*", name); err != nil || !matched {
+		return "", status.InvalidArgumentf("organization resources fully-qualified name must be in form orgs/ORGANIZATION-NAME")
 	}
-	return name, nil
+	names := strings.Split(name, "/")
+	return names[1], nil
 }
