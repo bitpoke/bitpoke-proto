@@ -1,6 +1,6 @@
 import {
     createStore as createReduxStore, combineReducers, applyMiddleware, compose,
-    Reducer
+    Reducer, Middleware
 } from 'redux'
 import { createLogger } from 'redux-logger'
 
@@ -76,8 +76,8 @@ export function createRootSaga(modules: object) {
 export function createStore(
     rootReducer: Reducer,
     rootSaga: Saga<any[]>,
-    initialState = {},
-    customMiddleware = []
+    initialState: object = {},
+    customMiddleware: Array<Middleware<any>> = []
 ) {
     const middleware = []
 
@@ -108,10 +108,10 @@ export function createStore(
 }
 
 export function createPersistedStore(
-    rootReducer: any,
+    rootReducer: Reducer,
     rootSaga: Saga<any[]>,
-    initialState = {},
-    customMiddleware = []
+    initialState: object = {},
+    customMiddleware: Array<Middleware<any>> = []
 ) {
     const store = createStore(rootReducer, rootSaga, initialState, customMiddleware)
     const persistor = persistStore(store)

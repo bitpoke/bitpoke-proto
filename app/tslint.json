@@ -27,7 +27,9 @@
     "no-console": [true, "warning"],
     "no-constant-condition": [true, { "checkLoops": false }],
 
-    "interface-over-type-literal": false
+    "interface-over-type-literal": false,
+
+    "prefer-array-literal": false
   },
   "linterOptions": {
     "exclude": [

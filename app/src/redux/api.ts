@@ -31,9 +31,7 @@ export enum Resource {
     site         = 'sites'
 }
 
-
-
-export type AnyResource = object
+export type AnyResourceInstance = object
 
 export type Selectors<T> = {
     getState: (state: RootState) => State<T> & any
@@ -72,12 +70,12 @@ export type State<T> = {
     entries: ResourcesList<T>
 }
 
-export const initialState: State<AnyResource> = {
+export const initialState: State<AnyResourceInstance> = {
     entries: {}
 }
 
 export function createReducer(resource: Resource, actionTypes: ActionTypes) {
-    return (state: State<AnyResource>, action: AnyAction) => {
+    return (state: State<AnyResourceInstance>, action: AnyAction) => {
         const response = get(action, 'payload')
 
         if (isOfType(actionTypes.LIST_SUCCEEDED, action)) {
@@ -142,7 +140,7 @@ export function createActionTypes(resource: Resource): ActionTypes {
     }, {} as any as ActionTypes)
 }
 
-export function createSelectors(resource: Resource): Selectors<AnyResource> {
+export function createSelectors(resource: Resource): Selectors<AnyResourceInstance> {
     const getState = (state: RootState) => get(state, resource)
     const getAll = createSelector(
         getState,
