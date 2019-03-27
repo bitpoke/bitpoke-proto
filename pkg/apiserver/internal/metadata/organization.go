@@ -11,7 +11,7 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
+	"github.com/presslabs/dashboard/pkg/apiserver/status"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 )
 

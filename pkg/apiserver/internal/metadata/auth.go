@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	apiserverstatus "github.com/presslabs/dashboard/pkg/apiserver/internal/status"
+	apiserverstatus "github.com/presslabs/dashboard/pkg/apiserver/status"
 	"github.com/presslabs/dashboard/pkg/cmd/apiserver/options"
 )
 

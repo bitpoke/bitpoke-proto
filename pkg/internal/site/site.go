@@ -16,6 +16,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/presslabs/dashboard/pkg/apiserver/status"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
@@ -131,12 +132,12 @@ func FQName(projName, siteName string) string {
 // The function returns site name, project name and error
 func Resolve(name string) (string, string, error) {
 	if path.Clean(name) != name {
-		return "", "", fmt.Errorf("site resources fully-qualified name must be in form project/PROJECT-NAME/site/SITE-NAME")
+		return "", "", status.InvalidArgumentf("site resources fully-qualified name must be in form project/PROJECT-NAME/site/SITE-NAME")
 	}
 
 	matched, err := path.Match("project/*/site/*", name)
 	if err != nil || !matched {
-		return "", "", fmt.Errorf("site resources fully-qualified name must be in form project/PROJECT-NAME/site/SITE-NAME")
+		return "", "", status.InvalidArgumentf("site resources fully-qualified name must be in form project/PROJECT-NAME/site/SITE-NAME")
 	}
 
 	names := strings.Split(name, "/")

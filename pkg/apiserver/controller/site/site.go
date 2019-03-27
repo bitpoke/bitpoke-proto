@@ -23,7 +23,7 @@ import (
 	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
+	"github.com/presslabs/dashboard/pkg/apiserver/status"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
 	"github.com/presslabs/dashboard/pkg/internal/site"
@@ -45,29 +45,20 @@ func containsString(s []string, e string) bool {
 	return false
 }
 
-// resolveFromDomain generates site name from primary domain if no one is given
-func resolveFromDomain(name, parent, domain string) (string, string, error) {
-	if len(name) == 0 {
-		etld, err := publicsuffix.EffectiveTLDPlusOne(domain)
-		if err != nil {
-			return "", "", status.FromError(err)
-		}
-		label := strings.Split(etld, ".")[0]
-
-		gen := rand.NewStringGenerator("abcdefghijklmnopqrstuvwxyz0123456789")
-		randomString, err := gen(5)
-		if err != nil {
-			return "", "", status.FromError(err)
-		}
-		return fmt.Sprintf("%s-%s", label, randomString), parent, nil
-	}
-
-	siteName, proj, err := site.Resolve(name)
+// generateNameFromDomain generates site name from primary domain if no one is given
+func generateNameFromDomain(domain string) string {
+	etld, err := publicsuffix.EffectiveTLDPlusOne(domain)
 	if err != nil {
-		return "", "", status.InvalidArgumentf("%s", err)
+		panic(err)
 	}
+	label := strings.Split(etld, ".")[0]
 
-	return siteName, proj, nil
+	gen := rand.NewStringGenerator("abcdefghijklmnopqrstuvwxyz0123456789")
+	randomString, err := gen(5)
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%s-%s", label, randomString)
 }
 
 // Add creates a new Site Controller and adds it to the API Server
@@ -97,11 +88,16 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 		return nil, status.InvalidArgumentf("primary domain cannot be empty")
 	}
 
-	siteName, projName, err = resolveFromDomain(r.Name, proj, r.PrimaryDomain)
+	if len(r.Name) == 0 {
+		r.Name = site.FQName(proj, generateNameFromDomain(r.PrimaryDomain))
+	}
+	if !strings.HasPrefix(r.Name, r.Parent) {
+		return nil, status.InvalidArgumentf("parent and project are not matching")
+	}
+	siteName, projName, err = site.Resolve(r.Name)
 	if err != nil {
 		return nil, err
 	}
-
 	if proj != projName {
 		return nil, status.InvalidArgumentf("parent and project are not matching")
 	}
@@ -263,7 +259,7 @@ func NewSitesServiceServer(client client.Client, cfg *rest.Config) sites.SitesSe
 
 func newSiteFromK8s(s *site.Site) *sites.Site {
 	return &sites.Site{
-		Name:           site.FQName(s.ObjectMeta.Labels["presslabs.com/project"], s.ObjectMeta.Labels["presslabs.com/site"]),
+		Name:           site.FQName(s.ObjectMeta.Labels["presslabs.com/project"], s.Name),
 		PrimaryDomain:  string(s.Spec.Domains[0]),
 		WordpressImage: s.Spec.Image,
 	}

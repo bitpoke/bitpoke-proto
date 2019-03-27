@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
+	"github.com/presslabs/dashboard/pkg/apiserver/status"
 )
 
 // Client returns impersonated client

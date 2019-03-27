@@ -21,7 +21,7 @@ import (
 	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
-	"github.com/presslabs/dashboard/pkg/apiserver/internal/status"
+	"github.com/presslabs/dashboard/pkg/apiserver/status"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 )

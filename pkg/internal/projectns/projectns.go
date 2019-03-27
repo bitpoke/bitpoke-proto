@@ -16,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/presslabs/dashboard/pkg/apiserver/status"
 )
 
 // ProjectNamespace embeds corev1.Namespace and adds utility functions
@@ -162,6 +164,10 @@ func Lookup(c client.Client, projName, orgName string) (*ProjectNamespace, error
 
 	if err := c.List(context.TODO(), listOptions, nsList); err != nil {
 		return nil, err
+	}
+
+	if len(nsList.Items) == 0 {
+		return nil, status.NotFound()
 	}
 
 	return New(&nsList.Items[0]), nil

@@ -27,12 +27,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
+
 	sites "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/sites/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
 	"github.com/presslabs/dashboard/pkg/controller"
-	"github.com/presslabs/dashboard/pkg/internal/projectns"
 	"github.com/presslabs/dashboard/pkg/internal/site"
-	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -45,7 +45,7 @@ func createSite(name, userID, project, image string, domains []wordpressv1alpha1
 	wp := site.New(&wordpressv1alpha1.Wordpress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: projectns.NamespaceName(project),
+			Namespace: project,
 			Labels: map[string]string{
 				"presslabs.com/kind":    "site",
 				"presslabs.com/site":    name,
@@ -68,7 +68,7 @@ func expectProperWordpress(c client.Client, name, userID, project, image string,
 	wp := &wordpressv1alpha1.Wordpress{}
 	key := client.ObjectKey{
 		Name:      name,
-		Namespace: projectns.NamespaceName(project),
+		Namespace: project,
 	}
 	Expect(c.Get(context.TODO(), key, wp)).To(Succeed())
 	Expect(wp.Name).To(Equal(name))
@@ -145,7 +145,7 @@ var _ = Describe("API server", func() {
 		// create ProjectNamespace
 		ns = &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      projectns.NamespaceName(project),
+				Name:      project,
 				Namespace: organization,
 				Labels: map[string]string{
 					"presslabs.com/kind":         "project",
@@ -170,7 +170,7 @@ var _ = Describe("API server", func() {
 		Expect(c.Delete(context.TODO(), ns)).To(Succeed())
 		Eventually(func() corev1.Namespace {
 			ns := corev1.Namespace{}
-			c.Get(context.TODO(), client.ObjectKey{Name: projectns.NamespaceName(project), Namespace: organization}, &ns)
+			c.Get(context.TODO(), client.ObjectKey{Name: project, Namespace: organization}, &ns)
 			return ns
 		}).Should(BeInPhase(corev1.NamespaceTerminating))
 	})
