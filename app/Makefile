@@ -2,8 +2,8 @@ NODE_ENV ?= production
 
 NODE_MODULES ?= $(CURDIR)/node_modules
 BINDIR       := $(NODE_MODULES)/.bin
-TSLINT   		 := $(BINDIR)/tslint
-REACT    		 := $(BINDIR)/react-scripts
+TSLINT       := $(BINDIR)/tslint
+REACT        := $(BINDIR)/react-scripts
 
 PROTO_OUT_DIR ?= ./src/proto
 
