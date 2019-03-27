@@ -10,6 +10,7 @@ package project
 import (
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/presslabs/controller-util/rand"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/presslabs/dashboard/pkg/apiserver/status"
 )
 
 // Project embeds corev1.Namespace and adds utility functions
@@ -140,17 +142,17 @@ func GenerateNamespaceName() (string, error) {
 
 // FQName returns the fully-qualified project name
 func FQName(name string) string {
-	return fmt.Sprintf("%s%s", prefix, name)
+	return path.Join(prefix, name)
 }
 
 // Resolve resolves a fully-qualified project name to a k8s object name
-func Resolve(path string) (string, error) {
-	if !strings.HasPrefix(path, prefix) {
-		return "", fmt.Errorf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", path)
+func Resolve(name string) (string, error) {
+	if path.Clean(name) != name {
+		return "", status.InvalidArgumentf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", name)
 	}
-	name := path[len(prefix):]
-	if len(name) == 0 {
-		return "", fmt.Errorf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", path)
+	if matched, err := path.Match("project/*", name); err != nil || !matched {
+		return "", status.InvalidArgumentf("project fully-qualified name must be in form project/PROJECT-NAME, '%s' given", name)
 	}
-	return name, nil
+	names := strings.Split(name, "/")
+	return names[1], nil
 }
