@@ -11,7 +11,7 @@ import {
 
 import URI from 'urijs'
 
-import { RootState, app, api, grpc, routing } from '../redux'
+import { RootState, auth, app, api, grpc, routing } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
 
@@ -168,8 +168,7 @@ export function reducer(state: State = initialState, action: Actions) {
 
 export function* saga() {
     yield fork(api.emitResourceActions, resource, apiTypes)
-    yield takeEvery([
-        app.INITIALIZED,
+    yield takeLatest([
         routing.ROUTE_CHANGED,
         CREATE_SUCCEEDED,
         DESTROY_SUCCEEDED
@@ -179,6 +178,11 @@ export function* saga() {
 }
 
 function* decideOrganizationContext(): Iterable<any> {
+    const isAuthenticated = yield _select(auth.isAuthenticated)
+    if (!isAuthenticated) {
+        yield take(auth.LOGIN_SUCCEEDED)
+    }
+
     const organizations = yield _select(getAll)
     const currentlySelected = yield _select(getCurrent)
 
@@ -189,10 +193,14 @@ function* decideOrganizationContext(): Iterable<any> {
             failure: take(LIST_FAILED)
         })
 
-        if (success) {
-            api.isEmptyResponse(success)
-                ? console.log('REDIRECT TO ONBOARDING')
-                : yield decideOrganizationContext()
+        if (success && !api.isEmptyResponse(success)) {
+            yield decideOrganizationContext()
+            return
+        }
+
+        const currentRoute = yield _select(routing.getCurrentRoute)
+        if (currentRoute.key !== 'onboarding') {
+            routing.push(routing.routeFor('onboarding'))
         }
     }
     else {
