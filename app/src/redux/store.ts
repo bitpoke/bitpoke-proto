@@ -6,8 +6,7 @@ import * as storeUtils from '../utils/store'
 import * as modules from '../redux'
 
 const persistedReducers = [
-    'auth',
-    'organizations'
+    'auth'
 ]
 
 const persistConfig = {
