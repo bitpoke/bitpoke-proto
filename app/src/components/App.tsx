@@ -7,7 +7,7 @@ import { RootState, app, auth } from '../redux'
 import Router from '../containers/Router'
 import NavBar from '../components/NavBar'
 
-import './App.css'
+import './App.scss'
 
 type Props = {
     dispatch: Dispatch
