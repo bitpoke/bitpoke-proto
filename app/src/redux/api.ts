@@ -5,8 +5,8 @@ import { takeEvery, put } from 'redux-saga/effects'
 import { singular, plural } from 'pluralize'
 
 import {
-    reduce, find, omit, get, head, last, join, split, keys, size,
-    snakeCase, toLower, includes, has
+    reduce, find, omit, get, head, last, join, split, keys, values, size,
+    snakeCase, toLower, includes, has, isEmpty
 } from 'lodash'
 
 import { grpc, RootState, AnyAction } from '../redux'
@@ -165,6 +165,22 @@ export function* emitResourceActions(resource: Resource, actionTypes: ActionType
         grpc.SUCCEEDED,
         grpc.FAILED
     ], emitResourceAction, resource, actionTypes)
+}
+
+export function isEmptyResponse({ type, payload }: { type: string, payload: grpc.Response }) {
+    const { data, request } = payload
+
+    if (!data || isEmpty(data)) {
+        return true
+    }
+
+    const requestType = getRequestTypeFromMethod(request.method)
+
+    if (requestType === Request.list && isEmpty(head(values(data)))) {
+        return true
+    }
+
+    return false
 }
 
 function* emitResourceAction(
