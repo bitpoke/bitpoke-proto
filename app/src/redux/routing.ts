@@ -39,9 +39,9 @@ export const ROUTES = {
         path      : '/',
         component : 'DashboardContainer'
     },
-    projects: {
-        path      : '/projects',
-        component : 'ProjectsContainer'
+    onboarding: {
+        path      : '/onboarding',
+        component : 'OnboardingContainer'
     }
 }
 

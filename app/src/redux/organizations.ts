@@ -5,15 +5,17 @@ import {
 import { SagaIterator, channel as createChannel } from 'redux-saga'
 import { createSelector } from 'reselect'
 import {
-    reduce, find, head, values, join, noop,
+    reduce, find, head, values as _values, join, noop,
     snakeCase, toUpper, has, includes, get as _get, isEmpty, isEqual
 } from 'lodash'
 
 import URI from 'urijs'
 
-import { RootState, auth, app, api, grpc, routing } from '../redux'
+import { RootState, auth, app, api, grpc, routing, forms, toasts } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
+
+import { Intent } from '@blueprintjs/core'
 
 const {
     Organization,
@@ -175,6 +177,7 @@ export function* saga() {
     ], decideOrganizationContext)
     yield takeLatest(SELECTED, setGRPCOrganizationMetadata)
     yield takeLatest(SELECTED, updateAddressWithOrganization)
+    yield forms.takeEverySubmission(forms.Name.organization, handleFormSubmission)
 }
 
 function* decideOrganizationContext(): Iterable<any> {
@@ -215,11 +218,63 @@ function* decideOrganizationContext(): Iterable<any> {
                 yield put(select(currentlySelected))
             }
             else {
-                const firstOrganizationAsDefault = head(values(organizations))
+                const firstOrganizationAsDefault = head(_values(organizations))
                 if (firstOrganizationAsDefault) {
                     yield put(select(firstOrganizationAsDefault))
                 }
             }
+        }
+    }
+}
+
+function* handleFormSubmission(action: any) {
+    const { resolve, reject, values } = action.payload
+
+    if (api.isNewEntry(values)) {
+        yield put(create(values))
+
+        const { success, failure } = yield race({
+            success : take(CREATE_SUCCEEDED),
+            failure : take(CREATE_FAILED)
+        })
+
+        if (success) {
+            yield call(resolve)
+            toasts.show({
+                intent: Intent.SUCCESS,
+                message: 'Organization created'
+            })
+        }
+        else {
+            yield call(reject)
+            toasts.show({
+                intent: Intent.DANGER,
+                message: 'Failed to create organization'
+            })
+        }
+    }
+    else {
+        yield put(update(values))
+
+        const { success, failure } = yield race({
+            success : take(UPDATE_SUCCEEDED),
+            failure : take(UPDATE_FAILED)
+        })
+
+        if (success) {
+            yield call(resolve)
+            routing.push(routing.routeFor('dashboard'))
+            toasts.show({
+                intent: Intent.SUCCESS,
+                message: 'Organization updated'
+            })
+        }
+        else {
+            yield call(reject)
+            toasts.show({
+                intent: Intent.DANGER,
+                message: 'Failed to update the organization'
+            })
         }
     }
 }

@@ -39,7 +39,7 @@ const OrganizationsList: React.SFC<Props & ReduxProps> = ({ entries, selectedEnt
             <Button
                 minimal
                 intent={ Intent.SUCCESS }
-                text="Create organization"
+                text="Create random organization"
                 onClick={ () => {
                     dispatch(organizations.create({ displayName: faker.company.companyName() }))
                 } }

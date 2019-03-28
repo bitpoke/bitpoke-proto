@@ -183,6 +183,10 @@ export function isEmptyResponse({ type, payload }: { type: string, payload: grpc
     return false
 }
 
+export function isNewEntry(entry: AnyResourceInstance | undefined) {
+    return !has(entry, 'name')
+}
+
 function* emitResourceAction(
     resource: Resource,
     actionTypes: ActionTypes,

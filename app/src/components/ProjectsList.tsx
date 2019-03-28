@@ -23,7 +23,7 @@ const ProjectsList: React.SFC<Props & ReduxProps> = ({ entries, dispatch }) => {
         <div>
             <h2>Projects</h2>
             <Button
-                text="Create project"
+                text="Create random project"
                 intent={ Intent.SUCCESS }
                 onClick={ () => dispatch(projects.create({
                     displayName: faker.commerce.productName()
