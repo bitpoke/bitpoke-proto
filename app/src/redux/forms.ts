@@ -12,7 +12,8 @@ import { RootState } from '../redux'
 import { Omit } from '../utils'
 
 export enum Name {
-    organization = 'organization'
+    organization = 'organization',
+    project = 'project'
 }
 
 export type Values = {}
@@ -21,13 +22,13 @@ export type Payload = {
     name: Name,
     values: Values,
     resolve: () => void
-    reject: () => void
+    reject: (error?: any) => void
 }
 
 export type Actions = ActionType<typeof actions>
 export type State = FormStateMap
 
-export { SubmissionError }
+export { SubmissionError, reset }
 
 type DefaultInjectedProps<FormData = {}> = InjectedFormProps<FormData, {}, string>
 type UpdatedInjectedProps<FormData = {}> =

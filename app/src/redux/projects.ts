@@ -1,13 +1,15 @@
 import { ActionType, createAsyncAction, action as createAction, isOfType } from 'typesafe-actions'
-import { takeEvery, takeLatest, fork, put, take, call } from 'redux-saga/effects'
+import { takeEvery, takeLatest, fork, put, take, call, race } from 'redux-saga/effects'
 import { SagaIterator, channel as createChannel } from 'redux-saga'
 import { createSelector } from 'reselect'
 
 import { reduce, pickBy, get as _get, join, noop, snakeCase, toUpper, includes } from 'lodash'
 
-import { RootState, api, grpc, organizations } from '../redux'
+import { RootState, api, grpc, forms, organizations, routing, toasts } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
+
+import { Intent } from '@blueprintjs/core'
 
 const {
     Project,
@@ -139,11 +141,67 @@ export function reducer(state: State = api.initialState, action: Actions) {
 
 export function* saga() {
     yield fork(api.emitResourceActions, resource, apiTypes)
-    yield takeLatest(organizations.SELECTED, fetchProjects)
+    yield takeLatest(organizations.SELECTED, fetchAll)
+    yield forms.takeEverySubmission(forms.Name.project, handleFormSubmission)
 }
 
-function* fetchProjects() {
+function* fetchAll() {
     yield put(list())
+}
+
+function* handleFormSubmission(action: forms.Actions) {
+    const { resolve, reject, values } = action.payload
+
+    if (api.isNewEntry(values)) {
+        yield put(create(values))
+
+        const { success, failure } = yield race({
+            success : take(CREATE_SUCCEEDED),
+            failure : take(CREATE_FAILED)
+        })
+
+        if (success) {
+            yield call(resolve)
+            yield put(forms.reset(forms.Name.project))
+            yield routing.push(routing.routeFor('dashboard'))
+            toasts.show({
+                intent: Intent.SUCCESS,
+                message: 'Project created'
+            })
+        }
+        else {
+            yield call(reject, new forms.SubmissionError())
+            toasts.show({
+                intent: Intent.DANGER,
+                message: 'Failed to create project'
+            })
+        }
+    }
+    else {
+        yield put(update(values))
+
+        const { success, failure } = yield race({
+            success : take(UPDATE_SUCCEEDED),
+            failure : take(UPDATE_FAILED)
+        })
+
+        if (success) {
+            yield call(resolve)
+            yield put(forms.reset(forms.Name.project))
+            yield routing.push(routing.routeFor('dashboard'))
+            toasts.show({
+                intent: Intent.SUCCESS,
+                message: 'Project updated'
+            })
+        }
+        else {
+            yield call(reject, new forms.SubmissionError())
+            toasts.show({
+                intent: Intent.DANGER,
+                message: 'Failed to update the project'
+            })
+        }
+    }
 }
 
 

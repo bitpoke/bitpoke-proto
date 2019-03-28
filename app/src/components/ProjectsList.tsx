@@ -7,8 +7,7 @@ import { map } from 'lodash'
 
 import { Button, Card, Elevation, Intent } from '@blueprintjs/core'
 
-
-import { RootState, api, projects } from '../redux'
+import { RootState, api, routing, projects } from '../redux'
 
 type Props = {
     dispatch: Dispatch
@@ -23,7 +22,14 @@ const ProjectsList: React.SFC<Props & ReduxProps> = ({ entries, dispatch }) => {
         <div>
             <h2>Projects</h2>
             <Button
+                text="Create project"
+                icon="add"
+                intent={ Intent.SUCCESS }
+                onClick={ () => routing.push(routing.routeFor('onboarding', { step: 'project' })) }
+            />
+            <Button
                 text="Create random project"
+                icon="random"
                 intent={ Intent.SUCCESS }
                 onClick={ () => dispatch(projects.create({
                     displayName: faker.commerce.productName()
@@ -39,6 +45,7 @@ const ProjectsList: React.SFC<Props & ReduxProps> = ({ entries, dispatch }) => {
                     <p>{ project.name }</p>
                     <Button
                         text="Delete project"
+                        icon="trash"
                         intent={ Intent.DANGER }
                         onClick={ () => dispatch(projects.destroy(project)) }
                     />

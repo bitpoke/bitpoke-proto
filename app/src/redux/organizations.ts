@@ -227,7 +227,7 @@ function* decideOrganizationContext(): Iterable<any> {
     }
 }
 
-function* handleFormSubmission(action: any) {
+function* handleFormSubmission(action: forms.Actions) {
     const { resolve, reject, values } = action.payload
 
     if (api.isNewEntry(values)) {
@@ -240,13 +240,14 @@ function* handleFormSubmission(action: any) {
 
         if (success) {
             yield call(resolve)
+            yield routing.push(routing.routeFor('dashboard'))
             toasts.show({
                 intent: Intent.SUCCESS,
                 message: 'Organization created'
             })
         }
         else {
-            yield call(reject)
+            yield call(reject, new forms.SubmissionError())
             toasts.show({
                 intent: Intent.DANGER,
                 message: 'Failed to create organization'
@@ -263,14 +264,14 @@ function* handleFormSubmission(action: any) {
 
         if (success) {
             yield call(resolve)
-            routing.push(routing.routeFor('dashboard'))
+            yield routing.push(routing.routeFor('dashboard'))
             toasts.show({
                 intent: Intent.SUCCESS,
                 message: 'Organization updated'
             })
         }
         else {
-            yield call(reject)
+            yield call(reject, new forms.SubmissionError())
             toasts.show({
                 intent: Intent.DANGER,
                 message: 'Failed to update the organization'

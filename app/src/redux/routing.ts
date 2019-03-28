@@ -40,7 +40,7 @@ export const ROUTES = {
         component : 'DashboardContainer'
     },
     onboarding: {
-        path      : '/onboarding',
+        path      : '/onboarding/:step?',
         component : 'OnboardingContainer'
     }
 }

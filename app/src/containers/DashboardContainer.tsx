@@ -30,6 +30,7 @@ const DashboardContainer: React.SFC<Props & ReduxProps> = ({ currentOrganization
             <p>{ currentOrganization.name }</p>
             <Button
                 text="Delete Organization"
+                icon="trash"
                 intent={ Intent.DANGER }
                 onClick={ () => dispatch(organizations.destroy(currentOrganization)) }
             />
