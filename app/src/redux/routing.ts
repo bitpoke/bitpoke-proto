@@ -10,7 +10,7 @@ import { createSelector } from 'reselect'
 
 import URI from 'urijs'
 
-import { map, filter, omit, get, head, has, isEmpty } from 'lodash'
+import { map, filter, omit, omitBy, get, head, has, isEmpty } from 'lodash'
 
 import { RootState, app } from '../redux'
 import { watchChannel } from '../utils'
@@ -96,11 +96,11 @@ export const history = process.env.NODE_ENV === 'test' ? createMemoryHistory() :
 const { push, replace } = history
 export { push, replace }
 
-export function routeFor(key: string, params = {}) {
+export function routeFor(key: string, routeParams = {}) {
     if (!has(ROUTES, key)) {
         throw new Error(`Invalid route key: ${key}`)
     }
-
+    const params = omitBy(routeParams, isEmpty)
     const route = ROUTES[key].path
     const url = new URI({ path: compile(route)(params) })
     const keys: Key[] = []

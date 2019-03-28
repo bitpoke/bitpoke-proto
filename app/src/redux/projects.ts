@@ -1,5 +1,5 @@
 import { ActionType, createAsyncAction, action as createAction, isOfType } from 'typesafe-actions'
-import { takeEvery, takeLatest, fork, put, take, call, race } from 'redux-saga/effects'
+import { takeEvery, takeLatest, fork, put, take, call, race, select } from 'redux-saga/effects'
 import { SagaIterator, channel as createChannel } from 'redux-saga'
 import { createSelector } from 'reselect'
 
@@ -147,6 +147,18 @@ export function* saga() {
 
 function* fetchAll() {
     yield put(list())
+
+    const { success, failure } = yield race({
+        success: take(LIST_SUCCEEDED),
+        failure: take(LIST_FAILED)
+    })
+
+    if (success && api.isEmptyResponse(success)) {
+        const currentRoute = yield select(routing.getCurrentRoute)
+        if (currentRoute.key !== 'onboarding' || currentRoute.params.step !== 'project') {
+            routing.push(routing.routeFor('onboarding', { step: 'project' }))
+        }
+    }
 }
 
 function* handleFormSubmission(action: forms.Actions) {

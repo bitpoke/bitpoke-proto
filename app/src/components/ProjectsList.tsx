@@ -39,7 +39,6 @@ const ProjectsList: React.SFC<Props & ReduxProps> = ({ entries, dispatch }) => {
                 <Card
                     key={ `project-${project.name}` }
                     elevation={ Elevation.TWO }
-                    interactive
                 >
                     <h5><a href="#">{ project.displayName }</a></h5>
                     <p>{ project.name }</p>

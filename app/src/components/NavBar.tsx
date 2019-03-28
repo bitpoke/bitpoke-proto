@@ -4,6 +4,8 @@ import { connect } from 'react-redux'
 
 import { Navbar as BlueprintNavBar, Spinner, Alignment } from '@blueprintjs/core'
 
+import { get } from 'lodash'
+
 import { RootState, auth, grpc, routing, organizations } from '../redux'
 
 import Link from '../components/Link'
@@ -17,18 +19,24 @@ type Props = {
 }
 
 type ReduxProps = {
-    currentUser : auth.User,
-    isLoading   : boolean
+    currentUser         : auth.User,
+    currentOrganization : organizations.IOrganization | null,
+    isLoading           : boolean
 }
 
 const { Group, Heading } = BlueprintNavBar
 
-const NavBar: React.SFC<Props & ReduxProps> = ({ currentUser, isLoading, dispatch }) => {
+const NavBar: React.SFC<Props & ReduxProps> = (props) => {
+    const { currentUser, currentOrganization, isLoading, dispatch } = props
     return (
         <BlueprintNavBar>
             <Group align={ Alignment.LEFT }>
                 <Heading className={ styles.logo }>
-                    <Link to={ routing.routeFor('dashboard') }>Presslabs Dashboard</Link>
+                    <Link to={ routing.routeFor('dashboard', {
+                        org: get(currentOrganization, 'name', null)
+                    }) }>
+                        Presslabs Dashboard
+                    </Link>
                     { isLoading && (
                         <Spinner
                             size={ Spinner.SIZE_SMALL }
@@ -47,8 +55,9 @@ const NavBar: React.SFC<Props & ReduxProps> = ({ currentUser, isLoading, dispatc
 
 const mapStateToProps = (state: RootState): ReduxProps => {
     return {
-        currentUser : auth.getCurrentUser(state),
-        isLoading   : grpc.isLoading(state)
+        currentUser         : auth.getCurrentUser(state),
+        currentOrganization : organizations.getCurrent(state),
+        isLoading           : grpc.isLoading(state)
     }
 }
 
