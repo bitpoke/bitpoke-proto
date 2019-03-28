@@ -5,6 +5,8 @@ import * as auth from './auth'
 import * as routing from './routing'
 import * as organizations from './organizations'
 import * as projects from './projects'
+import * as forms from './forms'
+import toasts from './toasts'
 
 export type RootState = {
     app           : app.State,
@@ -12,7 +14,8 @@ export type RootState = {
     auth          : auth.State,
     routing       : routing.State,
     organizations : organizations.State,
-    projects      : projects.State
+    projects      : projects.State,
+    forms         : forms.State
 }
 
 export type Reducer = (state: RootState | undefined, action: AnyAction) => RootState
@@ -32,5 +35,7 @@ export {
     auth,
     routing,
     organizations,
-    projects
+    projects,
+    forms,
+    toasts
 }

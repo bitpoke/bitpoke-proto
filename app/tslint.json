@@ -15,6 +15,7 @@
     "semicolon": [true, "never"],
     "trailing-comma": [true, {"multiline": "never", "singleline": "never"}],
     "object-literal-sort-keys": false,
+    "object-shorthand-properties-first": false,
 
     "brace-style": [true, "stroustrup", { "allowSingleLine": true }],
 
