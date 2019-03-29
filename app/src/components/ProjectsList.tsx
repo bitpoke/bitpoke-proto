@@ -25,7 +25,7 @@ const ProjectsList: React.SFC<Props & ReduxProps> = ({ entries, dispatch }) => {
                 text="Create project"
                 icon="add"
                 intent={ Intent.SUCCESS }
-                onClick={ () => routing.push(routing.routeFor('onboarding', { step: 'project' })) }
+                onClick={ () => dispatch(routing.push(routing.routeFor('onboarding', { step: 'project' }))) }
             />
             <Button
                 text="Create random project"

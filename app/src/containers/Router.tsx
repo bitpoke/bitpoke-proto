@@ -12,7 +12,7 @@ type Props = {}
 const Router: React.SFC<Props> = () => (
     <ReactRouter history={ routing.history }>
         <Switch>
-            { map(routing.ROUTES, ({ path, component }, key) => (
+            { map(routing.ROUTE_MAP, ({ path, component }, key) => (
                 <Route
                     key={ key }
                     path={ path }

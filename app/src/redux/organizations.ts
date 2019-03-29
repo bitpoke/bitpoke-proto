@@ -145,7 +145,7 @@ export const {
 
 const apiReducer = api.createReducer(resource, apiTypes)
 
-const initialState = {
+const initialState: State = {
     ...api.initialState,
     current: null
 }
@@ -200,11 +200,6 @@ function* decideOrganizationContext(): Iterable<any> {
             yield decideOrganizationContext()
             return
         }
-
-        const currentRoute = yield _select(routing.getCurrentRoute)
-        if (currentRoute.key !== 'onboarding') {
-            routing.push(routing.routeFor('onboarding'))
-        }
     }
     else {
         const params = yield _select(routing.getParams)
@@ -240,7 +235,7 @@ function* handleFormSubmission(action: forms.Actions) {
 
         if (success) {
             yield call(resolve)
-            yield routing.push(routing.routeFor('dashboard'))
+            yield put(routing.push(routing.routeFor('dashboard')))
             toasts.show({
                 intent: Intent.SUCCESS,
                 message: 'Organization created'
@@ -264,7 +259,7 @@ function* handleFormSubmission(action: forms.Actions) {
 
         if (success) {
             yield call(resolve)
-            yield routing.push(routing.routeFor('dashboard'))
+            yield put(routing.push(routing.routeFor('dashboard')))
             toasts.show({
                 intent: Intent.SUCCESS,
                 message: 'Organization updated'
@@ -300,7 +295,7 @@ function* updateAddressWithOrganization(action: ActionType<typeof select>) {
     updatedURL.addSearch('org', action.payload.name)
 
     if (updatedURL.toString() !== currentRoute.url) {
-        routing.replace(updatedURL.toString()) // eslint-disable-line lodash/prefer-lodash-method
+        yield put(routing.replace(updatedURL.toString())) // eslint-disable-line lodash/prefer-lodash-method
     }
 }
 

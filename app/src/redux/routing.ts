@@ -1,16 +1,16 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { createHashHistory, createMemoryHistory, Location } from 'history'
+import { createHashHistory, createMemoryHistory, Location, Path } from 'history'
 import pathToRegexp, { Key, compile } from 'path-to-regexp'
 import { matchPath } from 'react-router'
 import { takeEvery, put } from 'redux-saga/effects'
 import { channel as createChannel } from 'redux-saga'
-import { ActionType, action as createAction } from 'typesafe-actions'
+import { ActionType, action as createAction, isOfType } from 'typesafe-actions'
 import { createSelector } from 'reselect'
 
 import URI from 'urijs'
 
-import { map, filter, omit, omitBy, get, head, has, isEmpty } from 'lodash'
+import { map, filter, findKey, omit, omitBy, get, head, has, isEmpty, isString } from 'lodash'
 
 import { RootState, app } from '../redux'
 import { watchChannel } from '../utils'
@@ -19,7 +19,7 @@ import { watchChannel } from '../utils'
 //
 //  TYPES
 
-export type State = Route | null
+export type State = Route
 export type Actions = ActionType<typeof actions>
 export type Params = object
 
@@ -30,11 +30,10 @@ export type Route = {
     key?   : string
 }
 
-
 //
 //  ROUTES
 
-export const ROUTES = {
+export const ROUTE_MAP = {
     dashboard: {
         path      : '/',
         component : 'DashboardContainer'
@@ -45,22 +44,34 @@ export const ROUTES = {
     }
 }
 
+const INITIAL_ROUTE = {
+    path   : '/',
+    url    : '/',
+    key    : findKey(ROUTE_MAP, { path: '/' }),
+    params : {}
+} as Route
+
+
 
 //
 //  ACTIONS
 
-export const ROUTE_CHANGED = '@ routing / ROUTE_CHANGED'
+export const PUSH_REQUESTED    = '@ routing / PUSH_REQUESTED'
+export const REPLACE_REQUESTED = '@ routing / REPLACE_REQUESTED'
+export const ROUTE_CHANGED     = '@ routing / ROUTE_CHANGED'
 
-export const updateRoute = (route: Location<any>) => createAction(ROUTE_CHANGED, route)
+export const push = (path: Path) => createAction(PUSH_REQUESTED, path)
+export const replace = (path: Path) => createAction(REPLACE_REQUESTED, path)
+export const updateRoute = (location: Location<any>) => createAction(ROUTE_CHANGED, location)
 
 const actions = {
-    updateRoute
+    push, replace, updateRoute
 }
 
 //
 //  REDUCER
 
-const initialState: State = null
+const initialState: State = INITIAL_ROUTE
 
 export function reducer(state: State = initialState, action: Actions) {
     switch (action.type) {
@@ -81,6 +92,7 @@ const channel = createChannel()
 
 export function* saga() {
     yield takeEvery(app.INITIALIZED, bootstrap)
+    yield takeEvery([PUSH_REQUESTED, REPLACE_REQUESTED], dispatchToHistory)
     yield watchChannel(channel)
 }
 
@@ -89,19 +101,31 @@ function* bootstrap() {
     history.listen((route) => channel.put(updateRoute(route)))
 }
 
+function* dispatchToHistory(
+    action: ActionType<typeof push> | ActionType<typeof replace>
+): IterableIterator<any> {
+    const path = action.payload
+
+    if (isOfType(PUSH_REQUESTED)) {
+        history.push(path)
+    }
+
+    if (isOfType(REPLACE_REQUESTED)) {
+        history.replace(path)
+    }
+}
+
 //
 //   HELPERS and UTILITIES
 
 export const history = process.env.NODE_ENV === 'test' ? createMemoryHistory() : createHashHistory()
-const { push, replace } = history
-export { push, replace }
 
 export function routeFor(key: string, routeParams = {}) {
-    if (!has(ROUTES, key)) {
+    if (!has(ROUTE_MAP, key)) {
         throw new Error(`Invalid route key: ${key}`)
     }
     const params = omitBy(routeParams, isEmpty)
-    const route = ROUTES[key].path
+    const route = ROUTE_MAP[key].path
     const url = new URI({ path: compile(route)(params) })
     const keys: Key[] = []
 
@@ -114,7 +138,7 @@ export function routeFor(key: string, routeParams = {}) {
 function matchRoute(location: Location<any>): Route {
     const { pathname, search } = location
     const matched = filter(
-        map(ROUTES, ({ path }, key) => ({
+        map(ROUTE_MAP, ({ path }, key) => ({
             key,
             ...matchPath(pathname, { path, exact: true })
         })),

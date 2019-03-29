@@ -118,8 +118,8 @@ function handleTokenRefresh(action: ActionType<typeof refreshToken>) {
     provider.signinSilent()
 }
 
-function redirectToDashboard() {
-    routing.push(routing.routeFor('dashboard'))
+function* redirectToDashboard() {
+    yield put(routing.push(routing.routeFor('dashboard')))
 }
 
 function* setGRPCAuthorizationMetadata() {

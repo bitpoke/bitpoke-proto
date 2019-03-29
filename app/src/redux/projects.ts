@@ -156,7 +156,7 @@ function* fetchAll() {
     if (success && api.isEmptyResponse(success)) {
         const currentRoute = yield select(routing.getCurrentRoute)
         if (currentRoute.key !== 'onboarding' || currentRoute.params.step !== 'project') {
-            routing.push(routing.routeFor('onboarding', { step: 'project' }))
+            yield put(routing.push(routing.routeFor('onboarding', { step: 'project' })))
         }
     }
 }
@@ -175,7 +175,7 @@ function* handleFormSubmission(action: forms.Actions) {
         if (success) {
             yield call(resolve)
             yield put(forms.reset(forms.Name.project))
-            yield routing.push(routing.routeFor('dashboard'))
+            yield put(routing.push(routing.routeFor('dashboard')))
             toasts.show({
                 intent: Intent.SUCCESS,
                 message: 'Project created'
@@ -200,7 +200,7 @@ function* handleFormSubmission(action: forms.Actions) {
         if (success) {
             yield call(resolve)
             yield put(forms.reset(forms.Name.project))
-            yield routing.push(routing.routeFor('dashboard'))
+            yield put(routing.push(routing.routeFor('dashboard')))
             toasts.show({
                 intent: Intent.SUCCESS,
                 message: 'Project updated'
