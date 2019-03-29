@@ -82,6 +82,11 @@ export function* saga() {
     yield takeEvery(routing.ROUTE_CHANGED, ensureAuthentication)
     yield takeEvery([LOGIN_SUCCEEDED, LOGIN_FAILED, LOGOUT_REQUESTED], redirectToDashboard)
     yield takeEvery(TOKEN_REFRESH_REQUESTED, handleTokenRefresh)
+    yield takeEvery([
+        app.INITIALIZED,
+        LOGIN_SUCCEEDED
+    ], grantAccessIfRequired)
+    yield takeEvery(ACCESS_GRANTED, setGRPCAuthorizationMetadata)
     yield watchChannel(channel)
 }
 
@@ -89,8 +94,6 @@ function* ensureAuthentication(action: ActionType<typeof routing.updateRoute>) {
     const userIsAuthenticated = yield select(isAuthenticated)
     const route = yield select(routing.getCurrentRoute)
     if (userIsAuthenticated) {
-        yield call(setGRPCAuthorizationMetadata)
-        // yield put(grantAccess())
         provider.startSilentRenew()
         return
     }
@@ -105,6 +108,13 @@ function* ensureAuthentication(action: ActionType<typeof routing.updateRoute>) {
     }
 
     return
+}
+
+function* grantAccessIfRequired() {
+    const userIsAuthenticated = yield select(isAuthenticated)
+    if (userIsAuthenticated) {
+        yield put(grantAccess())
+    }
 }
 
 function handleAuthenticationIfRequired(action: ActionType<typeof routing.updateRoute>) {

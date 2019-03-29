@@ -1,8 +1,8 @@
 import { ActionType, createAsyncAction, action as createAction, isOfType } from 'typesafe-actions'
 import {
-    takeEvery, takeLatest, fork, put, take, call, race, select as _select
+    takeEvery, takeLatest, fork, put, take, call, race, select as _select, delay
 } from 'redux-saga/effects'
-import { SagaIterator, channel as createChannel } from 'redux-saga'
+import { channel as createChannel } from 'redux-saga'
 import { createSelector } from 'reselect'
 import {
     reduce, find, head, values as _values, join, noop,
@@ -181,9 +181,11 @@ export function* saga() {
 }
 
 function* decideOrganizationContext(): Iterable<any> {
+    yield delay(50)
+
     const isAuthenticated = yield _select(auth.isAuthenticated)
     if (!isAuthenticated) {
-        yield take(auth.LOGIN_SUCCEEDED)
+        yield take(auth.ACCESS_GRANTED)
     }
 
     const organizations = yield _select(getAll)
