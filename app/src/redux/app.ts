@@ -1,4 +1,4 @@
-import { ActionType } from 'typesafe-actions'
+import { ActionType, action as createAction } from 'typesafe-actions'
 import { createSelector } from 'reselect'
 
 import { RootState } from '../redux'
@@ -17,7 +17,7 @@ export type Actions = ActionType<typeof actions>
 //  ACTIONS
 
 export const INITIALIZED = '@ app / INITIALIZED'
-export const initialize = () => ({ type: INITIALIZED })
+export const initialize = () => createAction(INITIALIZED, Date.now())
 
 const actions = {
     initialize

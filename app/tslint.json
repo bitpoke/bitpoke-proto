@@ -29,6 +29,8 @@
     "no-console": [true, "warning"],
     "no-constant-condition": [true, { "checkLoops": false }],
 
+    "no-else-after-return": false,
+
     "interface-over-type-literal": false,
 
     "prefer-array-literal": false
