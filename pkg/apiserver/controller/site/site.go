@@ -70,7 +70,7 @@ func Add(server *apiserver.APIServer) error {
 
 func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteRequest) (*sites.Site, error) {
 	c, userID := impersonate.ClientFromContext(ctx, s.cfg)
-	org := metadata.RequireOrganization(ctx)
+	org := metadata.RequireOrganizationName(ctx)
 
 	var siteName, projName string
 
@@ -79,7 +79,7 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 		return nil, status.InvalidArgumentf("%s", err)
 	}
 
-	projNs, err := projectns.Lookup(c, proj, org)
+	projNs, err := projectns.Lookup(s.client, proj, org)
 	if err != nil {
 		return nil, status.FromError(err)
 	}
@@ -130,9 +130,9 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 
 func (s *sitesService) GetSite(ctx context.Context, r *sites.GetSiteRequest) (*sites.Site, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
-	org := metadata.RequireOrganization(ctx)
+	org := metadata.RequireOrganizationName(ctx)
 
-	key, err := site.ResolveToObjectKey(c, r.Name, org)
+	key, err := site.ResolveToObjectKey(s.client, r.Name, org)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
@@ -167,10 +167,10 @@ func updateWordpressImage(wp *wordpressv1alpha1.Wordpress, image string, fieldMa
 
 func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteRequest) (*sites.Site, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
-	org := metadata.RequireOrganization(ctx)
+	org := metadata.RequireOrganizationName(ctx)
 
 	wp := site.New(&wordpressv1alpha1.Wordpress{})
-	key, err := site.ResolveToObjectKey(c, r.Name, org)
+	key, err := site.ResolveToObjectKey(s.client, r.Name, org)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
@@ -196,9 +196,9 @@ func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteReques
 
 func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteRequest) (*types.Empty, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
-	org := metadata.RequireOrganization(ctx)
+	org := metadata.RequireOrganizationName(ctx)
 
-	key, err := site.ResolveToObjectKey(c, r.Name, org)
+	key, err := site.ResolveToObjectKey(s.client, r.Name, org)
 	if err != nil {
 		return nil, status.InvalidArgumentf("%s", err)
 	}
@@ -217,7 +217,7 @@ func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteReques
 
 func (s *sitesService) ListSites(ctx context.Context, r *sites.ListSitesRequest) (*sites.ListSitesResponse, error) {
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
-	org := metadata.RequireOrganization(ctx)
+	org := metadata.RequireOrganizationName(ctx)
 
 	wpList := &wordpressv1alpha1.WordpressList{}
 	resp := &sites.ListSitesResponse{}
@@ -227,7 +227,7 @@ func (s *sitesService) ListSites(ctx context.Context, r *sites.ListSitesRequest)
 		return nil, status.InvalidArgumentf("%s", err)
 	}
 
-	projNs, err := projectns.Lookup(c, proj, org)
+	projNs, err := projectns.Lookup(s.client, proj, org)
 	if err != nil {
 		return nil, status.FromError(err)
 	}
