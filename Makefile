@@ -34,14 +34,6 @@ apiserver-test:
 		--cover --coverprofile cover.out --trace --race \
 		./pkg/apiserver/...
 
-# TODO delete projectns-test
-# Run apiserver tests
-projectns-test:
-	ginkgo \
-		--randomizeAllSpecs --randomizeSuites --failOnPending \
-		--cover --coverprofile cover.out --trace --race \
-		./pkg/controller/projectns/...
-
 # Build dashboard binary
 build: generate fmt vet
 	go build -o bin/dashboard github.com/presslabs/dashboard/cmd/dashboard
