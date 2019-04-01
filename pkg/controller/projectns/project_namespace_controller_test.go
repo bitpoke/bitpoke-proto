@@ -43,7 +43,7 @@ import (
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 )
 
-const timeout = time.Second * 7
+const timeout = time.Second * 6
 
 // deleteServiceAccount deletes a service account.
 func deleteServiceAccount(email string) error {

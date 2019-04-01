@@ -47,6 +47,9 @@ var (
 	// SMTPSecret is the secret name for SMTP
 	// nolint: gosec
 	SMTPSecret = "smtp-defaults"
+
+	// GCloudProjectID is the project if for gcloud service account
+	GCloudProjectID = ""
 )
 
 // AddToFlagSet add options to a FlagSet
@@ -63,6 +66,8 @@ func AddToFlagSet(flag *pflag.FlagSet) {
 	flag.StringVar(&WebhookCertDir, "webhook-cert-dir", WebhookCertDir, "The webhook server certificates directory")
 
 	flag.StringVar(&SMTPSecret, "smtp-defaults", SMTPSecret, "The SMTP secret name")
+
+	flag.StringVar(&GCloudProjectID, "gcloud-project-id", GCloudProjectID, "The project ID for GCloud service account")
 }
 
 // Validate validates the arguments

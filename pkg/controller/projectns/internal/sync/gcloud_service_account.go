@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
 
@@ -36,7 +37,6 @@ func implicit(projectID string) error {
 	storageClient, err := storage.NewClient(ctx)
 	if err != nil {
 		return err
-		// log.Fatal(err)
 	}
 
 	it := storageClient.Buckets(ctx, projectID)
@@ -56,17 +56,10 @@ func implicit(projectID string) error {
 	oauthClient, err := google.DefaultClient(ctx, cloudkms.CloudPlatformScope)
 	if err != nil {
 		return err
-		// log.Fatal(err)
 	}
 
 	_, err = cloudkms.New(oauthClient)
 	return err
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	// return nil
 }
 
 // createServiceAccount creates a service account.
@@ -135,7 +128,7 @@ func NewGcloudServiceAccountSyncer(proj *projectns.ProjectNamespace, cl client.C
 
 		if out.CreationTimestamp.IsZero() {
 			// TODO get projectID from options
-			sa, err := createServiceAccount("development-reactor",
+			sa, err := createServiceAccount(options.GCloudProjectID,
 				proj.ObjectMeta.Labels["presslabs.com/project"],
 				proj.ObjectMeta.Annotations["presslabs.com/display-name"])
 			if err != nil {

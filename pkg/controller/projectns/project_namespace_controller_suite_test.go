@@ -35,6 +35,7 @@ import (
 
 	logf "github.com/presslabs/controller-util/log"
 	"github.com/presslabs/dashboard/pkg/apis"
+	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
 )
 
 const (
@@ -63,6 +64,8 @@ var _ = BeforeSuite(func() {
 		},
 	}
 	apis.AddToScheme(scheme.Scheme)
+
+	options.GCloudProjectID = "development-reactor"
 
 	cfg, err = t.Start()
 	Expect(err).NotTo(HaveOccurred())
