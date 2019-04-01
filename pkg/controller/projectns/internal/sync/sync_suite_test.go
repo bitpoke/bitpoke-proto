@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"github.com/presslabs/dashboard/pkg/apis"
+	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
 )
 
 func TestProjectNSSync(t *testing.T) {
@@ -33,4 +34,6 @@ var rts = scheme.Scheme
 
 var _ = BeforeSuite(func() {
 	apis.AddToScheme(rts)
+
+	options.GCloudProjectID = "development-reactor"
 })

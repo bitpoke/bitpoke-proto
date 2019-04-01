@@ -157,7 +157,7 @@ func (r *ReconcileProject) Reconcile(request reconcile.Request) (reconcile.Resul
 		sync.NewMysqlServiceMonitorSyncer(proj, r.Client, r.scheme),
 		sync.NewWordpressServiceMonitorSyncer(proj, r.Client, r.scheme),
 		sync.NewSMTPSecretSyncer(proj, r.Client, r.scheme),
-		sync.NewGcloudServiceAccountSyncer(proj, r.Client, r.scheme),
+		sync.NewGCloudServiceAccountSyncer(proj, r.Client, r.scheme),
 	}
 
 	return reconcile.Result{}, r.sync(syncers)

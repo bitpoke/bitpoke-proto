@@ -4,26 +4,10 @@
 [[projects]]
   digest = "1:776eda5913d1997b37e9ff005750905f5f448aa93e5b27c531cad688e81dfea9"
   name = "cloud.google.com/go"
-  packages = [
-    "compute/metadata",
-    "iam",
-    "internal",
-    "internal/optional",
-    "internal/trace",
-    "internal/version",
-    "storage",
-  ]
+  packages = ["compute/metadata"]
   pruneopts = "T"
   revision = "29f476ffa9c4cd4fd14336b6043090ac1ad76733"
   version = "v0.21.0"
-
-[[projects]]
-  digest = "1:147748cfa709da38076c3df47f6bca6814c8ced6cba510065ec03f2120cc4819"
-  name = "github.com/BurntSushi/toml"
-  packages = ["."]
-  pruneopts = "T"
-  revision = "3012a1dbe2e4bd1391d42b32f0577cb7bbc7f005"
-  version = "v0.3.1"
 
 [[projects]]
   digest = "1:352fc094dbd1438593b64251de6788bffdf30f9925cf763c7f62e1fd27142b76"
@@ -207,12 +191,7 @@
   packages = [
     "jsonpb",
     "proto",
-    "protoc-gen-go",
     "protoc-gen-go/descriptor",
-    "protoc-gen-go/generator",
-    "protoc-gen-go/generator/internal/remap",
-    "protoc-gen-go/grpc",
-    "protoc-gen-go/plugin",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
@@ -244,17 +223,6 @@
   pruneopts = "T"
   revision = "d460ce9f8df2e77fb1ba55ca87fafed96c607494"
   version = "v1.0.0"
-
-[[projects]]
-  digest = "1:cd42282234baaeb7ead07e652e4cd1fe4f9347b44f9886f0532cabb6101f0fee"
-  name = "github.com/googleapis/gax-go"
-  packages = [
-    ".",
-    "v2",
-  ]
-  pruneopts = "T"
-  revision = "beaecbbdd8af86aa3acf14180d53828ce69400b2"
-  version = "v2.0.4"
 
 [[projects]]
   digest = "1:cfa5328f090e652e39d95a1943583f33448dd84849e1141761e9e90fb508b3c8"
@@ -560,6 +528,7 @@
   packages = [
     "pkg/proto/presslabs/dashboard/organizations/v1",
     "pkg/proto/presslabs/dashboard/projects/v1",
+    "pkg/proto/presslabs/dashboard/sites/v1",
   ]
   pruneopts = "T"
   revision = "55619c430f6fa9b1d6ac98b7f67071d7cc6e2995"
@@ -669,29 +638,6 @@
   version = "v1.0.2"
 
 [[projects]]
-  digest = "1:ee91d938ed5446a583b174aa8d25149512ae4b849abfd6d2e0bf9e4e2f2db8ac"
-  name = "go.opencensus.io"
-  packages = [
-    ".",
-    "exemplar",
-    "internal",
-    "internal/tagencoding",
-    "plugin/ochttp",
-    "plugin/ochttp/propagation/b3",
-    "stats",
-    "stats/internal",
-    "stats/view",
-    "tag",
-    "trace",
-    "trace/internal",
-    "trace/propagation",
-    "trace/tracestate",
-  ]
-  pruneopts = "T"
-  revision = "3b8e2721f2c3c01fa1bf4a2e455874e7b8319cd7"
-  version = "v0.19.2"
-
-[[projects]]
   digest = "1:365b8ecb35a5faf5aa0ee8d798548fc9cd4200cb95d77a5b0b285ac881bae499"
   name = "go.uber.org/atomic"
   packages = ["."]
@@ -736,28 +682,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7ee6f7eb77a016762b32dc7a8ea8f143966fa8d33016a034649a20415cfe3f54"
-  name = "golang.org/x/exp"
-  packages = [
-    "apidiff",
-    "cmd/apidiff",
-  ]
-  pruneopts = "T"
-  revision = "f0864edee7f32333874efabd1557a9987f096ae1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:2f8b355c7bf40ff4559aee617f43ce572afaed911647c2a09410865067817ebc"
-  name = "golang.org/x/lint"
-  packages = [
-    ".",
-    "golint",
-  ]
-  pruneopts = "T"
-  revision = "d0100b6bd8b389f0385611eb39152c4d7c3a7905"
-
-[[projects]]
-  branch = "master"
   digest = "1:a42c6aed51ed8b42dae608760a24ce53b799ede0c31637dfcbf1116cd0c23b03"
   name = "golang.org/x/net"
   packages = [
@@ -771,6 +695,7 @@
     "http2/hpack",
     "idna",
     "internal/timeseries",
+    "publicsuffix",
     "trace",
   ]
   pruneopts = "T"
@@ -854,14 +779,7 @@
   digest = "1:cbd0d0c76fec60567d430e14d6668b64fad7fb0802fa49fa3b953cd6167fe12c"
   name = "golang.org/x/tools"
   packages = [
-    "cmd/goimports",
     "go/ast/astutil",
-    "go/buildutil",
-    "go/gcexportdata",
-    "go/internal/gcimporter",
-    "go/loader",
-    "go/packages",
-    "go/types/typeutil",
     "imports",
     "internal/fastwalk",
   ]
@@ -872,18 +790,10 @@
   digest = "1:2767ce07d4d6f1e8f4a7aaba38235f0ed7504cb509013cc52c4c0d57ae16aa9c"
   name = "google.golang.org/api"
   packages = [
-    "cloudkms/v1",
     "gensupport",
     "googleapi",
     "googleapi/internal/uritemplates",
-    "googleapi/transport",
     "iam/v1",
-    "internal",
-    "iterator",
-    "option",
-    "storage/v1",
-    "transport/http",
-    "transport/http/internal/propagation",
   ]
   pruneopts = "T"
   revision = "e742f5a8defa1f9f5d723dfa04c962e680dc33f0"
@@ -912,12 +822,7 @@
   branch = "master"
   digest = "1:e43f1cb3f488a0c2be85939c2a594636f60b442a12a196c778bd2d6c9aca3df7"
   name = "google.golang.org/genproto"
-  packages = [
-    "googleapis/api/annotations",
-    "googleapis/iam/v1",
-    "googleapis/rpc/code",
-    "googleapis/rpc/status",
-  ]
+  packages = ["googleapis/rpc/status"]
   pruneopts = "T"
   revision = "11092d34479b07829b72e10713b159248caf5dad"
 
@@ -1001,36 +906,6 @@
   pruneopts = "T"
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
   version = "v2.2.1"
-
-[[projects]]
-  digest = "1:db9e7a9be4301612e8e8be884914c1bfd20c45c73a9e0571bdef5bb02ecd34b3"
-  name = "honnef.co/go/tools"
-  packages = [
-    "arg",
-    "callgraph",
-    "callgraph/static",
-    "cmd/staticcheck",
-    "config",
-    "deprecated",
-    "functions",
-    "internal/sharedcheck",
-    "lint",
-    "lint/lintdsl",
-    "lint/lintutil",
-    "lint/lintutil/format",
-    "simple",
-    "ssa",
-    "ssa/ssautil",
-    "ssautil",
-    "staticcheck",
-    "staticcheck/vrp",
-    "stylecheck",
-    "unused",
-    "version",
-  ]
-  pruneopts = "T"
-  revision = "95959eaf5e3c41c66151dcfd91779616b84077a8"
-  version = "2019.1.1"
 
 [[projects]]
   digest = "1:8a1af4b4d5b51e3f8d6ec2a44467e8505e25e29814c2557d1d9717834065c674"
@@ -1334,7 +1209,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "cloud.google.com/go/storage",
     "github.com/coreos/go-oidc",
     "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1",
     "github.com/emicklei/go-restful",
@@ -1363,16 +1237,16 @@
     "github.com/presslabs/controller-util/syncer",
     "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1",
     "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1",
+    "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/sites/v1",
     "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1",
     "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
     "go.uber.org/zap",
     "golang.org/x/net/context",
+    "golang.org/x/net/publicsuffix",
     "golang.org/x/oauth2/google",
-    "google.golang.org/api/cloudkms/v1",
     "google.golang.org/api/iam/v1",
-    "google.golang.org/api/iterator",
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",
     "google.golang.org/grpc/metadata",

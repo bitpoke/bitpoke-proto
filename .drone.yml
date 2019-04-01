@@ -36,7 +36,7 @@ pipeline:
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/etc/key.json
     commands:
-      - echo "$GCLOUD_CREDENTIALS" > $GOOGLE_APPLICATION_CREDENTIALS
+      - echo "${GCLOUD_CREDENTIALS}" > $GOOGLE_APPLICATION_CREDENTIALS
       - make test
 
   test-webapp:
