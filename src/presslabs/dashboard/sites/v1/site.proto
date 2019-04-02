@@ -29,6 +29,9 @@ message Site {
   string primary_domain = 2;
   // The wordpress image
   string wordpress_image = 3;
+  // The project name. The project is immutable.
+  // This field is read-only
+  string project = 4;
 }
 
 message CreateSiteRequest {
