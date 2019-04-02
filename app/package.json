@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@blueprintjs/core": "^3.10.0",
-    "@presslabs/dashboard-proto": "presslabs/dashboard-js#master",
+    "@presslabs/dashboard-proto": "git+https://github.com/presslabs/dashboard-js.git#master",
     "axios": "^0.18.0",
     "browser-headers": "^0.4.1",
     "faker": "^4.1.0",

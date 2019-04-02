@@ -922,9 +922,9 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@presslabs/dashboard-proto@presslabs/dashboard-js#master":
+"@presslabs/dashboard-proto@git+https://github.com/presslabs/dashboard-js.git#master":
   version "0.1.0"
-  resolved "git+ssh://git@github.com/presslabs/dashboard-js.git#3a94dc2cd16f7483131853f93180930ef4f9d493"
+  resolved "git+https://github.com/presslabs/dashboard-js.git#220e11329e883e6a23047d125e38d5a07be06290"
 
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
