@@ -9,7 +9,7 @@ import FormContainer from '../components/FormContainer'
 import InputField from '../components/InputField'
 import { withForm } from '../components/Form'
 
-type Props = forms.Props<projects.IProject>
+type Props = forms.Props<projects.IProjectPayload>
 
 const ProjectForm: React.SFC<Props> = (props) => {
     const { initialValues } = props

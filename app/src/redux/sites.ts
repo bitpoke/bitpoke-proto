@@ -5,7 +5,7 @@ import { createSelector } from 'reselect'
 
 import { reduce, pickBy, get as _get, join, noop, snakeCase, toUpper, includes } from 'lodash'
 
-import { RootState, api, grpc } from '../redux'
+import { RootState, api, grpc, projects } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
 
@@ -35,10 +35,15 @@ export {
 //
 //  TYPES
 
+export type SiteName = string
+export interface ISite extends presslabs.dashboard.sites.v1.ISite {
+    name: SiteName
+}
+
 export type Site =
     presslabs.dashboard.sites.v1.Site
 
-export type ISite =
+export type ISitePayload =
     presslabs.dashboard.sites.v1.ISite
 
 export type ListSitesResponse =
@@ -65,8 +70,6 @@ export type IListSitesResponse =
 export type State = api.State<ISite>
 export type Actions = ActionType<typeof actions>
 
-const resource = api.Resource.site
-
 const service = SitesService.create(
     grpc.createTransport('presslabs.dashboard.sites.v1.SitesService')
 )
@@ -87,19 +90,19 @@ export const list = (payload?: IListSitesRequest) => grpc.invoke({
     data   : ListSitesRequest.create(payload)
 })
 
-export const create = (payload: ISite) => grpc.invoke({
+export const create = (payload: ISitePayload) => grpc.invoke({
     service,
     method : 'createSite',
     data   : CreateSiteRequest.create({ site: payload })
 })
 
-export const update = (payload: ISite) => grpc.invoke({
+export const update = (payload: ISitePayload) => grpc.invoke({
     service,
     method : 'updateSite',
     data   : UpdateSiteRequest.create({ site: payload })
 })
 
-export const destroy = (payload: ISite) => grpc.invoke({
+export const destroy = (payload: ISitePayload) => grpc.invoke({
     service,
     method : 'deleteSite',
     data   : DeleteSiteRequest.create(payload)
@@ -113,7 +116,7 @@ const actions = {
     destroy
 }
 
-const apiTypes = api.createActionTypes(resource)
+const apiTypes = api.createActionTypes(api.Resource.site)
 
 export const {
     LIST_REQUESTED,    LIST_SUCCEEDED,    LIST_FAILED,
@@ -127,7 +130,7 @@ export const {
 //
 //  REDUCER
 
-const apiReducer = api.createReducer(resource, apiTypes)
+const apiReducer = api.createReducer(api.Resource.site, apiTypes)
 
 export function reducer(state: State = api.initialState, action: Actions) {
     return apiReducer(state, action)
@@ -138,18 +141,21 @@ export function reducer(state: State = api.initialState, action: Actions) {
 //  SAGA
 
 export function* saga() {
-    yield fork(api.emitResourceActions, resource, apiTypes)
+    yield fork(api.emitResourceActions, api.Resource.site, apiTypes)
 }
 
 
 //
 //  SELECTORS
 
-const selectors = api.createSelectors(resource)
+const selectors = api.createSelectors(api.Resource.site)
 
-export const { getState, getAll, countAll, getByName } = selectors
+export const getState: (state: RootState) => State = selectors.getState
+export const getAll: (state: RootState) => api.ResourcesList<ISite> = selectors.getAll
+export const countAll: (state: RootState) => number = selectors.countAll
+export const getByName: (name: SiteName) => (state: RootState) => ISite | null = selectors.getByName
 
-export const getForProject = (project: string) => createSelector(
+export const getForProject = (project: projects.ProjectName) => createSelector(
     getAll,
     (sites) => pickBy(sites, { project })
 )

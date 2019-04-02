@@ -11,7 +11,7 @@ import {
 
 import URI from 'urijs'
 
-import { RootState, auth, app, api, grpc, routing, forms, toasts } from '../redux'
+import { RootState, auth, app, api, grpc, routing, forms, toasts, wizards } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
 
@@ -43,10 +43,15 @@ export {
 //
 //  TYPES
 
+export type OrganizationName = string
+export interface IOrganization extends presslabs.dashboard.organizations.v1.IOrganization {
+    name: OrganizationName
+}
+
 export type Organization =
     presslabs.dashboard.organizations.v1.Organization
 
-export type IOrganization =
+export type IOrganizationPayload =
     presslabs.dashboard.organizations.v1.IOrganization
 
 export type ListOrganizationsResponse =
@@ -102,19 +107,19 @@ export const list = (payload?: IListOrganizationsRequest) => grpc.invoke({
     data   : ListOrganizationsRequest.create(payload)
 })
 
-export const create = (payload: IOrganization) => grpc.invoke({
+export const create = (payload: IOrganizationPayload) => grpc.invoke({
     service,
     method : 'createOrganization',
     data   : CreateOrganizationRequest.create({ organization: payload })
 })
 
-export const update = (payload: IOrganization) => grpc.invoke({
+export const update = (payload: IOrganizationPayload) => grpc.invoke({
     service,
     method : 'updateOrganization',
     data   : UpdateOrganizationRequest.create({ organization: payload })
 })
 
-export const destroy = (payload: IOrganization) => grpc.invoke({
+export const destroy = (payload: IOrganizationPayload) => grpc.invoke({
     service,
     method : 'deleteOrganization',
     data   : DeleteOrganizationRequest.create(payload)
@@ -202,6 +207,8 @@ function* decideOrganizationContext(): Iterable<any> {
             yield decideOrganizationContext()
             return
         }
+
+        // yield put(wizards.startFlow('onboarding'))
     }
     else {
         const params = yield _select(routing.getParams)
@@ -286,6 +293,8 @@ function setGRPCOrganizationMetadata(action: ActionType<typeof select>) {
 }
 
 function* updateAddressWithOrganization(action: ActionType<typeof select>) {
+    return
+
     if (!action.payload.name) {
         return
     }
@@ -307,9 +316,18 @@ function* updateAddressWithOrganization(action: ActionType<typeof select>) {
 
 const selectors = api.createSelectors(resource)
 
-export const { getState, getAll, countAll, getByName } = selectors
+export const getState: (state: RootState) => State = selectors.getState
+export const getAll: (state: RootState) => api.ResourcesList<IOrganization> = selectors.getAll
+export const countAll: (state: RootState) => number = selectors.countAll
+export const getByName: (name: OrganizationName) => (state: RootState) => IOrganization | null = selectors.getByName
 
-export const getCurrent = createSelector(
+export const getCurrent: (state: RootState) => IOrganization | null = createSelector(
     [getState, getAll],
-    (state, orgs) => find(orgs, { name: state.current }) || null
+    (state, orgs) => {
+        if (state.current) {
+            return find(orgs, { name: state.current }) || null
+        }
+
+        return null
+    }
 )

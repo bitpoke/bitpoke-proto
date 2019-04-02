@@ -3,9 +3,9 @@ import { takeEvery, takeLatest, fork, put, take, call, race, select } from 'redu
 import { SagaIterator, channel as createChannel } from 'redux-saga'
 import { createSelector } from 'reselect'
 
-import { reduce, pickBy, get as _get, join, noop, snakeCase, toUpper, includes } from 'lodash'
+import { reduce, pickBy, get as _get, join, noop, snakeCase, toUpper, includes, isEmpty } from 'lodash'
 
-import { RootState, api, grpc, forms, organizations, routing, toasts } from '../redux'
+import { RootState, api, grpc, forms, organizations, routing, toasts, wizards } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
 
@@ -37,10 +37,15 @@ export {
 //
 //  TYPES
 
+export type ProjectName = string
+export interface IProject extends presslabs.dashboard.projects.v1.IProject {
+    name: ProjectName
+}
+
 export type Project =
     presslabs.dashboard.projects.v1.Project
 
-export type IProject =
+export type IProjectPayload =
     presslabs.dashboard.projects.v1.IProject
 
 export type ListProjectsResponse =
@@ -67,8 +72,6 @@ export type IListProjectsResponse =
 export type State = api.State<IProject>
 export type Actions = ActionType<typeof actions>
 
-const resource = api.Resource.project
-
 const service = ProjectsService.create(
     grpc.createTransport('presslabs.dashboard.projects.v1.ProjectsService')
 )
@@ -89,19 +92,19 @@ export const list = (payload?: IListProjectsRequest) => grpc.invoke({
     data   : ListProjectsRequest.create(payload)
 })
 
-export const create = (payload: IProject) => grpc.invoke({
+export const create = (payload: IProjectPayload) => grpc.invoke({
     service,
     method : 'createProject',
     data   : CreateProjectRequest.create({ project: payload })
 })
 
-export const update = (payload: IProject) => grpc.invoke({
+export const update = (payload: IProjectPayload) => grpc.invoke({
     service,
     method : 'updateProject',
     data   : UpdateProjectRequest.create({ project: payload })
 })
 
-export const destroy = (payload: IProject) => grpc.invoke({
+export const destroy = (payload: IProjectPayload) => grpc.invoke({
     service,
     method : 'deleteProject',
     data   : DeleteProjectRequest.create(payload)
@@ -115,7 +118,7 @@ const actions = {
     destroy
 }
 
-const apiTypes = api.createActionTypes(resource)
+const apiTypes = api.createActionTypes(api.Resource.project)
 
 export const {
     LIST_REQUESTED,    LIST_SUCCEEDED,    LIST_FAILED,
@@ -129,7 +132,7 @@ export const {
 //
 //  REDUCER
 
-const apiReducer = api.createReducer(resource, apiTypes)
+const apiReducer = api.createReducer(api.Resource.project, apiTypes)
 
 export function reducer(state: State = api.initialState, action: Actions) {
     return apiReducer(state, action)
@@ -140,23 +143,23 @@ export function reducer(state: State = api.initialState, action: Actions) {
 //  SAGA
 
 export function* saga() {
-    yield fork(api.emitResourceActions, resource, apiTypes)
+    yield fork(api.emitResourceActions, api.Resource.project, apiTypes)
     yield takeLatest(organizations.SELECTED, fetchAll)
     yield forms.takeEverySubmission(forms.Name.project, handleFormSubmission)
 }
 
 function* fetchAll() {
     yield put(list())
+    const projects = yield select(getAll)
 
-    const { success, failure } = yield race({
-        success: take(LIST_SUCCEEDED),
-        failure: take(LIST_FAILED)
-    })
+    if (isEmpty(projects)) {
+        const { success, failure } = yield race({
+            success: take(LIST_SUCCEEDED),
+            failure: take(LIST_FAILED)
+        })
 
-    if (success && api.isEmptyResponse(success)) {
-        const currentRoute = yield select(routing.getCurrentRoute)
-        if (currentRoute.key !== 'onboarding' || currentRoute.params.step !== 'project') {
-            yield put(routing.push(routing.routeFor('onboarding', { step: 'project' })))
+        if (success && api.isEmptyResponse(success)) {
+            // yield put(wizards.startFlow('onboarding'))
         }
     }
 }
@@ -220,13 +223,16 @@ function* handleFormSubmission(action: forms.Actions) {
 //
 //  SELECTORS
 
-const selectors = api.createSelectors(resource)
+const selectors = api.createSelectors(api.Resource.project)
 
-export const { getState, getAll, countAll, getByName } = selectors
+export const getState: (state: RootState) => State = selectors.getState
+export const getAll: (state: RootState) => api.ResourcesList<IProject> = selectors.getAll
+export const countAll: (state: RootState) => number = selectors.countAll
+export const getByName: (name: ProjectName) => (state: RootState) => IProject | null = selectors.getByName
 
 export const getForCurrentOrganization = createSelector(
     [organizations.getCurrent, getAll],
     (currentOranization, projects) => currentOranization
-        ? pickBy(projects, { organization: _get(currentOranization, 'name', 'test') })
+        ? pickBy(projects, { organization: currentOranization.name })
         : {}
 )

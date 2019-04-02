@@ -31,7 +31,9 @@ export enum Resource {
     site         = 'sites'
 }
 
-export type AnyResourceInstance = object
+export type AnyResourceInstance = {
+    name: string
+}
 
 export type Selectors<T> = {
     getState: (state: RootState) => State<T> & any
@@ -144,7 +146,7 @@ export function createSelectors(resource: Resource): Selectors<AnyResourceInstan
     const getState = (state: RootState) => get(state, resource)
     const getAll = createSelector(
         getState,
-        (state) => get(state, 'entries', {})
+        (state) => state.entries
     )
     const getByName = (name: string) => createSelector(
         getAll,
@@ -183,7 +185,7 @@ export function isEmptyResponse({ type, payload }: { type: string, payload: grpc
     return false
 }
 
-export function isNewEntry(entry: AnyResourceInstance | undefined) {
+export function isNewEntry(entry: object | undefined) {
     return !has(entry, 'name')
 }
 
