@@ -21,7 +21,7 @@ build:
 	NODE_ENV=$(NODE_ENV) $(REACT) build
 
 test:
-	NODE_ENV=$(NODE_ENV) $(REACT) test --env=jsdom
+	NODE_ENV=$(NODE_ENV) $(REACT) test --env=jsdom --passWithNoTests
 
 lint:
 	$(TSLINT) --project $(CURDIR)
