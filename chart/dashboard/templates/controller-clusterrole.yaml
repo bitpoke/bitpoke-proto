@@ -64,7 +64,19 @@ rules:
   - ""
   resources:
   - services
+  - serviceaccounts
   - persistentvolumeclaims
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
   - resourcequotas
   - namespaces
   - limitranges

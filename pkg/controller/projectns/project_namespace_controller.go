@@ -114,7 +114,8 @@ type ReconcileProject struct {
 
 // Reconcile reads that state of the cluster for a Project object and makes changes based on the state read
 // and what is in the Project.Spec
-// +kubebuilder:rbac:groups=,resources=services;persistentvolumeclaims;resourcequotas;namespaces;limitranges;events,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=,resources=services;serviceaccounts;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=,resources=resourcequotas;namespaces;limitranges;events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
