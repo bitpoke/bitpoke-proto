@@ -23,12 +23,12 @@ message Site {
   enum Status {
     // Not set.
     INVALID = 0;
-    // The SITE_STATUS_PROVISIONING state indicates the site is being created.
+    // The PROVISIONING state indicates the site is being created.
     PROVISIONING = 1;
-    // The SITE_STATUS_RUNNING state indicates the site has been provisioned and is fully
+    // The RUNNING state indicates the site has been provisioned and is fully
     // usable.
     RUNNING = 2;
-    // The SITE_STATUS_ERROR state indicates the site may be unusable. Details
+    // The ERROR state indicates the site may be unusable. Details
     // can be found in the `statusMessage` field.
     ERROR = 3;
   }
