@@ -47,14 +47,14 @@ var _ = BeforeSuite(func() {
 			filepath.Join("..", "..", "..", "..", "vendor/github.com/presslabs/wordpress-operator/config/crds"),
 		},
 	}
-	apis.AddToScheme(scheme.Scheme)
+	Expect(apis.AddToScheme(scheme.Scheme)).To(Succeed())
 
 	cfg, err = t.Start()
 	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
-	t.Stop()
+	Expect(t.Stop()).To(Succeed())
 })
 
 func SetupAPIServer(mgr manager.Manager) *apiserver.APIServer {
@@ -74,7 +74,7 @@ func SetupAPIServer(mgr manager.Manager) *apiserver.APIServer {
 	server, err := apiserver.NewAPIServer(opts)
 	Expect(err).To(Succeed())
 
-	mgr.Add(server)
+	Expect(mgr.Add(server)).To(Succeed())
 
 	return server
 }
@@ -84,7 +84,6 @@ func StartTestManager(mgr manager.Manager) chan struct{} {
 	go func() {
 		defer GinkgoRecover()
 		Expect(mgr.Start(stop)).To(Succeed())
-
 	}()
 	return stop
 }

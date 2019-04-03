@@ -13,12 +13,14 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/presslabs/dashboard/pkg/apiserver/status"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var log = logf.Log.WithName("internal.projectns")
 
 // ProjectNamespace embeds corev1.Namespace and adds utility functions
 type ProjectNamespace struct {
@@ -159,11 +161,15 @@ func Lookup(c client.Client, projName, orgName string) (*ProjectNamespace, error
 	})
 
 	if err := c.List(context.TODO(), opts, nsList); err != nil {
+		log.Error(err, "error while listing projects")
 		return nil, err
 	}
 
 	if len(nsList.Items) == 0 {
-		return nil, status.NotFound()
+		return nil, apierrors.NewNotFound(
+			corev1.Resource("namespace"),
+			fmt.Sprintf("namespace for project %s of org %s", projName, orgName),
+		)
 	}
 
 	return New(&nsList.Items[0]), nil

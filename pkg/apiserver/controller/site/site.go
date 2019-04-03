@@ -13,20 +13,22 @@ import (
 	"strings"
 
 	"github.com/gogo/protobuf/types"
+	"github.com/presslabs/controller-util/rand"
 	"golang.org/x/net/publicsuffix"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/presslabs/controller-util/rand"
 	sites "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/sites/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/impersonate"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
+	"github.com/presslabs/dashboard/pkg/apiserver/internal/site"
 	"github.com/presslabs/dashboard/pkg/apiserver/status"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
-	"github.com/presslabs/dashboard/pkg/internal/site"
+	dashboardsite "github.com/presslabs/dashboard/pkg/internal/site"
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
@@ -81,7 +83,10 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 
 	projNs, err := projectns.Lookup(s.client, proj, org)
 	if err != nil {
-		return nil, status.FromError(err)
+		if errors.IsNotFound(err) {
+			return nil, status.NotFoundf("project not found")
+		}
+		return nil, status.InternalError()
 	}
 
 	if len(r.Site.PrimaryDomain) == 0 {
@@ -89,7 +94,7 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 	}
 
 	if len(r.Name) == 0 {
-		r.Name = site.FQName(proj, generateNameFromDomain(r.PrimaryDomain))
+		r.Name = dashboardsite.FQName(proj, generateNameFromDomain(r.PrimaryDomain))
 	}
 	if !strings.HasPrefix(r.Name, r.Parent) {
 		return nil, status.InvalidArgumentf("parent and project are not matching")
@@ -102,7 +107,7 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 		return nil, status.InvalidArgumentf("parent and project are not matching")
 	}
 
-	wp := site.New(&wordpressv1alpha1.Wordpress{
+	wp := dashboardsite.New(&wordpressv1alpha1.Wordpress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      siteName,
 			Namespace: projNs.Name,
@@ -134,15 +139,15 @@ func (s *sitesService) GetSite(ctx context.Context, r *sites.GetSiteRequest) (*s
 
 	key, err := site.ResolveToObjectKey(s.client, r.Name, org)
 	if err != nil {
-		return nil, status.InvalidArgumentf("%s", err)
+		return nil, err
 	}
 
-	wp := site.New(&wordpressv1alpha1.Wordpress{})
+	wp := dashboardsite.New(&wordpressv1alpha1.Wordpress{})
 	if err := c.Get(ctx, *key, wp.Unwrap()); err != nil {
 		return nil, status.NotFoundf("site %s not found", r.Name).Because(err)
 	}
 
-	return newSiteFromK8s(site.New(wp.Unwrap())), nil
+	return newSiteFromK8s(dashboardsite.New(wp.Unwrap())), nil
 }
 
 // updatePrimaryDomain updates the primary domain
@@ -169,10 +174,10 @@ func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteReques
 	c, _ := impersonate.ClientFromContext(ctx, s.cfg)
 	org := metadata.RequireOrganizationName(ctx)
 
-	wp := site.New(&wordpressv1alpha1.Wordpress{})
+	wp := dashboardsite.New(&wordpressv1alpha1.Wordpress{})
 	key, err := site.ResolveToObjectKey(s.client, r.Name, org)
 	if err != nil {
-		return nil, status.InvalidArgumentf("%s", err)
+		return nil, err
 	}
 
 	// get the site
@@ -191,7 +196,7 @@ func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteReques
 		return nil, status.FromError(err)
 	}
 
-	return newSiteFromK8s(site.New(wp.Unwrap())), nil
+	return newSiteFromK8s(dashboardsite.New(wp.Unwrap())), nil
 }
 
 func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteRequest) (*types.Empty, error) {
@@ -200,10 +205,10 @@ func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteReques
 
 	key, err := site.ResolveToObjectKey(s.client, r.Name, org)
 	if err != nil {
-		return nil, status.InvalidArgumentf("%s", err)
+		return nil, err
 	}
 
-	wp := site.New(&wordpressv1alpha1.Wordpress{})
+	wp := dashboardsite.New(&wordpressv1alpha1.Wordpress{})
 	if err := c.Get(ctx, *key, wp.Unwrap()); err != nil {
 		return nil, status.NotFound().Because(err)
 	}
@@ -229,7 +234,10 @@ func (s *sitesService) ListSites(ctx context.Context, r *sites.ListSitesRequest)
 
 	projNs, err := projectns.Lookup(s.client, proj, org)
 	if err != nil {
-		return nil, status.FromError(err)
+		if errors.IsNotFound(err) {
+			return nil, status.NotFoundf("project not found")
+		}
+		return nil, status.InternalError()
 	}
 
 	listOptions := &client.ListOptions{
@@ -243,7 +251,7 @@ func (s *sitesService) ListSites(ctx context.Context, r *sites.ListSitesRequest)
 	// TODO: implement pagination
 	resp.Sites = make([]sites.Site, len(wpList.Items))
 	for i := range wpList.Items {
-		resp.Sites[i] = *newSiteFromK8s(site.New(&wpList.Items[i]))
+		resp.Sites[i] = *newSiteFromK8s(dashboardsite.New(&wpList.Items[i]))
 	}
 
 	return resp, nil
@@ -257,9 +265,9 @@ func NewSitesServiceServer(client client.Client, cfg *rest.Config) sites.SitesSe
 	}
 }
 
-func newSiteFromK8s(s *site.Site) *sites.Site {
+func newSiteFromK8s(s *dashboardsite.Site) *sites.Site {
 	return &sites.Site{
-		Name:           site.FQName(s.ObjectMeta.Labels["presslabs.com/project"], s.Name),
+		Name:           dashboardsite.FQName(s.ObjectMeta.Labels["presslabs.com/project"], s.Name),
 		PrimaryDomain:  string(s.Spec.Domains[0]),
 		WordpressImage: s.Spec.Image,
 	}
