@@ -29,6 +29,14 @@ message Site {
   string primary_domain = 2;
   // The wordpress image
   string wordpress_image = 3;
+  // The site endpoints
+  repeated Endpoint endpoints = 4;
+}
+
+// Endpoint for the site
+message Endpoint {
+  string ip = 1;
+  string host = 2;
 }
 
 message CreateSiteRequest {
@@ -96,9 +104,9 @@ service SitesService {
   rpc CreateSite(CreateSiteRequest) returns (Site);
   // GetSite fetches an site by it's name
   rpc GetSite(GetSiteRequest) returns (Site);
-  // UpdateSite updates an site details
+  // UpdateSite updates a site details
   rpc UpdateSite(UpdateSiteRequest) returns (Site);
-  // DeleteSite deletes an site by it's name
+  // DeleteSite deletes a site by it's name
   rpc DeleteSite(DeleteSiteRequest) returns (google.protobuf.Empty);
   // ListSites list sites
   rpc ListSites(ListSitesRequest) returns (ListSitesResponse);
