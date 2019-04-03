@@ -19,6 +19,19 @@ import "google/protobuf/field_mask.proto";
 // Site represents an site within the presslabs dashboard
 // context
 message Site {
+  // The current status of the site.
+  enum Status {
+    // Not set.
+    INVALID = 0;
+    // The SITE_STATUS_PROVISIONING state indicates the site is being created.
+    PROVISIONING = 1;
+    // The SITE_STATUS_RUNNING state indicates the site has been provisioned and is fully
+    // usable.
+    RUNNING = 2;
+    // The SITE_STATUS_ERROR state indicates the site may be unusable. Details
+    // can be found in the `statusMessage` field.
+    ERROR = 3;
+  }
   // The fully qualified site name in the form
   // project/super-awesome/site/{site_name}.
   // The `site_name` is a valid DNS label (RFC 1123) with maximum
@@ -31,6 +44,11 @@ message Site {
   string wordpress_image = 3;
   // The site endpoints
   repeated Endpoint endpoints = 4;
+  // [Output only] The current status of this site.
+  Status status = 5;
+  // [Output only] Additional information about the current status of this
+  // site, if available.
+  string status_message = 6;
 }
 
 // Endpoint for the site
