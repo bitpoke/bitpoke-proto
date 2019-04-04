@@ -39,7 +39,7 @@ const (
 )
 
 // createOrganization is a helper func that creates an organization
-func createOrganization(name, displayName, createdBy string) *organization.Organization {
+func createOrganization(name, displayName, userID string) *organization.Organization {
 	org := organization.New(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: organization.NamespaceName(name),
@@ -48,7 +48,7 @@ func createOrganization(name, displayName, createdBy string) *organization.Organ
 				"presslabs.com/organization": name,
 			},
 			Annotations: map[string]string{
-				"presslabs.com/created-by": createdBy,
+				"presslabs.com/created-by": userID,
 			},
 		},
 	})
@@ -66,7 +66,7 @@ func getNamespaceFn(ctx context.Context, c client.Client, key client.ObjectKey) 
 	}
 }
 
-func expectProperNamespace(c client.Client, name, displayName, createdBy string) {
+func expectProperNamespace(c client.Client, name, displayName, userID string) {
 	var ns corev1.Namespace
 	key := client.ObjectKey{
 		Name: organization.NamespaceName(name),
@@ -76,7 +76,7 @@ func expectProperNamespace(c client.Client, name, displayName, createdBy string)
 	Expect(ns.Labels).To(HaveKeyWithValue("presslabs.com/kind", "organization"))
 	Expect(ns.Labels).To(HaveKeyWithValue("presslabs.com/organization", name))
 	Expect(ns.Annotations).To(HaveKeyWithValue("presslabs.com/display-name", displayName))
-	Expect(ns.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", createdBy))
+	Expect(ns.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", userID))
 }
 
 var _ = Describe("API server", func() {
@@ -95,7 +95,7 @@ var _ = Describe("API server", func() {
 		id, autoID     string
 		name, autoName string
 		displayName    string
-		createdBy      string
+		userID         string
 	)
 
 	BeforeEach(func() {
@@ -123,8 +123,8 @@ var _ = Describe("API server", func() {
 		displayName = fmt.Sprintf("Org %s Inc", name)
 		autoName = slug.Make(displayName)
 		autoID = fmt.Sprintf("orgs/%s", autoName)
-		createdBy = fmt.Sprintf("user#%s", name)
-		metadata.FakeSubject = createdBy
+		userID = fmt.Sprintf("user#%s", name)
+		metadata.FakeSubject = userID
 	})
 
 	AfterEach(func() {
@@ -159,7 +159,7 @@ var _ = Describe("API server", func() {
 
 	Describe("at Create request", func() {
 		It("returns AlreadyExists error when organization already exists", func() {
-			org := createOrganization(name, displayName, createdBy)
+			org := createOrganization(name, displayName, userID)
 			Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			req := orgv1.CreateOrganizationRequest{
 				Organization: orgv1.Organization{
@@ -209,7 +209,7 @@ var _ = Describe("API server", func() {
 			resp, err := orgClient.CreateOrganization(context.TODO(), &req)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resp.Name).To(Equal(autoID))
-			expectProperNamespace(c, slug.Make(displayName), displayName, createdBy)
+			expectProperNamespace(c, slug.Make(displayName), displayName, userID)
 		})
 
 		It("creates organization when name is given", func() {
@@ -222,7 +222,7 @@ var _ = Describe("API server", func() {
 			resp, err := orgClient.CreateOrganization(context.TODO(), &req)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resp.Name).To(Equal(id))
-			expectProperNamespace(c, name, displayName, createdBy)
+			expectProperNamespace(c, name, displayName, userID)
 		})
 
 		It("fills display_name when no one is given", func() {
@@ -234,13 +234,13 @@ var _ = Describe("API server", func() {
 			resp, err := orgClient.CreateOrganization(context.TODO(), &req)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resp.Name).To(Equal(id))
-			expectProperNamespace(c, name, name, createdBy)
+			expectProperNamespace(c, name, name, userID)
 		})
 	})
 
 	Describe("at Get request", func() {
 		It("returns the organization", func() {
-			org := createOrganization(name, displayName, createdBy)
+			org := createOrganization(name, displayName, userID)
 			Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			req := orgv1.GetOrganizationRequest{
 				Name: id,
@@ -263,7 +263,7 @@ var _ = Describe("API server", func() {
 
 	Describe("at Delete request", func() {
 		It("deletes existing organization", func() {
-			org := createOrganization(name, displayName, createdBy)
+			org := createOrganization(name, displayName, userID)
 			Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			req := orgv1.DeleteOrganizationRequest{
 				Name: id,
@@ -290,7 +290,7 @@ var _ = Describe("API server", func() {
 
 	Describe("at Update request", func() {
 		BeforeEach(func() {
-			org := createOrganization(name, displayName, createdBy)
+			org := createOrganization(name, displayName, userID)
 			Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 		})
 		It("updates display_name of existing organization", func() {
@@ -347,13 +347,26 @@ var _ = Describe("API server", func() {
 			for i := 1; i <= myOrgsCount; i++ {
 				_name := fmt.Sprintf("%s-%02d", name, i)
 				_displayName := fmt.Sprintf("%s %02d Inc.", name, i)
-				org := createOrganization(_name, _displayName, createdBy)
+				org := createOrganization(_name, _displayName, userID)
 				Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 			}
 			org := createOrganization(name, displayName, "user#another")
 			Expect(c.Create(context.TODO(), org.Unwrap())).To(Succeed())
 		})
+
 		It("returns only my organizations", func() {
+			req := orgv1.ListOrganizationsRequest{}
+			Eventually(func() ([]orgv1.Organization, error) {
+				resp, err := orgClient.ListOrganizations(context.TODO(), &req)
+				return resp.Organizations, err
+			}).Should(HaveLen(myOrgsCount))
+		})
+
+		It("returns only active organizations", func() {
+			termOrg := createOrganization("terminating-org", displayName, userID)
+			termOrg.Status.Phase = corev1.NamespaceTerminating
+			Expect(c.Create(context.TODO(), termOrg.Unwrap())).To(Succeed())
+
 			req := orgv1.ListOrganizationsRequest{}
 			Eventually(func() ([]orgv1.Organization, error) {
 				resp, err := orgClient.ListOrganizations(context.TODO(), &req)
