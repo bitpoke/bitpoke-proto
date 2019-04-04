@@ -358,17 +358,20 @@ var _ = Describe("API server", func() {
 	})
 
 	Describe("at Get request", func() {
+		BeforeEach(func() {
+			wp := createSite(siteName, userID, projectName, image, domains)
+			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
+		})
+
 		It("returns NotFound when site does not exist", func() {
 			req := sites.GetSiteRequest{
-				Name: siteFQName,
+				Name: fmt.Sprintf("%s/site/inexistent", projectFQName),
 			}
 			_, err := siteClient.GetSite(ctx, &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
 		})
 
 		It("returns error when no organization is set in metadata", func() {
-			wp := createSite(siteName, userID, projectName, image, domains)
-			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
 			req := sites.GetSiteRequest{
 				Name: siteFQName,
 			}
@@ -378,8 +381,6 @@ var _ = Describe("API server", func() {
 		})
 
 		It("returns the site", func() {
-			wp := createSite(siteName, userID, projectName, image, domains)
-			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
 			req := sites.GetSiteRequest{
 				Name: siteFQName,
 			}
@@ -393,9 +394,14 @@ var _ = Describe("API server", func() {
 	})
 
 	Describe("at Delete request", func() {
+		BeforeEach(func() {
+			wp := createSite(siteName, userID, projectName, image, domains)
+			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
+		})
+
 		It("returns NotFound when site does not exists", func() {
 			req := sites.DeleteSiteRequest{
-				Name: siteFQName,
+				Name: fmt.Sprintf("%s/site/inexistent", projectFQName),
 			}
 
 			_, err := siteClient.DeleteSite(ctx, &req)
@@ -403,8 +409,6 @@ var _ = Describe("API server", func() {
 		})
 
 		It("returns error when no organization is set in metadata", func() {
-			wp := createSite(siteName, userID, projectName, image, domains)
-			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
 			req := sites.DeleteSiteRequest{
 				Name: siteFQName,
 			}
@@ -414,8 +418,6 @@ var _ = Describe("API server", func() {
 		})
 
 		It("deletes existing site", func() {
-			wp := createSite(siteName, userID, projectName, image, domains)
-			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
 			req := sites.DeleteSiteRequest{
 				Name: siteFQName,
 			}
