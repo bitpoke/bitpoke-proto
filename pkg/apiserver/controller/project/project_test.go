@@ -29,7 +29,6 @@ import (
 	projv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/projects/v1"
 	dashboardv1alpha1 "github.com/presslabs/dashboard/pkg/apis/dashboard/v1alpha1"
 	"github.com/presslabs/dashboard/pkg/apiserver/internal/metadata"
-	"github.com/presslabs/dashboard/pkg/controller"
 	"github.com/presslabs/dashboard/pkg/internal/organization"
 	"github.com/presslabs/dashboard/pkg/internal/project"
 )
@@ -118,9 +117,6 @@ var _ = Describe("API project controller", func() {
 		// create new k8s client
 		c, err = client.New(cfg, client.Options{})
 		Expect(err).To(Succeed())
-
-		// Add controllers for testing side effects
-		Expect(controller.AddToManager(mgr)).To(Succeed())
 
 		stop = StartTestManager(mgr)
 
