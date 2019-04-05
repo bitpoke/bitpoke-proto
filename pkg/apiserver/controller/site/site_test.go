@@ -41,15 +41,16 @@ const (
 )
 
 // createSite is a helper func that creates a site
-func createSite(name, userID, project, image string, domains []wordpressv1alpha1.Domain) *dashboardsite.Site {
+func createSite(name, userID, project, org, image string, domains []wordpressv1alpha1.Domain) *dashboardsite.Site {
 	wp := dashboardsite.New(&wordpressv1alpha1.Wordpress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: project,
 			Labels: map[string]string{
-				"presslabs.com/kind":    "site",
-				"presslabs.com/site":    name,
-				"presslabs.com/project": project,
+				"presslabs.com/kind":         "site",
+				"presslabs.com/site":         name,
+				"presslabs.com/project":      project,
+				"presslabs.com/organization": org,
 			},
 			Annotations: map[string]string{
 				"presslabs.com/created-by": userID,
@@ -64,7 +65,7 @@ func createSite(name, userID, project, image string, domains []wordpressv1alpha1
 	return wp
 }
 
-func expectProperWordpress(c client.Client, name, userID, project, image string, domains []wordpressv1alpha1.Domain) {
+func expectProperWordpress(c client.Client, name, userID, project, org, image string, domains []wordpressv1alpha1.Domain) {
 	wp := &wordpressv1alpha1.Wordpress{}
 	key := client.ObjectKey{
 		Name:      name,
@@ -75,6 +76,7 @@ func expectProperWordpress(c client.Client, name, userID, project, image string,
 	Expect(wp.Labels).To(HaveKeyWithValue("presslabs.com/kind", "site"))
 	Expect(wp.Labels).To(HaveKeyWithValue("presslabs.com/site", name))
 	Expect(wp.Labels).To(HaveKeyWithValue("presslabs.com/project", project))
+	Expect(wp.Labels).To(HaveKeyWithValue("presslabs.com/organization", org))
 	Expect(wp.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", userID))
 	Expect(wp.Spec.Image).To(Equal(image))
 	Expect(wp.Spec.Domains).To(Equal(domains))
@@ -163,7 +165,6 @@ var _ = Describe("API server", func() {
 		conn.Close()
 		// stop the manager and API server
 		close(stop)
-		time.Sleep(time.Second * 1)
 
 		// delete ProjectNamespace
 		Expect(c.Delete(context.TODO(), ns)).To(Succeed())
@@ -177,7 +178,7 @@ var _ = Describe("API server", func() {
 
 	Describe("at Create request", func() {
 		It("returns AlreadyExists error when site already exists", func() {
-			wp := createSite(siteName, userID, projectName, image, domains)
+			wp := createSite(siteName, userID, projectName, orgName, image, domains)
 			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
 			req := sites.CreateSiteRequest{
 				Parent: projectFQName,
@@ -271,7 +272,7 @@ var _ = Describe("API server", func() {
 			Expect(err).To(Succeed())
 			Expect(strings.HasPrefix(generatedName, "presslabs")).To(BeTrue())
 
-			expectProperWordpress(c, generatedName, userID, projectName, image, domains)
+			expectProperWordpress(c, generatedName, userID, projectName, orgName, image, domains)
 		})
 
 		It("returns error when name is not fully qualified", func() {
@@ -353,13 +354,13 @@ var _ = Describe("API server", func() {
 			Expect(wp.Name).To(Equal(siteFQName))
 			Expect(wp.PrimaryDomain).To(Equal(primaryDomain))
 			Expect(wp.WordpressImage).To(Equal(image))
-			expectProperWordpress(c, siteName, userID, projectName, image, domains)
+			expectProperWordpress(c, siteName, userID, projectName, orgName, image, domains)
 		})
 	})
 
 	Describe("at Get request", func() {
 		BeforeEach(func() {
-			wp := createSite(siteName, userID, projectName, image, domains)
+			wp := createSite(siteName, userID, projectName, orgName, image, domains)
 			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
 		})
 
@@ -395,7 +396,7 @@ var _ = Describe("API server", func() {
 
 	Describe("at Delete request", func() {
 		BeforeEach(func() {
-			wp := createSite(siteName, userID, projectName, image, domains)
+			wp := createSite(siteName, userID, projectName, orgName, image, domains)
 			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
 		})
 
@@ -437,9 +438,8 @@ var _ = Describe("API server", func() {
 
 	Describe("at Update request", func() {
 		BeforeEach(func() {
-			wp := createSite(siteName, userID, projectName, image, domains)
+			wp := createSite(siteName, userID, projectName, orgName, image, domains)
 			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
-			time.Sleep(time.Millisecond * 500)
 		})
 
 		It("returns NotFound when site does not exist", func() {
@@ -472,7 +472,7 @@ var _ = Describe("API server", func() {
 			Expect(resp.Name).To(Equal(siteFQName))
 			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
 			Expect(resp.WordpressImage).To(Equal(newImage))
-			expectProperWordpress(c, siteName, userID, projectName, newImage, domains)
+			expectProperWordpress(c, siteName, userID, projectName, orgName, newImage, domains)
 		})
 
 		It("keeps the old value of the wordpress image when 'site.wordpress_image' is not in r.UpdateMask.GetPaths() and r.UpdateMask.GetPaths() is not empty", func() {
@@ -493,7 +493,7 @@ var _ = Describe("API server", func() {
 			Expect(resp.Name).To(Equal(siteFQName))
 			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
 			Expect(resp.WordpressImage).To(Equal(image))
-			expectProperWordpress(c, siteName, userID, projectName, image, domains)
+			expectProperWordpress(c, siteName, userID, projectName, orgName, image, domains)
 		})
 
 		It("updates the primary domain of existing site when 'site.primary_domain' is in r.UpdateMask.GetPaths()", func() {
@@ -516,7 +516,7 @@ var _ = Describe("API server", func() {
 			Expect(resp.Name).To(Equal(siteFQName))
 			Expect(resp.PrimaryDomain).To(Equal(newPD))
 			Expect(resp.WordpressImage).To(Equal(image))
-			expectProperWordpress(c, siteName, userID, projectName, image, expectedDomains)
+			expectProperWordpress(c, siteName, userID, projectName, orgName, image, expectedDomains)
 		})
 
 		It("updates only primary domain when the site have more domains", func() {
@@ -525,7 +525,7 @@ var _ = Describe("API server", func() {
 			for i := 0; i < 3; i++ {
 				domains = append(domains, wordpressv1alpha1.Domain(fmt.Sprintf("%s-%02d", primaryDomain, i)))
 			}
-			wp := createSite(name, userID, projectName, image, domains)
+			wp := createSite(name, userID, projectName, orgName, image, domains)
 			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
 
 			newPD := "new-primary-domain"
@@ -548,7 +548,7 @@ var _ = Describe("API server", func() {
 			Expect(resp.Name).To(Equal(siteFQName))
 			Expect(resp.PrimaryDomain).To(Equal(newPD))
 			Expect(resp.WordpressImage).To(Equal(image))
-			expectProperWordpress(c, name, userID, projectName, image, expectedDomains)
+			expectProperWordpress(c, name, userID, projectName, orgName, image, expectedDomains)
 		})
 
 		It("keeps the old value of the primary domain when 'site.primary_domain' is not in r.UpdateMask.GetPaths() and r.UpdateMask.GetPaths() is not empty", func() {
@@ -569,7 +569,7 @@ var _ = Describe("API server", func() {
 			Expect(resp.Name).To(Equal(siteFQName))
 			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
 			Expect(resp.WordpressImage).To(Equal(image))
-			expectProperWordpress(c, siteName, userID, projectName, image, domains)
+			expectProperWordpress(c, siteName, userID, projectName, orgName, image, domains)
 		})
 
 		It("returns error when 'site.primary_domain' is in r.UpdateMask.GetPaths() and primaryDomain field is empty", func() {
@@ -607,7 +607,7 @@ var _ = Describe("API server", func() {
 			Expect(resp.Name).To(Equal(siteFQName))
 			Expect(resp.PrimaryDomain).To(Equal(newPD))
 			Expect(resp.WordpressImage).To(Equal(newWI))
-			expectProperWordpress(c, siteName, userID, projectName, newWI, expectedDomains)
+			expectProperWordpress(c, siteName, userID, projectName, orgName, newWI, expectedDomains)
 		})
 
 		It("updates primary domain and wordpress image of existing site when r.UpdateMask.GetPaths() is empty", func() {
@@ -628,7 +628,7 @@ var _ = Describe("API server", func() {
 			Expect(resp.Name).To(Equal(siteFQName))
 			Expect(resp.PrimaryDomain).To(Equal(newPD))
 			Expect(resp.WordpressImage).To(Equal(newWI))
-			expectProperWordpress(c, siteName, userID, projectName, newWI, expectedDomains)
+			expectProperWordpress(c, siteName, userID, projectName, orgName, newWI, expectedDomains)
 		})
 
 		It("returns error when no organization is set in metadata", func() {
@@ -654,14 +654,14 @@ var _ = Describe("API server", func() {
 				_domains := []wordpressv1alpha1.Domain{
 					wordpressv1alpha1.Domain(_primaryDomain),
 				}
-				site := createSite(_name, userID, projectName, _image, _domains)
+				site := createSite(_name, userID, projectName, orgName, _image, _domains)
 				Expect(c.Create(context.TODO(), site.Unwrap())).To(Succeed())
 			}
-			site := createSite(siteName, "user#another", projectName, image, domains)
+			site := createSite(siteName, "user#another", projectName, orgName, image, domains)
 			Expect(c.Create(context.TODO(), site.Unwrap())).To(Succeed())
 
 			name := fmt.Sprintf("%s", siteName)
-			site = createSite(name, userID, "another-project", image, domains)
+			site = createSite(name, userID, "another-project", orgName, image, domains)
 			Expect(c.Create(context.TODO(), site.Unwrap())).To(Succeed())
 		})
 

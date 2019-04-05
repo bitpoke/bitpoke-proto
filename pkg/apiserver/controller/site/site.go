@@ -112,9 +112,10 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 			Name:      siteName,
 			Namespace: projNs.Name,
 			Labels: map[string]string{
-				"presslabs.com/kind":    "site",
-				"presslabs.com/site":    siteName,
-				"presslabs.com/project": proj,
+				"presslabs.com/kind":         "site",
+				"presslabs.com/site":         siteName,
+				"presslabs.com/project":      proj,
+				"presslabs.com/organization": org,
 			},
 			Annotations: map[string]string{
 				"presslabs.com/created-by": userID,
