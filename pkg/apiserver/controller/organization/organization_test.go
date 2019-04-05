@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	"github.com/presslabs/dashboard/pkg/controller"
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 
 	orgv1 "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/organizations/v1"
@@ -109,6 +110,9 @@ var _ = Describe("API server", func() {
 		// create new k8s client
 		c, err = client.New(cfg, client.Options{})
 		Expect(err).To(Succeed())
+
+		// Add controllers for testing side effects
+		Expect(controller.AddToManager(mgr)).To(Succeed())
 
 		stop = StartTestManager(mgr)
 
