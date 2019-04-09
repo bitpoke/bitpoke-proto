@@ -54,7 +54,7 @@ func (m *Project) Reset()         { *m = Project{} }
 func (m *Project) String() string { return proto.CompactTextString(m) }
 func (*Project) ProtoMessage()    {}
 func (*Project) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_267579b4de69348c, []int{0}
+	return fileDescriptor_project_cbc3a6f101432cab, []int{0}
 }
 func (m *Project) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -118,7 +118,7 @@ func (m *GetProjectRequest) Reset()         { *m = GetProjectRequest{} }
 func (m *GetProjectRequest) String() string { return proto.CompactTextString(m) }
 func (*GetProjectRequest) ProtoMessage()    {}
 func (*GetProjectRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_267579b4de69348c, []int{1}
+	return fileDescriptor_project_cbc3a6f101432cab, []int{1}
 }
 func (m *GetProjectRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -156,7 +156,8 @@ func (m *GetProjectRequest) GetName() string {
 
 type ListProjectsRequest struct {
 	// The parent organization, for example "org/{organization_name}".
-	// The parent is a required parameter
+	// This parameter overrides the organization passed as metadata.
+	// If not specified as metadata, the parent is a required parameter.
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
 	// The maximum number of items to return.
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
@@ -172,7 +173,7 @@ func (m *ListProjectsRequest) Reset()         { *m = ListProjectsRequest{} }
 func (m *ListProjectsRequest) String() string { return proto.CompactTextString(m) }
 func (*ListProjectsRequest) ProtoMessage()    {}
 func (*ListProjectsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_267579b4de69348c, []int{2}
+	return fileDescriptor_project_cbc3a6f101432cab, []int{2}
 }
 func (m *ListProjectsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -236,7 +237,7 @@ func (m *ListProjectsResponse) Reset()         { *m = ListProjectsResponse{} }
 func (m *ListProjectsResponse) String() string { return proto.CompactTextString(m) }
 func (*ListProjectsResponse) ProtoMessage()    {}
 func (*ListProjectsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_267579b4de69348c, []int{3}
+	return fileDescriptor_project_cbc3a6f101432cab, []int{3}
 }
 func (m *ListProjectsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -280,8 +281,9 @@ func (m *ListProjectsResponse) GetNextPageToken() string {
 }
 
 type CreateProjectRequest struct {
-	// The parent resource name where the project is to be created
-	// The parent is a required parameter
+	// The parent organization, for example "org/{organization_name}".
+	// This parameter overrides the organization passed as metadata.
+	// If not specified as metadata, the parent is a required parameter.
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
 	// The project resource to create
 	Project              `protobuf:"bytes,3,opt,name=project,proto3,embedded=project" json:"project"`
@@ -294,7 +296,7 @@ func (m *CreateProjectRequest) Reset()         { *m = CreateProjectRequest{} }
 func (m *CreateProjectRequest) String() string { return proto.CompactTextString(m) }
 func (*CreateProjectRequest) ProtoMessage()    {}
 func (*CreateProjectRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_267579b4de69348c, []int{4}
+	return fileDescriptor_project_cbc3a6f101432cab, []int{4}
 }
 func (m *CreateProjectRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -347,7 +349,7 @@ func (m *UpdateProjectRequest) Reset()         { *m = UpdateProjectRequest{} }
 func (m *UpdateProjectRequest) String() string { return proto.CompactTextString(m) }
 func (*UpdateProjectRequest) ProtoMessage()    {}
 func (*UpdateProjectRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_267579b4de69348c, []int{5}
+	return fileDescriptor_project_cbc3a6f101432cab, []int{5}
 }
 func (m *UpdateProjectRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -390,7 +392,7 @@ func (m *DeleteProjectRequest) Reset()         { *m = DeleteProjectRequest{} }
 func (m *DeleteProjectRequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteProjectRequest) ProtoMessage()    {}
 func (*DeleteProjectRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_267579b4de69348c, []int{6}
+	return fileDescriptor_project_cbc3a6f101432cab, []int{6}
 }
 func (m *DeleteProjectRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2652,10 +2654,10 @@ var (
 )
 
 func init() {
-	proto.RegisterFile("presslabs/dashboard/projects/v1/project.proto", fileDescriptor_project_267579b4de69348c)
+	proto.RegisterFile("presslabs/dashboard/projects/v1/project.proto", fileDescriptor_project_cbc3a6f101432cab)
 }
 
-var fileDescriptor_project_267579b4de69348c = []byte{
+var fileDescriptor_project_cbc3a6f101432cab = []byte{
 	// 579 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xc1, 0x6e, 0xd3, 0x40,
 	0x10, 0x65, 0xdb, 0xd0, 0xa6, 0x93, 0x44, 0x15, 0x4b, 0x54, 0x45, 0xae, 0x70, 0x82, 0x85, 0x20,

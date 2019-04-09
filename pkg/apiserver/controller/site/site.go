@@ -15,6 +15,7 @@ import (
 	"github.com/gogo/protobuf/types"
 	"github.com/presslabs/controller-util/rand"
 	"golang.org/x/net/publicsuffix"
+	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -131,7 +132,7 @@ func (s *sitesService) CreateSite(ctx context.Context, r *sites.CreateSiteReques
 		return nil, status.FromError(err)
 	}
 
-	return newSiteFromK8s(wp), nil
+	return newSiteFromK8s(wp, []*sites.Endpoint{}), nil
 }
 
 func (s *sitesService) GetSite(ctx context.Context, r *sites.GetSiteRequest) (*sites.Site, error) {
@@ -144,11 +145,16 @@ func (s *sitesService) GetSite(ctx context.Context, r *sites.GetSiteRequest) (*s
 	}
 
 	wp := dashboardsite.New(&wordpressv1alpha1.Wordpress{})
-	if err := c.Get(ctx, *key, wp.Unwrap()); err != nil {
+	if err = c.Get(ctx, *key, wp.Unwrap()); err != nil {
 		return nil, status.NotFoundf("site %s not found", r.Name).Because(err)
 	}
 
-	return newSiteFromK8s(dashboardsite.New(wp.Unwrap())), nil
+	endp, err := getEndpoints(s.client, wp)
+	if err != nil {
+		return nil, err
+	}
+
+	return newSiteFromK8s(wp, endp), nil
 }
 
 // updatePrimaryDomain updates the primary domain
@@ -197,7 +203,12 @@ func (s *sitesService) UpdateSite(ctx context.Context, r *sites.UpdateSiteReques
 		return nil, status.FromError(err)
 	}
 
-	return newSiteFromK8s(dashboardsite.New(wp.Unwrap())), nil
+	endp, err := getEndpoints(s.client, wp)
+	if err != nil {
+		return nil, err
+	}
+
+	return newSiteFromK8s(wp, endp), nil
 }
 
 func (s *sitesService) DeleteSite(ctx context.Context, r *sites.DeleteSiteRequest) (*types.Empty, error) {
@@ -252,7 +263,11 @@ func (s *sitesService) ListSites(ctx context.Context, r *sites.ListSitesRequest)
 	// TODO: implement pagination
 	resp.Sites = make([]sites.Site, len(wpList.Items))
 	for i := range wpList.Items {
-		resp.Sites[i] = *newSiteFromK8s(dashboardsite.New(&wpList.Items[i]))
+		endp, err := getEndpoints(s.client, dashboardsite.New(&wpList.Items[i]))
+		if err != nil {
+			return nil, err
+		}
+		resp.Sites[i] = *newSiteFromK8s(dashboardsite.New(&wpList.Items[i]), endp)
 	}
 
 	return resp, nil
@@ -266,10 +281,30 @@ func NewSitesServiceServer(client client.Client, cfg *rest.Config) sites.SitesSe
 	}
 }
 
-func newSiteFromK8s(s *dashboardsite.Site) *sites.Site {
+func getEndpoints(cl client.Client, s *dashboardsite.Site) ([]*sites.Endpoint, error) {
+	ingr := extv1beta1.Ingress{}
+	key := client.ObjectKey{
+		Name:      s.Unwrap().Name,
+		Namespace: s.Unwrap().Namespace,
+	}
+	if err := cl.Get(context.TODO(), key, &ingr); err != nil {
+		return nil, status.FromError(err)
+	}
+
+	endp := make([]*sites.Endpoint, len(ingr.Status.LoadBalancer.Ingress))
+	for i := range ingr.Status.LoadBalancer.Ingress {
+		endp[i].Ip = ingr.Status.LoadBalancer.Ingress[i].IP
+		endp[i].Host = ingr.Status.LoadBalancer.Ingress[i].Hostname
+	}
+
+	return endp, nil
+}
+
+func newSiteFromK8s(s *dashboardsite.Site, endpoints []*sites.Endpoint) *sites.Site {
 	return &sites.Site{
 		Name:           dashboardsite.FQName(s.ObjectMeta.Labels["presslabs.com/project"], s.Name),
 		PrimaryDomain:  string(s.Spec.Domains[0]),
 		WordpressImage: s.Spec.Image,
+		Endpoints:      endpoints,
 	}
 }

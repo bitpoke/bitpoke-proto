@@ -50,7 +50,7 @@ version="v1.2.0"
 
 [[constraint]]
 name="github.com/presslabs/dashboard-go"
-revision="55619c430f6fa9b1d6ac98b7f67071d7cc6e2995"
+revision="ac1e1ed8c0712aa101766f42b1fb2ba135ebe823"
 
 [[constraint]]
 name="github.com/coreos/prometheus-operator"

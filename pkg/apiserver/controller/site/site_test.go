@@ -22,8 +22,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
+	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -41,7 +43,7 @@ const (
 )
 
 // createSite is a helper func that creates a site
-func createSite(name, userID, project, org, image string, domains []wordpressv1alpha1.Domain) *dashboardsite.Site {
+func createSite(c client.Client, name, userID, project, org, image string, domains []wordpressv1alpha1.Domain) {
 	wp := dashboardsite.New(&wordpressv1alpha1.Wordpress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -61,8 +63,40 @@ func createSite(name, userID, project, org, image string, domains []wordpressv1a
 			Image:   image,
 		},
 	})
+	Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
+}
 
-	return wp
+// createIngress is a helper func that creates an ingress
+func createIngress(c client.Client, name, namespace string) {
+	ingr := &extv1beta1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+
+	bk := extv1beta1.IngressBackend{
+		ServiceName: "wordpress-service",
+		ServicePort: intstr.FromString("http"),
+	}
+	bkpaths := []extv1beta1.HTTPIngressPath{
+		{
+			Path:    "/",
+			Backend: bk,
+		},
+	}
+	rules := []extv1beta1.IngressRule{}
+	rules = append(rules, extv1beta1.IngressRule{
+		Host: "presslabs",
+		IngressRuleValue: extv1beta1.IngressRuleValue{
+			HTTP: &extv1beta1.HTTPIngressRuleValue{
+				Paths: bkpaths,
+			},
+		},
+	})
+	ingr.Spec.Rules = rules
+
+	Expect(c.Create(context.TODO(), ingr)).To(Succeed())
 }
 
 func expectProperWordpress(c client.Client, name, userID, project, org, image string, domains []wordpressv1alpha1.Domain) {
@@ -80,6 +114,12 @@ func expectProperWordpress(c client.Client, name, userID, project, org, image st
 	Expect(wp.Annotations).To(HaveKeyWithValue("presslabs.com/created-by", userID))
 	Expect(wp.Spec.Image).To(Equal(image))
 	Expect(wp.Spec.Domains).To(Equal(domains))
+}
+
+func expectProperResponse(resp *sites.Site, siteFQName, primaryDomain, image string) {
+	Expect(resp.Name).To(Equal(siteFQName))
+	Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
+	Expect(resp.WordpressImage).To(Equal(image))
 }
 
 var _ = Describe("API server", func() {
@@ -178,8 +218,7 @@ var _ = Describe("API server", func() {
 
 	Describe("at Create request", func() {
 		It("returns AlreadyExists error when site already exists", func() {
-			wp := createSite(siteName, userID, projectName, orgName, image, domains)
-			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
+			createSite(c, siteName, userID, projectName, orgName, image, domains)
 			req := sites.CreateSiteRequest{
 				Parent: projectFQName,
 				Site: sites.Site{
@@ -349,19 +388,17 @@ var _ = Describe("API server", func() {
 					WordpressImage: image,
 				},
 			}
-			wp, err := siteClient.CreateSite(ctx, &req)
+			resp, err := siteClient.CreateSite(ctx, &req)
 			Expect(err).To(Succeed())
-			Expect(wp.Name).To(Equal(siteFQName))
-			Expect(wp.PrimaryDomain).To(Equal(primaryDomain))
-			Expect(wp.WordpressImage).To(Equal(image))
+			expectProperResponse(resp, siteFQName, primaryDomain, image)
 			expectProperWordpress(c, siteName, userID, projectName, orgName, image, domains)
 		})
 	})
 
 	Describe("at Get request", func() {
 		BeforeEach(func() {
-			wp := createSite(siteName, userID, projectName, orgName, image, domains)
-			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
+			createSite(c, siteName, userID, projectName, orgName, image, domains)
+			createIngress(c, siteName, projectName)
 		})
 
 		It("returns NotFound when site does not exist", func() {
@@ -388,16 +425,13 @@ var _ = Describe("API server", func() {
 
 			resp, err := siteClient.GetSite(ctx, &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Name).To(Equal(siteFQName))
-			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
-			Expect(resp.WordpressImage).To(Equal(image))
+			expectProperResponse(resp, siteFQName, primaryDomain, image)
 		})
 	})
 
 	Describe("at Delete request", func() {
 		BeforeEach(func() {
-			wp := createSite(siteName, userID, projectName, orgName, image, domains)
-			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
+			createSite(c, siteName, userID, projectName, orgName, image, domains)
 		})
 
 		It("returns NotFound when site does not exists", func() {
@@ -438,8 +472,8 @@ var _ = Describe("API server", func() {
 
 	Describe("at Update request", func() {
 		BeforeEach(func() {
-			wp := createSite(siteName, userID, projectName, orgName, image, domains)
-			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
+			createSite(c, siteName, userID, projectName, orgName, image, domains)
+			createIngress(c, siteName, projectName)
 		})
 
 		It("returns NotFound when site does not exist", func() {
@@ -469,9 +503,7 @@ var _ = Describe("API server", func() {
 
 			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Name).To(Equal(siteFQName))
-			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
-			Expect(resp.WordpressImage).To(Equal(newImage))
+			expectProperResponse(resp, siteFQName, primaryDomain, newImage)
 			expectProperWordpress(c, siteName, userID, projectName, orgName, newImage, domains)
 		})
 
@@ -490,9 +522,7 @@ var _ = Describe("API server", func() {
 
 			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Name).To(Equal(siteFQName))
-			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
-			Expect(resp.WordpressImage).To(Equal(image))
+			expectProperResponse(resp, siteFQName, primaryDomain, image)
 			expectProperWordpress(c, siteName, userID, projectName, orgName, image, domains)
 		})
 
@@ -513,9 +543,7 @@ var _ = Describe("API server", func() {
 
 			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Name).To(Equal(siteFQName))
-			Expect(resp.PrimaryDomain).To(Equal(newPD))
-			Expect(resp.WordpressImage).To(Equal(image))
+			expectProperResponse(resp, siteFQName, newPD, image)
 			expectProperWordpress(c, siteName, userID, projectName, orgName, image, expectedDomains)
 		})
 
@@ -525,8 +553,8 @@ var _ = Describe("API server", func() {
 			for i := 0; i < 3; i++ {
 				domains = append(domains, wordpressv1alpha1.Domain(fmt.Sprintf("%s-%02d", primaryDomain, i)))
 			}
-			wp := createSite(name, userID, projectName, orgName, image, domains)
-			Expect(c.Create(context.TODO(), wp.Unwrap())).To(Succeed())
+			createSite(c, name, userID, projectName, orgName, image, domains)
+			createIngress(c, name, projectName)
 
 			newPD := "new-primary-domain"
 			expectedDomains := domains
@@ -545,9 +573,7 @@ var _ = Describe("API server", func() {
 
 			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Name).To(Equal(siteFQName))
-			Expect(resp.PrimaryDomain).To(Equal(newPD))
-			Expect(resp.WordpressImage).To(Equal(image))
+			expectProperResponse(resp, siteFQName, newPD, image)
 			expectProperWordpress(c, name, userID, projectName, orgName, image, expectedDomains)
 		})
 
@@ -566,9 +592,7 @@ var _ = Describe("API server", func() {
 
 			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Name).To(Equal(siteFQName))
-			Expect(resp.PrimaryDomain).To(Equal(primaryDomain))
-			Expect(resp.WordpressImage).To(Equal(image))
+			expectProperResponse(resp, siteFQName, primaryDomain, image)
 			expectProperWordpress(c, siteName, userID, projectName, orgName, image, domains)
 		})
 
@@ -604,9 +628,7 @@ var _ = Describe("API server", func() {
 
 			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Name).To(Equal(siteFQName))
-			Expect(resp.PrimaryDomain).To(Equal(newPD))
-			Expect(resp.WordpressImage).To(Equal(newWI))
+			expectProperResponse(resp, siteFQName, newPD, newWI)
 			expectProperWordpress(c, siteName, userID, projectName, orgName, newWI, expectedDomains)
 		})
 
@@ -625,9 +647,7 @@ var _ = Describe("API server", func() {
 
 			resp, err := siteClient.UpdateSite(ctx, &req)
 			Expect(err).To(Succeed())
-			Expect(resp.Name).To(Equal(siteFQName))
-			Expect(resp.PrimaryDomain).To(Equal(newPD))
-			Expect(resp.WordpressImage).To(Equal(newWI))
+			expectProperResponse(resp, siteFQName, newPD, newWI)
 			expectProperWordpress(c, siteName, userID, projectName, orgName, newWI, expectedDomains)
 		})
 
@@ -654,15 +674,16 @@ var _ = Describe("API server", func() {
 				_domains := []wordpressv1alpha1.Domain{
 					wordpressv1alpha1.Domain(_primaryDomain),
 				}
-				site := createSite(_name, userID, projectName, orgName, _image, _domains)
-				Expect(c.Create(context.TODO(), site.Unwrap())).To(Succeed())
+				createSite(c, _name, userID, projectName, orgName, _image, _domains)
+				createIngress(c, _name, projectName)
 			}
-			site := createSite(siteName, "user#another", projectName, orgName, image, domains)
-			Expect(c.Create(context.TODO(), site.Unwrap())).To(Succeed())
+
+			createSite(c, siteName, "user#another", projectName, orgName, image, domains)
+			createIngress(c, siteName, projectName)
 
 			name := fmt.Sprintf("%s", siteName)
-			site = createSite(name, userID, "another-project", orgName, image, domains)
-			Expect(c.Create(context.TODO(), site.Unwrap())).To(Succeed())
+			createSite(c, name, userID, "another-project", orgName, image, domains)
+			createIngress(c, name, "another-project")
 		})
 
 		It("returns only my sites", func() {

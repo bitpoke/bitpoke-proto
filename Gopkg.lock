@@ -523,7 +523,7 @@
   version = "v0.1.10"
 
 [[projects]]
-  digest = "1:4b6e349f9f570b14679f93560735da187b1b0b791b3fd2d363a620c98e06145c"
+  digest = "1:03772a6f3d8ea5c9a514020cb009686649b435e9dde4f6c274b96dacc4d48742"
   name = "github.com/presslabs/dashboard-go"
   packages = [
     "pkg/proto/presslabs/dashboard/organizations/v1",
@@ -531,7 +531,7 @@
     "pkg/proto/presslabs/dashboard/sites/v1",
   ]
   pruneopts = "T"
-  revision = "55619c430f6fa9b1d6ac98b7f67071d7cc6e2995"
+  revision = "ac1e1ed8c0712aa101766f42b1fb2ba135ebe823"
 
 [[projects]]
   digest = "1:02cb434138ce852c640634af161c47f9776cfe8c2aef94be729cedf6e6b60656"
