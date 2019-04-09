@@ -1,7 +1,7 @@
 import { ActionType, action as createAction } from 'typesafe-actions'
 import { takeLatest, fork, put, take, race, select as _select, delay } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
-import { find, head, values as _values, get as _get, isEmpty, isEqual } from 'lodash'
+import { find, head, replace, values as _values, get as _get, isEmpty, isEqual } from 'lodash'
 
 import URI from 'urijs'
 
@@ -78,6 +78,8 @@ const resource = api.Resource.organization
 const service = OrganizationsService.create(
     grpc.createTransport('presslabs.dashboard.organizations.v1.OrganizationsService')
 )
+
+export const { parseName, buildName } = api.createNameHelpers('orgs/:slug')
 
 
 //
@@ -173,7 +175,6 @@ export function* saga() {
         DESTROY_SUCCEEDED
     ], decideOrganizationContext)
     yield takeLatest(SELECTED, setGRPCOrganizationMetadata)
-    yield takeLatest(SELECTED, updateAddressWithOrganization)
     yield forms.takeEverySubmission(forms.Name.organization, handleFormSubmission)
 }
 
@@ -209,10 +210,13 @@ function* decideOrganizationContext(): Iterable<any> {
     }
     else {
         const params = yield _select(routing.getParams)
-        const organizationFromAddress = yield _select(getByName(_get(params, 'org')))
+        const name = buildName({ slug: _get(params, 'org') })
+        const organizationFromAddress = name ? yield _select(getByName(name)) : null
 
-        if (organizationFromAddress && !isEqual(organizationFromAddress, currentlySelected)) {
-            yield put(select(organizationFromAddress))
+        if (organizationFromAddress) {
+            // if (!isEqual(organizationFromAddress, currentlySelected)) {
+                yield put(select(organizationFromAddress))
+            // }
         }
         else {
             if (currentlySelected) {
@@ -228,29 +232,33 @@ function* decideOrganizationContext(): Iterable<any> {
     }
 }
 
-function setGRPCOrganizationMetadata(action: ActionType<typeof select>) {
-    if (!action.payload.name) {
-        return
-    }
-
-    grpc.setMetadata('organization', action.payload.name)
+function* setGRPCOrganizationMetadata(action: ActionType<typeof select>) {
+    yield put(grpc.setMetadata({
+        key: 'organization',
+        value: action.payload.name
+    }))
 }
 
-function* updateAddressWithOrganization(action: ActionType<typeof select>) {
-    if (!action.payload.name) {
-        return
-    }
+// function* updateAddressWithOrganization(action: ActionType<typeof select>) {
+//     if (!action.payload.name) {
+//         return
+//     }
 
-    const currentRoute = yield _select(routing.getCurrentRoute)
-    const updatedURL = new URI(currentRoute.url)
+//     const currentRoute = yield _select(routing.getCurrentRoute)
+//     const updatedURL = new URI(currentRoute.url)
 
-    updatedURL.removeSearch('org')
-    updatedURL.addSearch('org', action.payload.name)
+//     const parsedName = parseName(action.payload.name)
+//     if (parsedName) {
+//         updatedURL.removeSearch('org')
+//         updatedURL.addSearch('org', parsedName.params.slug)
+//     }
 
-    if (updatedURL.toString() !== currentRoute.url) {
-        yield put(routing.replace(updatedURL.toString())) // eslint-disable-line lodash/prefer-lodash-method
-    }
-}
+//     if (updatedURL.toString() !== currentRoute.url) {
+//         yield put(routing.replace(updatedURL.toString())) // eslint-disable-line lodash/prefer-lodash-method
+//     }
+
+//     // yield put(routing.push(routing.routeFor('dashboard', { org: action.payload.name })))
+// }
 
 
 //
@@ -264,14 +272,13 @@ export const countAll:  (state: RootState) => number = selectors.countAll
 export const getByName: (name: OrganizationName) => (state: RootState) => IOrganization | null = selectors.getByName
 export const getForURL: (url: routing.Path) => (state: RootState) => IOrganization | null = selectors.getForURL
 
+export const getForCurrentURL = createSelector(
+    [routing.getCurrentRoute, (state: RootState) => state],
+    (currentRoute, state) => getForURL(currentRoute.url)(state)
+)
 export const getCurrent: (state: RootState) => IOrganization | null = createSelector(
     [getState, getAll],
     (state, orgs) => state.current
         ? find(orgs, { name: state.current }) || null
         : null
-)
-
-export const getForCurrentURL = createSelector(
-    [routing.getCurrentRoute, (state: RootState) => state],
-    (currentRoute, state) => getForURL(currentRoute.url)(state)
 )

@@ -9,6 +9,7 @@ import * as routing from './routing'
 import * as organizations from './organizations'
 import * as projects from './projects'
 import * as sites from './sites'
+import * as data from './data'
 import toasts from './toasts'
 
 export type RootState = {
@@ -34,6 +35,7 @@ export type AnyAction =
     | projects.Actions
     | sites.Actions
 
+export type Selector = (state: RootState) => any
 export type ActionDescriptor = string
 
 export type DispatchProp = { dispatch: Dispatch }
@@ -48,5 +50,6 @@ export {
     organizations,
     projects,
     sites,
+    data,
     toasts
 }

@@ -1,0 +1,29 @@
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    margin-bottom: 10px;
+}
+
+.title {
+    justify-content: center;
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+.title > h2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap:nowrap;
+}
+
+.title > h2 > span {
+    margin-left: 5px;
+}
+
+.title > h4 {
+    margin: -10px 0 10px 0;
+}

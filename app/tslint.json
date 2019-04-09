@@ -31,9 +31,9 @@
     "jsx-wrap-multiline": true,
     "jsx-boolean-value": [true, "never"],
 
+    "no-object-literal-type-assertion": false,
     "no-console": [true, "warning"],
     "no-constant-condition": [true, { "checkLoops": false }],
-
     "no-else-after-return": false,
 
     "interface-over-type-literal": false,

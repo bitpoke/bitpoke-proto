@@ -19,7 +19,11 @@ import { watchChannel } from '../utils'
 //
 //  TYPES
 
-export type State = Route
+export type State = {
+    currentRoute  : Route,
+    previousRoute : Route
+}
+
 export type Actions = ActionType<typeof actions>
 export type Params = object
 export type Path = Path
@@ -39,17 +43,17 @@ export const ROUTE_MAP = {
         path      : '/',
         component : 'DashboardContainer'
     },
-    organization: {
+    organizations: {
         path      : '/orgs/:slug?/:action?',
         component : 'OrganizationsContainer'
     },
-    project: {
+    projects: {
         path      : '/project/:slug?/:action?',
         component : 'ProjectsContainer'
     },
-    site: {
-        path      : '/project/:projectSlug/site/:slug',
-        component : 'DashboardContainer'
+    sites: {
+        path      : '/project/:project/site/:slug?/:action?',
+        component : 'SitesContainer'
     }
 }
 
@@ -59,6 +63,7 @@ export const ROUTE_MAP = {
 
 export const PUSH_REQUESTED    = '@ routing / PUSH_REQUESTED'
 export const REPLACE_REQUESTED = '@ routing / REPLACE_REQUESTED'
+export const BACK_REQUESTED    = '@ routing / BACK_REQUESTED'
 export const PUSH_SKIPPED      = '@ routing / PUSH_SKIPPED'
 export const ROUTE_CHANGED     = '@ routing / ROUTE_CHANGED'
 
@@ -66,25 +71,39 @@ export const push = (path: Path) => createAction(PUSH_REQUESTED, path)
 export const replace = (path: Path) => createAction(REPLACE_REQUESTED, path)
 export const skipPush = (path: Path) => createAction(PUSH_SKIPPED, path)
 export const updateRoute = (location: Location<any>) => createAction(ROUTE_CHANGED, location)
+export const goBack = () => createAction(BACK_REQUESTED)
 
 const actions = {
-    push, replace, updateRoute
+    push, replace, updateRoute, goBack
 }
 
 //
 //  REDUCER
 
-const initialState: Route = {
+const initialRoute = {
     path   : '/',
     url    : '/',
     key    : findKey(ROUTE_MAP, { path: '/' }),
     params : {}
 }
 
+const initialState = {
+    currentRoute  : initialRoute,
+    previousRoute : initialRoute
+}
+
 export function reducer(state: State = initialState, action: Actions) {
     switch (action.type) {
         case ROUTE_CHANGED: {
-            return matchRoute(action.payload)
+            const currentRoute = matchRoute(action.payload)
+            const previousRoute = isEqual(currentRoute, state.currentRoute)
+                ? state.previousRoute
+                : state.currentRoute
+
+            return {
+                currentRoute,
+                previousRoute
+            }
         }
 
         default:
@@ -100,7 +119,7 @@ const channel = createChannel()
 
 export function* saga() {
     yield takeLatest(app.INITIALIZED, bootstrap)
-    yield takeEvery([PUSH_REQUESTED, REPLACE_REQUESTED], dispatchToHistory)
+    yield takeEvery([PUSH_REQUESTED, REPLACE_REQUESTED, BACK_REQUESTED], dispatchToHistory)
     yield watchChannel(channel)
 }
 
@@ -110,11 +129,16 @@ function* bootstrap() {
 }
 
 function* dispatchToHistory(
-    action: ActionType<typeof push> | ActionType<typeof replace>
+    action: ActionType<typeof push> | ActionType<typeof replace> | ActionType<typeof goBack>
 ): IterableIterator<any> {
+    if (isOfType(BACK_REQUESTED, action)) {
+        history.goBack()
+        return
+    }
+
     const path = action.payload
 
-    if (isOfType(PUSH_REQUESTED)) {
+    if (isOfType(PUSH_REQUESTED, action)) {
         const currentRoute = yield select(getCurrentRoute)
         if (isEqual(currentRoute.url, path)) {
             yield put(skipPush(path))
@@ -124,7 +148,7 @@ function* dispatchToHistory(
         history.push(path)
     }
 
-    if (isOfType(REPLACE_REQUESTED)) {
+    if (isOfType(REPLACE_REQUESTED, action)) {
         history.replace(path)
     }
 }
@@ -218,7 +242,14 @@ export const withRouter = (component: React.ComponentType) => connect(getState)(
 //  SELECTORS
 
 export const getState = (state: RootState) => state.routing
-export const getCurrentRoute = getState
+export const getCurrentRoute = createSelector(
+    getState,
+    (state) => state.currentRoute
+)
+export const getPreviousRoute = createSelector(
+    getState,
+    (state) => state.previousRoute
+)
 export const getParams = createSelector(
     getCurrentRoute,
     (route) => get(route, 'params', {}) as Params

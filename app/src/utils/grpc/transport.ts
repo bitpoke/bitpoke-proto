@@ -74,7 +74,7 @@ export function createTransport(serviceName: string): RPCImpl {
     }
 }
 
-export function setMetadata(key: string, value: string) {
+export function setMetadataHeader(key: string, value: string) {
     axios.defaults.headers.common[key] = value
 }
 

@@ -2,24 +2,23 @@ import * as React from 'react'
 
 import { projects } from '../redux'
 
-import ProjectTitle from '../components/ProjectTitle'
+import SiteTitle from '../components/SiteTitle'
 import SitesList from '../components/SitesList'
 
 type Props = {
     entry: projects.IProject | null
 }
 
-const ProjectDetails: React.SFC<Props> = ({ entry }) => {
+const SiteDetails: React.SFC<Props> = ({ entry }) => {
     if (!entry) {
         return null
     }
 
     return (
         <div>
-            <ProjectTitle entry={ entry } />
-            <SitesList project={ entry.name } />
+            <SiteTitle entry={ entry } />
         </div>
     )
 }
 
-export default ProjectDetails
+export default SiteDetails

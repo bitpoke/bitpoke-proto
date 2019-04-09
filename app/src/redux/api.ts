@@ -1,8 +1,10 @@
 import { isOfType } from 'typesafe-actions'
 import { createSelector } from 'reselect'
-import { takeEvery, put, race, take, call } from 'redux-saga/effects'
-
+import { takeEvery, put, race, take, call, select } from 'redux-saga/effects'
 import { singular, plural } from 'pluralize'
+import { matchPath } from 'react-router'
+import { compile } from 'path-to-regexp'
+import URI from 'urijs'
 
 import {
     reduce, find, omit, get, head, last, join, split, keys, values as _values,
@@ -33,16 +35,18 @@ export enum Resource {
     site         = 'sites'
 }
 
+export type ResourceName = string
+
 export type AnyResourceInstance = {
-    name: string
+    name: ResourceName
 }
 
 export type Selectors<T> = {
-    getState: (state: RootState) => State<T> & any
-    getAll: (state: RootState) => ResourcesList<T>
-    countAll: (state: RootState) => number
-    getByName: (name: string) => (state: RootState) => T | null,
-    getForURL: (url: routing.Path) => (state: RootState) => T | null
+    getState  : (state: RootState) => State<T> & any
+    getAll    : (state: RootState) => ResourcesList<T>
+    countAll  : (state: RootState) => number
+    getByName : (name: ResourceName) => (state: RootState) => T | null,
+    getForURL : (url: routing.Path) => (state: RootState) => T | null
 }
 
 export type ActionTypes = {
@@ -81,6 +85,19 @@ export type Actions = {
     create  : (payload: any) => AnyAction,
     update  : (payload: any) => AnyAction
     destroy : (payload: any) => AnyAction
+}
+
+export type NameHelpers = {
+    parseName: (name: ResourceName) => NamePayload | null
+    buildName: (payload: object) => ResourceName | null
+}
+
+export type NamePayload = {
+    name   : ResourceName,
+    params : {
+        slug?: string,
+        parent?: string
+    }
 }
 
 export const initialState: State<AnyResourceInstance> = {
@@ -167,9 +184,9 @@ export function createSelectors(resource: Resource): Selectors<AnyResourceInstan
         getAll,
         (entries) => size(keys(entries))
     )
-    const getForURL = (fullURL: string) => createSelector(
+    const getForURL = (url: routing.Path) => createSelector(
         getAll,
-        (entries) => find(entries, (entry) => startsWith(replace(fullURL, /^\//, ''), entry.name)) || null
+        (entries) => find(entries, (entry) => startsWith(replace(url, /^\//, ''), entry.name)) || null
     )
     return {
         getState, getAll, getByName, countAll, getForURL
@@ -184,9 +201,8 @@ export function createFormHandler(
 ) {
     return function* handleSubmit(action: forms.Actions) {
         const { resolve, reject, values } = action.payload
-        const resourceName = singular(resource)
-        const resourceDisplayName = startCase(resourceName)
-        const entry = get(values, resourceName)
+        const resourceName = startCase(singular(resource))
+        const entry = get(values, singular(resource))
 
         if (isNewEntry(entry)) {
             yield put(actions.create(values))
@@ -199,11 +215,12 @@ export function createFormHandler(
             if (success) {
                 yield call(resolve)
                 yield put(forms.reset(formName))
-                toasts.show({ intent: Intent.SUCCESS, message: `${resourceDisplayName} created` })
+                yield put(routing.push(routing.routeForResource(success.payload.data)))
+                toasts.show({ intent: Intent.SUCCESS, message: `${resourceName} created` })
             }
             else {
                 yield call(reject, new forms.SubmissionError())
-                toasts.show({ intent: Intent.DANGER, message: `${resourceDisplayName} create failed` })
+                toasts.show({ intent: Intent.DANGER, message: `${resourceName} create failed` })
             }
         }
         else {
@@ -217,11 +234,12 @@ export function createFormHandler(
             if (success) {
                 yield call(resolve)
                 yield put(forms.reset(formName))
-                toasts.show({ intent: Intent.SUCCESS, message: `${resourceDisplayName} updated` })
+                yield put(routing.push(routing.routeForResource(success.payload.data)))
+                toasts.show({ intent: Intent.SUCCESS, message: `${resourceName} updated` })
             }
             else {
                 yield call(reject, new forms.SubmissionError())
-                toasts.show({ intent: Intent.DANGER, message: `${resourceDisplayName} update failed` })
+                toasts.show({ intent: Intent.DANGER, message: `${resourceName} update failed` })
             }
         }
     }
@@ -260,6 +278,10 @@ function* emitResourceAction(
     actionTypes: ActionTypes,
     action: grpc.Actions
 ) {
+    if (isOfType(grpc.METADATA_SET, action)) {
+        return
+    }
+
     const method = isOfType(grpc.INVOKED, action)
         ? action.payload.method
         : action.payload.request.method
@@ -285,6 +307,34 @@ function* emitResourceAction(
 
 function createActionDescriptor(request: Request, status: Status) {
     return join([request, status], '_')
+}
+
+export function createNameHelpers(path: string): NameHelpers {
+    function parseName(nameOrURL: string): NamePayload | null {
+        const pathname = replace(new URI(nameOrURL).pathname(), /^\//, '')
+        const matched = matchPath(pathname, { path, exact: false })
+        if (matched) {
+            return {
+                name   : matched.url,
+                params : matched.params
+            }
+        }
+
+        return null
+    }
+
+    function buildName(params: object): ResourceName | null {
+        try {
+            return compile(path)(params)
+        }
+        catch (e) {
+            return null
+        }
+    }
+
+    return {
+        parseName, buildName
+    }
 }
 
 function getRequestTypeFromMethodName(methodName: string): Request | null {

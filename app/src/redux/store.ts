@@ -1,6 +1,7 @@
 import localforage from 'localforage'
 import Raven from 'raven-js'
 import { Middleware } from 'redux'
+import createFilter from 'redux-persist-transform-filter'
 
 import * as storeUtils from '../utils/store'
 import * as modules from '../redux'
@@ -10,10 +11,14 @@ const persistedReducers = [
     'organizations'
 ]
 
+const authFilter = createFilter('auth', ['token'])
+const orgsFilter = createFilter('organizations', ['current'])
+
 const persistConfig = {
-    key       : 'root',
-    whitelist : persistedReducers,
-    storage   : localforage
+    key        : 'root',
+    whitelist  : persistedReducers,
+    storage    : localforage,
+    transforms : [authFilter]
 }
 
 const middleware: Array<Middleware<any>> = []

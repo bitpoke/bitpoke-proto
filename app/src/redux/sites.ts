@@ -75,6 +75,8 @@ const service = SitesService.create(
     grpc.createTransport('presslabs.dashboard.sites.v1.SitesService')
 )
 
+export const { parseName, buildName } = api.createNameHelpers('project/:parent/site/:slug')
+
 
 //
 //  ACTIONS
@@ -146,61 +148,13 @@ export function* saga() {
     yield forms.takeEverySubmission(forms.Name.site, handleFormSubmission)
 }
 
-function* handleFormSubmission(action: forms.Actions) {
-    const { resolve, reject, values } = action.payload
-    const entry = _get(values, api.Resource.site)
+const handleFormSubmission = api.createFormHandler(
+    forms.Name.site,
+    api.Resource.site,
+    apiTypes,
+    actions
+)
 
-    if (api.isNewEntry(entry)) {
-        yield put(create(values))
-
-        const { success } = yield race({
-            success : take(CREATE_SUCCEEDED),
-            failure : take(CREATE_FAILED)
-        })
-
-        if (success) {
-            yield call(resolve)
-            yield put(forms.reset(forms.Name.site))
-            yield put(routing.push(routing.routeFor('dashboard')))
-            toasts.show({
-                intent: Intent.SUCCESS,
-                message: 'Site created'
-            })
-        }
-        else {
-            yield call(reject, new forms.SubmissionError())
-            toasts.show({
-                intent: Intent.DANGER,
-                message: 'Failed to create site'
-            })
-        }
-    }
-    else {
-        yield put(update(values))
-
-        const { success } = yield race({
-            success : take(UPDATE_SUCCEEDED),
-            failure : take(UPDATE_FAILED)
-        })
-
-        if (success) {
-            yield call(resolve)
-            yield put(forms.reset(forms.Name.site))
-            yield put(routing.push(routing.routeFor('dashboard')))
-            toasts.show({
-                intent: Intent.SUCCESS,
-                message: 'Project updated'
-            })
-        }
-        else {
-            yield call(reject, new forms.SubmissionError())
-            toasts.show({
-                intent: Intent.DANGER,
-                message: 'Failed to update the project'
-            })
-        }
-    }
-}
 
 //
 //  SELECTORS
@@ -212,6 +166,11 @@ export const getAll:    (state: RootState) => api.ResourcesList<ISite> = selecto
 export const countAll:  (state: RootState) => number = selectors.countAll
 export const getByName: (name: SiteName) => (state: RootState) => ISite | null = selectors.getByName
 export const getForURL: (url: routing.Path) => (state: RootState) => ISite | null = selectors.getForURL
+
+export const getForCurrentURL = createSelector(
+    [routing.getCurrentRoute, (state: RootState) => state],
+    (currentRoute, state) => getForURL(currentRoute.url)(state)
+)
 
 export const getForProject = (project: projects.ProjectName) => createSelector(
     getAll,

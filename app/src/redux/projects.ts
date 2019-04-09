@@ -1,8 +1,8 @@
 import { ActionType } from 'typesafe-actions'
-import { takeLatest, fork, put, take, race, select } from 'redux-saga/effects'
+import { fork } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
 
-import { pickBy, get as _get, isEmpty } from 'lodash'
+import { pickBy, get as _get } from 'lodash'
 
 import { RootState, AnyAction, api, routing, grpc, forms, organizations } from '../redux'
 
@@ -72,6 +72,8 @@ export type Actions = ActionType<typeof actions>
 const service = ProjectsService.create(
     grpc.createTransport('presslabs.dashboard.projects.v1.ProjectsService')
 )
+
+export const { parseName, buildName } = api.createNameHelpers('project/:slug')
 
 
 //
@@ -149,7 +151,7 @@ export function reducer(state: State = api.initialState, action: AnyAction) {
 
 export function* saga() {
     yield fork(api.emitResourceActions, api.Resource.project, apiTypes)
-    yield takeLatest(organizations.SELECTED, fetchAll)
+    // yield takeLatest(organizations.SELECTED, fetchAll)
     yield forms.takeEverySubmission(forms.Name.project, handleFormSubmission)
 }
 
@@ -160,23 +162,22 @@ const handleFormSubmission = api.createFormHandler(
     actions
 )
 
-function* fetchAll(action: ActionType<typeof organizations.select>) {
-    const organization = action.payload
-    yield put(list({ parent: organization.name }))
-    const projects = yield select(getAll)
+// function* fetchAll(action: ActionType<typeof organizations.select>) {
+//     const organization = action.payload
+//     yield put(list({ parent: organization.name }))
+//     const projects = yield select(getAll)
 
-    if (isEmpty(projects)) {
-        const { success } = yield race({
-            success: take(LIST_SUCCEEDED),
-            failure: take(LIST_FAILED)
-        })
+//     if (isEmpty(projects)) {
+//         const { success } = yield race({
+//             success: take(LIST_SUCCEEDED),
+//             failure: take(LIST_FAILED)
+//         })
 
-        if (success && api.isEmptyResponse(success)) {
-            // yield put(wizards.startFlow(wizards.Flows.onboarding))
-        }
-    }
-}
-
+//         if (success && api.isEmptyResponse(success)) {
+//             // yield put(wizards.startFlow(wizards.Flows.onboarding))
+//         }
+//     }
+// }
 
 //
 //  SELECTORS
@@ -188,16 +189,15 @@ export const getAll:    (state: RootState) => api.ResourcesList<IProject> = sele
 export const countAll:  (state: RootState) => number = selectors.countAll
 export const getByName: (name: ProjectName) => (state: RootState) => IProject | null = selectors.getByName
 export const getForURL: (url: routing.Path) => (state: RootState) => IProject | null = selectors.getForURL
+
 export const getForOrganization = (organization: organizations.OrganizationName) => createSelector(
     getAll,
     (projects) => pickBy(projects, { organization })
 )
-
 export const getForCurrentURL = createSelector(
     [routing.getCurrentRoute, (state: RootState) => state],
     (currentRoute, state) => getForURL(currentRoute.url)(state)
 )
-
 export const getForCurrentOrganization = createSelector(
     [organizations.getCurrent, (state: RootState) => state],
     (currentOranization, state) => currentOranization

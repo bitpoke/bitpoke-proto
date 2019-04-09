@@ -1,12 +1,13 @@
 import * as React from 'react'
 import { Field } from 'redux-form'
+
 import { get } from 'lodash'
 
 import { forms, api, organizations } from '../redux'
 
+import { withForm } from '../components/Form'
 import FormContainer from '../components/FormContainer'
 import InputField from '../components/InputField'
-import { withForm } from '../components/Form'
 
 type Props = forms.Props<organizations.IOrganizationPayload>
 

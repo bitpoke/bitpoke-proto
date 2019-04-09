@@ -1,5 +1,5 @@
 import { channel as createChannel } from 'redux-saga'
-import { takeEvery } from 'redux-saga/effects'
+import { takeEvery, call, put } from 'redux-saga/effects'
 import { ActionType, action as createAction } from 'typesafe-actions'
 import { createSelector } from 'reselect'
 
@@ -8,10 +8,15 @@ import { get as _get, findIndex, concat, isEqual, isEmpty } from 'lodash'
 import { RootState } from '../redux'
 
 import { watchChannel } from '../utils'
-export { createTransport, setMetadata } from '../utils/grpc/transport'
+import { createTransport, setMetadataHeader } from '../utils/grpc/transport'
+
+export { createTransport }
 
 export type State = {
-    ongoingRequests: []
+    ongoingRequests: [],
+    metadata: {
+        [key: string]: string
+    }
 }
 
 export type Actions = ActionType<typeof actions>
@@ -28,21 +33,29 @@ export type Response = {
     request : Request
 }
 
+export type Metadata = {
+    key   : string,
+    value : string
+}
+
 //
 //  ACTIONS
 
-export const INVOKED   = '@ grpc / INVOKED'
-export const SUCCEEDED = '@ grpc / SUCCEEDED'
-export const FAILED    = '@ grpc / FAILED'
+export const INVOKED      = '@ grpc / INVOKED'
+export const SUCCEEDED    = '@ grpc / SUCCEEDED'
+export const FAILED       = '@ grpc / FAILED'
+export const METADATA_SET = '@ grpc / METADATA_SET'
 
 export const invoke = (payload: Request) => createAction(INVOKED, payload)
 export const success = (payload: Response) => createAction(SUCCEEDED, payload)
 export const fail = (payload: Response) => createAction(FAILED, payload)
+export const setMetadata = (payload: Metadata) => createAction(METADATA_SET, payload)
 
 const actions = {
     invoke,
     success,
-    fail
+    fail,
+    setMetadata
 }
 
 //
@@ -52,10 +65,11 @@ const channel = createChannel()
 
 export function* saga() {
     yield takeEvery(INVOKED, performRequest)
+    yield takeEvery(METADATA_SET, updateTransportMetadata)
     yield watchChannel(channel)
 }
 
-function* performRequest(action: ReturnType<typeof invoke>) {
+function* performRequest(action: ActionType<typeof invoke>) {
     const request = action.payload
     const { service, method, data } = request
 
@@ -76,12 +90,19 @@ function* performRequest(action: ReturnType<typeof invoke>) {
     }
 }
 
+function* updateTransportMetadata(action: ActionType<typeof setMetadata>) {
+    const metadata = action.payload
+    const { key, value } = metadata
+    yield call(setMetadataHeader, key, value)
+}
+
 
 //
 //  REDUCER
 
 const initialState: State = {
-    ongoingRequests: []
+    ongoingRequests: [],
+    metadata: {}
 }
 
 export function reducer(state: State = initialState, action: Actions) {
@@ -112,6 +133,16 @@ export function reducer(state: State = initialState, action: Actions) {
             }
         }
 
+        case METADATA_SET: {
+            const { key, value } = action.payload
+            return {
+                ...state,
+                metadata: {
+                    [key]: value
+                }
+            }
+        }
+
         default:
             return state
     }
@@ -124,4 +155,8 @@ export const getState = (state: RootState) => state.grpc
 export const isLoading = createSelector(
     getState,
     (state) => !isEmpty(state.ongoingRequests)
+)
+export const getMetadata = (key: string) => createSelector(
+    getState,
+    (state) => _get(state, ['metadata', key])
 )

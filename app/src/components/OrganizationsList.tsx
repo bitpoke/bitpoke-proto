@@ -2,11 +2,11 @@ import React from 'react'
 import { connect } from 'react-redux'
 import faker from 'faker'
 
-import { map } from 'lodash'
+import { map, get } from 'lodash'
 
 import { Navbar, Alignment, Button, Intent } from '@blueprintjs/core'
 
-import { RootState, DispatchProp, organizations, api } from '../redux'
+import { RootState, DispatchProp, organizations, api, routing } from '../redux'
 
 type ReduxProps = {
     entries: api.ResourcesList<organizations.IOrganization>,
@@ -28,7 +28,9 @@ const OrganizationsList: React.SFC<Props> = ({ entries, selectedEntry, dispatch 
                     key={ organization.name }
                     text={ organization.displayName }
                     onClick={ () => {
-                        dispatch(organizations.select(organization))
+                        dispatch(routing.push(
+                            routing.routeFor('dashboard', { org: get(organizations.parseName(organization.name), 'params.slug') })
+                        ))
                     } }
                 />
             )) }

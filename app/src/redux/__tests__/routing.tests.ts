@@ -30,7 +30,7 @@ describe('api', () => {
         it('matches routes with path segments', () => {
             const route = createLocation({ pathname: '/orgs/test', search: '?filter=active' })
             expect(matchRoute(route)).toEqual({
-                key     : 'organization',
+                key     : 'organizations',
                 isExact : true,
                 params  : { slug: 'test', filter: 'active', action: undefined },
                 path    : '/orgs/:slug?/:action?',
@@ -47,16 +47,16 @@ describe('api', () => {
         })
 
         it('replaces path segments with given params', () => {
-            expect(routeFor('organization', { slug: 'test' })).toEqual('/orgs/test')
-            expect(routeFor('organization', { action: 'new' })).toEqual('/orgs/new')
+            expect(routeFor('organizations', { slug: 'test' })).toEqual('/orgs/test')
+            expect(routeFor('organizations', { action: 'new' })).toEqual('/orgs/new')
         })
 
         it('appends extra parameters to the query', () => {
-            expect(routeFor('organization', { slug: 'test', filter: 'active' })).toEqual('/orgs/test?filter=active')
+            expect(routeFor('organizations', { slug: 'test', filter: 'active' })).toEqual('/orgs/test?filter=active')
         })
 
         it('throws if a required path segment is missing', () => {
-            expect(() => { routeFor('site') }).toThrow(new TypeError('Expected "projectSlug" to be a string'))
+            expect(() => { routeFor('sites') }).toThrow(new TypeError('Expected "project" to be a string'))
         })
 
         it('throws if an invalid key is used', () => {
@@ -81,6 +81,11 @@ describe('api', () => {
         it('appends query arguments accordingly', () => {
             const resource = { name: 'orgs/test' }
             expect(routeForResource(resource, { filter: 'active' })).toEqual('/orgs/test?filter=active')
+        })
+
+        it('works with non top-level resources', () => {
+            const resource = { name: 'project/123/sites/abc' }
+            expect(routeForResource(resource, { filter: 'active' })).toEqual('/project/123/sites/abc?filter=active')
         })
 
         it('works with any type of resource', () => {

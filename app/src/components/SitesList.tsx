@@ -2,67 +2,76 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import faker from 'faker'
 
-import { map } from 'lodash'
+import { map, get } from 'lodash'
 
-import { Button, Card, Elevation, Intent } from '@blueprintjs/core'
+import { Button, ButtonGroup, Card, Elevation, Intent } from '@blueprintjs/core'
 
 import { RootState, DispatchProp, api, routing, sites, projects } from '../redux'
 
+import List from '../components/List'
+import TitleBar from '../components/TitleBar'
+
 type OwnProps = {
-    project : projects.ProjectName
+    project: projects.ProjectName
 }
 
 type ReduxProps = {
-    entries: api.ResourcesList<sites.ISite>
+    parent: projects.IProject | null
 }
 
 type Props = OwnProps & ReduxProps & DispatchProp
 
 const SitesList: React.SFC<Props> = (props) => {
-    const { entries, project, dispatch } = props
+    const { project, parent, dispatch } = props
+
+    if (!project) {
+        return null
+    }
+
     return (
-        <div>
-            <h2>Sites</h2>
-            <Button
-                text="Create site"
-                icon="add"
-                intent={ Intent.SUCCESS }
-                onClick={ () => dispatch(routing.push(routing.routeFor('site', { step: 'new' }))) }
-            />
-            <Button
-                text="Create random site"
-                icon="random"
-                intent={ Intent.SUCCESS }
-                onClick={ () => dispatch(sites.create({
-                    parent: project,
-                    site: {
-                        primaryDomain: faker.internet.domainName()
-                    }
-                })) }
-            />
-            { map(entries, (site) => (
-                <Card
-                    key={ site.name }
-                    elevation={ Elevation.TWO }
-                >
-                    <h5><a href="#">{ site.primaryDomain }</a></h5>
-                    <p>{ site.primaryDomain }</p>
-                    <Button
-                        text="Delete site"
-                        icon="trash"
-                        intent={ Intent.DANGER }
-                        onClick={ () => dispatch(sites.destroy(site)) }
-                    />
-                </Card>
-            )) }
-        </div>
+        <List
+            dataRequest={ sites.list({ parent: project }) }
+            dataSelector={ sites.getForProject(project) }
+            title={
+                <TitleBar
+                    title="Sites"
+                    actions={ parent && (
+                        <ButtonGroup>
+                            <Button
+                                text="Create site"
+                                icon="add"
+                                intent={ Intent.SUCCESS }
+                                onClick={ () =>
+                                    dispatch(routing.push(
+                                        routing.routeForResource(parent, { action: 'new-site' })
+                                    ))
+                                }
+                            />
+                            <Button
+                                text="Generate random site"
+                                icon="random"
+                                intent={ Intent.SUCCESS }
+                                onClick={ () =>
+                                    dispatch(sites.create({
+                                        parent: project,
+                                        site: {
+                                            primaryDomain: faker.internet.domainName()
+                                        }
+                                    }))
+                                }
+                            />
+                        </ButtonGroup>
+                    ) }
+                />
+            }
+        />
     )
 }
 
 function mapStateToProps(state: RootState, ownProps: OwnProps): ReduxProps {
-    const entries = sites.getForProject(ownProps.project)(state)
+    const parent = projects.getByName(ownProps.project)(state)
     return {
-        entries
+        parent
     }
 }
 
