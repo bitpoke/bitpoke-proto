@@ -12,6 +12,7 @@ import (
 
 	"github.com/gogo/protobuf/types"
 	"github.com/gosimple/slug"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -102,7 +103,10 @@ func (s *projectsServer) GetProject(ctx context.Context, r *projs.GetProjectRequ
 
 	proj := project.New(&dashboardv1alpha1.Project{})
 	if err := c.Get(ctx, key, proj.Unwrap()); err != nil {
-		return nil, status.NotFoundf("project %s not found", r.Name).Because(err)
+		if errors.IsNotFound(err) {
+			return nil, status.NotFoundf("project %s not found", r.Name).Because(err)
+		}
+		return nil, status.FromError(err)
 	}
 
 	return newProjectFromK8s(proj), nil
@@ -123,6 +127,9 @@ func (s *projectsServer) UpdateProject(ctx context.Context, r *projs.UpdateProje
 
 	proj := project.New(&dashboardv1alpha1.Project{})
 	if err = c.Get(ctx, key, proj.Unwrap()); err != nil {
+		if errors.IsNotFound(err) {
+			return nil, status.NotFoundf("project %s not found", r.Name).Because(err)
+		}
 		return nil, status.FromError(err)
 	}
 
@@ -150,6 +157,9 @@ func (s *projectsServer) DeleteProject(ctx context.Context, r *projs.DeleteProje
 
 	var proj dashboardv1alpha1.Project
 	if err := c.Get(ctx, key, &proj); err != nil {
+		if errors.IsNotFound(err) {
+			return nil, status.NotFoundf("project %s not found", r.Name).Because(err)
+		}
 		return nil, status.FromError(err)
 	}
 

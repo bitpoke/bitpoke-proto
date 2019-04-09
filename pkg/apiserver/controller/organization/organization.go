@@ -16,6 +16,7 @@ import (
 	"github.com/gosimple/slug"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -106,7 +107,13 @@ func (s *organizationsService) GetOrganization(ctx context.Context, r *orgs.GetO
 	}
 
 	org := organization.New(&corev1.Namespace{})
-	if err := c.Get(ctx, key, org.Unwrap()); err != nil {
+	if err = c.Get(ctx, key, org.Unwrap()); err != nil {
+		if errors.IsNotFound(err) {
+			return nil, status.NotFoundf("organization %s not found", r.Name).Because(err)
+		}
+		return nil, status.FromError(err)
+	}
+	if org.Unwrap().Status.Phase != corev1.NamespaceActive {
 		return nil, status.NotFoundf("organization %s not found", r.Name).Because(err)
 	}
 
@@ -126,7 +133,10 @@ func (s *organizationsService) UpdateOrganization(ctx context.Context, r *orgs.U
 
 	org := organization.New(&corev1.Namespace{})
 	if err = c.Get(ctx, key, org.Unwrap()); err != nil {
-		return nil, status.NotFound().Because(err)
+		if errors.IsNotFound(err) {
+			return nil, status.NotFoundf("organization %s not found", r.Name).Because(err)
+		}
+		return nil, status.FromError(err)
 	}
 
 	org.UpdateDisplayName(r.Organization.DisplayName)
@@ -151,7 +161,10 @@ func (s *organizationsService) DeleteOrganization(ctx context.Context, r *orgs.D
 
 	org := organization.New(&corev1.Namespace{})
 	if err := c.Get(ctx, key, org.Unwrap()); err != nil {
-		return nil, status.NotFound().Because(err)
+		if errors.IsNotFound(err) {
+			return nil, status.NotFoundf("organization %s not found", r.Name).Because(err)
+		}
+		return nil, status.FromError(err)
 	}
 
 	if err := c.Delete(ctx, org.Unwrap()); err != nil {

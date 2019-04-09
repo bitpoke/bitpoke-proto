@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -259,6 +260,24 @@ var _ = Describe("API server", func() {
 		It("returns NotFound when organization does not exist", func() {
 			req := orgv1.GetOrganizationRequest{
 				Name: id,
+			}
+			_, err := orgClient.GetOrganization(context.TODO(), &req)
+			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
+		})
+
+		It("returns NotFound when organization namespace is not active", func() {
+			termOrgName := fmt.Sprintf("%s-terminating", name)
+			termOrg := createOrganization(termOrgName, displayName, userID)
+			termOrg.Unwrap().ObjectMeta.Finalizers = []string{"api.dashboard.presslabs.org/terminating-org-namespace"}
+			Expect(c.Create(context.TODO(), termOrg.Unwrap())).To(Succeed())
+
+			key := types.NamespacedName{Name: organization.NamespaceName(termOrgName)}
+			Expect(c.Delete(context.TODO(), termOrg.Unwrap())).To(Succeed())
+			Eventually(getNamespaceFn(context.TODO(), c, key), deleteTimeout).Should(
+				BeInPhase(corev1.NamespaceTerminating))
+
+			req := orgv1.GetOrganizationRequest{
+				Name: fmt.Sprintf("orgs/%s", termOrgName),
 			}
 			_, err := orgClient.GetOrganization(context.TODO(), &req)
 			Expect(status.Convert(err).Code()).To(Equal(codes.NotFound))
