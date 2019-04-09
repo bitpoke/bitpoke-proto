@@ -1,15 +1,12 @@
-import { ActionType, createAsyncAction, action as createAction, isOfType } from 'typesafe-actions'
-import { takeEvery, takeLatest, fork, put, take, call, race, select } from 'redux-saga/effects'
-import { SagaIterator, channel as createChannel } from 'redux-saga'
+import { ActionType } from 'typesafe-actions'
+import { takeLatest, fork, put, take, race, select } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
 
-import { reduce, pickBy, get as _get, join, noop, snakeCase, toUpper, includes, isEmpty } from 'lodash'
+import { pickBy, get as _get, isEmpty } from 'lodash'
 
-import { RootState, api, grpc, forms, organizations, routing, toasts, wizards } from '../redux'
+import { RootState, AnyAction, api, routing, grpc, forms, organizations } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
-
-import { Intent } from '@blueprintjs/core'
 
 const {
     Project,
@@ -92,16 +89,16 @@ export const list = (payload?: IListProjectsRequest) => grpc.invoke({
     data   : ListProjectsRequest.create(payload)
 })
 
-export const create = (payload: IProjectPayload) => grpc.invoke({
+export const create = (payload: ICreateProjectRequest) => grpc.invoke({
     service,
     method : 'createProject',
-    data   : CreateProjectRequest.create({ project: payload })
+    data   : CreateProjectRequest.create(payload)
 })
 
-export const update = (payload: IProjectPayload) => grpc.invoke({
+export const update = (payload: IUpdateProjectRequest) => grpc.invoke({
     service,
     method : 'updateProject',
-    data   : UpdateProjectRequest.create({ project: payload })
+    data   : UpdateProjectRequest.create(payload)
 })
 
 export const destroy = (payload: IProjectPayload) => grpc.invoke({
@@ -134,8 +131,16 @@ export const {
 
 const apiReducer = api.createReducer(api.Resource.project, apiTypes)
 
-export function reducer(state: State = api.initialState, action: Actions) {
-    return apiReducer(state, action)
+export function reducer(state: State = api.initialState, action: AnyAction) {
+    switch (action.type) {
+        case organizations.DESTROY_SUCCEEDED: {
+            return api.initialState
+        }
+
+        default:
+            return apiReducer(state, action)
+    }
+
 }
 
 
@@ -148,73 +153,26 @@ export function* saga() {
     yield forms.takeEverySubmission(forms.Name.project, handleFormSubmission)
 }
 
-function* fetchAll() {
-    yield put(list())
+const handleFormSubmission = api.createFormHandler(
+    forms.Name.project,
+    api.Resource.project,
+    apiTypes,
+    actions
+)
+
+function* fetchAll(action: ActionType<typeof organizations.select>) {
+    const organization = action.payload
+    yield put(list({ parent: organization.name }))
     const projects = yield select(getAll)
 
     if (isEmpty(projects)) {
-        const { success, failure } = yield race({
+        const { success } = yield race({
             success: take(LIST_SUCCEEDED),
             failure: take(LIST_FAILED)
         })
 
         if (success && api.isEmptyResponse(success)) {
-            // yield put(wizards.startFlow('onboarding'))
-        }
-    }
-}
-
-function* handleFormSubmission(action: forms.Actions) {
-    const { resolve, reject, values } = action.payload
-
-    if (api.isNewEntry(values)) {
-        yield put(create(values))
-
-        const { success, failure } = yield race({
-            success : take(CREATE_SUCCEEDED),
-            failure : take(CREATE_FAILED)
-        })
-
-        if (success) {
-            yield call(resolve)
-            yield put(forms.reset(forms.Name.project))
-            yield put(routing.push(routing.routeFor('dashboard')))
-            toasts.show({
-                intent: Intent.SUCCESS,
-                message: 'Project created'
-            })
-        }
-        else {
-            yield call(reject, new forms.SubmissionError())
-            toasts.show({
-                intent: Intent.DANGER,
-                message: 'Failed to create project'
-            })
-        }
-    }
-    else {
-        yield put(update(values))
-
-        const { success, failure } = yield race({
-            success : take(UPDATE_SUCCEEDED),
-            failure : take(UPDATE_FAILED)
-        })
-
-        if (success) {
-            yield call(resolve)
-            yield put(forms.reset(forms.Name.project))
-            yield put(routing.push(routing.routeFor('dashboard')))
-            toasts.show({
-                intent: Intent.SUCCESS,
-                message: 'Project updated'
-            })
-        }
-        else {
-            yield call(reject, new forms.SubmissionError())
-            toasts.show({
-                intent: Intent.DANGER,
-                message: 'Failed to update the project'
-            })
+            // yield put(wizards.startFlow(wizards.Flows.onboarding))
         }
     }
 }
@@ -225,14 +183,24 @@ function* handleFormSubmission(action: forms.Actions) {
 
 const selectors = api.createSelectors(api.Resource.project)
 
-export const getState: (state: RootState) => State = selectors.getState
-export const getAll: (state: RootState) => api.ResourcesList<IProject> = selectors.getAll
-export const countAll: (state: RootState) => number = selectors.countAll
+export const getState:  (state: RootState) => State = selectors.getState
+export const getAll:    (state: RootState) => api.ResourcesList<IProject> = selectors.getAll
+export const countAll:  (state: RootState) => number = selectors.countAll
 export const getByName: (name: ProjectName) => (state: RootState) => IProject | null = selectors.getByName
+export const getForURL: (url: routing.Path) => (state: RootState) => IProject | null = selectors.getForURL
+export const getForOrganization = (organization: organizations.OrganizationName) => createSelector(
+    getAll,
+    (projects) => pickBy(projects, { organization })
+)
+
+export const getForCurrentURL = createSelector(
+    [routing.getCurrentRoute, (state: RootState) => state],
+    (currentRoute, state) => getForURL(currentRoute.url)(state)
+)
 
 export const getForCurrentOrganization = createSelector(
-    [organizations.getCurrent, getAll],
-    (currentOranization, projects) => currentOranization
-        ? pickBy(projects, { organization: currentOranization.name })
+    [organizations.getCurrent, (state: RootState) => state],
+    (currentOranization, state) => currentOranization
+        ? getForOrganization(currentOranization.name)(state)
         : {}
 )

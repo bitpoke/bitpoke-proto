@@ -1,7 +1,6 @@
 import * as React from 'react'
-
-import { has } from 'lodash'
 import { Field } from 'redux-form'
+import { get } from 'lodash'
 
 import { forms, api, organizations } from '../redux'
 
@@ -14,14 +13,15 @@ type Props = forms.Props<organizations.IOrganizationPayload>
 const OrganizationForm: React.SFC<Props> = (props) => {
     const { initialValues } = props
 
-    const title = api.isNewEntry(initialValues)
+    const entry = get(initialValues, 'organization', {})
+    const title = api.isNewEntry(entry)
         ? 'Create Organization'
-        : initialValues.displayName
+        : entry.displayName
 
     return (
         <FormContainer title={ title } { ...props }>
             <Field
-                name="displayName"
+                name="organization.displayName"
                 label="Name"
                 component={ InputField }
             />

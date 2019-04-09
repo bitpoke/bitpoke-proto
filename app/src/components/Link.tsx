@@ -1,17 +1,16 @@
 import * as React from 'react'
-import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { isString, isFunction } from 'lodash'
 
-import { routing } from '../redux'
+import { DispatchProp, routing } from '../redux'
 
 type Props = {
-    dispatch: Dispatch,
     to?: string,
-    onClick?: () => void
-}
+    onClick?: () => void,
+    className?: string
+} & DispatchProp
 
-const Link: React.SFC<Props> = ({ children, to, onClick, dispatch }) => {
+const Link: React.SFC<Props> = ({ children, to, onClick, className, dispatch }) => {
     const handleClick = isString(to)
         ? (e: React.SyntheticEvent<EventTarget>) => {
             e.preventDefault()
@@ -20,7 +19,7 @@ const Link: React.SFC<Props> = ({ children, to, onClick, dispatch }) => {
         : () => isFunction(onClick) && onClick()
 
     return (
-        <a href={ to } onClick={ handleClick }>
+        <a href={ to } onClick={ handleClick } className={ className }>
             { children }
         </a>
     )

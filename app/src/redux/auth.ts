@@ -1,9 +1,8 @@
 import { ActionType, action as createAction } from 'typesafe-actions'
-import { takeEvery, select, call, put } from 'redux-saga/effects'
+import { takeEvery, select, put } from 'redux-saga/effects'
 import { channel as createChannel } from 'redux-saga'
 import { User as Token, UserManager } from 'oidc-client'
 import { createSelector } from 'reselect'
-import axios from 'axios'
 
 import { join, pick } from 'lodash'
 

@@ -6,7 +6,7 @@ import { createLogger } from 'redux-logger'
 
 import {
     persistStore, purgeStoredState, persistCombineReducers,
-    PersistConfig, PersistedState
+    PersistConfig
 } from 'redux-persist'
 
 import createSagaMiddleware, { Saga } from 'redux-saga'
@@ -15,7 +15,7 @@ import createRavenMiddleware from 'raven-for-redux'
 
 import { fork, all } from 'redux-saga/effects'
 
-import { map, reduce, pickBy, get, compact, noop, has, isEmpty, isFunction } from 'lodash'
+import { map, reduce, get, noop, isEmpty, isFunction } from 'lodash'
 
 import { auth, RootState, AnyAction } from '../redux'
 

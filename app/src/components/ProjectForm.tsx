@@ -1,7 +1,6 @@
 import * as React from 'react'
-
-import { has } from 'lodash'
 import { Field } from 'redux-form'
+import { get } from 'lodash'
 
 import { forms, api, projects } from '../redux'
 
@@ -14,14 +13,15 @@ type Props = forms.Props<projects.IProjectPayload>
 const ProjectForm: React.SFC<Props> = (props) => {
     const { initialValues } = props
 
-    const title = api.isNewEntry(initialValues)
+    const entry = get(initialValues, 'project', {})
+    const title = api.isNewEntry(entry)
         ? 'Create Project'
-        : initialValues.displayName
+        : entry.displayName
 
     return (
         <FormContainer title={ title } { ...props }>
             <Field
-                name="displayName"
+                name="project.displayName"
                 label="Name"
                 component={ InputField }
             />

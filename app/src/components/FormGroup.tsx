@@ -7,7 +7,7 @@ import { forms } from '../redux'
 type Props = forms.FieldProps
 
 const FormGroup: React.SFC<Props> = (props) => {
-    const { input, meta, label, ...otherProps } = props
+    const { input, meta } = props
     const { name } = input
     const { error } = meta
 

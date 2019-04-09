@@ -1,12 +1,9 @@
-import { SagaIterator, channel as createChannel } from 'redux-saga'
-import { takeEvery, put, select, take, call } from 'redux-saga/effects'
+import { channel as createChannel } from 'redux-saga'
+import { takeEvery } from 'redux-saga/effects'
 import { ActionType, action as createAction } from 'typesafe-actions'
 import { createSelector } from 'reselect'
 
-import {
-    reduce, get as _get, findIndex, compact, concat, join, noop, size,
-    snakeCase, startCase, toUpper, toLower, includes, isEqual, isString, isEmpty
-} from 'lodash'
+import { get as _get, findIndex, concat, isEqual, isEmpty } from 'lodash'
 
 import { RootState } from '../redux'
 
@@ -41,12 +38,6 @@ export const FAILED    = '@ grpc / FAILED'
 export const invoke = (payload: Request) => createAction(INVOKED, payload)
 export const success = (payload: Response) => createAction(SUCCEEDED, payload)
 export const fail = (payload: Response) => createAction(FAILED, payload)
-
-const types = {
-    INVOKED,
-    SUCCEEDED,
-    FAILED
-}
 
 const actions = {
     invoke,

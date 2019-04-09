@@ -1,12 +1,11 @@
 import * as React from 'react'
-import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 
-import { Navbar as BlueprintNavBar, Spinner, Alignment } from '@blueprintjs/core'
+import { Navbar as BlueprintNavBar, Spinner, Alignment, Button } from '@blueprintjs/core'
 
 import { get } from 'lodash'
 
-import { RootState, auth, grpc, routing, organizations } from '../redux'
+import { RootState, DispatchProp, auth, grpc, routing, organizations } from '../redux'
 
 import Link from '../components/Link'
 import UserCard from '../components/UserCard'
@@ -14,19 +13,17 @@ import OrganizationsList from '../components/OrganizationsList'
 
 import styles from './NavBar.module.scss'
 
-type Props = {
-    dispatch: Dispatch
-}
-
 type ReduxProps = {
     currentUser         : auth.User,
     currentOrganization : organizations.IOrganization | null,
     isLoading           : boolean
 }
 
+type Props = ReduxProps & DispatchProp
+
 const { Group, Heading } = BlueprintNavBar
 
-const NavBar: React.SFC<Props & ReduxProps> = (props) => {
+const NavBar: React.SFC<Props> = (props) => {
     const { currentUser, currentOrganization, isLoading, dispatch } = props
     return (
         <BlueprintNavBar>
@@ -48,6 +45,13 @@ const NavBar: React.SFC<Props & ReduxProps> = (props) => {
             </Group>
             <Group align={ Alignment.RIGHT }>
                 <UserCard entry={ currentUser } />
+                <Button
+                    text="Logout"
+                    rightIcon="log-out"
+                    onClick={ () => dispatch(auth.logout()) }
+                    small
+                    minimal
+                />
             </Group>
         </BlueprintNavBar>
     )

@@ -1,15 +1,17 @@
 import { isOfType } from 'typesafe-actions'
 import { createSelector } from 'reselect'
-import { takeEvery, put } from 'redux-saga/effects'
+import { takeEvery, put, race, take, call } from 'redux-saga/effects'
 
 import { singular, plural } from 'pluralize'
 
 import {
-    reduce, find, omit, get, head, last, join, split, keys, values, size,
-    snakeCase, toLower, includes, has, isEmpty
+    reduce, find, omit, get, head, last, join, split, keys, values as _values,
+    size, replace, startCase, snakeCase, toLower, has, includes, startsWith, endsWith, isEmpty
 } from 'lodash'
 
-import { grpc, RootState, AnyAction } from '../redux'
+import { RootState, AnyAction, grpc, routing, forms, toasts } from '../redux'
+
+import { Intent } from '@blueprintjs/core'
 
 export enum Request {
     list    = 'LIST',
@@ -39,7 +41,8 @@ export type Selectors<T> = {
     getState: (state: RootState) => State<T> & any
     getAll: (state: RootState) => ResourcesList<T>
     countAll: (state: RootState) => number
-    getByName: (name: string) => (state: RootState) => T | null
+    getByName: (name: string) => (state: RootState) => T | null,
+    getForURL: (url: routing.Path) => (state: RootState) => T | null
 }
 
 export type ActionTypes = {
@@ -70,6 +73,14 @@ export type ResourcesList<T> = {
 
 export type State<T> = {
     entries: ResourcesList<T>
+}
+
+export type Actions = {
+    list    : (payload: any) => AnyAction
+    get     : (payload: any) => AnyAction
+    create  : (payload: any) => AnyAction,
+    update  : (payload: any) => AnyAction
+    destroy : (payload: any) => AnyAction
 }
 
 export const initialState: State<AnyResourceInstance> = {
@@ -156,8 +167,63 @@ export function createSelectors(resource: Resource): Selectors<AnyResourceInstan
         getAll,
         (entries) => size(keys(entries))
     )
+    const getForURL = (fullURL: string) => createSelector(
+        getAll,
+        (entries) => find(entries, (entry) => startsWith(replace(fullURL, /^\//, ''), entry.name)) || null
+    )
     return {
-        getState, getAll, getByName, countAll
+        getState, getAll, getByName, countAll, getForURL
+    }
+}
+
+export function createFormHandler(
+    formName: forms.Name,
+    resource: Resource,
+    actionTypes: ActionTypes,
+    actions: Actions
+) {
+    return function* handleSubmit(action: forms.Actions) {
+        const { resolve, reject, values } = action.payload
+        const resourceName = singular(resource)
+        const resourceDisplayName = startCase(resourceName)
+        const entry = get(values, resourceName)
+
+        if (isNewEntry(entry)) {
+            yield put(actions.create(values))
+
+            const { success } = yield race({
+                success : take(actionTypes.CREATE_SUCCEEDED),
+                failure : take(actionTypes.CREATE_FAILED)
+            })
+
+            if (success) {
+                yield call(resolve)
+                yield put(forms.reset(formName))
+                toasts.show({ intent: Intent.SUCCESS, message: `${resourceDisplayName} created` })
+            }
+            else {
+                yield call(reject, new forms.SubmissionError())
+                toasts.show({ intent: Intent.DANGER, message: `${resourceDisplayName} create failed` })
+            }
+        }
+        else {
+            yield put(actions.update(values))
+
+            const { success } = yield race({
+                success : take(actionTypes.UPDATE_SUCCEEDED),
+                failure : take(actionTypes.UPDATE_FAILED)
+            })
+
+            if (success) {
+                yield call(resolve)
+                yield put(forms.reset(formName))
+                toasts.show({ intent: Intent.SUCCESS, message: `${resourceDisplayName} updated` })
+            }
+            else {
+                yield call(reject, new forms.SubmissionError())
+                toasts.show({ intent: Intent.DANGER, message: `${resourceDisplayName} update failed` })
+            }
+        }
     }
 }
 
@@ -176,9 +242,9 @@ export function isEmptyResponse({ type, payload }: { type: string, payload: grpc
         return true
     }
 
-    const requestType = getRequestTypeFromMethod(request.method)
+    const requestType = getRequestTypeFromMethodName(request.method)
 
-    if (requestType === Request.list && isEmpty(head(values(data)))) {
+    if (includes([Request.list, Request.get], requestType) && isEmpty(head(_values(data)))) {
         return true
     }
 
@@ -198,8 +264,8 @@ function* emitResourceAction(
         ? action.payload.method
         : action.payload.request.method
 
-    const requestResource = getResourceFromMethod(method)
-    const request = getRequestTypeFromMethod(method)
+    const requestResource = getResourceFromMethodName(method)
+    const request = getRequestTypeFromMethodName(method)
     const status = getStatusFromAction(action)
 
     if (requestResource !== resource) {
@@ -221,38 +287,54 @@ function createActionDescriptor(request: Request, status: Status) {
     return join([request, status], '_')
 }
 
-function getRequestTypeFromMethod(methodName: string) {
+function getRequestTypeFromMethodName(methodName: string): Request | null {
     const requestType = toLower(head(split(snakeCase(methodName), '_')))
 
     if (!requestType) {
-        return undefined
+        return null
     }
 
     if (requestType === 'delete') {
         return Request.destroy
     }
 
-    return get(Request, requestType, undefined)
+    return get(Request, requestType, null)
 }
 
-function getResourceFromMethod(methodName: string) {
+function getResourceFromMethodName(methodName: string): Resource | null {
     const resourceName = toLower(last(split(snakeCase(methodName), '_')))
 
     if (!resourceName) {
-        return undefined
+        return null
     }
 
     return find(Resource, (resource) => (
         resource === plural(resourceName) ||
         resource === singular(resourceName)
-    ))
+    )) || null
 }
 
-function getStatusFromAction(action: grpc.Actions) {
+export function getStatusFromAction(action: AnyAction): Status | null {
     switch (action.type) {
         case grpc.INVOKED   : return Status.requested
         case grpc.SUCCEEDED : return Status.succeeded
         case grpc.FAILED    : return Status.failed
-        default             : return undefined
+        default: {
+            if (endsWith(action.type, Status.requested)) return Status.requested
+            if (endsWith(action.type, Status.succeeded)) return Status.succeeded
+            if (endsWith(action.type, Status.failed))    return Status.failed
+
+            return null
+        }
     }
+}
+
+export function getRequestTypeFromAction(action: AnyAction): Request | null {
+    const method = get(action, 'payload.method', get(action, 'payload.request.method'))
+
+    if (!method) {
+        return null
+    }
+
+    return getRequestTypeFromMethodName(method)
 }

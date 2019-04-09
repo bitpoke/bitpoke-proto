@@ -273,6 +273,10 @@ $navbar-padding: $pt-grid-size * 3;
 @import "~@blueprintjs/core/src/blueprint";
 // @import "~@blueprintjs/select/src/blueprint-select";
 
+* {
+    outline: none !important;
+}
+
 .bp3-button {
   font-weight: 700;
 }

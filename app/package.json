@@ -25,13 +25,14 @@
     "react-router": "^5",
     "react-router-dom": "^5",
     "react-scripts": "2.1.8",
+    "recompose": "^0.30.0",
     "redux": "^4.0.0",
     "redux-form": "^8.1.0",
     "redux-logger": "^3.0.6",
     "redux-persist": "^5.10.0",
     "redux-saga": "^1",
     "reselect": "^4.0.0",
-    "typesafe-actions": "^3",
+    "typesafe-actions": "^4",
     "urijs": "^1.19.1"
   },
   "scripts": {

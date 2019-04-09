@@ -1,18 +1,18 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { createHashHistory, createMemoryHistory, Location, Path } from 'history'
+import { createHashHistory, createMemoryHistory, createLocation, Location, Path } from 'history'
 import pathToRegexp, { Key, compile } from 'path-to-regexp'
 import { matchPath } from 'react-router'
 import { channel as createChannel } from 'redux-saga'
-import { takeEvery, put, select } from 'redux-saga/effects'
+import { takeEvery, takeLatest, put, select } from 'redux-saga/effects'
 import { ActionType, action as createAction, isOfType } from 'typesafe-actions'
 import { createSelector } from 'reselect'
 
 import URI from 'urijs'
 
-import { map, filter, findKey, omit, omitBy, get, head, has, isEmpty, isString, isEqual } from 'lodash'
+import { map, filter, findKey, omit, omitBy, get, head, has, isEmpty, isEqual } from 'lodash'
 
-import { RootState, app } from '../redux'
+import { RootState, app, api } from '../redux'
 import { watchChannel } from '../utils'
 
 
@@ -22,6 +22,7 @@ import { watchChannel } from '../utils'
 export type State = Route
 export type Actions = ActionType<typeof actions>
 export type Params = object
+export type Path = Path
 
 export type Route = {
     path   : string,
@@ -38,17 +39,18 @@ export const ROUTE_MAP = {
         path      : '/',
         component : 'DashboardContainer'
     },
-    onboarding: {
-        path      : '/onboarding/:step?',
-        component : 'OnboardingContainer'
+    organization: {
+        path      : '/orgs/:slug?/:action?',
+        component : 'OrganizationsContainer'
+    },
+    project: {
+        path      : '/project/:slug?/:action?',
+        component : 'ProjectsContainer'
+    },
+    site: {
+        path      : '/project/:projectSlug/site/:slug',
+        component : 'DashboardContainer'
     }
-}
-
-const INITIAL_ROUTE: Route = {
-    path   : '/',
-    url    : '/',
-    key    : findKey(ROUTE_MAP, { path: '/' }),
-    params : {}
 }
 
 
@@ -72,7 +74,12 @@ const actions = {
 //
 //  REDUCER
 
-const initialState: State = INITIAL_ROUTE
+const initialState: Route = {
+    path   : '/',
+    url    : '/',
+    key    : findKey(ROUTE_MAP, { path: '/' }),
+    params : {}
+}
 
 export function reducer(state: State = initialState, action: Actions) {
     switch (action.type) {
@@ -92,8 +99,8 @@ export function reducer(state: State = initialState, action: Actions) {
 const channel = createChannel()
 
 export function* saga() {
+    yield takeLatest(app.INITIALIZED, bootstrap)
     yield takeEvery([PUSH_REQUESTED, REPLACE_REQUESTED], dispatchToHistory)
-    yield takeEvery(app.INITIALIZED, bootstrap)
     yield watchChannel(channel)
 }
 
@@ -139,13 +146,25 @@ export function routeFor(key: string, routeParams = {}) {
     return url.toString()
 }
 
+export function routeForResource(resource: api.AnyResourceInstance, params = {}) {
+    const pathname = `/${resource.name}`
+    const search = URI.buildQuery(params)
+    const matchedRoute = matchRoute(createLocation({ pathname, search }))
+
+    if (matchedRoute.key) {
+        return routeFor(matchedRoute.key, matchedRoute.params)
+    }
+
+    return new URI({ path: pathname, query: search }).toString()
+}
+
 function getPathParams(path: Path) {
     const keys: Key[] = []
     pathToRegexp(path, keys)
     return map(keys, 'name')
 }
 
-function matchRoute(location: Location<any>): Route {
+export function matchRoute(location: Location<any>): Route {
     const { pathname, search } = location
     const matched = filter(
         map(ROUTE_MAP, ({ path }, key) => ({

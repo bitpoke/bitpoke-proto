@@ -25,6 +25,11 @@
     "no-submodule-imports": false,
 
     "jsx-no-lambda": false,
+    "jsx-curly-spacing": [true, "always"],
+    "jsx-self-close": true,
+    "jsx-space-before-trailing-slash": true,
+    "jsx-wrap-multiline": true,
+    "jsx-boolean-value": [true, "never"],
 
     "no-console": [true, "warning"],
     "no-constant-condition": [true, { "checkLoops": false }],

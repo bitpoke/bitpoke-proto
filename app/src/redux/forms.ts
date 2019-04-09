@@ -1,19 +1,19 @@
 import {
-    reducer, reset, SubmissionError, isSubmitting,
+    reducer, reset, SubmissionError,
     FormStateMap, InjectedFormProps, WrappedFieldProps
 } from 'redux-form'
-import { ActionType, createAsyncAction, action as createAction, isOfType } from 'typesafe-actions'
-import { Dispatch } from 'redux'
+import { ActionType, action as createAction } from 'typesafe-actions'
 import { takeEvery, put } from 'redux-saga/effects'
 
 import { toUpper, snakeCase } from 'lodash'
 
-import { RootState } from '../redux'
+import { RootState, DispatchProp } from '../redux'
 import { Omit } from '../utils'
 
 export enum Name {
     organization = 'organization',
-    project = 'project'
+    project = 'project',
+    site = 'site'
 }
 
 export type Values = {}
@@ -40,9 +40,8 @@ type UpdatedInjectedProps<FormData = {}> =
     }
 
 export type Props<FormData = {}> = UpdatedInjectedProps<FormData> & {
-    dispatch: Dispatch
     onSubmit: () => void
-}
+} & DispatchProp
 
 export type FieldProps = WrappedFieldProps & {
     label?: string

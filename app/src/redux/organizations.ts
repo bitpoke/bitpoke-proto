@@ -1,21 +1,13 @@
-import { ActionType, createAsyncAction, action as createAction, isOfType } from 'typesafe-actions'
-import {
-    takeEvery, takeLatest, fork, put, take, call, race, select as _select, delay
-} from 'redux-saga/effects'
-import { channel as createChannel } from 'redux-saga'
+import { ActionType, action as createAction } from 'typesafe-actions'
+import { takeLatest, fork, put, take, race, select as _select, delay } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
-import {
-    reduce, find, head, values as _values, join, noop,
-    snakeCase, toUpper, has, includes, get as _get, isEmpty, isEqual
-} from 'lodash'
+import { find, head, values as _values, get as _get, isEmpty, isEqual } from 'lodash'
 
 import URI from 'urijs'
 
-import { RootState, auth, app, api, grpc, routing, forms, toasts, wizards } from '../redux'
+import { RootState, auth, api, grpc, routing, forms } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
-
-import { Intent } from '@blueprintjs/core'
 
 const {
     Organization,
@@ -107,16 +99,16 @@ export const list = (payload?: IListOrganizationsRequest) => grpc.invoke({
     data   : ListOrganizationsRequest.create(payload)
 })
 
-export const create = (payload: IOrganizationPayload) => grpc.invoke({
+export const create = (payload: ICreateOrganizationRequest) => grpc.invoke({
     service,
     method : 'createOrganization',
-    data   : CreateOrganizationRequest.create({ organization: payload })
+    data   : CreateOrganizationRequest.create(payload)
 })
 
-export const update = (payload: IOrganizationPayload) => grpc.invoke({
+export const update = (payload: IUpdateOrganizationRequest) => grpc.invoke({
     service,
     method : 'updateOrganization',
-    data   : UpdateOrganizationRequest.create({ organization: payload })
+    data   : UpdateOrganizationRequest.create(payload)
 })
 
 export const destroy = (payload: IOrganizationPayload) => grpc.invoke({
@@ -185,6 +177,13 @@ export function* saga() {
     yield forms.takeEverySubmission(forms.Name.organization, handleFormSubmission)
 }
 
+const handleFormSubmission = api.createFormHandler(
+    forms.Name.organization,
+    api.Resource.organization,
+    apiTypes,
+    actions
+)
+
 function* decideOrganizationContext(): Iterable<any> {
     yield delay(50)
 
@@ -198,7 +197,7 @@ function* decideOrganizationContext(): Iterable<any> {
 
     if (isEmpty(organizations)) {
         yield put(list())
-        const { success, failure } = yield race({
+        const { success } = yield race({
             success: take(LIST_SUCCEEDED),
             failure: take(LIST_FAILED)
         })
@@ -207,8 +206,6 @@ function* decideOrganizationContext(): Iterable<any> {
             yield decideOrganizationContext()
             return
         }
-
-        // yield put(wizards.startFlow('onboarding'))
     }
     else {
         const params = yield _select(routing.getParams)
@@ -231,59 +228,6 @@ function* decideOrganizationContext(): Iterable<any> {
     }
 }
 
-function* handleFormSubmission(action: forms.Actions) {
-    const { resolve, reject, values } = action.payload
-
-    if (api.isNewEntry(values)) {
-        yield put(create(values))
-
-        const { success, failure } = yield race({
-            success : take(CREATE_SUCCEEDED),
-            failure : take(CREATE_FAILED)
-        })
-
-        if (success) {
-            yield call(resolve)
-            yield put(routing.push(routing.routeFor('dashboard')))
-            toasts.show({
-                intent: Intent.SUCCESS,
-                message: 'Organization created'
-            })
-        }
-        else {
-            yield call(reject, new forms.SubmissionError())
-            toasts.show({
-                intent: Intent.DANGER,
-                message: 'Failed to create organization'
-            })
-        }
-    }
-    else {
-        yield put(update(values))
-
-        const { success, failure } = yield race({
-            success : take(UPDATE_SUCCEEDED),
-            failure : take(UPDATE_FAILED)
-        })
-
-        if (success) {
-            yield call(resolve)
-            yield put(routing.push(routing.routeFor('dashboard')))
-            toasts.show({
-                intent: Intent.SUCCESS,
-                message: 'Organization updated'
-            })
-        }
-        else {
-            yield call(reject, new forms.SubmissionError())
-            toasts.show({
-                intent: Intent.DANGER,
-                message: 'Failed to update the organization'
-            })
-        }
-    }
-}
-
 function setGRPCOrganizationMetadata(action: ActionType<typeof select>) {
     if (!action.payload.name) {
         return
@@ -293,8 +237,6 @@ function setGRPCOrganizationMetadata(action: ActionType<typeof select>) {
 }
 
 function* updateAddressWithOrganization(action: ActionType<typeof select>) {
-    return
-
     if (!action.payload.name) {
         return
     }
@@ -316,18 +258,20 @@ function* updateAddressWithOrganization(action: ActionType<typeof select>) {
 
 const selectors = api.createSelectors(resource)
 
-export const getState: (state: RootState) => State = selectors.getState
-export const getAll: (state: RootState) => api.ResourcesList<IOrganization> = selectors.getAll
-export const countAll: (state: RootState) => number = selectors.countAll
+export const getState:  (state: RootState) => State = selectors.getState
+export const getAll:    (state: RootState) => api.ResourcesList<IOrganization> = selectors.getAll
+export const countAll:  (state: RootState) => number = selectors.countAll
 export const getByName: (name: OrganizationName) => (state: RootState) => IOrganization | null = selectors.getByName
+export const getForURL: (url: routing.Path) => (state: RootState) => IOrganization | null = selectors.getForURL
 
 export const getCurrent: (state: RootState) => IOrganization | null = createSelector(
     [getState, getAll],
-    (state, orgs) => {
-        if (state.current) {
-            return find(orgs, { name: state.current }) || null
-        }
+    (state, orgs) => state.current
+        ? find(orgs, { name: state.current }) || null
+        : null
+)
 
-        return null
-    }
+export const getForCurrentURL = createSelector(
+    [routing.getCurrentRoute, (state: RootState) => state],
+    (currentRoute, state) => getForURL(currentRoute.url)(state)
 )

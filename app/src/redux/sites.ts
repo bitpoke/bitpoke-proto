@@ -1,13 +1,14 @@
-import { ActionType, createAsyncAction, action as createAction, isOfType } from 'typesafe-actions'
-import { takeEvery, takeLatest, fork, put, take, call } from 'redux-saga/effects'
-import { SagaIterator, channel as createChannel } from 'redux-saga'
+import { ActionType } from 'typesafe-actions'
+import { fork, put, take, call, race } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
 
-import { reduce, pickBy, get as _get, join, noop, snakeCase, toUpper, includes } from 'lodash'
+import { pickBy, get as _get, startsWith } from 'lodash'
 
-import { RootState, api, grpc, projects } from '../redux'
+import { RootState, api, grpc, forms, projects, routing, toasts } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
+
+import { Intent } from '@blueprintjs/core'
 
 const {
     Site,
@@ -90,16 +91,16 @@ export const list = (payload?: IListSitesRequest) => grpc.invoke({
     data   : ListSitesRequest.create(payload)
 })
 
-export const create = (payload: ISitePayload) => grpc.invoke({
+export const create = (payload: ICreateSiteRequest) => grpc.invoke({
     service,
     method : 'createSite',
-    data   : CreateSiteRequest.create({ site: payload })
+    data   : CreateSiteRequest.create(payload)
 })
 
-export const update = (payload: ISitePayload) => grpc.invoke({
+export const update = (payload: IUpdateSiteRequest) => grpc.invoke({
     service,
     method : 'updateSite',
-    data   : UpdateSiteRequest.create({ site: payload })
+    data   : UpdateSiteRequest.create(payload)
 })
 
 export const destroy = (payload: ISitePayload) => grpc.invoke({
@@ -142,20 +143,77 @@ export function reducer(state: State = api.initialState, action: Actions) {
 
 export function* saga() {
     yield fork(api.emitResourceActions, api.Resource.site, apiTypes)
+    yield forms.takeEverySubmission(forms.Name.site, handleFormSubmission)
 }
 
+function* handleFormSubmission(action: forms.Actions) {
+    const { resolve, reject, values } = action.payload
+    const entry = _get(values, api.Resource.site)
+
+    if (api.isNewEntry(entry)) {
+        yield put(create(values))
+
+        const { success } = yield race({
+            success : take(CREATE_SUCCEEDED),
+            failure : take(CREATE_FAILED)
+        })
+
+        if (success) {
+            yield call(resolve)
+            yield put(forms.reset(forms.Name.site))
+            yield put(routing.push(routing.routeFor('dashboard')))
+            toasts.show({
+                intent: Intent.SUCCESS,
+                message: 'Site created'
+            })
+        }
+        else {
+            yield call(reject, new forms.SubmissionError())
+            toasts.show({
+                intent: Intent.DANGER,
+                message: 'Failed to create site'
+            })
+        }
+    }
+    else {
+        yield put(update(values))
+
+        const { success } = yield race({
+            success : take(UPDATE_SUCCEEDED),
+            failure : take(UPDATE_FAILED)
+        })
+
+        if (success) {
+            yield call(resolve)
+            yield put(forms.reset(forms.Name.site))
+            yield put(routing.push(routing.routeFor('dashboard')))
+            toasts.show({
+                intent: Intent.SUCCESS,
+                message: 'Project updated'
+            })
+        }
+        else {
+            yield call(reject, new forms.SubmissionError())
+            toasts.show({
+                intent: Intent.DANGER,
+                message: 'Failed to update the project'
+            })
+        }
+    }
+}
 
 //
 //  SELECTORS
 
 const selectors = api.createSelectors(api.Resource.site)
 
-export const getState: (state: RootState) => State = selectors.getState
-export const getAll: (state: RootState) => api.ResourcesList<ISite> = selectors.getAll
-export const countAll: (state: RootState) => number = selectors.countAll
+export const getState:  (state: RootState) => State = selectors.getState
+export const getAll:    (state: RootState) => api.ResourcesList<ISite> = selectors.getAll
+export const countAll:  (state: RootState) => number = selectors.countAll
 export const getByName: (name: SiteName) => (state: RootState) => ISite | null = selectors.getByName
+export const getForURL: (url: routing.Path) => (state: RootState) => ISite | null = selectors.getForURL
 
 export const getForProject = (project: projects.ProjectName) => createSelector(
     getAll,
-    (sites) => pickBy(sites, { project })
+    (sites) => pickBy(sites, ({ name }) => startsWith(name, project))
 )

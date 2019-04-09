@@ -1,36 +1,43 @@
 import * as React from 'react'
-import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 
-import { Button } from '@blueprintjs/core'
+import { RootState, DispatchProp, auth, routing, organizations } from '../redux'
 
-import { auth, organizations } from '../redux'
+import Link from '../components/Link'
 
 import styles from './UserCard.module.scss'
 
-type Props = {
-    dispatch: Dispatch,
+type ReduxProps = {
+    currentOrganization: organizations.IOrganization | null
+}
+
+type OwnProps = {
     entry: auth.User
 }
 
-const UserCard: React.SFC<Props> = ({ entry, dispatch }) => {
+type Props = OwnProps & ReduxProps & DispatchProp
+
+const UserCard: React.SFC<Props> = ({ entry, currentOrganization, dispatch }) => {
     if (!entry) {
         return null
     }
 
     return (
-        <div className={ styles.container }>
+        <Link
+            to={ currentOrganization ? routing.routeForResource(currentOrganization) : routing.routeFor('dashboard') }
+            className={ styles.container }
+        >
             <img className={ styles.avatar } src={ entry.avatarURL } />
             <strong className={ styles.email }>{ entry.email }</strong>
-            <Button
-                text="Logout"
-                rightIcon="log-out"
-                onClick={ () => dispatch(auth.logout()) }
-                small
-                minimal
-            />
-        </div>
+        </Link>
     )
 }
 
-export default connect()(UserCard)
+function mapStateToProps(state: RootState): ReduxProps {
+    const currentOrganization = organizations.getCurrent(state)
+    return {
+        currentOrganization
+    }
+}
+
+export default connect(mapStateToProps)(UserCard)

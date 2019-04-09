@@ -1,24 +1,19 @@
 import * as React from 'react'
-import { Dispatch } from 'redux'
+import {  } from 'redux'
 import { connect } from 'react-redux'
 import {
     reduxForm,
     getFormValues,
     getFormSubmitErrors,
-    reset,
     ConfigProps,
     InjectedFormProps
 } from 'redux-form'
 
 import { omit, get } from 'lodash'
 
-import { RootState, forms } from '../redux'
+import { RootState, DispatchProp, forms } from '../redux'
 
 import { Omit } from '../utils'
-
-type ReduxProps = {
-    dispatch: Dispatch
-}
 
 type Config = Omit<ConfigProps<any, any, string>, 'form'> & { name: forms.Name }
 
@@ -26,7 +21,7 @@ export function withForm(config: Config) {
     const { name } = config
 
     return (WrappedComponent: React.ComponentType<any>) => {
-        const Form = (props: InjectedFormProps & ReduxProps) => {
+        const Form = (props: InjectedFormProps & DispatchProp) => {
             const {
                 initialValues, handleSubmit,
                 submitting, dirty, pristine, valid, error,

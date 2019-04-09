@@ -1,35 +1,31 @@
-import React, { Fragment } from 'react'
-import { Dispatch } from 'redux'
+import React from 'react'
 import { connect } from 'react-redux'
-
 import faker from 'faker'
 
 import { map } from 'lodash'
 
 import { Navbar, Alignment, Button, Intent } from '@blueprintjs/core'
 
-import { RootState, organizations, api } from '../redux'
-
-type Props = {
-    dispatch: Dispatch
-}
+import { RootState, DispatchProp, organizations, api } from '../redux'
 
 type ReduxProps = {
     entries: api.ResourcesList<organizations.IOrganization>,
     selectedEntry: organizations.IOrganization | null
 }
 
-const { Group, Heading, Divider } = Navbar
+type Props = ReduxProps & DispatchProp
 
-const OrganizationsList: React.SFC<Props & ReduxProps> = ({ entries, selectedEntry, dispatch }) => {
+const { Group, Divider } = Navbar
+
+const OrganizationsList: React.SFC<Props> = ({ entries, selectedEntry, dispatch }) => {
     return (
-        <Group align={Alignment.LEFT}>
+        <Group align={ Alignment.LEFT }>
             <Divider />
             { map(entries, (organization) => (
                 <Button
                     minimal
                     active={ organization === selectedEntry }
-                    key={ `organization-${organization.name}` }
+                    key={ organization.name }
                     text={ organization.displayName }
                     onClick={ () => {
                         dispatch(organizations.select(organization))
@@ -39,16 +35,16 @@ const OrganizationsList: React.SFC<Props & ReduxProps> = ({ entries, selectedEnt
             <Button
                 minimal
                 intent={ Intent.SUCCESS }
-                text="Create random organization"
+                icon="add"
                 onClick={ () => {
-                    dispatch(organizations.create({ displayName: faker.company.companyName() }))
+                    dispatch(organizations.create({ organization: { displayName: faker.company.companyName() } }))
                 } }
             />
         </Group>
     )
 }
 
-function mapStateToProps(state: RootState) {
+function mapStateToProps(state: RootState): ReduxProps {
     const selectedEntry = organizations.getCurrent(state)
     const entries = organizations.getAll(state)
 

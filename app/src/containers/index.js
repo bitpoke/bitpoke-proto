@@ -1,2 +1,3 @@
 export { default as DashboardContainer } from './DashboardContainer'
-export { default as OnboardingContainer } from './OnboardingContainer'
+export { default as OrganizationsContainer } from './OrganizationsContainer'
+export { default as ProjectsContainer } from './ProjectsContainer'
