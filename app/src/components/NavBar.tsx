@@ -25,15 +25,15 @@ const { Group, Heading } = BlueprintNavBar
 
 const NavBar: React.SFC<Props> = (props) => {
     const { currentUser, currentOrganization, isLoading, dispatch } = props
-    const homeURL = currentOrganization
-        ? routing.routeFor('dashboard', { org: organizations.parseName(currentOrganization.name).slug })
-        : routing.routeFor('dashboard')
+    // const homeURL = currentOrganization
+    //     ? routing.routeFor('dashboard', { org: organizations.parseName(currentOrganization.name).slug })
+    //     : routing.routeFor('dashboard')
 
     return (
         <BlueprintNavBar>
             <Group align={ Alignment.LEFT }>
                 <Heading className={ styles.logo }>
-                    <Link to={ homeURL }>Presslabs Dashboard</Link>
+                    <Link to={ routing.routeFor('dashboard') }>Presslabs Dashboard</Link>
                     { isLoading && (
                         <Spinner
                             size={ Spinner.SIZE_SMALL }

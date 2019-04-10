@@ -21,16 +21,15 @@ const OrganizationsList: React.SFC<Props> = ({ entries, selectedEntry, dispatch 
     return (
         <Group align={ Alignment.LEFT }>
             <Divider />
-            { map(entries, (organization) => (
+            { map(entries, (organization: organizations.IOrganization) => (
                 <Button
                     minimal
                     active={ organization === selectedEntry }
                     key={ organization.name }
                     text={ organization.displayName }
                     onClick={ () => {
-                        dispatch(routing.push(
-                            routing.routeFor('dashboard', { org: organizations.parseName(organization.name).slug })
-                        ))
+                        dispatch(organizations.select(organization))
+                        dispatch(routing.push(routing.routeFor('dashboard')))
                     } }
                 />
             )) }
@@ -38,6 +37,14 @@ const OrganizationsList: React.SFC<Props> = ({ entries, selectedEntry, dispatch 
                 minimal
                 intent={ Intent.SUCCESS }
                 icon="add"
+                onClick={ () => {
+                    dispatch(routing.push(routing.routeFor('organizations', { slug: '_', action: 'new' })))
+                } }
+            />
+            <Button
+                minimal
+                intent={ Intent.SUCCESS }
+                icon="random"
                 onClick={ () => {
                     dispatch(organizations.create({ organization: { displayName: faker.company.companyName() } }))
                 } }

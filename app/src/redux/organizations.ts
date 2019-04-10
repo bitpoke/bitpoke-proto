@@ -1,13 +1,15 @@
 import { ActionType, action as createAction } from 'typesafe-actions'
-import { takeLatest, fork, put, take, race, select as _select, delay } from 'redux-saga/effects'
+import { takeLatest, takeEvery, fork, put, take, race, select as _select, delay } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
 import { find, head, replace, values as _values, get as _get, isEmpty, isEqual } from 'lodash'
 
 import URI from 'urijs'
 
-import { RootState, auth, api, grpc, routing, forms } from '../redux'
+import { RootState, ActionDescriptor, auth, api, grpc, routing, forms, toasts } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
+
+import { Intent } from '@blueprintjs/core'
 
 const {
     Organization,
@@ -169,13 +171,17 @@ export function reducer(state: State = initialState, action: Actions) {
 
 export function* saga() {
     yield fork(api.emitResourceActions, resource, apiTypes)
+    yield fork(forms.takeEverySubmission, forms.Name.organization, handleFormSubmission)
+    yield takeLatest(SELECTED, setGRPCOrganizationMetadata)
     yield takeLatest([
         routing.ROUTE_CHANGED,
         CREATE_SUCCEEDED,
         DESTROY_SUCCEEDED
     ], decideOrganizationContext)
-    yield takeLatest(SELECTED, setGRPCOrganizationMetadata)
-    yield fork(forms.takeEverySubmission, forms.Name.organization, handleFormSubmission)
+    yield takeEvery([
+        DESTROY_SUCCEEDED,
+        DESTROY_FAILED
+    ], handleDeletion)
 }
 
 const handleFormSubmission = api.createFormHandler(
@@ -241,6 +247,20 @@ function* setGRPCOrganizationMetadata(action: ActionType<typeof select>) {
     }))
 }
 
+function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: grpc.Response }): Iterable<any> {
+    switch (type) {
+        case DESTROY_SUCCEEDED: {
+            toasts.show({ intent: Intent.SUCCESS, message: 'Organization deleted' })
+            yield put(routing.push(routing.routeFor('dashboard')))
+            break
+        }
+
+        case DESTROY_FAILED: {
+            toasts.show({ intent: Intent.DANGER, message: 'Organization delete failed' })
+            break
+        }
+    }
+}
 
 //
 //  SELECTORS

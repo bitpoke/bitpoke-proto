@@ -15,15 +15,11 @@ type ReduxProps = {
 type Props = ReduxProps
 
 const OrganizationsContainer: React.SFC<Props> = ({ organization }) => {
-    if (!organization) {
-        return null
-    }
-
     return (
         <Container>
             <Switch>
                 <Route
-                    path={ routing.routeFor('organizations', { action: 'new' }) }
+                    path={ routing.routeFor('organizations', { slug: '_', action: 'new' }) }
                     component={ OrganizationForm }
                 />
                 { organization && (
