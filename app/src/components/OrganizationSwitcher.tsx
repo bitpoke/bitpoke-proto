@@ -17,7 +17,7 @@ type Props = ReduxProps & DispatchProp
 
 const { Group, Divider } = Navbar
 
-const OrganizationsList: React.SFC<Props> = ({ entries, selectedEntry, dispatch }) => {
+const OrganizationSwitcher: React.SFC<Props> = ({ entries, selectedEntry, dispatch }) => {
     return (
         <Group align={ Alignment.LEFT }>
             <Divider />
@@ -63,4 +63,4 @@ function mapStateToProps(state: RootState): ReduxProps {
     }
 }
 
-export default connect(mapStateToProps)(OrganizationsList)
+export default connect(mapStateToProps)(OrganizationSwitcher)

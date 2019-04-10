@@ -9,7 +9,7 @@ import { RootState, DispatchProp, auth, grpc, routing, organizations } from '../
 
 import Link from '../components/Link'
 import UserCard from '../components/UserCard'
-import OrganizationsList from '../components/OrganizationsList'
+import OrganizationSwitcher from '../components/OrganizationSwitcher'
 
 import styles from './NavBar.module.scss'
 
@@ -41,7 +41,7 @@ const NavBar: React.SFC<Props> = (props) => {
                         />
                     ) }
                 </Heading>
-                <OrganizationsList />
+                <OrganizationSwitcher />
             </Group>
             <Group align={ Alignment.RIGHT }>
                 <UserCard entry={ currentUser } />
