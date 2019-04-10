@@ -4,24 +4,24 @@ import { Button, ButtonGroup, Card, Elevation, Intent } from '@blueprintjs/core'
 
 import { get } from 'lodash'
 
-import { RootState, DispatchProp, api, routing, projects } from '../redux'
+import { RootState, DispatchProp, api, routing, organizations } from '../redux'
 
 import TitleBar from '../components/TitleBar'
 import SitesList from '../components/SitesList'
 import ResourceActions from '../components/ResourceActions'
 
 type OwnProps = {
-    entry?: projects.IProject | null
+    entry?: organizations.IOrganization | null
 }
 
 type Props = OwnProps & DispatchProp
 
-const ProjectTitle: React.SFC<Props> = ({ entry, dispatch }) => {
+const OrganizationTitle: React.SFC<Props> = ({ entry, dispatch }) => {
     const [title, subtitle] = !entry || api.isNewEntry(entry)
-        ? ['Create Project', null]
+        ? ['Create Organization', null]
         : [entry.displayName, entry.name]
 
-    const onDestroy = entry ? () => dispatch(projects.destroy(entry)) : undefined
+    const onDestroy = entry ? () => dispatch(organizations.destroy(entry)) : undefined
 
     return (
         <TitleBar
@@ -30,7 +30,7 @@ const ProjectTitle: React.SFC<Props> = ({ entry, dispatch }) => {
             actions={
                 <ResourceActions
                     entry={ entry }
-                    resourceName={ api.Resource.project }
+                    resourceName={ api.Resource.organization }
                     onDestroy={ onDestroy }
                 />
             }
@@ -38,5 +38,4 @@ const ProjectTitle: React.SFC<Props> = ({ entry, dispatch }) => {
     )
 }
 
-export default connect()(ProjectTitle)
-
+export default connect()(OrganizationTitle)

@@ -8,8 +8,6 @@ import Container from '../components/Container'
 import ProjectTitle from '../components/ProjectTitle'
 import ProjectForm from '../components/ProjectForm'
 import ProjectDetails from '../components/ProjectDetails'
-import SiteForm from '../components/SiteForm'
-import SiteDetails from '../components/SiteDetails'
 
 import { RootState, DispatchProp, routing, organizations, projects } from '../redux'
 
@@ -35,15 +33,6 @@ const ProjectsContainer: React.SFC<Props> = (props) => {
     return (
         <Container>
             <Switch>
-                <Route
-                    path={ routing.routeForResource(project, { action: 'new-site' }) }
-                    render={ () => (
-                        <div>
-                            <ProjectTitle entry={ project } />
-                            <SiteForm initialValues={ { parent: project.name } } />
-                        </div>
-                    ) }
-                />
                 <Route
                     path={ routing.routeForResource(project, { action: 'edit' }) }
                     render={ () => <ProjectForm initialValues={ { project } } /> }

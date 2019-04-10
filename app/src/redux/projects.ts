@@ -1,12 +1,14 @@
 import { ActionType } from 'typesafe-actions'
-import { fork } from 'redux-saga/effects'
+import { takeEvery, fork, put } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
 
 import { pickBy, get as _get } from 'lodash'
 
-import { RootState, AnyAction, api, routing, grpc, forms, organizations } from '../redux'
+import { RootState, AnyAction, ActionDescriptor, api, routing, grpc, forms, organizations, toasts } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
+
+import { Intent } from '@blueprintjs/core'
 
 const {
     Project,
@@ -151,8 +153,11 @@ export function reducer(state: State = api.initialState, action: AnyAction) {
 
 export function* saga() {
     yield fork(api.emitResourceActions, api.Resource.project, apiTypes)
-    // yield takeLatest(organizations.SELECTED, fetchAll)
-    yield forms.takeEverySubmission(forms.Name.project, handleFormSubmission)
+    yield fork(forms.takeEverySubmission, forms.Name.project, handleFormSubmission)
+    yield takeEvery([
+        DESTROY_SUCCEEDED,
+        DESTROY_FAILED
+    ], handleDeletion)
 }
 
 const handleFormSubmission = api.createFormHandler(
@@ -162,22 +167,20 @@ const handleFormSubmission = api.createFormHandler(
     actions
 )
 
-// function* fetchAll(action: ActionType<typeof organizations.select>) {
-//     const organization = action.payload
-//     yield put(list({ parent: organization.name }))
-//     const projects = yield select(getAll)
+function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: grpc.Response }): Iterable<any> {
+    switch (type) {
+        case DESTROY_SUCCEEDED: {
+            toasts.show({ intent: Intent.SUCCESS, message: 'Project deleted' })
+            yield put(routing.push(routing.routeFor('dsahboard')))
+            break
+        }
 
-//     if (isEmpty(projects)) {
-//         const { success } = yield race({
-//             success: take(LIST_SUCCEEDED),
-//             failure: take(LIST_FAILED)
-//         })
-
-//         if (success && api.isEmptyResponse(success)) {
-//             // yield put(wizards.startFlow(wizards.Flows.onboarding))
-//         }
-//     }
-// }
+        case DESTROY_FAILED: {
+            toasts.show({ intent: Intent.DANGER, message: 'Project delete failed' })
+            break
+        }
+    }
+}
 
 //
 //  SELECTORS

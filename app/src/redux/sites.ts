@@ -1,10 +1,10 @@
-import { ActionType } from 'typesafe-actions'
-import { fork, put, take, call, race } from 'redux-saga/effects'
+import { ActionType, isOfType } from 'typesafe-actions'
+import { takeEvery, fork, put, take, call, race } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
 
 import { pickBy, get as _get, startsWith } from 'lodash'
 
-import { RootState, api, grpc, forms, projects, routing, toasts } from '../redux'
+import { RootState, ActionDescriptor, api, grpc, forms, projects, routing, toasts } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
 
@@ -145,7 +145,11 @@ export function reducer(state: State = api.initialState, action: Actions) {
 
 export function* saga() {
     yield fork(api.emitResourceActions, api.Resource.site, apiTypes)
-    yield forms.takeEverySubmission(forms.Name.site, handleFormSubmission)
+    yield fork(forms.takeEverySubmission, forms.Name.site, handleFormSubmission)
+    yield takeEvery([
+        DESTROY_SUCCEEDED,
+        DESTROY_FAILED
+    ], handleDeletion)
 }
 
 const handleFormSubmission = api.createFormHandler(
@@ -154,6 +158,27 @@ const handleFormSubmission = api.createFormHandler(
     apiTypes,
     actions
 )
+
+function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: grpc.Response }): Iterable<any> {
+    switch (type) {
+        case DESTROY_SUCCEEDED: {
+            toasts.show({ intent: Intent.SUCCESS, message: 'Site deleted' })
+            const entry = payload.request.data as ISite
+            const parentURL = projects.parseName(entry.name).url
+
+            if (parentURL) {
+                yield put(routing.push(parentURL))
+            }
+
+            break
+        }
+
+        case DESTROY_FAILED: {
+            toasts.show({ intent: Intent.DANGER, message: 'Site delete failed' })
+            break
+        }
+    }
+}
 
 
 //

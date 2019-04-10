@@ -130,7 +130,7 @@ function* bootstrap() {
 
 function* dispatchToHistory(
     action: ActionType<typeof push> | ActionType<typeof replace> | ActionType<typeof goBack>
-): IterableIterator<any> {
+): Iterable<any> {
     if (isOfType(BACK_REQUESTED, action)) {
         history.goBack()
         return

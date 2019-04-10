@@ -29,7 +29,7 @@ const OrganizationsList: React.SFC<Props> = ({ entries, selectedEntry, dispatch 
                     text={ organization.displayName }
                     onClick={ () => {
                         dispatch(routing.push(
-                            routing.routeFor('dashboard', { org: get(organizations.parseName(organization.name), 'params.slug') })
+                            routing.routeFor('dashboard', { org: organizations.parseName(organization.name).slug })
                         ))
                     } }
                 />

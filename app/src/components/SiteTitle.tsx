@@ -4,76 +4,38 @@ import { Button, ButtonGroup, Card, Elevation, Intent } from '@blueprintjs/core'
 
 import { get } from 'lodash'
 
-import { RootState, DispatchProp, routing, sites } from '../redux'
+import { RootState, DispatchProp, api, routing, sites } from '../redux'
 
 import TitleBar from '../components/TitleBar'
 import SitesList from '../components/SitesList'
+import ResourceActions from '../components/ResourceActions'
 
 type OwnProps = {
-    entry: sites.ISite | null
+    entry?: sites.ISite | null
 }
 
-type ReduxProps = {
-    isEditing: boolean
-}
+type Props = OwnProps & DispatchProp
 
-type Props = OwnProps & ReduxProps & DispatchProp
+const SiteTitle: React.SFC<Props> = ({ entry, dispatch }) => {
+    const [title, subtitle] = !entry || api.isNewEntry(entry)
+        ? ['Create Site', null]
+        : [entry.primaryDomain, entry.name]
 
-const SiteTitle: React.SFC<Props> = ({ entry, isEditing, dispatch }) => {
-    if (!entry) {
-        return null
-    }
+    const onDestroy = entry ? () => dispatch(sites.destroy(entry)) : undefined
 
     return (
         <TitleBar
-            title={ entry.primaryDomain }
-            subtitle={ entry.name }
+            title={ title }
+            subtitle={ subtitle }
             actions={
-                isEditing
-                    ? (
-                        <ButtonGroup>
-                            <Button
-                                text="Discard"
-                                icon="cross"
-                                intent={ Intent.PRIMARY }
-                                onClick={ () =>
-                                    dispatch(routing.push(
-                                        routing.routeForResource(entry)
-                                    ))
-                                }
-                            />
-                        </ButtonGroup>
-                    ) : (
-                        <ButtonGroup>
-                            <Button
-                                text="Edit site"
-                                icon="edit"
-                                intent={ Intent.PRIMARY }
-                                onClick={ () =>
-                                    dispatch(routing.push(
-                                        routing.routeForResource(entry, { action: 'edit' })
-                                    ))
-                                }
-                            />
-                            <Button
-                                text="Delete site"
-                                icon="trash"
-                                intent={ Intent.DANGER }
-                                onClick={ () => dispatch(sites.destroy(entry)) }
-                            />
-                        </ButtonGroup>
-                    )
+                <ResourceActions
+                    entry={ entry }
+                    resourceName={ api.Resource.site }
+                    onDestroy={ onDestroy }
+                />
             }
         />
     )
 }
 
-function mapStateToProps(state: RootState): ReduxProps {
-    const currentRoute = routing.getCurrentRoute(state)
-    const isEditing = currentRoute.key === 'sites' && get(currentRoute, 'params.action') === 'edit'
-    return {
-        isEditing
-    }
-}
-
-export default connect(mapStateToProps)(SiteTitle)
+export default connect()(SiteTitle)

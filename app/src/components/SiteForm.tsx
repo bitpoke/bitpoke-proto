@@ -8,7 +8,6 @@ import { forms, api, sites } from '../redux'
 import { withForm } from '../components/Form'
 import FormContainer from '../components/FormContainer'
 import InputField from '../components/InputField'
-import TitleBar from '../components/TitleBar'
 import SiteTitle from '../components/SiteTitle'
 
 type Props = forms.Props<sites.ISitePayload>
@@ -16,14 +15,13 @@ type Props = forms.Props<sites.ISitePayload>
 const SiteForm: React.SFC<Props> = (props) => {
     const { initialValues } = props
 
-    const entry = get(initialValues, 'site', {})
-    const isNewEntry = api.isNewEntry(entry)
-    const title = isNewEntry
-        ? <TitleBar title="Create Site" />
-        : <SiteTitle entry={ entry } />
+    const entry = get(initialValues, 'site')
 
     return (
-        <FormContainer title={ title } { ...props }>
+        <FormContainer
+            title={ <SiteTitle entry={ entry } /> }
+            { ...props }
+        >
             <Field
                 name="site.primaryDomain"
                 label="Domain Name"

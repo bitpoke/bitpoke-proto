@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 
-import { map, get, size, isEqual, isString } from 'lodash'
+import { map, get, size, isEqual, isString, isFunction } from 'lodash'
 
 import { Card, Elevation, Intent } from '@blueprintjs/core'
 
@@ -15,7 +15,8 @@ import styles from './List.module.scss'
 type OwnProps = {
     dataSelector : Selector,
     dataRequest  : AnyAction,
-    title        : React.ReactNode
+    title        : React.ReactNode,
+    renderItem   : (entry: api.AnyResourceInstance) => React.ReactNode
 }
 
 type ReduxProps = {
@@ -38,7 +39,7 @@ class List extends React.Component<Props> {
     }
 
     render() {
-        const { data, title, dispatch } = this.props
+        const { data, title, renderItem, dispatch } = this.props
 
         const dataCount = size(data)
         const countLabel = dataCount > 0 ? dataCount : undefined
@@ -50,19 +51,7 @@ class List extends React.Component<Props> {
                     ...title.props, tag: countLabel } as TitleBarProps
                 ) }
                 <div className={ styles.container }>
-                    { map(data, (entry) => (
-                        <Card
-                            key={ entry.name }
-                            elevation={ Elevation.TWO }
-                            interactive
-                            onClick={ () => dispatch(routing.push(routing.routeForResource(entry))) }
-                        >
-                            <h5>
-                                <Link to={ routing.routeForResource(entry) }>{ get(entry, 'displayName', '-') }</Link>
-                            </h5>
-                            <p>{ entry.name }</p>
-                        </Card>
-                    )) }
+                    { map(data, renderItem) }
                 </div>
             </div>
         )

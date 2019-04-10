@@ -82,7 +82,7 @@ function* emitFormActions(action: ActionType<typeof submit>) {
     yield put({ type, payload })
 }
 
-export function* takeEverySubmission(name: Name, handler: (action: any) => IterableIterator<any>) {
+export function* takeEverySubmission(name: Name, handler: (action: any) => Iterable<any>) {
     const descriptor = createDescriptor(name)
     yield takeEvery(descriptor, handler)
 }

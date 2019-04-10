@@ -6,6 +6,7 @@ import { isEqual } from 'lodash'
 
 import Container from '../components/Container'
 import ProjectTitle from '../components/ProjectTitle'
+import SiteTitle from '../components/SiteTitle'
 import SiteForm from '../components/SiteForm'
 import SiteDetails from '../components/SiteDetails'
 
@@ -32,8 +33,12 @@ const SitesContainer: React.SFC<Props> = (props) => {
             <ProjectTitle entry={ project } />
             <Switch>
                 <Route
-                    path={ routing.routeFor('sites', { project: project.name, action: 'new' }) }
-                    component={ SiteForm }
+                    path={ routing.routeFor('sites', {
+                        project: projects.parseName(project.name).slug,
+                        slug: '_',
+                        action: 'new'
+                    }) }
+                    render={ () => <SiteForm initialValues={ { parent: project.name } } /> }
                 />
                 { site && (
                     <Route

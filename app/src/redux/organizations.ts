@@ -175,7 +175,7 @@ export function* saga() {
         DESTROY_SUCCEEDED
     ], decideOrganizationContext)
     yield takeLatest(SELECTED, setGRPCOrganizationMetadata)
-    yield forms.takeEverySubmission(forms.Name.organization, handleFormSubmission)
+    yield fork(forms.takeEverySubmission, forms.Name.organization, handleFormSubmission)
 }
 
 const handleFormSubmission = api.createFormHandler(
@@ -214,8 +214,10 @@ function* decideOrganizationContext(): Iterable<any> {
         const organizationFromAddress = name ? yield _select(getByName(name)) : null
 
         if (organizationFromAddress) {
+            yield put(select(organizationFromAddress))
+
             // if (!isEqual(organizationFromAddress, currentlySelected)) {
-                yield put(select(organizationFromAddress))
+            //     yield put(select(organizationFromAddress))
             // }
         }
         else {
@@ -238,27 +240,6 @@ function* setGRPCOrganizationMetadata(action: ActionType<typeof select>) {
         value: action.payload.name
     }))
 }
-
-// function* updateAddressWithOrganization(action: ActionType<typeof select>) {
-//     if (!action.payload.name) {
-//         return
-//     }
-
-//     const currentRoute = yield _select(routing.getCurrentRoute)
-//     const updatedURL = new URI(currentRoute.url)
-
-//     const parsedName = parseName(action.payload.name)
-//     if (parsedName) {
-//         updatedURL.removeSearch('org')
-//         updatedURL.addSearch('org', parsedName.params.slug)
-//     }
-
-//     if (updatedURL.toString() !== currentRoute.url) {
-//         yield put(routing.replace(updatedURL.toString())) // eslint-disable-line lodash/prefer-lodash-method
-//     }
-
-//     // yield put(routing.push(routing.routeFor('dashboard', { org: action.payload.name })))
-// }
 
 
 //

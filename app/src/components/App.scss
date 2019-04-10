@@ -284,6 +284,7 @@ $navbar-padding: $pt-grid-size * 3;
 body {
   background: $pt-app-background-color;
   padding-top: $pt-navbar-height; // because of navbar stickToTop
+  overflow-y: scroll;
 }
 
 .bp3-center {

@@ -2,7 +2,7 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import { Button, Card, Elevation, Intent } from '@blueprintjs/core'
 
-import TitleBar from '../components/TitleBar'
+import OrganizationTitle from '../components/OrganizationTitle'
 
 import { DispatchProp, routing, organizations } from '../redux'
 
@@ -19,11 +19,7 @@ const OrganizationDetails: React.SFC<Props> = (props) => {
 
     return (
         <div>
-            <TitleBar
-                title={ entry.displayName }
-                subtitle={ entry.name }
-            />
-            <Card elevation={ Elevation.TWO } />
+            <OrganizationTitle entry={ entry } />
         </div>
     )
 }

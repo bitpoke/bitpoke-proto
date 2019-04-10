@@ -26,7 +26,7 @@ const { Group, Heading } = BlueprintNavBar
 const NavBar: React.SFC<Props> = (props) => {
     const { currentUser, currentOrganization, isLoading, dispatch } = props
     const homeURL = currentOrganization
-        ? routing.routeFor('dashboard', { org: get(organizations.parseName(currentOrganization.name), 'params.slug') })
+        ? routing.routeFor('dashboard', { org: organizations.parseName(currentOrganization.name).slug })
         : routing.routeFor('dashboard')
 
     return (

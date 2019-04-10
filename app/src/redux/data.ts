@@ -9,7 +9,7 @@ export function* saga() {
     yield takeLatest(routing.ROUTE_CHANGED, fetchData)
 }
 
-function* fetchData(): IterableIterator<any> {
+function* fetchData(): Iterable<any> {
     const isAuthenticated = yield select(auth.isAuthenticated)
     const organizationMeta = yield select(grpc.getMetadata('organization'))
 
@@ -31,7 +31,7 @@ function* fetchData(): IterableIterator<any> {
     yield all(compact(map([projects, sites], (scope) => {
         const parsed = scope.parseName(route.url)
 
-        if (parsed && parsed.name) {
+        if (parsed.name) {
             return call(selectOrFetch, scope, parsed.name)
         }
 

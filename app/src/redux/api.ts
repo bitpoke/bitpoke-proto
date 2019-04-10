@@ -1,4 +1,4 @@
-import { isOfType } from 'typesafe-actions'
+import { ActionType, isOfType } from 'typesafe-actions'
 import { createSelector } from 'reselect'
 import { takeEvery, put, race, take, call, select } from 'redux-saga/effects'
 import { singular, plural } from 'pluralize'
@@ -7,7 +7,7 @@ import { compile } from 'path-to-regexp'
 import URI from 'urijs'
 
 import {
-    reduce, find, omit, get, head, last, join, split, keys, values as _values,
+    reduce, find, omit, get, head, last, join, split, dropRight, keys, values as _values,
     size, replace, startCase, snakeCase, toLower, has, includes, startsWith, endsWith, isEmpty
 } from 'lodash'
 
@@ -88,14 +88,16 @@ export type Actions = {
 }
 
 export type NameHelpers = {
-    parseName: (name: ResourceName) => NamePayload | null
+    parseName: (name: ResourceName) => ParsedNamePayload
     buildName: (payload: object) => ResourceName | null
 }
 
-export type NamePayload = {
-    name   : ResourceName,
+export type ParsedNamePayload = {
+    name   : ResourceName | null,
+    parent : ResourceName | null,
+    url    : routing.Path | null,
+    slug   : string | null,
     params : {
-        slug?: string,
         parent?: string
     }
 }
@@ -199,7 +201,7 @@ export function createFormHandler(
     actionTypes: ActionTypes,
     actions: Actions
 ) {
-    return function* handleSubmit(action: forms.Actions) {
+    return function* handleSubmit(action: ActionType<typeof forms.submit>) {
         const { resolve, reject, values } = action.payload
         const resourceName = startCase(singular(resource))
         const entry = get(values, singular(resource))
@@ -269,7 +271,7 @@ export function isEmptyResponse({ type, payload }: { type: string, payload: grpc
     return false
 }
 
-export function isNewEntry(entry: object | undefined) {
+export function isNewEntry(entry: object | undefined | null) {
     return !has(entry, 'name')
 }
 
@@ -310,17 +312,20 @@ function createActionDescriptor(request: Request, status: Status) {
 }
 
 export function createNameHelpers(path: string): NameHelpers {
-    function parseName(nameOrURL: string): NamePayload | null {
+    function parseName(nameOrURL: string): ParsedNamePayload {
         const pathname = replace(new URI(nameOrURL).pathname(), /^\//, '')
         const matched = matchPath(pathname, { path, exact: false })
-        if (matched) {
-            return {
-                name   : matched.url,
-                params : matched.params
-            }
-        }
+        const name = get(matched, 'url', null)
+        const segments = name ? split(name, '/') : []
+        const parent = size(segments) > 2 ? join(dropRight(segments, 2), '/') : null
 
-        return null
+        return {
+            name,
+            parent,
+            url    : `/${name}`,
+            slug   : get(matched, 'params.slug', null),
+            params : get(matched, 'params', {})
+        }
     }
 
     function buildName(params: object): ResourceName | null {
