@@ -931,7 +931,7 @@
 
 "@presslabs/dashboard-proto@git+https://github.com/presslabs/dashboard-js.git#master":
   version "0.1.0"
-  resolved "git+https://github.com/presslabs/dashboard-js.git#79cf985d79dba5594c1627a98b0e1f6bdbb859dd"
+  resolved "git+https://github.com/presslabs/dashboard-js.git#15143b1cad64abdd466ac40786ef016f063f98fa"
 
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"

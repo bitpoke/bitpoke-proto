@@ -9,6 +9,7 @@ import { RootState, DispatchProp, api, routing, sites } from '../redux'
 import TitleBar from '../components/TitleBar'
 import SitesList from '../components/SitesList'
 import ResourceActions from '../components/ResourceActions'
+import SiteStatusTag from '../components/SiteStatusTag'
 
 type OwnProps = {
     entry?: sites.ISite | null
@@ -26,6 +27,7 @@ const SiteTitle: React.SFC<Props> = ({ entry, dispatch }) => {
             title={ title }
             subtitle={ subtitle }
             link={ link }
+            tag={ <SiteStatusTag entry={ entry } /> }
             actions={
                 <ResourceActions
                     entry={ entry }

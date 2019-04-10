@@ -2,7 +2,7 @@ import { ActionType, isOfType } from 'typesafe-actions'
 import { takeEvery, fork, put, take, call, race } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
 
-import { pickBy, get as _get, startsWith } from 'lodash'
+import { pickBy, get as _get, head, findKey, keys, startsWith } from 'lodash'
 
 import { RootState, ActionDescriptor, api, grpc, forms, projects, routing, toasts } from '../redux'
 
@@ -21,8 +21,13 @@ const {
     DeleteSiteRequest
 } = presslabs.dashboard.sites.v1
 
+const {
+    Status
+} = Site
+
 export {
     Site,
+    Status,
     SitesService,
     ListSitesRequest,
     ListSitesResponse,
@@ -43,6 +48,9 @@ export interface ISite extends presslabs.dashboard.sites.v1.ISite {
 
 export type Site =
     presslabs.dashboard.sites.v1.Site
+
+export type Status =
+    presslabs.dashboard.sites.v1.Site.Status
 
 export type ISitePayload =
     presslabs.dashboard.sites.v1.ISite
@@ -180,6 +188,9 @@ function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: g
     }
 }
 
+export function statusName(status: Status | null | undefined) {
+    return findKey(Status, (s) => s === status) || head(keys(Status))
+}
 
 //
 //  SELECTORS
