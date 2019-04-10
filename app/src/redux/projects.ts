@@ -171,7 +171,7 @@ function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: g
     switch (type) {
         case DESTROY_SUCCEEDED: {
             toasts.show({ intent: Intent.SUCCESS, message: 'Project deleted' })
-            yield put(routing.push(routing.routeFor('dsahboard')))
+            yield put(routing.push(routing.routeFor('dashboard')))
             break
         }
 

@@ -17,16 +17,15 @@ type OwnProps = {
 type Props = OwnProps & DispatchProp
 
 const ProjectTitle: React.SFC<Props> = ({ entry, dispatch }) => {
-    const [title, subtitle] = !entry || api.isNewEntry(entry)
-        ? ['Create Project', null]
-        : [entry.displayName, entry.name]
-
-    const onDestroy = entry ? () => dispatch(projects.destroy(entry)) : undefined
+    const [title, subtitle, link, onDestroy] = !entry || api.isNewEntry(entry)
+        ? ['Create Project', null, null, undefined]
+        : [entry.displayName, entry.name, routing.routeForResource(entry), () => dispatch(projects.destroy(entry))]
 
     return (
         <TitleBar
             title={ title }
             subtitle={ subtitle }
+            link={ link }
             actions={
                 <ResourceActions
                     entry={ entry }

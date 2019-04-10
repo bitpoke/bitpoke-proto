@@ -42,13 +42,12 @@ class List extends React.Component<Props> {
         const { data, title, renderItem, dispatch } = this.props
 
         const dataCount = size(data)
-        const countLabel = dataCount > 0 ? dataCount : undefined
 
         return (
             <div>
-                { isString(title) && <TitleBar title={ title } tag={ countLabel } /> }
+                { isString(title) && <TitleBar title={ title } tag={ dataCount } /> }
                 { React.isValidElement(title) && React.cloneElement(title, {
-                    ...title.props, tag: countLabel } as TitleBarProps
+                    ...title.props, tag: dataCount } as TitleBarProps
                 ) }
                 <div className={ styles.container }>
                     { map(data, renderItem) }
