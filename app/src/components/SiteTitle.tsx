@@ -1,25 +1,26 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { Button, ButtonGroup, Card, Elevation, Intent } from '@blueprintjs/core'
 
-import { get } from 'lodash'
 
-import { RootState, DispatchProp, api, routing, sites } from '../redux'
+import { DispatchProp, api, routing, sites } from '../redux'
 
 import TitleBar from '../components/TitleBar'
-import SitesList from '../components/SitesList'
 import ResourceActions from '../components/ResourceActions'
 import SiteStatusTag from '../components/SiteStatusTag'
 
 type OwnProps = {
-    entry?: sites.ISite | null
+    entry?: sites.ISite | null,
+    title?: string | null,
+    withActionTitles?: boolean,
+    withMinimalActions?: boolean
 }
 
 type Props = OwnProps & DispatchProp
 
-const SiteTitle: React.SFC<Props> = ({ entry, dispatch }) => {
+const SiteTitle: React.SFC<Props> = (props) => {
+    const { entry, withActionTitles, withMinimalActions, dispatch } = props
     const [title, subtitle, link, onDestroy] = !entry || api.isNewEntry(entry)
-        ? ['Create Site', null, null, undefined]
+        ? [props.title || 'Create Site', null, null, undefined]
         : [entry.primaryDomain, entry.name, routing.routeForResource(entry), () => dispatch(sites.destroy(entry))]
 
     return (
@@ -33,10 +34,17 @@ const SiteTitle: React.SFC<Props> = ({ entry, dispatch }) => {
                     entry={ entry }
                     resourceName={ api.Resource.site }
                     onDestroy={ onDestroy }
+                    withTitles={ withActionTitles }
+                    minimal={ withMinimalActions }
                 />
             }
         />
     )
+}
+
+SiteTitle.defaultProps = {
+    withActionTitles: true,
+    withMinimalActions: false
 }
 
 export default connect()(SiteTitle)

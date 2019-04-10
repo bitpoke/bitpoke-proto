@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import faker from 'faker'
 
-import { map, get } from 'lodash'
+import { map } from 'lodash'
 
 import { Navbar, Alignment, Button, Intent } from '@blueprintjs/core'
 

@@ -3,7 +3,6 @@ import * as React from 'react'
 import { projects } from '../redux'
 
 import SiteTitle from '../components/SiteTitle'
-import SitesList from '../components/SitesList'
 
 type Props = {
     entry: projects.IProject | null

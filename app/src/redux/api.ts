@@ -1,6 +1,6 @@
 import { ActionType, isOfType } from 'typesafe-actions'
 import { createSelector } from 'reselect'
-import { takeEvery, put, race, take, call, select } from 'redux-saga/effects'
+import { takeEvery, put, race, take, call } from 'redux-saga/effects'
 import { singular, plural } from 'pluralize'
 import { matchPath } from 'react-router'
 import { compile } from 'path-to-regexp'

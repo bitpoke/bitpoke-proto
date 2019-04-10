@@ -2,10 +2,8 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import { Switch, Route } from 'react-router-dom'
 
-import { isEqual } from 'lodash'
 
 import Container from '../components/Container'
-import ProjectTitle from '../components/ProjectTitle'
 import ProjectForm from '../components/ProjectForm'
 import ProjectDetails from '../components/ProjectDetails'
 

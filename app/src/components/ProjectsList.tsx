@@ -2,13 +2,13 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import faker from 'faker'
 
-import { Card, Button, ButtonGroup, Intent, Elevation } from '@blueprintjs/core'
+import { Card, Elevation } from '@blueprintjs/core'
 
-import { RootState, DispatchProp, api, routing, projects, organizations } from '../redux'
+import { DispatchProp, api, routing, projects, organizations } from '../redux'
 
-import Link from '../components/Link'
 import List from '../components/List'
 import TitleBar from '../components/TitleBar'
+import ProjectTitle from '../components/ProjectTitle'
 import ResourceActions from '../components/ResourceActions'
 
 type OwnProps = {
@@ -31,17 +31,7 @@ const ProjectsList: React.SFC<Props> = (props) => {
                         interactive
                         onClick={ () => dispatch(routing.push(routing.routeForResource(entry))) }
                     >
-                        <h5>
-                            <Link to={ routing.routeForResource(entry) }>{ entry.displayName }</Link>
-                        </h5>
-                        <p>{ entry.name }</p>
-                        <ResourceActions
-                            entry={ entry }
-                            resourceName={ api.Resource.project }
-                            onDestroy={ () => dispatch(projects.destroy(entry)) }
-                            withTitles={ false }
-                            minimal
-                        />
+                        <ProjectTitle entry={ entry } withActionTitles={ false } withMinimalActions />
                     </Card>
                 ) }
                 title={

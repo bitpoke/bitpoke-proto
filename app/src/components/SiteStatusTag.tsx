@@ -1,10 +1,9 @@
 import * as React from 'react'
-import { connect } from 'react-redux'
 import { Tag, Tooltip, Intent, Position } from '@blueprintjs/core'
 
 import { get } from 'lodash'
 
-import { RootState, api, sites } from '../redux'
+import { sites } from '../redux'
 
 type OwnProps = {
     entry?: sites.ISite | null

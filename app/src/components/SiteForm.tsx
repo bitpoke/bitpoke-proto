@@ -3,7 +3,7 @@ import { Field } from 'redux-form'
 
 import { get } from 'lodash'
 
-import { forms, api, sites } from '../redux'
+import { forms, sites } from '../redux'
 
 import { withForm } from '../components/Form'
 import FormContainer from '../components/FormContainer'

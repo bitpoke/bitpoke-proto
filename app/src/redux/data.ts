@@ -1,5 +1,4 @@
-import { takeEvery, takeLatest, take, put, call, all, select } from 'redux-saga/effects'
-import { ActionType } from 'typesafe-actions'
+import { takeLatest, take, put, call, all, select } from 'redux-saga/effects'
 
 import { map, compact } from 'lodash'
 

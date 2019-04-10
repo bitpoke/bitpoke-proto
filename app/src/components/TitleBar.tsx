@@ -1,8 +1,8 @@
 import * as React from 'react'
 
-import { isString, isNumber, isFunction } from 'lodash'
+import { isString, isNumber } from 'lodash'
 
-import { Card, Elevation, Button, Intent, Tag, Classes } from '@blueprintjs/core'
+import { Tag, Classes } from '@blueprintjs/core'
 
 import { routing } from '../redux'
 

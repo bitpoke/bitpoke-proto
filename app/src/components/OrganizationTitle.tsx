@@ -1,13 +1,10 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { Button, ButtonGroup, Card, Elevation, Intent } from '@blueprintjs/core'
 
-import { get } from 'lodash'
 
-import { RootState, DispatchProp, api, routing, organizations } from '../redux'
+import { DispatchProp, api, organizations } from '../redux'
 
 import TitleBar from '../components/TitleBar'
-import SitesList from '../components/SitesList'
 import ResourceActions from '../components/ResourceActions'
 
 type OwnProps = {

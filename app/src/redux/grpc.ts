@@ -1,5 +1,5 @@
 import { channel as createChannel } from 'redux-saga'
-import { takeEvery, call, put } from 'redux-saga/effects'
+import { takeEvery, call } from 'redux-saga/effects'
 import { ActionType, action as createAction } from 'typesafe-actions'
 import { createSelector } from 'reselect'
 

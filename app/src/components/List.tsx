@@ -1,13 +1,11 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 
-import { map, get, size, isEqual, isString, isFunction } from 'lodash'
+import { map, size, isEqual, isString } from 'lodash'
 
-import { Card, Elevation, Intent } from '@blueprintjs/core'
 
-import { RootState, AnyAction, Selector, DispatchProp, api, routing } from '../redux'
+import { RootState, AnyAction, Selector, DispatchProp, api } from '../redux'
 
-import Link from '../components/Link'
 import TitleBar, { Props as TitleBarProps } from '../components/TitleBar'
 
 import styles from './List.module.scss'
@@ -39,15 +37,15 @@ class List extends React.Component<Props> {
     }
 
     render() {
-        const { data, title, renderItem, dispatch } = this.props
+        const { data, title, renderItem } = this.props
 
         const dataCount = size(data)
 
         return (
             <div>
                 { isString(title) && <TitleBar title={ title } tag={ dataCount } /> }
-                { React.isValidElement(title) && React.cloneElement(title, {
-                    ...title.props, tag: dataCount } as TitleBarProps
+                { React.isValidElement(title) &&
+                    React.cloneElement(title, { ...title.props, tag: dataCount } as TitleBarProps
                 ) }
                 <div className={ styles.container }>
                     { map(data, renderItem) }

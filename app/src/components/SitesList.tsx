@@ -2,16 +2,14 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import faker from 'faker'
 
-import { map, get } from 'lodash'
 
-import { Card, Button, ButtonGroup, Intent, Elevation } from '@blueprintjs/core'
+import { Card, Elevation } from '@blueprintjs/core'
 
-import { RootState, DispatchProp, api, routing, sites, projects } from '../redux'
+import { DispatchProp, api, routing, sites, projects } from '../redux'
 
-import Link from '../components/Link'
 import List from '../components/List'
 import TitleBar from '../components/TitleBar'
-import SiteStatusTag from '../components/SiteStatusTag'
+import SiteTitle from '../components/SiteTitle'
 import ResourceActions from '../components/ResourceActions'
 
 type OwnProps = {
@@ -38,18 +36,7 @@ const SitesList: React.SFC<Props> = (props) => {
                     interactive
                     onClick={ () => dispatch(routing.push(routing.routeForResource(entry))) }
                 >
-                    <SiteStatusTag entry={ entry } />
-                    <h5>
-                        <Link to={ routing.routeForResource(entry) }>{ entry.primaryDomain }</Link>
-                    </h5>
-                    <p>{ entry.name }</p>
-                    <ResourceActions
-                        entry={ entry }
-                        resourceName={ api.Resource.site }
-                        onDestroy={ () => dispatch(sites.destroy(entry)) }
-                        withTitles={ false }
-                        minimal
-                    />
+                    <SiteTitle entry={ entry } withActionTitles={ false } withMinimalActions />
                 </Card>
             ) }
             title={

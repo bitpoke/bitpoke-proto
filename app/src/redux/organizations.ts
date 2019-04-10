@@ -1,9 +1,8 @@
 import { ActionType, action as createAction } from 'typesafe-actions'
 import { takeLatest, takeEvery, fork, put, take, race, select as _select, delay } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
-import { find, head, replace, values as _values, get as _get, isEmpty, isEqual } from 'lodash'
+import { find, head, values as _values, get as _get, isEmpty } from 'lodash'
 
-import URI from 'urijs'
 
 import { RootState, ActionDescriptor, auth, api, grpc, routing, forms, toasts } from '../redux'
 

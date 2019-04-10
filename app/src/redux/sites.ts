@@ -1,5 +1,5 @@
-import { ActionType, isOfType } from 'typesafe-actions'
-import { takeEvery, fork, put, take, call, race } from 'redux-saga/effects'
+import { ActionType } from 'typesafe-actions'
+import { takeEvery, fork, put } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
 
 import { pickBy, get as _get, head, findKey, keys, startsWith } from 'lodash'

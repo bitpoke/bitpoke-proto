@@ -18,7 +18,7 @@ const persistConfig = {
     key        : 'root',
     whitelist  : persistedReducers,
     storage    : localforage,
-    transforms : [authFilter]
+    transforms : [authFilter, orgsFilter]
 }
 
 const middleware: Array<Middleware<any>> = []

@@ -8,7 +8,7 @@
     "no-consecutive-blank-lines": [true, 2],
 
     "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],
-    "no-unused-variable": false,
+    "no-unused-variable": true,
 
     "arrow-parens": [true, "always"],
     "ter-arrow-parens": [true, "always"],
