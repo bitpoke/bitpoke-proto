@@ -4,6 +4,7 @@ NODE_MODULES ?= $(CURDIR)/node_modules
 BINDIR       := $(NODE_MODULES)/.bin
 TSLINT       := $(BINDIR)/tslint
 REACT        := $(BINDIR)/react-scripts
+SERVER       := $(NODE_MODULES)/.bin/http-server
 
 PROTO_OUT_DIR ?= ./src/proto
 
@@ -22,6 +23,9 @@ build:
 
 test:
 	NODE_ENV=$(NODE_ENV) $(REACT) test --env=jsdom --passWithNoTests
+
+run-build: build
+	NODE_ENV=$(NODE_ENV) $(SERVER) ./build -p 3000
 
 lint:
 	$(TSLINT) --project $(CURDIR)
