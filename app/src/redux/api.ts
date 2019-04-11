@@ -291,7 +291,7 @@ export function isNewEntry(entry: object | undefined | null) {
     return !has(entry, 'name')
 }
 
-function* emitResourceAction(
+export function* emitResourceAction(
     resource: Resource,
     actionTypes: ActionTypes,
     action: grpc.Actions
@@ -323,7 +323,7 @@ function* emitResourceAction(
     }
 }
 
-function createActionDescriptor(request: Request, status: Status) {
+export function createActionDescriptor(request: Request, status: Status) {
     return join([request, status], '_')
 }
 
@@ -338,7 +338,7 @@ export function createNameHelpers(path: string): NameHelpers {
         return {
             name,
             parent,
-            url    : `/${name}`,
+            url    : `/${name || ''}`,
             slug   : get(matched, 'params.slug', null),
             params : get(matched, 'params', {})
         }
@@ -358,7 +358,7 @@ export function createNameHelpers(path: string): NameHelpers {
     }
 }
 
-function getRequestTypeFromMethodName(methodName: string): Request | null {
+export function getRequestTypeFromMethodName(methodName: string): Request | null {
     const requestType = toLower(head(split(snakeCase(methodName), '_')))
 
     if (!requestType) {
@@ -372,7 +372,7 @@ function getRequestTypeFromMethodName(methodName: string): Request | null {
     return get(Request, requestType, null)
 }
 
-function getResourceFromMethodName(methodName: string): Resource | null {
+export function getResourceFromMethodName(methodName: string): Resource | null {
     const resourceName = toLower(last(split(snakeCase(methodName), '_')))
 
     if (!resourceName) {
@@ -401,7 +401,14 @@ export function getStatusFromAction(action: AnyAction): Status | null {
 }
 
 export function getRequestTypeFromAction(action: AnyAction): Request | null {
-    const method = get(action, 'payload.method', get(action, 'payload.request.method'))
+    const status = getStatusFromAction(action)
+    if (!status) {
+        return null
+    }
+
+    const method = status === Status.requested
+        ? get(action, 'payload.method')
+        : get(action, 'payload.request.method')
 
     if (!method) {
         return null
