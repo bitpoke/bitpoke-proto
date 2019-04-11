@@ -17,7 +17,6 @@ dependencies:
 run:
 	NODE_ENV=development BROWSER=none $(REACT) start
 
-.PHONY: build
 build:
 	NODE_ENV=$(NODE_ENV) $(REACT) build
 
@@ -30,8 +29,11 @@ run-build: build
 lint:
 	$(TSLINT) --project $(CURDIR)
 
+lint-fix:
+	$(TSLINT) --project $(CURDIR) --fix
+
 clean:
 	rm -rf build
 	rm -rf $(NODE_MODULES)
 
-.PHONY: dependencies run test lint clean
+.PHONY: dependencies run run-build test lint lint-fix clean

@@ -1,5 +1,5 @@
 {
-  "extends": ["tslint:recommended", "tslint-react", "tslint-react-recommended", "tslint-config-prettier", "tslint-config-airbnb"],
+  "extends": ["tslint:recommended", "tslint-react", "tslint-react-recommended", "tslint-config-prettier", "tslint-config-airbnb", "tslint-etc"],
   "rules": {
     "indent": [true, "spaces", 4],
     "ter-indent": [true, 4, { "SwitchCase": 1 }],
@@ -8,7 +8,8 @@
     "no-consecutive-blank-lines": [true, 2],
 
     "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],
-    "no-unused-variable": true,
+    "no-unused-variable": false,
+    "no-unused-declaration": true,
 
     "arrow-parens": [true, "always"],
     "ter-arrow-parens": [true, "always"],

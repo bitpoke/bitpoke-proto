@@ -2,7 +2,7 @@ import { ActionType } from 'typesafe-actions'
 import { takeEvery, fork, put } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
 
-import { pickBy, get as _get } from 'lodash'
+import { pickBy } from 'lodash'
 
 import { RootState, AnyAction, ActionDescriptor, api, routing, grpc, forms, organizations, ui } from '../redux'
 
