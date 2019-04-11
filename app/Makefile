@@ -21,7 +21,7 @@ build:
 	NODE_ENV=$(NODE_ENV) $(REACT) build
 
 test:
-	NODE_ENV=$(NODE_ENV) $(REACT) test --env=jsdom
+	NODE_ENV=$(NODE_ENV) $(REACT) test --env=jsdom --verbose --colors
 
 run-build: build
 	NODE_ENV=$(NODE_ENV) $(SERVER) ./build -p 3000

@@ -95,10 +95,10 @@ describe('api', () => {
             params : {}
         }
 
-        describe('for top-level resource [orgs/:slug]', () => {
+        describe('for top-level resource: orgs/:slug', () => {
             const { parseName, buildName } = api.createNameHelpers('orgs/:slug')
 
-            describe('parseName() [orgs/:slug]', () => {
+            describe('parseName()', () => {
                 it('properly parses valid names', () => {
                     expect(parseName('orgs/abc')).toEqual({
                         slug   : 'abc',
@@ -122,7 +122,7 @@ describe('api', () => {
                 })
 
                 it('properly parses names from full (maybe longer) URLs', () => {
-                    expect(parseName('/orgs/abc/projects/123/sites/xyz')).toEqual({
+                    expect(parseName('/orgs/abc/projects/123/sites/xyz?filter=active')).toEqual({
                         slug   : 'abc',
                         name   : 'orgs/abc',
                         url    : '/orgs/abc',
@@ -139,7 +139,7 @@ describe('api', () => {
                 })
             })
 
-            describe('buildName() [orgs/:slug]', () => {
+            describe('buildName()', () => {
                 it('builds name form given params', () => {
                     expect(buildName({ slug: 'abc' })).toEqual('orgs/abc')
                 })
@@ -151,10 +151,10 @@ describe('api', () => {
             })
         })
 
-        describe('for nested resource [proj/:proj/sites/:slug]', () => {
+        describe('for nested resource: proj/:proj/sites/:slug', () => {
             const { parseName, buildName } = api.createNameHelpers('proj/:proj/sites/:slug')
 
-            describe('parseName() [proj/:proj/sites/:slug]', () => {
+            describe('parseName()', () => {
                 it('properly parses valid names', () => {
                     expect(parseName('proj/abc/sites/xyz')).toEqual({
                         slug   : 'xyz',
@@ -174,7 +174,7 @@ describe('api', () => {
                 })
             })
 
-            describe('buildName() [proj/:proj/sites/:slug]', () => {
+            describe('buildName()', () => {
                 it('builds name form given params', () => {
                     expect(buildName({ proj: 'abc', slug: 'xyz' })).toEqual('proj/abc/sites/xyz')
                 })
