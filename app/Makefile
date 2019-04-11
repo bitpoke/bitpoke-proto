@@ -21,7 +21,7 @@ build:
 	NODE_ENV=$(NODE_ENV) $(REACT) build
 
 test:
-	NODE_ENV=$(NODE_ENV) $(REACT) test --env=jsdom --passWithNoTests
+	NODE_ENV=$(NODE_ENV) $(REACT) test --env=jsdom
 
 run-build: build
 	NODE_ENV=$(NODE_ENV) $(SERVER) ./build -p 3000

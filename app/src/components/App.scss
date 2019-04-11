@@ -271,7 +271,6 @@ $pt-navbar-height: $pt-grid-size * 6;
 $navbar-padding: $pt-grid-size * 3;
 
 @import "~@blueprintjs/core/src/blueprint";
-// @import "~@blueprintjs/select/src/blueprint-select";
 
 * {
     outline: none !important;
@@ -309,9 +308,6 @@ body {
 }
 
 .bp3-omnibar {
-  // filter: none;
-  // opacity: 1;
-
   $omnibar-transition-props: (
     filter: (none, none),
     opacity: (0.2, 1),
