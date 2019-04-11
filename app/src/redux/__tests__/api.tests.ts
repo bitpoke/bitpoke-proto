@@ -1,6 +1,6 @@
 import { api, grpc, sites } from '../'
 
-import { map, keys, values } from 'lodash'
+import { map, keys, values, isArray } from 'lodash'
 
 describe('api', () => {
     const { createActionDescriptor } = api
@@ -46,16 +46,43 @@ describe('api', () => {
 
         const createEntry = (name, otherProps = {}) => ({ name, ...otherProps })
         const createState = (entries) => ({ entries })
+        const createResponse = (payload) => {
+            const data = isArray(payload)
+                ? { [api.Resource.site]: payload }
+                : payload
 
-        describe('handles LIST requests', () => {
-            const createResponse = (entries) => ({
-                data: { [api.Resource.site]: entries },
+            return {
+                data,
                 error: null,
                 request: {}
-            })
-            const createResponseAction = (type, entries) => ({ type, payload: createResponse(entries) })
+            }
+        }
 
-            const initialState = { entries: {} }
+        const createDestroyResponse = (payload) => ({
+            data: null,
+            error: null,
+            request: {
+                data: payload
+            }
+        })
+
+        const createResponseAction = (type, entry) => {
+            const payload = type === actionTypes.DESTROY_SUCCEEDED
+                ? createDestroyResponse(entry)
+                : createResponse(entry)
+
+            return {
+                type,
+                payload
+            }
+        }
+
+        const existingEntry = createEntry('proj/abc/sites/x', { primaryDomain: 'x.com' })
+
+        const initialState = createState({})
+        const existingState = createState({ [existingEntry.name]: existingEntry })
+
+        describe('handles LIST requests', () => {
             const fetchedEntries = [
                 createEntry('proj/abc/sites/a'),
                 createEntry('proj/abc/sites/b'),
@@ -70,8 +97,6 @@ describe('api', () => {
             })
 
             it('merging existing entries with fetched ones', () => {
-                const existingEntry = createEntry('proj/abc/sites/x')
-                const existingState = createState({ [existingEntry.name]: existingEntry })
                 const action = createResponseAction(actionTypes.LIST_SUCCEEDED, fetchedEntries)
                 const state = reduce(existingState, action)
 
@@ -91,25 +116,12 @@ describe('api', () => {
                 expect(
                     reduce(initialState, createResponseAction(actionTypes.GET_SUCCEEDED, fetchedEntries))
                 ).toEqual(initialState)
-
-                expect(
-                    reduce(initialState, {})
-                ).toEqual(initialState)
             })
         })
 
         describe('handles GET, CREATE, UPDATE requests', () => {
-            const createResponse = (entry) => ({
-                data: entry,
-                error: null,
-                request: {}
-            })
-            const createResponseAction = (type, entry) => ({ type, payload: createResponse(entry) })
-
             it('merging existing entries with fetched entry payload', () => {
-                const existingEntry = createEntry('proj/abc/sites/x')
                 const fetchedEntry = createEntry('proj/abc/sites/y')
-                const existingState = createState({ [existingEntry.name]: existingEntry })
 
                 const action = createResponseAction(actionTypes.GET_SUCCEEDED, fetchedEntry)
                 const state = reduce(existingState, action)
@@ -119,9 +131,7 @@ describe('api', () => {
             })
 
             it('replacing keys for existing payload with updated entry payload', () => {
-                const existingEntry = createEntry('proj/abc/sites/x', { primaryDomain: 'x.com' })
                 const updatedEntry = createEntry('proj/abc/sites/x', { primaryDomain: 'y.com' })
-                const existingState = createState({ [existingEntry.name]: existingEntry })
 
                 const action = createResponseAction(actionTypes.UPDATE_SUCCEEDED, updatedEntry)
                 const state = reduce(existingState, action)
@@ -130,7 +140,6 @@ describe('api', () => {
             })
 
             it('ignoring invalid actions/payloads', () => {
-                const initialState = createState({})
                 expect(
                     reduce(initialState, createResponseAction(actionTypes.CREATE_SUCCEEDED, {}))
                 ).toEqual(initialState)
@@ -138,10 +147,21 @@ describe('api', () => {
                 expect(
                     reduce(initialState, createResponseAction(actionTypes.CREATE_FAILED, {}))
                 ).toEqual(initialState)
+            })
+        })
 
+        describe('handles DESTROY requests', () => {
+            it('removing the destroyed entry from the state', () => {
+                const action = createResponseAction(actionTypes.DESTROY_SUCCEEDED, existingEntry)
+                const state = reduce(existingState, action)
+
+                expect(state).toEqual(initialState)
+            })
+
+            it('ignoring invalid actions/payloads', () => {
                 expect(
-                    reduce(initialState, {})
-                ).toEqual(initialState)
+                    reduce(existingState, createResponseAction(actionTypes.DESTROY_FAILED, existingEntry))
+                ).toEqual(existingState)
             })
         })
     })
