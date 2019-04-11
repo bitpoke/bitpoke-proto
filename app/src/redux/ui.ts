@@ -1,7 +1,6 @@
 import { ActionType, action as createAction } from 'typesafe-actions'
 import { channel as createChannel } from 'redux-saga'
 import { takeEvery } from 'redux-saga/effects'
-import { createSelector } from 'reselect'
 import { Position, Toaster, Intent, IconName } from '@blueprintjs/core'
 
 import { get } from 'lodash'

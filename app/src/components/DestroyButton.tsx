@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { connect } from 'react-redux'
 import { Button, Alert, Intent, IButtonProps } from '@blueprintjs/core'
 
 type OwnProps = {

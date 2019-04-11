@@ -6,7 +6,7 @@ import Container from '../components/Container'
 import ProjectForm from '../components/ProjectForm'
 import ProjectDetails from '../components/ProjectDetails'
 
-import { RootState, DispatchProp, routing, organizations, projects } from '../redux'
+import { RootState, DispatchProp, routing, projects } from '../redux'
 
 type ReduxProps = {
     project: projects.IProject | null
