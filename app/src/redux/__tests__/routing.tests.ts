@@ -48,6 +48,7 @@ describe('api', () => {
 
         it('replaces path segments with given params', () => {
             expect(routeFor('organizations', { slug: 'test' })).toEqual('/orgs/test')
+            expect(routeFor('organizations', { slug: '_', action: 'new' })).toEqual('/orgs/_/new')
             expect(routeFor('organizations', { action: 'new' })).toEqual('/orgs/new')
         })
 
