@@ -7,6 +7,8 @@ import { get, isFunction } from 'lodash'
 
 import { RootState, DispatchProp, api, routing } from '../redux'
 
+import DestroyButton from '../components/DestroyButton'
+
 
 type OwnProps = {
     resourceName: api.Resource,
@@ -26,12 +28,15 @@ type ReduxProps = {
 
 type Props = OwnProps & ReduxProps & DispatchProp
 
+
 const ResourceActions: React.SFC<Props> = (props) => {
     const {
-        entry, resourceName, dispatch,
+        entry, dispatch,
         onCreate, onGenerate, onDestroy,
         minimal, withTitles, isEditing, isCreating, isHidden
     } = props
+
+    const resourceName = singular(props.resourceName)
 
     if (isHidden) {
         return null
@@ -40,7 +45,7 @@ const ResourceActions: React.SFC<Props> = (props) => {
     if (isCreating) {
         return (
             <Button
-                text={ withTitles && `Discard ${singular(resourceName)}` }
+                text={ withTitles && `Discard ${resourceName}` }
                 icon="cross"
                 intent={ Intent.PRIMARY }
                 minimal={ minimal }
@@ -54,7 +59,7 @@ const ResourceActions: React.SFC<Props> = (props) => {
             <ButtonGroup>
                 { isFunction(onCreate) && (
                     <Button
-                        text={ withTitles && `Create ${singular(resourceName)}` }
+                        text={ withTitles && `Create ${resourceName}` }
                         icon="add"
                         intent={ Intent.SUCCESS }
                         minimal={ minimal }
@@ -63,7 +68,7 @@ const ResourceActions: React.SFC<Props> = (props) => {
                 ) }
                 { isFunction(onGenerate) && (
                     <Button
-                        text={ withTitles && `Generate random ${singular(resourceName)}` }
+                        text={ withTitles && `Generate random ${resourceName}` }
                         icon="random"
                         intent={ Intent.SUCCESS }
                         minimal={ minimal }
@@ -95,7 +100,7 @@ const ResourceActions: React.SFC<Props> = (props) => {
     return (
         <ButtonGroup>
             <Button
-                text={ withTitles && `Edit ${singular(resourceName)}` }
+                text={ withTitles && `Edit ${resourceName}` }
                 icon="edit"
                 intent={ Intent.PRIMARY }
                 minimal={ minimal }
@@ -107,15 +112,13 @@ const ResourceActions: React.SFC<Props> = (props) => {
                 } }
             />
             { isFunction(onDestroy) && (
-                <Button
-                    text={ withTitles && `Delete ${singular(resourceName)}` }
-                    icon="trash"
-                    intent={ Intent.DANGER }
+                <DestroyButton
+                    text={ withTitles && `Delete ${resourceName}` }
                     minimal={ minimal }
-                    onClick={ (e: React.SyntheticEvent<EventTarget>) => {
-                        e.stopPropagation()
-                        onDestroy()
-                    } }
+                    confirmationText={
+                        `Are you sure you want to delete this ${resourceName}?\nThis action is not undoable!`
+                    }
+                    onDestroy={ () => onDestroy() }
                 />
             ) }
         </ButtonGroup>
