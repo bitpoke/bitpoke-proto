@@ -4,7 +4,7 @@ import { createSelector } from 'reselect'
 import { find, head, values as _values, get as _get, isEmpty } from 'lodash'
 
 
-import { RootState, ActionDescriptor, auth, api, grpc, routing, forms, toasts } from '../redux'
+import { RootState, ActionDescriptor, auth, api, grpc, routing, forms, ui } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
 
@@ -249,13 +249,21 @@ function* setGRPCOrganizationMetadata(action: ActionType<typeof select>) {
 function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: grpc.Response }): Iterable<any> {
     switch (type) {
         case DESTROY_SUCCEEDED: {
-            toasts.show({ intent: Intent.SUCCESS, message: 'Organization deleted' })
             yield put(routing.push(routing.routeFor('dashboard')))
+            yield put(ui.showToast({
+                message : 'Organization deleted',
+                intent  : Intent.SUCCESS,
+                icon    : 'tick-circle'
+            }))
             break
         }
 
         case DESTROY_FAILED: {
-            toasts.show({ intent: Intent.DANGER, message: 'Organization delete failed' })
+            yield put(ui.showToast({
+                message : 'Organization delete failed',
+                intent  : Intent.DANGER,
+                icon    : 'error'
+            }))
             break
         }
     }

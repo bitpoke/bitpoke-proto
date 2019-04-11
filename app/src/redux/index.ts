@@ -10,7 +10,7 @@ import * as organizations from './organizations'
 import * as projects from './projects'
 import * as sites from './sites'
 import * as data from './data'
-import toasts from './toasts'
+import * as ui from './ui'
 
 export type RootState = {
     app           : app.State,
@@ -20,7 +20,8 @@ export type RootState = {
     routing       : routing.State,
     organizations : organizations.State,
     projects      : projects.State,
-    sites         : sites.State
+    sites         : sites.State,
+    ui            : ui.State
 }
 
 export type Reducer = (state: RootState | undefined, action: AnyAction) => RootState
@@ -34,6 +35,7 @@ export type AnyAction =
     | organizations.Actions
     | projects.Actions
     | sites.Actions
+    | ui.Actions
 
 export type Selector = (state: RootState) => any
 export type ActionDescriptor = string
@@ -51,5 +53,5 @@ export {
     projects,
     sites,
     data,
-    toasts
+    ui
 }

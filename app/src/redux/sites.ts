@@ -4,7 +4,7 @@ import { createSelector } from 'reselect'
 
 import { pickBy, get as _get, head, findKey, keys, startsWith } from 'lodash'
 
-import { RootState, ActionDescriptor, api, grpc, forms, projects, routing, toasts } from '../redux'
+import { RootState, ActionDescriptor, api, grpc, forms, projects, routing, ui } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
 
@@ -170,7 +170,6 @@ const handleFormSubmission = api.createFormHandler(
 function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: grpc.Response }): Iterable<any> {
     switch (type) {
         case DESTROY_SUCCEEDED: {
-            toasts.show({ intent: Intent.SUCCESS, message: 'Site deleted' })
             const entry = payload.request.data as ISite
             const parentURL = projects.parseName(entry.name).url
 
@@ -178,11 +177,21 @@ function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: g
                 yield put(routing.push(parentURL))
             }
 
+            yield put(ui.showToast({
+                message : 'Site deleted',
+                intent  : Intent.SUCCESS,
+                icon    : 'tick-circle'
+            }))
+
             break
         }
 
         case DESTROY_FAILED: {
-            toasts.show({ intent: Intent.DANGER, message: 'Site delete failed' })
+            yield put(ui.showToast({
+                message : 'Site delete failed',
+                intent  : Intent.DANGER,
+                icon    : 'error'
+            }))
             break
         }
     }

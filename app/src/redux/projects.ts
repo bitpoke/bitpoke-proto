@@ -4,7 +4,7 @@ import { createSelector } from 'reselect'
 
 import { pickBy, get as _get } from 'lodash'
 
-import { RootState, AnyAction, ActionDescriptor, api, routing, grpc, forms, organizations, toasts } from '../redux'
+import { RootState, AnyAction, ActionDescriptor, api, routing, grpc, forms, organizations, ui } from '../redux'
 
 import { presslabs } from '@presslabs/dashboard-proto'
 
@@ -170,13 +170,21 @@ const handleFormSubmission = api.createFormHandler(
 function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: grpc.Response }): Iterable<any> {
     switch (type) {
         case DESTROY_SUCCEEDED: {
-            toasts.show({ intent: Intent.SUCCESS, message: 'Project deleted' })
             yield put(routing.push(routing.routeFor('dashboard')))
+            yield put(ui.showToast({
+                message : 'Project deleted',
+                intent  : Intent.SUCCESS,
+                icon    : 'tick-circle'
+            }))
             break
         }
 
         case DESTROY_FAILED: {
-            toasts.show({ intent: Intent.DANGER, message: 'Project delete failed' })
+            yield put(ui.showToast({
+                message : 'Project delete failed',
+                intent  : Intent.DANGER,
+                icon    : 'error'
+            }))
             break
         }
     }

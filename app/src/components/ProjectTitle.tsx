@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 
-
 import { DispatchProp, api, routing, projects } from '../redux'
 
 import TitleBar from '../components/TitleBar'
@@ -46,4 +45,3 @@ ProjectTitle.defaultProps = {
 }
 
 export default connect()(ProjectTitle)
-

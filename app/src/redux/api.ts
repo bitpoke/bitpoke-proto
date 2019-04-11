@@ -11,7 +11,7 @@ import {
     size, replace, startCase, snakeCase, toLower, has, includes, startsWith, endsWith, isEmpty
 } from 'lodash'
 
-import { RootState, AnyAction, grpc, routing, forms, toasts } from '../redux'
+import { RootState, AnyAction, grpc, routing, forms, ui } from '../redux'
 
 import { Intent } from '@blueprintjs/core'
 
@@ -218,11 +218,19 @@ export function createFormHandler(
                 yield call(resolve)
                 yield put(forms.reset(formName))
                 yield put(routing.push(routing.routeForResource(success.payload.data)))
-                toasts.show({ intent: Intent.SUCCESS, message: `${resourceName} created` })
+                yield put(ui.showToast({
+                    message : `${resourceName} created`,
+                    intent  : Intent.SUCCESS,
+                    icon    : 'tick-circle'
+                }))
             }
             else {
                 yield call(reject, new forms.SubmissionError())
-                toasts.show({ intent: Intent.DANGER, message: `${resourceName} create failed` })
+                yield put(ui.showToast({
+                    message : `${resourceName} create failed`,
+                    intent  : Intent.DANGER,
+                    icon    : 'error'
+                }))
             }
         }
         else {
@@ -237,11 +245,19 @@ export function createFormHandler(
                 yield call(resolve)
                 yield put(forms.reset(formName))
                 yield put(routing.push(routing.routeForResource(success.payload.data)))
-                toasts.show({ intent: Intent.SUCCESS, message: `${resourceName} updated` })
+                yield put(ui.showToast({
+                    message : `${resourceName} updated`,
+                    intent  : Intent.SUCCESS,
+                    icon    : 'tick-circle'
+                }))
             }
             else {
                 yield call(reject, new forms.SubmissionError())
-                toasts.show({ intent: Intent.DANGER, message: `${resourceName} update failed` })
+                yield put(ui.showToast({
+                    message : `${resourceName} update failed`,
+                    intent  : Intent.DANGER,
+                    icon    : 'error'
+                }))
             }
         }
     }
