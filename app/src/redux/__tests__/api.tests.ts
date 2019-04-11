@@ -1,5 +1,7 @@
 import { api, grpc, sites } from '../'
 
+import { map, keys, values } from 'lodash'
+
 describe('api', () => {
     const { createActionDescriptor } = api
     describe('createActionDescriptor()', () => {
@@ -7,6 +9,140 @@ describe('api', () => {
             expect(createActionDescriptor(api.Request.list, api.Status.succeeded)).toEqual('LIST_SUCCEEDED')
             expect(createActionDescriptor(api.Request.create, api.Status.requested)).toEqual('CREATE_REQUESTED')
             expect(createActionDescriptor(api.Request.update, api.Status.failed)).toEqual('UPDATE_FAILED')
+        })
+    })
+
+    const { createActionTypes } = api
+    describe('createActionTypes()', () => {
+        it('builds action types for all request types and status combinations', () => {
+            expect(createActionTypes(api.Resource.site)).toEqual({
+                LIST_REQUESTED    : '@ sites / LIST_REQUESTED',
+                LIST_SUCCEEDED    : '@ sites / LIST_SUCCEEDED',
+                LIST_FAILED       : '@ sites / LIST_FAILED',
+
+                GET_REQUESTED     : '@ sites / GET_REQUESTED',
+                GET_SUCCEEDED     : '@ sites / GET_SUCCEEDED',
+                GET_FAILED        : '@ sites / GET_FAILED',
+
+                CREATE_REQUESTED  : '@ sites / CREATE_REQUESTED',
+                CREATE_SUCCEEDED  : '@ sites / CREATE_SUCCEEDED',
+                CREATE_FAILED     : '@ sites / CREATE_FAILED',
+
+                UPDATE_REQUESTED  : '@ sites / UPDATE_REQUESTED',
+                UPDATE_SUCCEEDED  : '@ sites / UPDATE_SUCCEEDED',
+                UPDATE_FAILED     : '@ sites / UPDATE_FAILED',
+
+                DESTROY_REQUESTED : '@ sites / DESTROY_REQUESTED',
+                DESTROY_SUCCEEDED : '@ sites / DESTROY_SUCCEEDED',
+                DESTROY_FAILED    : '@ sites / DESTROY_FAILED'
+            })
+        })
+    })
+
+    const { createReducer } = api
+    describe('reduce()', () => {
+        const actionTypes = createActionTypes(api.Resource.site)
+        const reduce = createReducer(api.Resource.site, actionTypes)
+
+        const createEntry = (name, otherProps = {}) => ({ name, ...otherProps })
+        const createState = (entries) => ({ entries })
+
+        describe('handles LIST requests', () => {
+            const createResponse = (entries) => ({
+                data: { [api.Resource.site]: entries },
+                error: null,
+                request: {}
+            })
+            const createResponseAction = (type, entries) => ({ type, payload: createResponse(entries) })
+
+            const initialState = { entries: {} }
+            const fetchedEntries = [
+                createEntry('proj/abc/sites/a'),
+                createEntry('proj/abc/sites/b'),
+                createEntry('proj/abc/sites/c')
+            ]
+
+            it('storing fetched entries indexed by name', () => {
+                const action = createResponseAction(actionTypes.LIST_SUCCEEDED, fetchedEntries)
+                const state = reduce(initialState, action)
+                expect(keys(state.entries)).toEqual(map(fetchedEntries, 'name'))
+                expect(values(state.entries)).toEqual(fetchedEntries)
+            })
+
+            it('merging existing entries with fetched ones', () => {
+                const existingEntry = createEntry('proj/abc/sites/x')
+                const existingState = createState({ [existingEntry.name]: existingEntry })
+                const action = createResponseAction(actionTypes.LIST_SUCCEEDED, fetchedEntries)
+                const state = reduce(existingState, action)
+
+                expect(keys(state.entries)).toEqual([existingEntry.name, ...map(fetchedEntries, 'name')])
+                expect(values(state.entries)).toEqual([existingEntry, ...fetchedEntries])
+            })
+
+            it('ignoring invalid actions/payloads', () => {
+                expect(
+                    reduce(initialState, createResponseAction(actionTypes.LIST_SUCCEEDED, null))
+                ).toEqual(initialState)
+
+                expect(
+                    reduce(initialState, createResponseAction(actionTypes.LIST_FAILED, fetchedEntries))
+                ).toEqual(initialState)
+
+                expect(
+                    reduce(initialState, createResponseAction(actionTypes.GET_SUCCEEDED, fetchedEntries))
+                ).toEqual(initialState)
+
+                expect(
+                    reduce(initialState, {})
+                ).toEqual(initialState)
+            })
+        })
+
+        describe('handles GET, CREATE, UPDATE requests', () => {
+            const createResponse = (entry) => ({
+                data: entry,
+                error: null,
+                request: {}
+            })
+            const createResponseAction = (type, entry) => ({ type, payload: createResponse(entry) })
+
+            it('merging existing entries with fetched entry payload', () => {
+                const existingEntry = createEntry('proj/abc/sites/x')
+                const fetchedEntry = createEntry('proj/abc/sites/y')
+                const existingState = createState({ [existingEntry.name]: existingEntry })
+
+                const action = createResponseAction(actionTypes.GET_SUCCEEDED, fetchedEntry)
+                const state = reduce(existingState, action)
+
+                expect(keys(state.entries)).toEqual([existingEntry.name, fetchedEntry.name])
+                expect(values(state.entries)).toEqual([existingEntry, fetchedEntry])
+            })
+
+            it('replacing keys for existing payload with updated entry payload', () => {
+                const existingEntry = createEntry('proj/abc/sites/x', { primaryDomain: 'x.com' })
+                const updatedEntry = createEntry('proj/abc/sites/x', { primaryDomain: 'y.com' })
+                const existingState = createState({ [existingEntry.name]: existingEntry })
+
+                const action = createResponseAction(actionTypes.UPDATE_SUCCEEDED, updatedEntry)
+                const state = reduce(existingState, action)
+
+                expect(state.entries[existingEntry.name].primaryDomain).toEqual('y.com')
+            })
+
+            it('ignoring invalid actions/payloads', () => {
+                const initialState = createState({})
+                expect(
+                    reduce(initialState, createResponseAction(actionTypes.CREATE_SUCCEEDED, {}))
+                ).toEqual(initialState)
+
+                expect(
+                    reduce(initialState, createResponseAction(actionTypes.CREATE_FAILED, {}))
+                ).toEqual(initialState)
+
+                expect(
+                    reduce(initialState, {})
+                ).toEqual(initialState)
+            })
         })
     })
 

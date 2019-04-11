@@ -133,6 +133,11 @@ export function createReducer(resource: Resource, actionTypes: ActionTypes) {
             actionTypes.UPDATE_SUCCEEDED
         ], action)) {
             const entry = response.data
+
+            if (!entry.name) {
+                return state
+            }
+
             return {
                 ...state,
                 entries: {
@@ -147,6 +152,11 @@ export function createReducer(resource: Resource, actionTypes: ActionTypes) {
 
         if (isOfType(actionTypes.DESTROY_SUCCEEDED, action)) {
             const entry = response.request.data
+
+            if (!entry.name) {
+                return state
+            }
+
             return {
                 ...state,
                 entries: omit(state.entries, entry.name)
