@@ -218,10 +218,6 @@ function* decideOrganizationContext(): Iterable<any> {
 
         if (organizationFromAddress) {
             yield put(select(organizationFromAddress))
-
-            // if (!isEqual(organizationFromAddress, currentlySelected)) {
-            //     yield put(select(organizationFromAddress))
-            // }
         }
         else {
             if (currentlySelected) {
