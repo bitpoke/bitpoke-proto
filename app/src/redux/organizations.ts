@@ -74,8 +74,6 @@ export type State = {
 
 export type Actions = ActionType<typeof actions>
 
-const resource = api.Resource.organization
-
 const service = OrganizationsService.create(
     grpc.createTransport('presslabs.dashboard.organizations.v1.OrganizationsService')
 )
@@ -129,7 +127,7 @@ const actions = {
     select
 }
 
-const apiTypes = api.createActionTypes(resource)
+const apiTypes = api.createActionTypes(api.Resource.organization)
 
 export const {
     LIST_REQUESTED,    LIST_SUCCEEDED,    LIST_FAILED,
@@ -143,7 +141,7 @@ export const {
 //
 //  REDUCER
 
-const apiReducer = api.createReducer(resource, apiTypes)
+const apiReducer = api.createReducer(api.Resource.organization, apiTypes)
 
 const initialState: State = {
     ...api.initialState,
@@ -169,7 +167,7 @@ export function reducer(state: State = initialState, action: Actions) {
 //  SAGA
 
 export function* saga() {
-    yield fork(api.emitResourceActions, resource, apiTypes)
+    yield fork(api.emitResourceActions, api.Resource.organization, apiTypes)
     yield fork(forms.takeEverySubmission, forms.Name.organization, handleFormSubmission)
     yield takeLatest(SELECTED, setGRPCOrganizationMetadata)
     yield takeLatest([
@@ -272,7 +270,7 @@ function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: g
 //
 //  SELECTORS
 
-const selectors = api.createSelectors(resource)
+const selectors = api.createSelectors(api.Resource.organization)
 
 export const getState:  (state: RootState) => State = selectors.getState
 export const getAll:    (state: RootState) => api.ResourcesList<IOrganization> = selectors.getAll
