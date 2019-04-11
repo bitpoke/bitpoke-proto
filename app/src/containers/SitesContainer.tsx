@@ -2,19 +2,16 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import { Switch, Route } from 'react-router-dom'
 
-
 import Container from '../components/Container'
 import ProjectTitle from '../components/ProjectTitle'
 import SiteForm from '../components/SiteForm'
 import SiteDetails from '../components/SiteDetails'
 
-import { RootState, DispatchProp, routing, sites, projects, organizations } from '../redux'
+import { RootState, DispatchProp, routing, sites, projects } from '../redux'
 
 type ReduxProps = {
     site: sites.ISite | null,
-    project: projects.IProject | null,
-    currentOrganization: organizations.IOrganization | null,
-    currentRoute: routing.Route
+    project: projects.IProject | null
 }
 
 type Props = ReduxProps & DispatchProp
@@ -57,8 +54,6 @@ const SitesContainer: React.SFC<Props> = (props) => {
 
 function mapStateToProps(state: RootState): ReduxProps {
     return {
-        currentRoute: routing.getCurrentRoute(state),
-        currentOrganization: organizations.getCurrent(state),
         project: projects.getForCurrentURL(state),
         site: sites.getForCurrentURL(state)
     }

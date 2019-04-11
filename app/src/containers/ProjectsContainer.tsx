@@ -2,7 +2,6 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import { Switch, Route } from 'react-router-dom'
 
-
 import Container from '../components/Container'
 import ProjectForm from '../components/ProjectForm'
 import ProjectDetails from '../components/ProjectDetails'
@@ -10,9 +9,7 @@ import ProjectDetails from '../components/ProjectDetails'
 import { RootState, DispatchProp, routing, organizations, projects } from '../redux'
 
 type ReduxProps = {
-    project: projects.IProject | null,
-    currentOrganization: organizations.IOrganization | null,
-    currentRoute: routing.Route
+    project: projects.IProject | null
 }
 
 type Props = ReduxProps & DispatchProp
@@ -20,29 +17,25 @@ type Props = ReduxProps & DispatchProp
 const ProjectsContainer: React.SFC<Props> = (props) => {
     const { project } = props
 
-    if (!project) {
-        return (
-            <Container>
-                <ProjectForm initialValues={ {} } />
-            </Container>
-        )
-    }
-
     return (
         <Container>
             <Switch>
                 <Route
-                    path={ routing.routeForResource(project, { action: 'edit' }) }
-                    render={ () => <ProjectForm initialValues={ { project } } /> }
+                    path={ routing.routeFor('projects', { slug: '_', action: 'new' }) }
+                    render={ () => <ProjectForm initialValues={ {} } /> }
                 />
-                <Route
-                    path={ routing.routeForResource(project, { action: 'edit' }) }
-                    render={ () => <ProjectForm initialValues={ { project } } /> }
-                />
-                <Route
-                    path={ routing.routeForResource(project) }
-                    render={ () => <ProjectDetails entry={ project } /> }
-                />
+                { project && (
+                    <Route
+                        path={ routing.routeForResource(project, { action: 'edit' }) }
+                        render={ () => <ProjectForm initialValues={ { project } } /> }
+                    />
+                ) }
+                { project && (
+                    <Route
+                        path={ routing.routeForResource(project) }
+                        render={ () => <ProjectDetails entry={ project } /> }
+                    />
+                ) }
             </Switch>
         </Container>
     )
@@ -50,8 +43,6 @@ const ProjectsContainer: React.SFC<Props> = (props) => {
 
 function mapStateToProps(state: RootState): ReduxProps {
     return {
-        currentRoute: routing.getCurrentRoute(state),
-        currentOrganization: organizations.getCurrent(state),
         project: projects.getForCurrentURL(state)
     }
 }
