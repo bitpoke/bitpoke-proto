@@ -8,15 +8,12 @@ which is part of this source code package.
 package sync
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"golang.org/x/oauth2/google"
-	iam "google.golang.org/api/iam/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -24,26 +21,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/dashboard/pkg/internal/gcloud/serviceaccount"
 	"github.com/presslabs/dashboard/pkg/internal/projectns"
 )
-
-// deleteServiceAccount deletes a service account.
-func deleteServiceAccount(email string) error {
-	client, err := google.DefaultClient(context.Background(), iam.CloudPlatformScope)
-	if err != nil {
-		return fmt.Errorf("google.DefaultClient: %v", err)
-	}
-	service, err := iam.New(client)
-	if err != nil {
-		return fmt.Errorf("iam.New: %v", err)
-	}
-
-	_, err = service.Projects.ServiceAccounts.Delete("projects/-/serviceAccounts/" + email).Do()
-	if err != nil {
-		return fmt.Errorf("Projects.ServiceAccounts.Delete: %v", err)
-	}
-	return nil
-}
 
 var _ = Describe("GCloudServiceAccountSyncer", func() {
 	var (
@@ -86,7 +66,7 @@ var _ = Describe("GCloudServiceAccountSyncer", func() {
 	})
 
 	AfterEach(func() {
-		Expect(deleteServiceAccount(string(gcloudSASecret.Data["SERVICE_ACCOUNT_MAIL"]))).To(Succeed())
+		Expect(serviceaccount.DeleteServiceAccount(string(gcloudSASecret.Data["SERVICE_ACCOUNT_MAIL"]))).To(Succeed())
 	})
 
 	It("reconciles the GCloud Service Account Secret", func() {

@@ -48,7 +48,7 @@ var (
 	// nolint: gosec
 	SMTPSecret = "smtp-defaults"
 
-	// GCloudProjectID is the project if for gcloud service account
+	// GCloudProjectID is the project id of the gcloud service account
 	GCloudProjectID = ""
 )
 
