@@ -24,6 +24,7 @@
     "ordered-imports": false,
     "import-name": false,
     "no-submodule-imports": false,
+    "no-implicit-dependencies": [true, "dev"],
 
     "jsx-no-lambda": false,
     "jsx-curly-spacing": [true, "always"],

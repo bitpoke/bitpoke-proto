@@ -1,6 +1,8 @@
-import { api, grpc, sites } from '../'
+import { expectSaga } from 'redux-saga-test-plan'
+import { put } from 'redux-saga/effects'
+import { map, reduce, keys, values, size, isArray } from 'lodash'
 
-import { map, reduce, keys, values, isArray } from 'lodash'
+import { api, grpc, sites } from '../'
 
 describe('api', () => {
     const { createActionDescriptor } = api
@@ -249,6 +251,72 @@ describe('api', () => {
                 expect(getByName('proj/abc/sites')(state)).toEqual(null)
                 expect(getByName('proj/abc/sites/xx')(state)).toEqual(null)
                 expect(getByName('/orgs/123/proj/abc/sites/xyz')(state)).toEqual(null)
+            })
+        })
+    })
+
+    describe('saga()', () => {
+        const { emitResourceAction } = api
+        describe('emitResourceAction()', () => {
+            const actionTypes = createActionTypes(api.Resource.site)
+
+            const createRequest = (method) => ({
+                method,
+                data: {},
+                service: {}
+            })
+
+            const createResponse = (method) => ({
+                data: {},
+                error: null,
+                request: createRequest(method)
+            })
+
+            describe('emits resource specific actions based on base gRPC action', () => {
+                it('for REQUESTED actions', () => {
+                    const request = createRequest('listSites')
+                    const action = grpc.invoke(request)
+
+                    return expectSaga(emitResourceAction, api.Resource.site, actionTypes, action)
+                        .put({
+                            type: actionTypes.LIST_REQUESTED,
+                            payload: request
+                        })
+                        .run()
+                })
+
+                it('for SUCCEEDED actions', () => {
+                    const response = createResponse('listSites')
+                    const action = grpc.success(response)
+
+                    return expectSaga(emitResourceAction, api.Resource.site, actionTypes, action)
+                        .put({
+                            type: actionTypes.LIST_SUCCEEDED,
+                            payload: response
+                        })
+                        .run()
+                })
+
+                it('for FAILED actions', () => {
+                    const response = createResponse('listSites')
+                    const action = grpc.fail(response)
+
+                    return expectSaga(emitResourceAction, api.Resource.site, actionTypes, action)
+                        .put({
+                            type: actionTypes.LIST_FAILED,
+                            payload: response
+                        })
+                        .run()
+                })
+
+                it("ignoring other resource's requests/responses", () => {
+                    const response = createResponse('listOrganizations')
+                    const action = grpc.success(response)
+
+                    return expectSaga(emitResourceAction, api.Resource.site, actionTypes, action)
+                        .run()
+                        .then(({ effects }) => expect(size(effects.put)).toEqual(0))
+                })
             })
         })
     })
