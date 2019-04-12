@@ -1,0 +1,353 @@
+$ns: bp3;
+
+$pt-grid-size: 10px;
+$pt-border-radius: 5px;
+$pt-font-family: "Nunito Sans", sans-serif;
+
+$black: #10161a;
+
+$dark-gray1: #182026;
+$dark-gray2: #202b33;
+$dark-gray3: #293742;
+$dark-gray4: #30404d;
+$dark-gray5: #394b59;
+
+$gray1: #5c7080;
+$gray2: #738694;
+$gray3: #8a9ba8;
+$gray4: #a7b6c2;
+$gray5: #bfccd6;
+
+$light-gray1: #ced9e0;
+$light-gray2: #d8e1e8;
+$light-gray3: #e1e8ed;
+$light-gray4: #ebf1f5;
+$light-gray5: #f5f8fa;
+
+$white: #ffffff;
+
+// Core colors
+
+$blue1: #0e5a8a;
+$blue2: #106ba3;
+$blue3: #137cbd;
+$blue4: #2b95d6;
+$blue5: #48aff0;
+
+$green1: #359936;
+$green2: #47C944;
+$green3: #7ED97C;
+$green4: #B5E9B4;
+$green5: #ECF9EC;
+
+$orange1: #a66321;
+$orange2: #bf7326;
+$orange3: #d9822b;
+$orange4: #f29d49;
+$orange5: #ffb366;
+
+$red1: #a82a2a;
+$red2: #c23030;
+$red3: #db3737;
+$red4: #f55656;
+$red5: #ff7373;
+
+// Extended colors
+
+$vermilion1: #9e2b0e;
+$vermilion2: #b83211;
+$vermilion3: #d13913;
+$vermilion4: #eb532d;
+$vermilion5: #ff6e4a;
+
+$rose1: #a82255;
+$rose2: #c22762;
+$rose3: #db2c6f;
+$rose4: #f5498b;
+$rose5: #ff66a1;
+
+$violet1: #5c255c;
+$violet2: #752f75;
+$violet3: #8f398f;
+$violet4: #a854a8;
+$violet5: #c274c2;
+
+$indigo1: #5642a6;
+$indigo2: #634dbf;
+$indigo3: #7157d9;
+$indigo4: #9179f2;
+$indigo5: #ad99ff;
+
+$cobalt1: #1f4b99;
+$cobalt2: #2458b3;
+$cobalt3: #2965cc;
+$cobalt4: #4580e6;
+$cobalt5: #669eff;
+
+$turquoise1: #008075;
+$turquoise2: #00998c;
+$turquoise3: #00b3a4;
+$turquoise4: #14ccbd;
+$turquoise5: #2ee6d6;
+
+$forest1: #1d7324;
+$forest2: #238c2c;
+$forest3: #29a634;
+$forest4: #43bf4d;
+$forest5: #62d96b;
+
+$lime1: #728c23;
+$lime2: #87a629;
+$lime3: #9bbf30;
+$lime4: #b6d94c;
+$lime5: #d1f26d;
+
+$gold1: #a67908;
+$gold2: #bf8c0a;
+$gold3: #d99e0b;
+$gold4: #f2b824;
+$gold5: #ffc940;
+
+$sepia1: #63411e;
+$sepia2: #7d5125;
+$sepia3: #96622d;
+$sepia4: #b07b46;
+$sepia5: #c99765;
+
+$pt-intent-primary: $green2;
+$pt-intent-success: $green3;
+$pt-intent-warning: $gold4;
+$pt-intent-danger: $red3;
+
+$pt-app-background-color: $light-gray5;
+$pt-dark-app-background-color: $dark-gray3;
+$pt-icon-color: $gray3;
+
+$card-padding: $pt-grid-size * 4;
+
+$pt-outline-color: rgba($blue3, 0.6);
+
+$pt-divider-black: rgba($black, 0.15);
+$pt-dark-divider-black: rgba($black, 0.4);
+$pt-dark-divider-white: rgba($white, 0.15);
+
+$pt-border-shadow-opacity: 0;
+$pt-drop-shadow-opacity: 0.1;
+$pt-dark-border-shadow-opacity: $pt-border-shadow-opacity * 2;
+$pt-dark-drop-shadow-opacity: $pt-drop-shadow-opacity * 2;
+
+@function border-shadow($alpha, $color: $black, $size: 1px) {
+  @return 0 0 0 $size rgba($color, $alpha);
+}
+
+$pt-elevation-shadow-0: 0 0 0 rgba($black, 0);
+$pt-elevation-shadow-1: 0 1px 1px rgba($black, $pt-drop-shadow-opacity);
+$pt-elevation-shadow-2: 0 2px 6px rgba($black, $pt-drop-shadow-opacity);
+$pt-elevation-shadow-3: 0 8px 24px rgba($black, $pt-drop-shadow-opacity);
+$pt-elevation-shadow-4: 0 18px 46px 6px rgba($black, $pt-drop-shadow-opacity);
+
+$pt-dark-elevation-shadow-0: 0 0 0 rgba($black, 0);
+$pt-dark-elevation-shadow-1: 0 1px 1px rgba($black, $pt-dark-drop-shadow-opacity);
+$pt-dark-elevation-shadow-2: 0 2px 6px rgba($black, $pt-dark-drop-shadow-opacity);
+$pt-dark-elevation-shadow-3: 0 8px 24px rgba($black, $pt-dark-drop-shadow-opacity);
+$pt-dark-elevation-shadow-4: 0 18px 46px 6px rgba($black, $pt-dark-drop-shadow-opacity);
+
+$pt-text-color: $dark-gray1;
+$pt-text-color-muted: $gray1;
+$pt-text-color-disabled: rgba($pt-text-color-muted, 0.5);
+$pt-heading-color: $pt-text-color;
+$pt-link-color: $blue2;
+$pt-dark-text-color: $light-gray5;
+$pt-dark-text-color-muted: $gray5;
+$pt-dark-text-color-disabled: rgba($pt-dark-text-color-muted, 0.5);
+$pt-dark-heading-color: $pt-dark-text-color;
+$pt-dark-link-color: $blue5;
+// Default text selection color using #7dbcff
+$pt-text-selection-color: rgba(125, 188, 255, 0.6);
+
+$pt-icon-color: $pt-text-color-muted;
+$pt-icon-color-hover: $pt-text-color;
+$pt-icon-color-disabled: $pt-text-color-disabled;
+$pt-icon-color-selected: $pt-intent-primary;
+$pt-dark-icon-color: $pt-dark-text-color-muted;
+$pt-dark-icon-color-hover: $pt-dark-text-color;
+$pt-dark-icon-color-disabled: $pt-dark-text-color-disabled;
+$pt-dark-icon-color-selected: $pt-intent-primary;
+
+$pt-divider-black: rgba($black, 0.15);
+$pt-dark-divider-black: rgba($black, 0.4);
+$pt-dark-divider-white: rgba($white, 0.15);
+
+$pt-code-text-color: $pt-text-color-muted;
+$pt-dark-code-text-color: $pt-dark-text-color-muted;
+$pt-code-background-color: rgba($white, 0.7);
+$pt-dark-code-background-color: rgba($black, 0.3);
+
+$button-border-width: 0;
+$button-gradient: none;
+$button-intent-gradient: none;
+$dark-button-gradient: none;
+
+$button-box-shadow: none;
+$button-box-shadow-active: none;
+$button-intent-box-shadow: none;
+$button-intent-box-shadow-active: none;
+
+$button-padding: ($pt-grid-size / 2) $pt-grid-size*2;
+$button-padding-small: 0 ($pt-grid-size * 0.7)*2;
+$button-padding-large: ($pt-grid-size / 2) $pt-grid-size;
+
+// "intent": (default, hover, active colors)
+$button-intents: (
+  "primary": ($pt-intent-primary, $green3, $green4),
+  "success": ($pt-intent-success, $green4, $green4),
+  "warning": ($light-gray4, $light-gray3, $light-gray2),
+  "danger": ($pt-intent-danger, $red4, $red4)
+);
+
+$minimal-button-background-color: none;
+$minimal-button-background-color-hover: $light-gray5;
+$minimal-button-background-color-active: $light-gray4;
+
+
+
+
+$pt-font-size: $pt-grid-size * 1.4;
+$pt-font-size-large: $pt-grid-size * 1.6;
+$pt-font-size-small: $pt-grid-size * 1.2;
+
+$half-grid-size: $pt-grid-size / 2 !default;
+
+$menu-item-border-radius: 0;
+
+// Set line-height of menu items to be a multiple of the font size. This is
+// needed because if the line-height does not extend far enough past the font's
+// baseline, clipping will occur when the .#{$ns}-text-overflow-ellipsis class is
+// applied to it (#2177). Also, line-height should be an even value, or content
+// will be misaligned by one pixel (Chrome quirk).
+$menu-item-line-height-factor: 1.4;
+$menu-item-line-height: round($pt-font-size * $menu-item-line-height-factor);
+$menu-item-line-height-large: round($pt-font-size-large * $menu-item-line-height-factor);
+
+$pt-icon-size-standard: 16px;
+$pt-icon-size-large: 20px;
+
+$pt-button-height: $pt-grid-size * 3;
+$pt-button-height-small: $pt-grid-size * 2.4 !default;
+$pt-button-height-smaller: $pt-grid-size * 2 !default;
+$pt-button-height-large: $pt-grid-size * 4 !default;
+
+$menu-min-width: $pt-grid-size * 18 !default;
+$menu-item-padding: ($pt-button-height - $pt-icon-size-standard);
+$menu-item-padding-large: ($pt-button-height-large - $pt-icon-size-large) !default;
+$menu-item-padding-vertical: ($pt-button-height - $menu-item-line-height) / 2 !default;
+$menu-item-padding-vertical-large:
+  ($pt-button-height-large - $menu-item-line-height-large) / 2 !default;
+
+$menu-background-color: $white !default;
+$dark-menu-background-color: $dark-gray4 !default;
+
+$minimal-button-divider-width: 1px !default;
+$minimal-button-background-color: none !default;
+$minimal-button-background-color-hover: rgba($gray4, 0.3) !default;
+$minimal-button-background-color-active: rgba($gray2, 0.3) !default;
+$dark-minimal-button-background-color: none !default;
+$dark-minimal-button-background-color-hover: rgba($gray3, 0.15) !default;
+$dark-minimal-button-background-color-active: rgba($gray3, 0.3) !default;
+
+$menu-item-color-active: $light-gray4;
+$menu-item-color-hover: $light-gray5;
+$pt-divider-black: $light-gray4;
+
+
+$dark-menu-item-color-hover: $dark-minimal-button-background-color-hover !default;
+$dark-menu-item-color-active: $dark-minimal-button-background-color-active !default;
+
+$omnibar-height: 60vh !default;
+$omnibar-width: $pt-grid-size * 30 !default;
+$omnibar-input-height: $pt-grid-size * 4;
+
+$pt-navbar-height: $pt-grid-size * 6;
+$navbar-padding: $pt-grid-size * 3;
+
+@import "~@blueprintjs/core/src/blueprint";
+
+* {
+    outline: none !important;
+}
+
+.bp3-button {
+  font-weight: 700;
+}
+
+body {
+  background: $pt-app-background-color;
+  padding-top: $pt-navbar-height; // because of navbar stickToTop
+  overflow-y: scroll;
+}
+
+.bp3-center {
+  text-align: center;
+}
+
+.bp3-menu {
+  padding-left: 0;
+  padding-right: 0;
+  color: $gray1;
+}
+
+.bp3-menu-divider {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.bp3-button.bp3-large.bp3-intent-primary {
+  border-radius: 30px;
+  padding-left: $pt-grid-size*3;
+  padding-right: $pt-grid-size*3;
+}
+
+.bp3-omnibar {
+  $omnibar-transition-props: (
+    filter: (none, none),
+    opacity: (0.2, 1),
+  );
+  @include react-transition(
+    "#{$ns}-overlay",
+    $omnibar-transition-props,
+    $duration: $pt-transition-duration * 2,
+    $easing: $pt-transition-ease,
+    $before: "&"
+  );
+}
+
+.bp3-intent-warning .bp3-button-text {
+  color: $gray2;
+}
+.bp3-button.bp3-intent-warning {
+  padding-left: 20px;
+  padding-right: 20px;
+  border-radius: 30px;
+
+  .bp3-icon {
+    color: $green2 !important;
+  }
+}
+
+.project-title {
+  margin: 0;
+}
+
+.bp3-project-select .bp3-button {
+  background-color: #FFFFFF;
+
+  &:hover {
+    background-color: $light-gray5;
+  }
+}
+
+.bp3-select-popover .bp3-popover-content .bp3-menu {
+  margin-left: -5px;
+  margin-right: -5px;
+  width: auto;
+}

@@ -1,21 +1,24 @@
 import { ActionType, action as createAction } from 'typesafe-actions'
-import { takeEvery, select } from 'redux-saga/effects'
+import { takeEvery, select, put, call } from 'redux-saga/effects'
 import { channel as createChannel } from 'redux-saga'
 import { User as Token, UserManager } from 'oidc-client'
 import { createSelector } from 'reselect'
 
+import { join, pick } from 'lodash'
 
 import config from '../config'
 
-import { join, pick } from 'lodash'
-
-import { RootState, app, routing } from '../redux'
+import { RootState, app, routing, grpc } from '../redux'
 import { watchChannel } from '../utils'
 
 //
 //  TYPES
 
-export type State = Token | null
+export type State = {
+    token: Token | null
+    isAccessGranted: boolean
+}
+
 export type Actions = ActionType<typeof actions>
 
 export type User = {
@@ -34,33 +37,50 @@ export const LOGIN_SUCCEEDED         = '@ auth / LOGIN_SUCCEEDED'
 export const LOGIN_FAILED            = '@ auth / LOGIN_FAILED'
 export const LOGOUT_REQUESTED        = '@ auth / LOGOUT_REQUESTED'
 export const TOKEN_REFRESH_REQUESTED = '@ auth / TOKEN_REFRESH_REQUESTED'
+export const ACCESS_GRANTED          = '@ auth / ACCESS_GRANTED'
 
 export const loginSuccess = (token: Token) => createAction(LOGIN_SUCCEEDED, token)
 export const loginFailure = (error: any) => createAction(LOGIN_FAILED, error)
-export const logout = () => createAction(LOGOUT_REQUESTED)
+export const logout       = () => createAction(LOGOUT_REQUESTED)
 export const refreshToken = () => createAction(TOKEN_REFRESH_REQUESTED)
+export const grantAccess  = () => createAction(ACCESS_GRANTED)
 
 const actions = {
     logout,
     loginSuccess,
     loginFailure,
-    refreshToken
+    refreshToken,
+    grantAccess
 }
 
 
 //
 //  REDUCER
 
-const initialState: State = null
+const initialState: State = {
+    token: null,
+    isAccessGranted: false
+}
+
 export function reducer(state: State = initialState, action: Actions) {
     switch (action.type) {
         case LOGIN_SUCCEEDED: {
-            return action.payload
+            return {
+                ...state,
+                token: action.payload
+            }
         }
 
         case LOGIN_FAILED:
         case LOGOUT_REQUESTED: {
             return null
+        }
+
+        case ACCESS_GRANTED: {
+            return {
+                ...state,
+                isAccessGranted: true
+            }
         }
 
         default:
@@ -80,14 +100,17 @@ export function* saga() {
     yield takeEvery(routing.ROUTE_CHANGED, ensureAuthentication)
     yield takeEvery([LOGIN_SUCCEEDED, LOGIN_FAILED, LOGOUT_REQUESTED], redirectToDashboard)
     yield takeEvery(TOKEN_REFRESH_REQUESTED, handleTokenRefresh)
+    yield takeEvery([
+        app.INITIALIZED,
+        LOGIN_SUCCEEDED
+    ], grantAccessIfRequired)
     yield watchChannel(channel)
 }
 
-function* ensureAuthentication(action: ActionType<typeof app.initialize>) {
-    const userIsAuthenticated = yield select(isAuthenticated)
+function* ensureAuthentication(action: ActionType<typeof routing.updateRoute>) {
+    const hasToken = yield select(hasValidToken)
     const route = yield select(routing.getCurrentRoute)
-
-    if (userIsAuthenticated) {
+    if (hasToken) {
         provider.startSilentRenew()
         return
     }
@@ -97,15 +120,24 @@ function* ensureAuthentication(action: ActionType<typeof app.initialize>) {
         return
     }
 
-    if (!userIsAuthenticated) {
+    if (!hasToken) {
         provider.signinRedirect()
     }
 
     return
 }
 
+function* grantAccessIfRequired() {
+    const hasToken = yield select(hasValidToken)
+    if (hasToken) {
+        yield call(setGRPCAuthorizationMetadata)
+        yield put(grantAccess())
+    }
+}
+
 function handleAuthenticationIfRequired(action: ActionType<typeof routing.updateRoute>) {
-    if (hasAuthenticationPayload(action.payload)) {
+    const { pathname } = action.payload
+    if (hasAuthenticationPayload(pathname)) {
         provider.signinRedirectCallback()
     }
 }
@@ -114,8 +146,16 @@ function handleTokenRefresh(action: ActionType<typeof refreshToken>) {
     provider.signinSilent()
 }
 
-function redirectToDashboard() {
-    routing.push(routing.routeFor('dashboard'))
+function* redirectToDashboard() {
+    yield put(routing.push(routing.routeFor('dashboard')))
+}
+
+function* setGRPCAuthorizationMetadata() {
+    const tokenPayload = yield select(getTokenPayload)
+    yield put(grpc.setMetadata({
+        key: 'Authorization',
+        value: tokenPayload
+    }))
 }
 
 
@@ -132,10 +172,10 @@ const provider = new UserManager({
     automaticSilentRenew : true
 })
 
-provider.events.addUserLoaded((user) => {
-    user && !user.expired
-        ? channel.put(loginSuccess(user))
-        : channel.put(loginFailure(user))
+provider.events.addUserLoaded((token) => {
+    token && !token.expired
+        ? channel.put(loginSuccess(token))
+        : channel.put(loginFailure(token))
 })
 provider.events.addUserUnloaded(() => channel.put(logout()))
 provider.events.addUserSignedOut(() => channel.put(logout()))
@@ -145,7 +185,7 @@ function hasAuthenticationPayload(path: string) {
     return /access_token|id_token|error/.test(path)
 }
 
-function tokenIsValid(token: State) {
+function tokenIsValid(token: Token | null) {
     if (!token || !token.expires_at) {
         return false
     }
@@ -169,15 +209,23 @@ function normalizeProfile(token: Token) {
 //  SELECTORS
 
 export const getState = (state: RootState): State => state.auth
-export const getAuthorizationHeader = createSelector(
+export const getToken = createSelector(
     getState,
-    (state) => state ? join([state.token_type, state.id_token], ' ') : null
+    (state) => state.token
+)
+export const getTokenPayload = createSelector(
+    getToken,
+    (token) => token ? join([token.token_type, token.id_token], ' ') : null
 )
 export const getCurrentUser = createSelector(
-    getState,
-    (state) => state ? normalizeProfile(state) : null
+    getToken,
+    (token) => token ? normalizeProfile(token) : null
+)
+export const hasValidToken = createSelector(
+    getToken,
+    (token) => token ? tokenIsValid(token) : false
 )
 export const isAuthenticated = createSelector(
-    getState,
-    (state) => tokenIsValid(state)
+    [hasValidToken, getState],
+    (hasToken, state) => hasToken && state.isAccessGranted
 )

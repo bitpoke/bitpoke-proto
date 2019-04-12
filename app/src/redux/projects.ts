@@ -1,110 +1,217 @@
-import { ActionType, action as createAction } from 'typesafe-actions'
-import { takeEvery, select } from 'redux-saga/effects'
-import { channel as createChannel } from 'redux-saga'
-import { grpc } from 'grpc-web-client'
+import { ActionType } from 'typesafe-actions'
+import { takeEvery, fork, put } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
 
-import config from '../config'
-import { watchChannel } from '../utils'
-import { RootState, auth } from '../redux'
+import { pickBy } from 'lodash'
 
-import { ListRequest } from '../proto/presslabs/dashboard/meta/v1/list_pb'
-import { Project } from '../proto/presslabs/dashboard/core/v1/project_pb'
-import { Projects } from '../proto/presslabs/dashboard/core/v1/project_pb_service'
+import { RootState, AnyAction, ActionDescriptor, api, routing, grpc, forms, organizations, ui } from '../redux'
 
-const host: string = config.REACT_APP_API_URL || 'http://localhost:8080'
+import { presslabs } from '@presslabs/dashboard-proto'
+
+import { Intent } from '@blueprintjs/core'
+
+const {
+    Project,
+    ProjectsService,
+    ListProjectsRequest,
+    ListProjectsResponse,
+    GetProjectRequest,
+    CreateProjectRequest,
+    UpdateProjectRequest,
+    DeleteProjectRequest
+} = presslabs.dashboard.projects.v1
+
+export {
+    Project,
+    ProjectsService,
+    ListProjectsRequest,
+    ListProjectsResponse,
+    GetProjectRequest,
+    CreateProjectRequest,
+    UpdateProjectRequest,
+    DeleteProjectRequest
+}
 
 
 //
 //  TYPES
 
-export type State = {
-    readonly entries: ProjectsList
+export type ProjectName = string
+export interface IProject extends presslabs.dashboard.projects.v1.IProject {
+    name: ProjectName
 }
-export type Actions = ActionType<typeof actions>
-export { Project }
 
-export type ProjectsList = {
-    [id: string]: Project;
-}
+export type Project =
+    presslabs.dashboard.projects.v1.Project
+
+export type IProjectPayload =
+    presslabs.dashboard.projects.v1.IProject
+
+export type ListProjectsResponse =
+    presslabs.dashboard.projects.v1.ListProjectsRequest
+
+export type IListProjectsRequest =
+    presslabs.dashboard.projects.v1.IListProjectsRequest
+
+export type IGetProjectRequest =
+    presslabs.dashboard.projects.v1.IGetProjectRequest
+
+export type ICreateProjectRequest =
+    presslabs.dashboard.projects.v1.ICreateProjectRequest
+
+export type IUpdateProjectRequest =
+    presslabs.dashboard.projects.v1.IUpdateProjectRequest
+
+export type IDeleteProjectRequest =
+    presslabs.dashboard.projects.v1.IDeleteProjectRequest
+
+export type IListProjectsResponse =
+    presslabs.dashboard.projects.v1.IListProjectsResponse
+
+export type State = api.State<IProject>
+export type Actions = ActionType<typeof actions>
+
+const service = ProjectsService.create(
+    grpc.createTransport('presslabs.dashboard.projects.v1.ProjectsService')
+)
+
+export const { parseName, buildName } = api.createNameHelpers('project/:slug')
+
 
 //
 //  ACTIONS
 
-export const LIST_REQUESTED = '@ projects / LIST_REQUESTED'
-export const LIST_SUCCEEDED = '@ projects / LIST_SUCCEEDED'
+export const get = (payload: IGetProjectRequest) => grpc.invoke({
+    service,
+    method : 'getProject',
+    data   : GetProjectRequest.create(payload)
+})
 
-export const RECEIVED       = '@ projects / RECEIVED'
+export const list = (payload?: IListProjectsRequest) => grpc.invoke({
+    service,
+    method : 'listProjects',
+    data   : ListProjectsRequest.create(payload)
+})
 
-export const list = () => createAction(LIST_REQUESTED)
-export const receive = (entry: Project) => createAction(RECEIVED, entry)
+export const create = (payload: ICreateProjectRequest) => grpc.invoke({
+    service,
+    method : 'createProject',
+    data   : CreateProjectRequest.create(payload)
+})
 
-const listRequest = {
-    service: Projects.List,
-    request: new ListRequest()
-}
+export const update = (payload: IUpdateProjectRequest) => grpc.invoke({
+    service,
+    method : 'updateProject',
+    data   : UpdateProjectRequest.create(payload)
+})
+
+export const destroy = (payload: IProjectPayload) => grpc.invoke({
+    service,
+    method : 'deleteProject',
+    data   : DeleteProjectRequest.create(payload)
+})
 
 const actions = {
+    get,
     list,
-    receive
+    create,
+    update,
+    destroy
 }
+
+const apiTypes = api.createActionTypes(api.Resource.project)
+
+export const {
+    LIST_REQUESTED,    LIST_SUCCEEDED,    LIST_FAILED,
+    GET_REQUESTED,     GET_SUCCEEDED,     GET_FAILED,
+    CREATE_REQUESTED,  CREATE_SUCCEEDED,  CREATE_FAILED,
+    UPDATE_REQUESTED,  UPDATE_SUCCEEDED,  UPDATE_FAILED,
+    DESTROY_REQUESTED, DESTROY_SUCCEEDED, DESTROY_FAILED
+} = apiTypes
 
 
 //
 //  REDUCER
 
-const initialState: State = {
-    entries: {}
-}
+const apiReducer = api.createReducer(api.Resource.project, apiTypes)
 
-export function reducer(state: State = initialState, action: Actions) {
+export function reducer(state: State = api.initialState, action: AnyAction) {
     switch (action.type) {
-        case RECEIVED: {
-            const project = action.payload
-            return {
-                ...state,
-                entries: {
-                    ...state.entries,
-                    [project.getId()]: project
-                }
-            }
+        case organizations.DESTROY_SUCCEEDED: {
+            return api.initialState
         }
+
+        default:
+            return apiReducer(state, action)
     }
 
-    return state
 }
 
 
 //
 //  SAGA
 
-const channel = createChannel()
-
 export function* saga() {
-    yield takeEvery(LIST_REQUESTED, performRequest)
-    yield watchChannel(channel)
+    yield fork(api.emitResourceActions, api.Resource.project, apiTypes)
+    yield fork(forms.takeEverySubmission, forms.Name.project, handleFormSubmission)
+    yield takeEvery([
+        DESTROY_SUCCEEDED,
+        DESTROY_FAILED
+    ], handleDeletion)
 }
 
-function* performRequest(action: ActionType<typeof list>) {
-    const authorization = yield select(auth.getAuthorizationHeader)
-    grpc.invoke(listRequest.service, {
-        host,
-        request: listRequest.request,
-        metadata: { authorization },
-        onMessage: (response: Project) =>
-            channel.put(receive(response)),
-        onEnd: () =>
-            console.log('ONEND!'),
-        debug: true
-    })
-}
+const handleFormSubmission = api.createFormHandler(
+    forms.Name.project,
+    api.Resource.project,
+    apiTypes,
+    actions
+)
 
+function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: grpc.Response }): Iterable<any> {
+    switch (type) {
+        case DESTROY_SUCCEEDED: {
+            yield put(routing.push(routing.routeFor('dashboard')))
+            yield put(ui.showToast({
+                message : 'Project deleted',
+                intent  : Intent.SUCCESS,
+                icon    : 'tick-circle'
+            }))
+            break
+        }
+
+        case DESTROY_FAILED: {
+            yield put(ui.showToast({
+                message : 'Project delete failed',
+                intent  : Intent.DANGER,
+                icon    : 'error'
+            }))
+            break
+        }
+    }
+}
 
 //
 //  SELECTORS
 
-export const getState = (state: RootState): State => state.projects
-export const getAll = createSelector(
-    getState,
-    (state: State): ProjectsList => state.entries
+const selectors = api.createSelectors(api.Resource.project)
+
+export const getState:  (state: RootState) => State = selectors.getState
+export const getAll:    (state: RootState) => api.ResourcesList<IProject> = selectors.getAll
+export const countAll:  (state: RootState) => number = selectors.countAll
+export const getByName: (name: ProjectName) => (state: RootState) => IProject | null = selectors.getByName
+export const getForURL: (url: routing.Path) => (state: RootState) => IProject | null = selectors.getForURL
+
+export const getForOrganization = (organization: organizations.OrganizationName) => createSelector(
+    getAll,
+    (projects) => pickBy(projects, { organization })
+)
+export const getForCurrentURL = createSelector(
+    [routing.getCurrentRoute, (state: RootState) => state],
+    (currentRoute, state) => getForURL(currentRoute.url)(state)
+)
+export const getForCurrentOrganization = createSelector(
+    [organizations.getCurrent, (state: RootState) => state],
+    (currentOranization, state) => currentOranization
+        ? getForOrganization(currentOranization.name)(state)
+        : {}
 )

@@ -1,111 +1,286 @@
-import { ActionType, createAsyncAction, action as createAction } from 'typesafe-actions'
-import { takeEvery, put, select, take, call } from 'redux-saga/effects'
-import { SagaIterator, channel as createChannel } from 'redux-saga'
-import { grpc } from 'grpc-web-client'
+import { ActionType, action as createAction } from 'typesafe-actions'
+import { takeLatest, takeEvery, fork, put, take, race, select as _select, delay } from 'redux-saga/effects'
 import { createSelector } from 'reselect'
+import { find, head, values as _values, get as _get, isEmpty } from 'lodash'
 
-import { reduce } from 'lodash'
 
-import { watchChannel } from '../utils'
-import { RootState, auth } from '../redux'
+import { RootState, ActionDescriptor, auth, api, grpc, routing, forms, ui } from '../redux'
 
-import { ListRequest } from '../proto/presslabs/dashboard/meta/v1/list_pb'
-import { Organization } from '../proto/presslabs/dashboard/core/v1/organization_pb'
-import { Organizations } from '../proto/presslabs/dashboard/core/v1/organization_pb_service'
+import { presslabs } from '@presslabs/dashboard-proto'
 
-const host: string = process.env.REACT_API_URL || 'http://localhost:9090'
+import { Intent } from '@blueprintjs/core'
+
+const {
+    Organization,
+    OrganizationsService,
+    ListOrganizationsRequest,
+    ListOrganizationsResponse,
+    GetOrganizationRequest,
+    CreateOrganizationRequest,
+    UpdateOrganizationRequest,
+    DeleteOrganizationRequest
+} = presslabs.dashboard.organizations.v1
+
+export {
+    Organization,
+    OrganizationsService,
+    ListOrganizationsRequest,
+    ListOrganizationsResponse,
+    GetOrganizationRequest,
+    CreateOrganizationRequest,
+    UpdateOrganizationRequest,
+    DeleteOrganizationRequest
+}
 
 
 //
 //  TYPES
 
-export type State = {
-    readonly entries: OrganizationsList
+export type OrganizationName = string
+export interface IOrganization extends presslabs.dashboard.organizations.v1.IOrganization {
+    name: OrganizationName
 }
-export type Actions = ActionType<typeof actions>
-export { Organization }
 
-export type OrganizationsList = {
-    [id: string]: Organization;
-}
+export type Organization =
+    presslabs.dashboard.organizations.v1.Organization
+
+export type IOrganizationPayload =
+    presslabs.dashboard.organizations.v1.IOrganization
+
+export type ListOrganizationsResponse =
+    presslabs.dashboard.organizations.v1.ListOrganizationsRequest
+
+export type IListOrganizationsRequest =
+    presslabs.dashboard.organizations.v1.IListOrganizationsRequest
+
+export type IGetOrganizationRequest =
+    presslabs.dashboard.organizations.v1.IGetOrganizationRequest
+
+export type ICreateOrganizationRequest =
+    presslabs.dashboard.organizations.v1.ICreateOrganizationRequest
+
+export type IUpdateOrganizationRequest =
+    presslabs.dashboard.organizations.v1.IUpdateOrganizationRequest
+
+export type IDeleteOrganizationRequest =
+    presslabs.dashboard.organizations.v1.IDeleteOrganizationRequest
+
+export type IListOrganizationsResponse =
+    presslabs.dashboard.organizations.v1.IListOrganizationsResponse
+
+export type State = {
+    current: string | null
+} & api.State<IOrganization>
+
+export type Actions = ActionType<typeof actions>
+
+const service = OrganizationsService.create(
+    grpc.createTransport('presslabs.dashboard.organizations.v1.OrganizationsService')
+)
+
+export const { parseName, buildName } = api.createNameHelpers('orgs/:slug')
+
 
 //
 //  ACTIONS
 
-export const LIST_REQUESTED = '@ organizations / LIST_REQUESTED'
-export const LIST_SUCCEEDED = '@ organizations / LIST_SUCCEEDED'
+export const SELECTED = '@ organizations / SELECTED'
 
-export const RECEIVED       = '@ organizations / RECEIVED'
+export const select = (payload: IOrganization) => createAction(SELECTED, payload)
 
-export const list = () => createAction(LIST_REQUESTED)
-export const receive = (entry: Organization) => createAction(RECEIVED, entry)
+export const get = (payload: IGetOrganizationRequest) => grpc.invoke({
+    service,
+    method : 'getOrganization',
+    data   : GetOrganizationRequest.create(payload)
+})
 
-const listRequest = {
-    service: Organizations.List,
-    request: new ListRequest()
-}
+export const list = (payload?: IListOrganizationsRequest) => grpc.invoke({
+    service,
+    method : 'listOrganizations',
+    data   : ListOrganizationsRequest.create(payload)
+})
+
+export const create = (payload: ICreateOrganizationRequest) => grpc.invoke({
+    service,
+    method : 'createOrganization',
+    data   : CreateOrganizationRequest.create(payload)
+})
+
+export const update = (payload: IUpdateOrganizationRequest) => grpc.invoke({
+    service,
+    method : 'updateOrganization',
+    data   : UpdateOrganizationRequest.create(payload)
+})
+
+export const destroy = (payload: IOrganizationPayload) => grpc.invoke({
+    service,
+    method : 'deleteOrganization',
+    data   : DeleteOrganizationRequest.create(payload)
+})
 
 const actions = {
+    get,
     list,
-    receive
+    create,
+    update,
+    destroy,
+    select
 }
+
+const apiTypes = api.createActionTypes(api.Resource.organization)
+
+export const {
+    LIST_REQUESTED,    LIST_SUCCEEDED,    LIST_FAILED,
+    GET_REQUESTED,     GET_SUCCEEDED,     GET_FAILED,
+    CREATE_REQUESTED,  CREATE_SUCCEEDED,  CREATE_FAILED,
+    UPDATE_REQUESTED,  UPDATE_SUCCEEDED,  UPDATE_FAILED,
+    DESTROY_REQUESTED, DESTROY_SUCCEEDED, DESTROY_FAILED
+} = apiTypes
 
 
 //
 //  REDUCER
 
+const apiReducer = api.createReducer(api.Resource.organization, apiTypes)
+
 const initialState: State = {
-    entries: {}
+    ...api.initialState,
+    current: null
 }
 
 export function reducer(state: State = initialState, action: Actions) {
     switch (action.type) {
-        case RECEIVED: {
-            const organization = action.payload
+        case SELECTED: {
             return {
                 ...state,
-                entries: {
-                    ...state.entries,
-                    [organization.getId()]: organization
-                }
+                current: action.payload.name
             }
         }
-    }
 
-    return state
+        default:
+            return apiReducer(state, action)
+    }
 }
 
 
 //
 //  SAGA
 
-const channel = createChannel()
-
 export function* saga() {
-    yield takeEvery(LIST_REQUESTED, performRequest)
-    yield watchChannel(channel)
+    yield fork(api.emitResourceActions, api.Resource.organization, apiTypes)
+    yield fork(forms.takeEverySubmission, forms.Name.organization, handleFormSubmission)
+    yield takeLatest(SELECTED, setGRPCOrganizationMetadata)
+    yield takeLatest([
+        routing.ROUTE_CHANGED,
+        CREATE_SUCCEEDED,
+        DESTROY_SUCCEEDED
+    ], decideOrganizationContext)
+    yield takeEvery([
+        DESTROY_SUCCEEDED,
+        DESTROY_FAILED
+    ], handleDeletion)
 }
 
-function* performRequest(action: ActionType<typeof list>) {
-    const authorization = yield select(auth.getAuthorizationHeader)
-    grpc.invoke(listRequest.service, {
-        host,
-        request: listRequest.request,
-        metadata: { authorization },
-        onMessage: (response: Organization) =>
-            channel.put(receive(response)),
-        onEnd: () =>
-            console.log('ONEND!'),
-        debug: true
-    })
+const handleFormSubmission = api.createFormHandler(
+    forms.Name.organization,
+    api.Resource.organization,
+    apiTypes,
+    actions
+)
+
+function* decideOrganizationContext(): Iterable<any> {
+    yield delay(50)
+
+    const isAuthenticated = yield _select(auth.isAuthenticated)
+    if (!isAuthenticated) {
+        yield take(auth.ACCESS_GRANTED)
+    }
+
+    const organizations = yield _select(getAll)
+    const currentlySelected = yield _select(getCurrent)
+
+    if (isEmpty(organizations)) {
+        yield put(list())
+        const { success } = yield race({
+            success: take(LIST_SUCCEEDED),
+            failure: take(LIST_FAILED)
+        })
+
+        if (success && !api.isEmptyResponse(success)) {
+            yield decideOrganizationContext()
+            return
+        }
+    }
+    else {
+        const params = yield _select(routing.getParams)
+        const name = buildName({ slug: _get(params, 'org') })
+        const organizationFromAddress = name ? yield _select(getByName(name)) : null
+
+        if (organizationFromAddress) {
+            yield put(select(organizationFromAddress))
+        }
+        else {
+            if (currentlySelected) {
+                yield put(select(currentlySelected))
+            }
+            else {
+                const firstOrganizationAsDefault = head(_values(organizations))
+                if (firstOrganizationAsDefault) {
+                    yield put(select(firstOrganizationAsDefault))
+                }
+            }
+        }
+    }
 }
 
+function* setGRPCOrganizationMetadata(action: ActionType<typeof select>) {
+    yield put(grpc.setMetadata({
+        key: 'organization',
+        value: action.payload.name
+    }))
+}
+
+function* handleDeletion({ type, payload }: { type: ActionDescriptor, payload: grpc.Response }): Iterable<any> {
+    switch (type) {
+        case DESTROY_SUCCEEDED: {
+            yield put(routing.push(routing.routeFor('dashboard')))
+            yield put(ui.showToast({
+                message : 'Organization deleted',
+                intent  : Intent.SUCCESS,
+                icon    : 'tick-circle'
+            }))
+            break
+        }
+
+        case DESTROY_FAILED: {
+            yield put(ui.showToast({
+                message : 'Organization delete failed',
+                intent  : Intent.DANGER,
+                icon    : 'error'
+            }))
+            break
+        }
+    }
+}
 
 //
 //  SELECTORS
 
-export const getState = (state: RootState): State => state.organizations
-export const getAll = createSelector(
-    getState,
-    (state: State): OrganizationsList => state.entries
+const selectors = api.createSelectors(api.Resource.organization)
+
+export const getState:  (state: RootState) => State = selectors.getState
+export const getAll:    (state: RootState) => api.ResourcesList<IOrganization> = selectors.getAll
+export const countAll:  (state: RootState) => number = selectors.countAll
+export const getByName: (name: OrganizationName) => (state: RootState) => IOrganization | null = selectors.getByName
+export const getForURL: (url: routing.Path) => (state: RootState) => IOrganization | null = selectors.getForURL
+
+export const getForCurrentURL = createSelector(
+    [routing.getCurrentRoute, (state: RootState) => state],
+    (currentRoute, state) => getForURL(currentRoute.url)(state)
+)
+export const getCurrent: (state: RootState) => IOrganization | null = createSelector(
+    [getState, getAll],
+    (state, orgs) => state.current
+        ? find(orgs, { name: state.current }) || null
+        : null
 )

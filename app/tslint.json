@@ -1,13 +1,15 @@
 {
-  "extends": ["tslint:recommended", "tslint-react", "tslint-react-recommended", "tslint-config-prettier", "tslint-config-airbnb"],
+  "extends": ["tslint:recommended", "tslint-react", "tslint-react-recommended", "tslint-config-prettier", "tslint-config-airbnb", "tslint-etc"],
   "rules": {
     "indent": [true, "spaces", 4],
     "ter-indent": [true, 4, { "SwitchCase": 1 }],
     "align": [true, "elements", "members", "parameters", "statements"],
+    "max-line-length": [true, 120],
     "no-consecutive-blank-lines": [true, 2],
 
     "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],
     "no-unused-variable": false,
+    "no-unused-declaration": true,
 
     "arrow-parens": [true, "always"],
     "ter-arrow-parens": [true, "always"],
@@ -15,19 +17,30 @@
     "semicolon": [true, "never"],
     "trailing-comma": [true, {"multiline": "never", "singleline": "never"}],
     "object-literal-sort-keys": false,
+    "object-shorthand-properties-first": false,
 
     "brace-style": [true, "stroustrup", { "allowSingleLine": true }],
 
     "ordered-imports": false,
     "import-name": false,
     "no-submodule-imports": false,
+    "no-implicit-dependencies": [true, "dev"],
 
     "jsx-no-lambda": false,
+    "jsx-curly-spacing": [true, "always"],
+    "jsx-self-close": true,
+    "jsx-space-before-trailing-slash": true,
+    "jsx-wrap-multiline": true,
+    "jsx-boolean-value": [true, "never"],
 
+    "no-object-literal-type-assertion": false,
     "no-console": [true, "warning"],
     "no-constant-condition": [true, { "checkLoops": false }],
+    "no-else-after-return": false,
 
-    "interface-over-type-literal": false
+    "interface-over-type-literal": false,
+
+    "prefer-array-literal": false
   },
   "linterOptions": {
     "exclude": [

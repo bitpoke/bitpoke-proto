@@ -1,19 +1,33 @@
 import * as React from 'react'
-import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 
+import { RootState, organizations } from '../redux'
+
+import Container from '../components/Container'
 import ProjectsList from '../components/ProjectsList'
 
-type Props = {
-    dispatch: Dispatch
+type ReduxProps = {
+    currentOrganization: organizations.IOrganization | null
 }
 
-const DashboardContainer: React.SFC<Props> = ({ dispatch }) => {
+const DashboardContainer: React.SFC<ReduxProps> = ({ currentOrganization }) => {
+    if (!currentOrganization) {
+        return null
+    }
+
     return (
-        <div>
-            <ProjectsList />
-        </div>
+        <Container>
+            <ProjectsList organization={ currentOrganization.name } />
+        </Container>
     )
 }
 
-export default connect()(DashboardContainer)
+function mapStateToProps(state: RootState): ReduxProps {
+    const currentOrganization = organizations.getCurrent(state)
+
+    return {
+        currentOrganization
+    }
+}
+
+export default connect(mapStateToProps)(DashboardContainer)

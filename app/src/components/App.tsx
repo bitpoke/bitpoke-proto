@@ -1,23 +1,20 @@
 import * as React from 'react'
-import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 
-import { RootState, app, auth } from '../redux'
+import { RootState, DispatchProp, app, auth } from '../redux'
 
 import Router from '../containers/Router'
 import NavBar from '../components/NavBar'
 
-import './App.css'
-
-type Props = {
-    dispatch: Dispatch
-}
+import './App.scss'
 
 type ReduxProps = {
     isAuthenticated: boolean
 }
 
-class App extends React.Component<Props & ReduxProps> {
+type Props = ReduxProps & DispatchProp
+
+class App extends React.Component<Props> {
     componentDidMount() {
         const { dispatch } = this.props
         dispatch(app.initialize())
@@ -30,7 +27,7 @@ class App extends React.Component<Props & ReduxProps> {
         }
 
         return (
-            <div className="App_container">
+            <div>
                 <NavBar />
                 <Router />
             </div>

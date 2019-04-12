@@ -1,0 +1,10 @@
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.container > div {
+    width: 400px;
+    margin: 0 20px 20px 0;
+}
