@@ -188,7 +188,7 @@ export function createSelectors(resource: Resource): Selectors<AnyResourceInstan
         getState,
         (state) => state.entries
     )
-    const getByName = (name: string) => createSelector(
+    const getByName = (name: ResourceName) => createSelector(
         getAll,
         (entries) => get(entries, name, null)
     )
@@ -198,7 +198,11 @@ export function createSelectors(resource: Resource): Selectors<AnyResourceInstan
     )
     const getForURL = (url: routing.Path) => createSelector(
         getAll,
-        (entries) => find(entries, (entry) => startsWith(replace(url, /^\//, ''), entry.name)) || null
+        (entries) =>
+            find(entries, (entry) => startsWith(
+                replace(new URI(url).pathname(), /^\//, ''),
+                entry.name)
+            ) || null
     )
     return {
         getState, getAll, getByName, countAll, getForURL

@@ -1,6 +1,6 @@
 import { api, grpc, sites } from '../'
 
-import { map, keys, values, isArray } from 'lodash'
+import { map, reduce, keys, values, isArray } from 'lodash'
 
 describe('api', () => {
     const { createActionDescriptor } = api
@@ -40,9 +40,9 @@ describe('api', () => {
     })
 
     const { createReducer } = api
-    describe('reduce()', () => {
+    describe('reducer()', () => {
         const actionTypes = createActionTypes(api.Resource.site)
-        const reduce = createReducer(api.Resource.site, actionTypes)
+        const reducer = createReducer(api.Resource.site, actionTypes)
 
         const createEntry = (name, otherProps = {}) => ({ name, ...otherProps })
         const createState = (entries) => ({ entries })
@@ -91,14 +91,14 @@ describe('api', () => {
 
             it('storing fetched entries indexed by name', () => {
                 const action = createResponseAction(actionTypes.LIST_SUCCEEDED, fetchedEntries)
-                const state = reduce(initialState, action)
+                const state = reducer(initialState, action)
                 expect(keys(state.entries)).toEqual(map(fetchedEntries, 'name'))
                 expect(values(state.entries)).toEqual(fetchedEntries)
             })
 
             it('merging existing entries with fetched ones', () => {
                 const action = createResponseAction(actionTypes.LIST_SUCCEEDED, fetchedEntries)
-                const state = reduce(existingState, action)
+                const state = reducer(existingState, action)
 
                 expect(keys(state.entries)).toEqual([existingEntry.name, ...map(fetchedEntries, 'name')])
                 expect(values(state.entries)).toEqual([existingEntry, ...fetchedEntries])
@@ -106,15 +106,15 @@ describe('api', () => {
 
             it('ignoring invalid actions/payloads', () => {
                 expect(
-                    reduce(initialState, createResponseAction(actionTypes.LIST_SUCCEEDED, null))
+                    reducer(initialState, createResponseAction(actionTypes.LIST_SUCCEEDED, null))
                 ).toEqual(initialState)
 
                 expect(
-                    reduce(initialState, createResponseAction(actionTypes.LIST_FAILED, fetchedEntries))
+                    reducer(initialState, createResponseAction(actionTypes.LIST_FAILED, fetchedEntries))
                 ).toEqual(initialState)
 
                 expect(
-                    reduce(initialState, createResponseAction(actionTypes.GET_SUCCEEDED, fetchedEntries))
+                    reducer(initialState, createResponseAction(actionTypes.GET_SUCCEEDED, fetchedEntries))
                 ).toEqual(initialState)
             })
         })
@@ -124,7 +124,7 @@ describe('api', () => {
                 const fetchedEntry = createEntry('proj/abc/sites/y')
 
                 const action = createResponseAction(actionTypes.GET_SUCCEEDED, fetchedEntry)
-                const state = reduce(existingState, action)
+                const state = reducer(existingState, action)
 
                 expect(keys(state.entries)).toEqual([existingEntry.name, fetchedEntry.name])
                 expect(values(state.entries)).toEqual([existingEntry, fetchedEntry])
@@ -134,18 +134,18 @@ describe('api', () => {
                 const updatedEntry = createEntry('proj/abc/sites/x', { primaryDomain: 'y.com' })
 
                 const action = createResponseAction(actionTypes.UPDATE_SUCCEEDED, updatedEntry)
-                const state = reduce(existingState, action)
+                const state = reducer(existingState, action)
 
                 expect(state.entries[existingEntry.name].primaryDomain).toEqual('y.com')
             })
 
             it('ignoring invalid actions/payloads', () => {
                 expect(
-                    reduce(initialState, createResponseAction(actionTypes.CREATE_SUCCEEDED, {}))
+                    reducer(initialState, createResponseAction(actionTypes.CREATE_SUCCEEDED, {}))
                 ).toEqual(initialState)
 
                 expect(
-                    reduce(initialState, createResponseAction(actionTypes.CREATE_FAILED, {}))
+                    reducer(initialState, createResponseAction(actionTypes.CREATE_FAILED, {}))
                 ).toEqual(initialState)
             })
         })
@@ -153,15 +153,102 @@ describe('api', () => {
         describe('handles DESTROY requests', () => {
             it('removing the destroyed entry from the state', () => {
                 const action = createResponseAction(actionTypes.DESTROY_SUCCEEDED, existingEntry)
-                const state = reduce(existingState, action)
+                const state = reducer(existingState, action)
 
                 expect(state).toEqual(initialState)
             })
 
             it('ignoring invalid actions/payloads', () => {
                 expect(
-                    reduce(existingState, createResponseAction(actionTypes.DESTROY_FAILED, existingEntry))
+                    reducer(existingState, createResponseAction(actionTypes.DESTROY_FAILED, existingEntry))
                 ).toEqual(existingState)
+            })
+        })
+    })
+
+    const { createSelectors } = api
+    describe('selectors', () => {
+        const { getState, getAll, countAll, getByName, getForURL } = createSelectors(api.Resource.site)
+
+        const createEntry = (name, otherProps = {}) => ({ name, ...otherProps })
+        const asIndexedList = (entries) => reduce(entries, (acc, entry) => ({
+            ...acc,
+            [entry.name]: entry
+        }), {})
+
+        const createState = (entries) => ({
+            sites: {
+                entries: asIndexedList(entries),
+                otherProp: true
+            }
+        })
+
+        const queriedEntry = createEntry('proj/abc/sites/x', { primaryDomain: 'x.com' })
+        const existingEntries = [
+            queriedEntry,
+            createEntry('proj/abc/sites/y', { primaryDomain: 'y.com' }),
+            createEntry('proj/abc/sites/z', { primaryDomain: 'z.com' })
+        ]
+
+        const state = createState(existingEntries)
+        const emptyState = createState([])
+
+        describe('getState()', () => {
+            it("returns the resource's root state", () => {
+                expect(getState(state)).toEqual(state.sites)
+                expect(keys(getState(state))).toEqual(['entries', 'otherProp'])
+            })
+
+            it('returns the state structure even for empty state', () => {
+                expect(getState(emptyState)).toEqual(emptyState.sites)
+                expect(keys(getState(emptyState))).toEqual(['entries', 'otherProp'])
+            })
+        })
+
+        describe('getAll()', () => {
+            it('returns all the resource entries in the current state', () => {
+                expect(getAll(state)).toEqual(asIndexedList(existingEntries))
+            })
+
+            it('returns an empty indexed list for an empty state', () => {
+                expect(getAll(emptyState)).toEqual({})
+            })
+        })
+
+        describe('countAll()', () => {
+            it('returns the number of resource entries', () => {
+                expect(countAll(state)).toEqual(3)
+            })
+
+            it('returns 0 for an empty state', () => {
+                expect(countAll(emptyState)).toEqual(0)
+            })
+        })
+
+        describe('getByName()', () => {
+            it('finds an entry by a given name', () => {
+                expect(getByName('proj/abc/sites/x')(state)).toEqual(queriedEntry)
+            })
+
+            it('returns null if nothing matches', () => {
+                expect(getByName('proj/abc/sites/xyz')(state)).toEqual(null)
+            })
+        })
+
+        describe('getByURL()', () => {
+            it('finds an entry by a given URL', () => {
+                expect(getForURL('proj/abc/sites/x')(state)).toEqual(queriedEntry)
+                expect(getForURL('/proj/abc/sites/x')(state)).toEqual(queriedEntry)
+                expect(getForURL('/proj/abc/sites/x/and/some/more?query=true')(state)).toEqual(queriedEntry)
+                expect(getForURL('https://dashboard.test/proj/abc/sites/x')(state)).toEqual(queriedEntry)
+                expect(getForURL('https://dashboard.test/proj/abc/sites/x?q=test')(state)).toEqual(queriedEntry)
+            })
+
+            it('returns null if nothing matches', () => {
+                expect(getByName('proj/abc')(state)).toEqual(null)
+                expect(getByName('proj/abc/sites')(state)).toEqual(null)
+                expect(getByName('proj/abc/sites/xx')(state)).toEqual(null)
+                expect(getByName('/orgs/123/proj/abc/sites/xyz')(state)).toEqual(null)
             })
         })
     })
@@ -277,8 +364,18 @@ describe('api', () => {
                     })
                 })
 
-                it('properly parses names from full (maybe longer) URLs', () => {
+                it('properly parses names from full URLs', () => {
                     expect(parseName('/orgs/abc/projects/123/sites/xyz?filter=active')).toEqual({
+                        slug   : 'abc',
+                        name   : 'orgs/abc',
+                        url    : '/orgs/abc',
+                        parent : null,
+                        params : {
+                            slug: 'abc'
+                        }
+                    })
+
+                    expect(parseName('https://dashboard.test/orgs/abc/projects/123/sites/xyz?filter=active')).toEqual({
                         slug   : 'abc',
                         name   : 'orgs/abc',
                         url    : '/orgs/abc',
@@ -290,6 +387,7 @@ describe('api', () => {
                 })
 
                 it('returns an empty payload for non-matching names', () => {
+                    expect(parseName('orgs/')).toEqual(emptyNamePayload)
                     expect(parseName('proj/abc')).toEqual(emptyNamePayload)
                     expect(parseName('proj/abc/orgs/xyz')).toEqual(emptyNamePayload)
                 })
