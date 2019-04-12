@@ -9,7 +9,9 @@ package apiserver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"net"
 	"net/http"
@@ -54,6 +56,14 @@ type APIServer struct {
 	grpcWeb    *grpcweb.WrappedGrpcServer
 	grpcAddr   string
 	packrBox   *packr.Box
+	tmpl       *template.Template
+	env        *webappEnv
+}
+
+type webappEnv struct {
+	ClientID   string `json:"REACT_APP_OIDC_CLIENT_ID"`
+	OIDCIssuer string `json:"REACT_APP_OIDC_ISSUER"`
+	BaseURL    string `json:"REACT_APP_API_URL"`
 }
 
 var log = logf.Log.WithName("apiserver")
@@ -109,6 +119,26 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 		Handler: http.HandlerFunc(mux.ServeHTTP),
 	}
 	box := packr.NewBox("../../app/build")
+	if !box.Has("index.html") {
+		return nil, fmt.Errorf("Cannot find 'index.html' web server entry point. You need to build the webapp first.")
+	}
+
+	t := template.New("index")
+	t.Funcs(template.FuncMap{
+		"toJSON": func(v interface{}) template.JS {
+			a, _ := json.Marshal(v)
+			return template.JS(a)
+		},
+	})
+	if _, err := t.Parse(box.String("index.html")); err != nil {
+		return nil, err
+	}
+
+	env := webappEnv{
+		ClientID:   options.ClientID,
+		OIDCIssuer: options.OIDCIssuer,
+		BaseURL:    options.BaseURL,
+	}
 
 	s := &APIServer{
 		Manager:    opts.Manager,
@@ -117,6 +147,8 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 		serverMux:  mux,
 		grpcAddr:   opts.GRPCAddr,
 		packrBox:   &box,
+		tmpl:       t,
+		env:        &env,
 	}
 
 	s.grpcWeb = grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(s.allowedOrigin))
@@ -156,10 +188,9 @@ func (s *APIServer) allowedOrigin(origin string) bool {
 }
 
 func (s *APIServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	// if !s.packrBox.Has("index.html") {
-	// 	panic("Cannot find 'index.html' web server entry point. You need to build the webapp first.")
-	// }
-	if s.grpcWeb.IsGrpcWebRequest(req) || s.grpcWeb.IsAcceptableGrpcCorsRequest(req) {
+	if req.URL.Path == "/" {
+		s.tmpl.Execute(resp, map[string]interface{}{"Env": s.env})
+	} else if s.grpcWeb.IsGrpcWebRequest(req) || s.grpcWeb.IsAcceptableGrpcCorsRequest(req) {
 		s.grpcWeb.ServeHTTP(resp, req)
 	} else {
 		http.FileServer(s.packrBox).ServeHTTP(resp, req)
