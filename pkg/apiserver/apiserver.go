@@ -120,13 +120,14 @@ func NewAPIServer(opts *APIServerOptions) (*APIServer, error) {
 	}
 	box := packr.NewBox("../../app/build")
 	if !box.Has("index.html") {
-		return nil, fmt.Errorf("Cannot find 'index.html' web server entry point. You need to build the webapp first.")
+		return nil, fmt.Errorf("cannot find 'index.html' web server entry point")
 	}
 
 	t := template.New("index")
 	t.Funcs(template.FuncMap{
 		"toJSON": func(v interface{}) template.JS {
 			a, _ := json.Marshal(v)
+			// #nosec: we are doing the marshaling ourselves
 			return template.JS(a)
 		},
 	})
@@ -188,11 +189,12 @@ func (s *APIServer) allowedOrigin(origin string) bool {
 }
 
 func (s *APIServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	if req.URL.Path == "/" {
-		s.tmpl.Execute(resp, map[string]interface{}{"Env": s.env})
-	} else if s.grpcWeb.IsGrpcWebRequest(req) || s.grpcWeb.IsAcceptableGrpcCorsRequest(req) {
+	switch {
+	case req.URL.Path == "/":
+		_ = s.tmpl.Execute(resp, map[string]interface{}{"Env": s.env})
+	case s.grpcWeb.IsGrpcWebRequest(req) || s.grpcWeb.IsAcceptableGrpcCorsRequest(req):
 		s.grpcWeb.ServeHTTP(resp, req)
-	} else {
+	default:
 		http.FileServer(s.packrBox).ServeHTTP(resp, req)
 	}
 }
