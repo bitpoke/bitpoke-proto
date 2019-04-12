@@ -34,3 +34,5 @@ protoc.zip
 k8s-webhook-server/
 
 chart/dashboard/templates/_crds.yaml
+
+app/.env

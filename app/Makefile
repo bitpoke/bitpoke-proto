@@ -36,4 +36,4 @@ clean:
 	rm -rf build
 	rm -rf $(NODE_MODULES)
 
-.PHONY: dependencies run run-build test lint lint-fix clean
+.PHONY: dependencies run run-build test lint lint-fix clean build
