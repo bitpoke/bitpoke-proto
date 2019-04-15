@@ -72,7 +72,7 @@ export function createTransport(serviceName: string): RPCImpl {
     }
 }
 
-export function parseData(buffer) {
+export function parseData(buffer: ArrayBuffer) {
     const chunk = parseChunk(buffer)
     return new Uint8Array(get(chunk, 'data', []))
 }
