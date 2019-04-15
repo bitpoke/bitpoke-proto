@@ -198,7 +198,6 @@ var _ = Describe("Project Namespace controller", func() {
 				},
 				"gcloud-service-account": {
 					"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
-					"presslabs.com/kind":           "gcloud-service-account-secret",
 				},
 			}
 

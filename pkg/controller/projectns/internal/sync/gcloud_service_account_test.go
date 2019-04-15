@@ -71,7 +71,6 @@ var _ = Describe("GCloudServiceAccountSyncer", func() {
 
 	It("reconciles the GCloud Service Account Secret", func() {
 		expectedLabels := map[string]string{
-			"presslabs.com/kind":           "gcloud-service-account-secret",
 			"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 		}
 		Expect(gcloudSASecret.GetLabels()).To(Equal(expectedLabels))

@@ -22,10 +22,6 @@ import (
 
 // NewGCloudServiceAccountSyncer returns a new syncer.Interface for reconciling gcloud service account
 func NewGCloudServiceAccountSyncer(proj *projectns.ProjectNamespace, cl client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := labels.Set{
-		"presslabs.com/kind": "gcloud-service-account-secret",
-	}
-
 	obj := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.GcloudServiceAccountSecret),
@@ -54,7 +50,7 @@ func NewGCloudServiceAccountSyncer(proj *projectns.ProjectNamespace, cl client.C
 				return err
 			}
 
-			out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+			out.Labels = labels.Merge(out.Labels, controllerLabels)
 			out.Data = map[string][]byte{
 				"SERVICE_ACCOUNT_KEY":  secretData,
 				"SERVICE_ACCOUNT_MAIL": []byte(sa.Email),
