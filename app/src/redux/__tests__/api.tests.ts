@@ -1,5 +1,4 @@
 import { expectSaga } from 'redux-saga-test-plan'
-import { put } from 'redux-saga/effects'
 import { map, reduce, keys, values, size, isArray } from 'lodash'
 
 import { api, grpc, sites } from '../'
@@ -255,9 +254,9 @@ describe('api', () => {
         })
     })
 
-    describe('saga()', () => {
+    describe('*saga()', () => {
         const { emitResourceAction } = api
-        describe('emitResourceAction()', () => {
+        describe('*emitResourceAction()', () => {
             const actionTypes = createActionTypes(api.Resource.site)
 
             const createRequest = (method) => ({
