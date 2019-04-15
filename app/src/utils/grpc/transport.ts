@@ -63,15 +63,18 @@ export function createTransport(serviceName: string): RPCImpl {
                 callback(error, null)
             }
             else {
-                const chunk = parseChunk(buffer)
-                const data = new Uint8Array(get(chunk, 'data', []))
-                callback(null, data)
+                callback(null, parseData(buffer))
             }
         }
         catch (error) {
             callback(error, null)
         }
     }
+}
+
+export function parseData(buffer) {
+    const chunk = parseChunk(buffer)
+    return new Uint8Array(get(chunk, 'data', []))
 }
 
 export function setMetadataHeader(key: string, value: string) {
