@@ -7,6 +7,9 @@ fullnameOverride: ""
 defaults:
   installRoles: true
 
+gcloud:
+  serviceAccountKey: ""
+
 crd:
   install: true
 
