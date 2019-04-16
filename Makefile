@@ -51,11 +51,12 @@ manifests:
 	cp config/rbac/rbac_role.yaml $(CHARTDIR)/templates/_rbac.yaml
 	yq m -d'*' -i $(CHARTDIR)/templates/_rbac.yaml hack/chart-metadata.yaml
 	yq d -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.creationTimestamp
-	yq w -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.name '{{ template "dashboard.fullname" . }}-controller'
-	cat hack/generated-by-makefile.yaml > $(CHARTDIR)/templates/controller-clusterrole.yaml
-	echo '{{- if .Values.rbac.create }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
-	cat $(CHARTDIR)/templates/_rbac.yaml >> $(CHARTDIR)/templates/controller-clusterrole.yaml
-	echo '{{- end }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
+	yq w -d'*' -i $(CHARTDIR)/templates/_rbac.yaml 'metadata.labels[rbac.dashboard.presslabs.com/aggregate-to-controller]' '"true"'
+	yq w -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.name '{{ template "dashboard.fullname" . }}-controller-kubebuilder'
+	cat hack/generated-by-makefile.yaml > $(CHARTDIR)/templates/controller-clusterrole-kubebuilder.yaml
+	echo '{{- if .Values.rbac.create }}' >> $(CHARTDIR)/templates/controller-clusterrole-kubebuilder.yaml
+	cat $(CHARTDIR)/templates/_rbac.yaml >> $(CHARTDIR)/templates/controller-clusterrole-kubebuilder.yaml
+	echo '{{- end }}' >> $(CHARTDIR)/templates/controller-clusterrole-kubebuilder.yaml
 	rm $(CHARTDIR)/templates/_rbac.yaml
 	# CRDs
 	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(CHARTDIR)/templates/_crds.yaml
