@@ -29,7 +29,7 @@ func CreateServiceAccount(projectID, name, displayName string) (*iam.ServiceAcco
 	request := &iam.CreateServiceAccountRequest{
 		AccountId: name,
 		ServiceAccount: &iam.ServiceAccount{
-			DisplayName: displayName,
+			DisplayName: fmt.Sprintf("%s service account", displayName),
 		},
 	}
 	account, err := service.Projects.ServiceAccounts.Create("projects/"+projectID, request).Do()

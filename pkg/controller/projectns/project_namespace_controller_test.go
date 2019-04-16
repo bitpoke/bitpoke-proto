@@ -230,7 +230,7 @@ var _ = Describe("Project Namespace controller", func() {
 			Expect(c.Get(context.TODO(), key, &saSecret)).To(Succeed())
 
 			// delete gcloud service account
-			Expect(deleteServiceAccount(string(saSecret.Data["SERVICE_ACCOUNT_MAIL"]))).To(Succeed())
+			Expect(deleteServiceAccount(string(saSecret.Data["service_account_email"]))).To(Succeed())
 
 			Expect(c.Delete(context.TODO(), project)).To(Succeed())
 			Eventually(func() corev1.Namespace {

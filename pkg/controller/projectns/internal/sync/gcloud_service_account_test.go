@@ -66,7 +66,7 @@ var _ = Describe("GCloudServiceAccountSyncer", func() {
 	})
 
 	AfterEach(func() {
-		Expect(serviceaccount.DeleteServiceAccount(string(gcloudSASecret.Data["SERVICE_ACCOUNT_MAIL"]))).To(Succeed())
+		Expect(serviceaccount.DeleteServiceAccount(string(gcloudSASecret.Data["google_application_credentials.json"]))).To(Succeed())
 	})
 
 	It("reconciles the GCloud Service Account Secret", func() {
