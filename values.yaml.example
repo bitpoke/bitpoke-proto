@@ -1,0 +1,9 @@
+# Fill this at minimum
+apiserver:
+  oidc:
+    client_id: "TgYj4aR1ttmiZ0YexSwtHVKYSAOza2Vn"
+    client_secret: "Nmro5jF1Yx78RdHB5hHiYc-TvdNF96Dd1VR0Uo_3yM26AlLzIQ2TsU0oLWafnyvO"
+    issuer: "https://presslabs.auth0.com/"
+gcloud:
+  projectID:
+  serviceAccountKey: |

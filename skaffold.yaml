@@ -1,4 +1,4 @@
-apiVersion: skaffold/v1beta7
+apiVersion: skaffold/v1beta8
 kind: Config
 build:
   tagPolicy:
@@ -14,7 +14,6 @@ deploy:
       chartPath: chart/dashboard
       values:
         image: quay.io/presslabs/dashboard
-      setValues:
-        apiserver.oidc.client_id: "TgYj4aR1ttmiZ0YexSwtHVKYSAOza2Vn"
-        apiserver.oidc.client_secret: "Nmro5jF1Yx78RdHB5hHiYc-TvdNF96Dd1VR0Uo_3yM26AlLzIQ2TsU0oLWafnyvO"
-        apiserver.oidc.issuer: "https://presslabs.auth0.com/"
+      valuesFiles:
+        # see the example in values.yaml.example
+        - values.yaml
