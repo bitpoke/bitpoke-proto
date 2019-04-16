@@ -57,6 +57,16 @@ manifests:
 	cat $(CHARTDIR)/templates/_rbac.yaml >> $(CHARTDIR)/templates/controller-clusterrole.yaml
 	echo '{{- end }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
 	rm $(CHARTDIR)/templates/_rbac.yaml
+	# CRDs
+	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(CHARTDIR)/templates/_crds.yaml
+	yq m -d'*' -i $(CHARTDIR)/templates/_crds.yaml hack/chart-metadata.yaml
+	yq w -d'*' -i $(CHARTDIR)/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml metadata.creationTimestamp
+	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml status metadata.creationTimestamp
+	echo '{{- if and .Values.crd.install (not (.Capabilities.APIVersions.Has "dashboard.presslabs.com/v1alpha1")) }}' > $(CHARTDIR)/templates/crds.yaml
+	cat $(CHARTDIR)/templates/_crds.yaml >> $(CHARTDIR)/templates/crds.yaml
+	echo '{{- end }}' >> $(CHARTDIR)/templates/crds.yaml
+	rm $(CHARTDIR)/templates/_crds.yaml
 	# Webhooks
 	cp config/webhook/webhook.yaml chart/dashboard/templates/webhook.yaml
 	yq m -d'*' -i $(CHARTDIR)/templates/webhook.yaml hack/chart-metadata.yaml
