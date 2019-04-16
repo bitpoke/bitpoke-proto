@@ -25,7 +25,7 @@ func NewGCloudServiceAccountSyncer(proj *projectns.ProjectNamespace, cl client.C
 	obj := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      proj.ComponentName(projectns.GcloudServiceAccountSecret),
-			Namespace: proj.ComponentName(projectns.Namespace),
+			Namespace: proj.Name,
 		},
 	}
 
@@ -52,8 +52,8 @@ func NewGCloudServiceAccountSyncer(proj *projectns.ProjectNamespace, cl client.C
 
 			out.Labels = labels.Merge(out.Labels, controllerLabels)
 			out.Data = map[string][]byte{
-				"SERVICE_ACCOUNT_KEY":  secretData,
-				"SERVICE_ACCOUNT_MAIL": []byte(sa.Email),
+				"google_application_credentials.json": secretData,
+				"service_account_email":               []byte(sa.Email),
 			}
 		}
 
