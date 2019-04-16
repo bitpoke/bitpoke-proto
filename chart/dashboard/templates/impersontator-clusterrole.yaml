@@ -7,9 +7,15 @@ metadata:
     chart: '{{ include "dashboard.chart" . }}'
     heritage: '{{ .Release.Service }}'
     release: '{{ .Release.Name }}'
-  name: '{{ template "dashboard.fullname" . }}-controller'
-aggregationRule:
-  clusterRoleSelectors:
-  - matchLabels:
-      rbac.dashboard.presslabs.com/aggregate-to-controller: "true"
+    rbac.dashboard.presslabs.com/aggregate-to-controller: "true"
+  name: '{{ template "dashboard.fullname" . }}-impersonator'
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - users
+  - groups
+  - serviceaccounts
+  verbs:
+  - impersonate
 {{- end }}
