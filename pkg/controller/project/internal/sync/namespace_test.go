@@ -32,6 +32,7 @@ var _ = Describe("NamespaceSyncer", func() {
 		orgName       string
 		userID        string
 		projNamespace string
+		displayName   string
 	)
 
 	BeforeEach(func() {
@@ -39,6 +40,7 @@ var _ = Describe("NamespaceSyncer", func() {
 		projName = fmt.Sprintf("%d", mathrand.Int31())
 		projNamespace = fmt.Sprintf("proj-%d", mathrand.Int31())
 		userID = fmt.Sprintf("user#%d", mathrand.Int31())
+		displayName = fmt.Sprintf("Awesome Project %s", projName)
 
 		p = project.New(&dashboardv1alpha1.Project{
 			ObjectMeta: metav1.ObjectMeta{
@@ -49,7 +51,8 @@ var _ = Describe("NamespaceSyncer", func() {
 					"presslabs.com/project":      projName,
 				},
 				Annotations: map[string]string{
-					"presslabs.com/created-by": userID,
+					"presslabs.com/created-by":   userID,
+					"presslabs.com/display-name": displayName,
 				},
 			},
 			Spec: dashboardv1alpha1.ProjectSpec{
@@ -73,7 +76,8 @@ var _ = Describe("NamespaceSyncer", func() {
 		Expect(ns.GetLabels()).To(Equal(expectedLabels))
 
 		expectedAnnotations := map[string]string{
-			"presslabs.com/created-by": userID,
+			"presslabs.com/created-by":   userID,
+			"presslabs.com/display-name": displayName,
 		}
 		Expect(ns.Annotations).To(Equal(expectedAnnotations))
 	})
