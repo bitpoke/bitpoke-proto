@@ -28,8 +28,6 @@ import (
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"golang.org/x/net/context"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/iam/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,28 +38,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/presslabs/dashboard/pkg/cmd/manager/options"
+	"github.com/presslabs/dashboard/pkg/internal/gcloud/serviceaccount"
 	. "github.com/presslabs/dashboard/pkg/internal/testutil/gomega"
 )
 
 const timeout = time.Second * 6
-
-// deleteServiceAccount deletes a service account.
-func deleteServiceAccount(email string) error {
-	client, err := google.DefaultClient(context.Background(), iam.CloudPlatformScope)
-	if err != nil {
-		return fmt.Errorf("google.DefaultClient: %v", err)
-	}
-	service, err := iam.New(client)
-	if err != nil {
-		return fmt.Errorf("iam.New: %v", err)
-	}
-
-	_, err = service.Projects.ServiceAccounts.Delete("projects/-/serviceAccounts/" + email).Do()
-	if err != nil {
-		return fmt.Errorf("Projects.ServiceAccounts.Delete: %v", err)
-	}
-	return nil
-}
 
 var _ = Describe("Project Namespace controller", func() {
 	var (
@@ -230,7 +211,7 @@ var _ = Describe("Project Namespace controller", func() {
 			Expect(c.Get(context.TODO(), key, &saSecret)).To(Succeed())
 
 			// delete gcloud service account
-			Expect(deleteServiceAccount(string(saSecret.Data["service_account_email"]))).To(Succeed())
+			Expect(serviceaccount.DeleteServiceAccount(string(saSecret.Data["service_account_email"]))).To(Succeed())
 
 			Expect(c.Delete(context.TODO(), project)).To(Succeed())
 			Eventually(func() corev1.Namespace {
