@@ -66,7 +66,7 @@ var _ = Describe("GCloudServiceAccountSyncer", func() {
 	})
 
 	AfterEach(func() {
-		Expect(serviceaccount.DeleteServiceAccount(string(gcloudSASecret.Data["google_application_credentials.json"]))).To(Succeed())
+		Expect(serviceaccount.DeleteServiceAccount(string(gcloudSASecret.Data["service_account_email"]))).To(Succeed())
 	})
 
 	It("reconciles the GCloud Service Account Secret", func() {
@@ -74,6 +74,6 @@ var _ = Describe("GCloudServiceAccountSyncer", func() {
 			"app.kubernetes.io/managed-by": "project-namespace-controller.dashboard.presslabs.com",
 		}
 		Expect(gcloudSASecret.GetLabels()).To(Equal(expectedLabels))
-		Expect(gcloudSASecret.Data["SERVICE_ACCOUNT_KEY"]).NotTo(BeEmpty())
+		Expect(gcloudSASecret.Data["google_application_credentials.json"]).NotTo(BeEmpty())
 	})
 })
