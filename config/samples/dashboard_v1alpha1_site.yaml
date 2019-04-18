@@ -1,9 +1,0 @@
-apiVersion: wordpress.presslabs.org/v1alpha1
-kind: Wordpress
-metadata:
-  name: sample-site
-  labels:
-    presslabs.com/organization: sample-organization
-    presslabs.com/project: sample-project
-  annotations:
-    presslabs.com/created-by: user

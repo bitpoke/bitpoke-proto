@@ -1,6 +1,0 @@
-metadata:
-  labels:
-    app: '{{ include "dashboard.name" . }}'
-    chart: '{{ include "dashboard.chart" . }}'
-    release: '{{ .Release.Name }}'
-    heritage: '{{ .Release.Service }}'

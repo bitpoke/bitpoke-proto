@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package presslabs.dashboard.projects.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "v1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+
+// Projects represents an project within the presslabs dashboard
+// context
+message Project {
+  // The fully qualified project name in the form project/{project_name}.
+  // The `project_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  // The name is read-only
+  string name = 1;
+  // The display_name for the project
+  string display_name = 2;
+  // The organization name. The organization is immutable.
+  // This field is read-only
+  string organization = 3;
+}
+
+message GetProjectRequest {
+  // The resource name of the project to fetch in the form project/{project_name}
+  // The `project_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1;
+}
+
+message ListProjectsRequest {
+  // The parent organization, for example "org/{organization_name}".
+  // This parameter overrides the organization passed as metadata.
+  // If not specified as metadata, the parent is a required parameter.
+  string parent = 1;
+  // The maximum number of items to return.
+  int32 page_size = 2;
+  // The next_page_token value returned from a previous List request, if
+  // any.
+  string page_token = 3;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message CreateProjectRequest {
+  // The parent organization, for example "org/{organization_name}".
+  // This parameter overrides the organization passed as metadata.
+  // If not specified as metadata, the parent is a required parameter.
+  string parent = 1;
+  // The project resource to create
+  Project project = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateProjectRequest {
+  // The new definition of the Folder. It must include
+  // a `name` , `organization` and `display_name` field. 
+  // The other fields will be ignored.
+  Project project = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  // Only the `display_name` can be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message DeleteProjectRequest {
+  // The resource name of the project to delete in the form project/{project_name}
+  // The `project_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1;
+}
+
+// ProjectsService allow managing projects 
+service ProjectsService {
+  // CreateProject creates a new project 
+  rpc CreateProject(CreateProjectRequest) returns (Project);
+  // GetProject fetches an project by it's name
+  rpc GetProject(GetProjectRequest) returns (Project);
+  // UpdateProject updates an project details
+  rpc UpdateProject(UpdateProjectRequest) returns (Project);
+  // DeleteProject deletes an project by it's name
+  rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty);
+  // ListProjects list projects
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+}

@@ -1,3 +1,0 @@
-{{ $domain := printf "%s-webhook.%s.svc" (include "dashboard.name" .) .Release.Namespace }}
-{{ $cert := genSelfSignedCert $domain nil nil 3650 }}
-
