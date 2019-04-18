@@ -10,7 +10,7 @@ option (gogoproto.protosizer_all) = true;
 option (gogoproto.testgen_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.verbose_equal_all) = true;
-option go_package = "v1";
+option go_package = "github.com/presslabs/dashboard-go/project/v1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
@@ -71,7 +71,7 @@ message CreateProjectRequest {
 
 message UpdateProjectRequest {
   // The new definition of the Folder. It must include
-  // a `name` , `organization` and `display_name` field. 
+  // a `name` , `organization` and `display_name` field.
   // The other fields will be ignored.
   Project project = 1 [
     (gogoproto.embed) = true,
@@ -92,9 +92,9 @@ message DeleteProjectRequest {
   string name = 1;
 }
 
-// ProjectsService allow managing projects 
+// ProjectsService allow managing projects
 service ProjectsService {
-  // CreateProject creates a new project 
+  // CreateProject creates a new project
   rpc CreateProject(CreateProjectRequest) returns (Project);
   // GetProject fetches an project by it's name
   rpc GetProject(GetProjectRequest) returns (Project);

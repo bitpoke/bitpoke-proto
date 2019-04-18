@@ -28,4 +28,4 @@ generate:
     - name: gogo
       type: gogo
       flags: plugins=grpc
-      output: ../build/go/src/github.com/presslabs/dashboard-go/pkg/proto
+      output: ../staging/src
