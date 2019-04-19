@@ -100,7 +100,6 @@ message DeleteSiteRequest {
 
 message ListSitesRequest {
   // The parent project, for example "project/{project_name}".
-  // The parent is a required parameter
   string parent = 1;
   // The maximum number of items to return.
   int32 page_size = 2;
