@@ -8,9 +8,9 @@ which is part of this source code package.
 package gomega
 
 import (
-	// nolint: golint
+	// nolint: golint,stylecheck
 	. "github.com/onsi/gomega"
-	// nolint: golint
+	// nolint: golint,stylecheck
 	. "github.com/onsi/gomega/gstruct"
 
 	gomegatypes "github.com/onsi/gomega/types"

@@ -61,6 +61,7 @@ func FromError(err error) *StatusError {
 		if code, codeExists := k8sErrorMap[e.Status().Reason]; codeExists {
 			st.Status = status.New(code, code.String())
 		}
+	default:
 	}
 	return st
 }

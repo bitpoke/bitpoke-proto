@@ -19,7 +19,7 @@ import (
 
 // Client returns impersonated client
 func Client(userName string, cfg *rest.Config) client.Client {
-	if len(userName) <= 0 {
+	if userName == "" {
 		panic(status.InternalErrorf("empty impersonation user"))
 	}
 	mcfg := rest.CopyConfig(cfg)

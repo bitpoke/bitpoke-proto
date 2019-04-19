@@ -151,11 +151,11 @@ publish: images
 	done
 
 lint:
-	$(BINDIR)/golangci-lint run ./pkg/... ./cmd/...
+	GOGC=off $(BINDIR)/golangci-lint run ./pkg/... ./cmd/...
 
 dependencies:
 	test -d $(BINDIR) || mkdir $(BINDIR)
 	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
 	GOBIN=$(BINDIR) go install ./vendor/github.com/gobuffalo/packr/packr
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.16.0
 	$(MAKE) -C app dependencies

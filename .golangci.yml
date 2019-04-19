@@ -26,6 +26,8 @@ linters:
   disable:
     - goimports
     - maligned
+    - gochecknoinits
+    - gochecknoglobals
 
 issues:
   max-same-issues: 0

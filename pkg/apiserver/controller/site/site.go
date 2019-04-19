@@ -13,13 +13,14 @@ import (
 	"strings"
 
 	"github.com/gogo/protobuf/types"
-	"github.com/presslabs/controller-util/rand"
 	"golang.org/x/net/publicsuffix"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/presslabs/controller-util/rand"
 
 	sites "github.com/presslabs/dashboard-go/pkg/proto/presslabs/dashboard/sites/v1"
 	"github.com/presslabs/dashboard/pkg/apiserver"
@@ -170,7 +171,7 @@ func updatePrimaryDomain(wp *wordpressv1alpha1.Wordpress, domain string, fieldMa
 }
 
 // updateWordpressImage updates the wordpress image
-func updateWordpressImage(wp *wordpressv1alpha1.Wordpress, image string, fieldMask types.FieldMask) error {
+func updateWordpressImage(wp *wordpressv1alpha1.Wordpress, image string, fieldMask types.FieldMask) error { // nolint:unparam
 	if len(fieldMask.Paths) == 0 || containsString(fieldMask.Paths, "site.wordpress_image") {
 		wp.Spec.Image = image
 	}

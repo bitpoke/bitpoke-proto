@@ -117,7 +117,7 @@ func getMemcachedPodSpec(wp *site.Site) (corev1.PodSpec, error) {
 
 	memcachedMemoryInt64, ok := resMemcachedMemory.AsInt64()
 	if !ok {
-		return spec, fmt.Errorf("Cannot convert %s into int64", memcachedMemory)
+		return spec, fmt.Errorf("cannot convert %s into int64", memcachedMemory)
 	}
 	// make conversion: 12Mi (12 * 2^20)
 	memcachedMemoryArg := memcachedMemoryInt64 / 1024 / 1024
