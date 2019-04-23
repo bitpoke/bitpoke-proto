@@ -10,7 +10,7 @@ option (gogoproto.protosizer_all) = true;
 option (gogoproto.testgen_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.verbose_equal_all) = true;
-option go_package = "github.com/presslabs/dashboard-go/project/v1";
+option go_package = "github.com/presslabs/dashboard-go/pkg/project/v1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
@@ -23,7 +23,7 @@ message Project {
   // The `project_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // The name is read-only
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // The display_name for the project
   string display_name = 2;
   // The organization name. The organization is immutable.
@@ -35,7 +35,7 @@ message GetProjectRequest {
   // The resource name of the project to fetch in the form project/{project_name}
   // The `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListProjectsRequest {
@@ -89,7 +89,7 @@ message DeleteProjectRequest {
   // The resource name of the project to delete in the form project/{project_name}
   // The `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 // ProjectsService allow managing projects
