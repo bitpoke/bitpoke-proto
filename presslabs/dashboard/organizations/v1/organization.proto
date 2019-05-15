@@ -10,7 +10,7 @@ option (gogoproto.protosizer_all) = true;
 option (gogoproto.testgen_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.verbose_equal_all) = true;
-option go_package = "github.com/presslabs/dashboard-go/organization/v1";
+option go_package = "github.com/presslabs/dashboard-go/pkg/organization/v1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
@@ -22,7 +22,9 @@ message Organization {
   // The fully qualified organization name in the form orgs/{organization_name}.
   // The `organization_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
-  string name = 1;
+  // The name is read-only
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // The display_name for the project
   // The display_name for the organization
   string display_name = 2;
 }
@@ -31,7 +33,7 @@ message GetOrganizationRequest {
   // The resource name of the organization to fetch in the form orgs/{organization_name}
   // The `organization_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListOrganizationsRequest {
@@ -76,7 +78,7 @@ message DeleteOrganizationRequest {
   // The resource name of the organization to delete in the form orgs/{organization_name}
   // The `organization_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 // OrganizationsService allow managing organizations
