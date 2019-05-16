@@ -32,6 +32,22 @@ message Site {
     // can be found in the `statusMessage` field.
     ERROR = 3;
   }
+
+  enum ResourceType {
+    MEMORY_PER_POD = 0;
+    CPU_PER_POD = 1;
+    PODS = 2;
+    PHP_WORKERS = 3;
+    PHP_WORKERS_MEMORY = 4;
+  }
+
+  message ResourceAllocation {
+    ResourceType type = 0;
+    string guaranteed = 1;
+    string burstable = 2;
+    string current = 3;
+  }
+
   // The fully qualified site name in the form
   // project/super-awesome/site/{site_name}.
   // The `site_name` is a valid DNS label (RFC 1123) with maximum
@@ -44,6 +60,8 @@ message Site {
   string wordpress_image = 3;
   // The site endpoints
   repeated Endpoint endpoints = 4;
+  // The site's allocated resource
+  repeated ResourceAllocation resources = 7;
   // [Output only] The current status of this site.
   Status status = 5;
   // [Output only] Additional information about the current status of this
