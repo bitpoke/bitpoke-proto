@@ -42,10 +42,10 @@ message Site {
   }
 
   message ResourceAllocation {
-    ResourceType type = 0;
-    string guaranteed = 1;
-    string burstable = 2;
-    string current = 3;
+    ResourceType type = 1;
+    string guaranteed = 2;
+    string burstable = 3;
+    string current = 4;
   }
 
   // The fully qualified site name in the form
