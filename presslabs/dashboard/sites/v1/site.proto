@@ -10,7 +10,7 @@ option (gogoproto.protosizer_all) = true;
 option (gogoproto.testgen_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.verbose_equal_all) = true;
-option go_package = "github.com/presslabs/dashboard-go/site/v1";
+option go_package = "github.com/presslabs/dashboard-go/pkg/site/v1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
@@ -38,8 +38,9 @@ message Site {
   // The `site_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // The name is read-only
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // The primary domain for site
+  // The primary domain is a required parameter
   string primary_domain = 2;
   // The wordpress image
   string wordpress_image = 3;
@@ -83,7 +84,7 @@ message ResourceAllocation {
 message CreateSiteRequest {
   // The parent project, for example "project/{project_name}".
   // The parent is a required parameter
-  string parent = 1;
+  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // The site resource to create
   Site site = 2 [
     (gogoproto.embed) = true,
@@ -96,7 +97,7 @@ message GetSiteRequest {
   // project/super-awesome/site/{site_name}.
   // The `site_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message UpdateSiteRequest {
@@ -118,12 +119,12 @@ message DeleteSiteRequest {
   // project/super-awesome/site/{site_name}.
   // The `site_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListSitesRequest {
   // The parent project, for example "project/{project_name}".
-  string parent = 1;
+  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // The maximum number of items to return.
   int32 page_size = 2;
   // The next_page_token value returned from a previous List request, if
