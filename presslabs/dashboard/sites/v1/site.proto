@@ -61,6 +61,7 @@ message Endpoint {
 }
 
 message ResourceAllocation {
+  // The type of the resource that is being allocated
   enum Type {
     MEMORY_PER_POD = 0;
     CPU_PER_POD = 1;
@@ -70,8 +71,11 @@ message ResourceAllocation {
   }
 
   Type type = 1;
+  // the minimum value allocated
   string guaranteed = 2;
+  // the maximum value that the allocation can grow to
   string burstable = 3;
+  // the currently allocated value for the resource
   string current = 4;
 }
 
