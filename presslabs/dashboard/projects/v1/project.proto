@@ -28,7 +28,7 @@ message Project {
   string display_name = 2;
   // The organization name. The organization is immutable.
   // This field is read-only
-  string organization = 3;
+  string organization = 3 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
 }
 
 message GetProjectRequest {
@@ -42,7 +42,7 @@ message ListProjectsRequest {
   // The parent organization, for example "org/{organization_name}".
   // This parameter overrides the organization passed as metadata.
   // If not specified as metadata, the parent is a required parameter.
-  string parent = 1;
+  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // The maximum number of items to return.
   int32 page_size = 2;
   // The next_page_token value returned from a previous List request, if
@@ -61,7 +61,7 @@ message CreateProjectRequest {
   // The parent organization, for example "org/{organization_name}".
   // This parameter overrides the organization passed as metadata.
   // If not specified as metadata, the parent is a required parameter.
-  string parent = 1;
+  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // The project resource to create
   Project project = 3 [
     (gogoproto.embed) = true,
