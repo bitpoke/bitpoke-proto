@@ -24,7 +24,6 @@ message Organization {
   // length of 48 characters.
   // The name is read-only
   string name = 1 [(gogoproto.casttype) = "Name"];
-  // The display_name for the project
   // The display_name for the organization
   string display_name = 2;
 }
