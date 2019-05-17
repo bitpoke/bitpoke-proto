@@ -32,7 +32,6 @@ message Site {
     // can be found in the `statusMessage` field.
     ERROR = 3;
   }
-
   // The fully qualified site name in the form
   // project/super-awesome/site/{site_name}.
   // The `site_name` is a valid DNS label (RFC 1123) with maximum
@@ -69,7 +68,6 @@ message ResourceAllocation {
     PHP_WORKERS = 3;
     PHP_WORKERS_MEMORY = 4;
   }
-
   Type type = 1;
   // the minimum value allocated
   string guaranteed = 2;
@@ -78,7 +76,6 @@ message ResourceAllocation {
   // the currently allocated value for the resource
   string current = 4;
 }
-
 
 message CreateSiteRequest {
   // The parent project, for example "project/{project_name}".
