@@ -59,6 +59,7 @@ message Endpoint {
   string host = 2;
 }
 
+// ResourceAllocation describes what the allocated resources for a site are
 message ResourceAllocation {
   // The type of the resource that is being allocated
   enum Type {
