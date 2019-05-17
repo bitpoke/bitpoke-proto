@@ -33,21 +33,6 @@ message Site {
     ERROR = 3;
   }
 
-  enum ResourceType {
-    MEMORY_PER_POD = 0;
-    CPU_PER_POD = 1;
-    PODS = 2;
-    PHP_WORKERS = 3;
-    PHP_WORKERS_MEMORY = 4;
-  }
-
-  message ResourceAllocation {
-    ResourceType type = 1;
-    string guaranteed = 2;
-    string burstable = 3;
-    string current = 4;
-  }
-
   // The fully qualified site name in the form
   // project/super-awesome/site/{site_name}.
   // The `site_name` is a valid DNS label (RFC 1123) with maximum
@@ -74,6 +59,22 @@ message Endpoint {
   string ip = 1;
   string host = 2;
 }
+
+message ResourceAllocation {
+  enum Type {
+    MEMORY_PER_POD = 0;
+    CPU_PER_POD = 1;
+    PODS = 2;
+    PHP_WORKERS = 3;
+    PHP_WORKERS_MEMORY = 4;
+  }
+
+  Type type = 1;
+  string guaranteed = 2;
+  string burstable = 3;
+  string current = 4;
+}
+
 
 message CreateSiteRequest {
   // The parent project, for example "project/{project_name}".
