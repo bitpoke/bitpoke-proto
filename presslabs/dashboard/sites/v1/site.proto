@@ -44,7 +44,7 @@ message Site {
   string wordpress_image = 3;
   // The site endpoints
   repeated Endpoint endpoints = 4;
-  // The site's allocated resource
+  // [Output only] The site's allocated resource
   repeated ResourceAllocation resources = 7;
   // [Output only] The current status of this site.
   Status status = 5;
