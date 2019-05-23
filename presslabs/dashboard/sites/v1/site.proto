@@ -15,6 +15,7 @@ option go_package = "github.com/presslabs/dashboard-go/site/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
+import "presslabs/dashboard/api/events/v1/event.proto";
 
 // Site represents an site within the presslabs dashboard
 // context
@@ -137,6 +138,23 @@ message ListSitesResponse {
   string next_page_token = 2;
 }
 
+message ListSiteEventsRequest {
+  // The parent site to list events for. Eg. project/{project_name}/site/{site_name}
+  string parent = 1;
+  // The maximum number of items to return.
+  int32 page_size = 2;
+  // The next_page_token value returned from a previous List request, if
+  // any.
+  string page_token = 3;
+}
+
+message ListSiteEventsResponse {
+  repeated presslabs.dashboard.api.events.v1.Event events = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
 // SitesService allow managing sites
 service SitesService {
   // CreateSite creates a new site
@@ -149,4 +167,6 @@ service SitesService {
   rpc DeleteSite(DeleteSiteRequest) returns (google.protobuf.Empty);
   // ListSites list sites
   rpc ListSites(ListSitesRequest) returns (ListSitesResponse);
+  // ListSiteEvents list site related events
+  rpc ListSiteEvents(ListSiteEventsRequest) returns (ListSiteEventsResponse);
 }
