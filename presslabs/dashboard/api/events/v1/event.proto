@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package presslabs.dashboard.api.events.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/presslabs/dashboard-go/pkg/api/events/v1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// Event represents a generic event
+message Event {
+  // Event type
+  enum Kind {
+    // Not set.
+    UNSPECIFIED = 0;
+    // NORMAL represents a regular, informative event
+    NORMAL = 1;
+    // WARNING represents a warning event
+    WARNING = 2;
+    // ERROR is an error event. This type is not currently used, but left here for completeness
+    ERROR = 3;
+  }
+  // The fully qualified project name in the form event/{event_name}.
+  // The `event_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  // The name is read-only
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // The event type
+  Kind kind = 2;
+  // This should be a short, machine understandable string that gives the reason
+  // for the transition into the object's current status.
+  // eg. MemcachedStatefulSetSyncSuccessfull
+  string reason = 3;
+  // A human-readable description of the status of this operation.
+  // eg: StatefulSet proj-u03mfu/donz-lyoxp-memcached created successfully
+  string message = 4;
+  // The component reporting this event. This is a machine understandable string
+  // eg: site-controller or gke-dashboard-stage-1-worker-pool-1-7ca88f81-ps6g/kubelet
+  string source = 5;
+  // The number of times this event has occurred
+  int32 count = 6;
+  // The time at which the event was first recorded
+  google.protobuf.Timestamp first_timestamp = 7;
+  // The time at which the most recent occurrence of this event was recorded
+  google.protobuf.Timestamp last_timestamp = 8;
+}
