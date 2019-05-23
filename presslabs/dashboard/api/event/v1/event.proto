@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package presslabs.dashboard.api.events.v1;
+package presslabs.dashboard.api.event.v1;
 
 option (gogoproto.equal_all) = true; // Required for test generation
 option (gogoproto.gostring_all) = true;
@@ -10,7 +10,7 @@ option (gogoproto.protosizer_all) = true;
 option (gogoproto.testgen_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.verbose_equal_all) = true;
-option go_package = "github.com/presslabs/dashboard-go/pkg/api/events/v1";
+option go_package = "github.com/presslabs/dashboard-go/pkg/api/event/v1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
@@ -28,10 +28,10 @@ message Event {
     // ERROR is an error event. This type is not currently used, but left here for completeness
     ERROR = 3;
   }
-  // The fully qualified event name in the form {event_scope}/event/{event_name}.
+  // The fully qualified event name in the form event/{event_name}.
   // The `event_name` is a valid DNS label (RFC 1123) with maximum
-  // length of 48 characters. The `event_scope` is optional.
-  // The name is read-only
+  // length of 48 characters.
+  // The name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
   // The event type
   Kind kind = 2;

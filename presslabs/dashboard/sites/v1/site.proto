@@ -15,7 +15,7 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/site/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
-import "presslabs/dashboard/api/events/v1/event.proto";
+import "presslabs/dashboard/api/event/v1/event.proto";
 
 // Site represents an site within the presslabs dashboard
 // context
@@ -150,7 +150,7 @@ message ListSiteEventsRequest {
 }
 
 message ListSiteEventsResponse {
-  repeated presslabs.dashboard.api.events.v1.Event events = 1 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.api.event.v1.Event events = 1 [(gogoproto.nullable) = false];
   // Token to retrieve the next page of results, or empty if there are no
   // more results in the list.
   string next_page_token = 2;

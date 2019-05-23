@@ -29,7 +29,7 @@ generate:
     import_path: github.com/presslabs/dashboard-go
     extra_modifiers:
       # out staging/vendor duality fucks up code generations, so we need to manually fix it
-      presslabs/dashboard/api/events/v1/event.proto: github.com/presslabs/dashboard-go/pkg/api/events/v1
+      presslabs/dashboard/api/event/v1/event.proto: github.com/presslabs/dashboard-go/pkg/api/event/v1
   plugins:
     - name: gogo
       type: gogo
