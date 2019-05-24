@@ -28,9 +28,9 @@ message Event {
     // ERROR is an error event. This type is not currently used, but left here for completeness
     ERROR = 3;
   }
-  // The fully qualified project name in the form event/{event_name}.
+  // The fully qualified event name in the form {event_scope}/event/{event_name}.
   // The `event_name` is a valid DNS label (RFC 1123) with maximum
-  // length of 48 characters.
+  // length of 48 characters. The `event_scope` is optional.
   // The name is read-only
   string name = 1 [(gogoproto.casttype) = "Name"];
   // The event type
