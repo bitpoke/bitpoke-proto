@@ -53,6 +53,18 @@ message Site {
   // [Output only] Additional information about the current status of this
   // site, if available.
   string status_message = 6;
+  // The git_repository_origin is the source of truth, in regards to the site's code.
+  // For now, it needs to be a public git repository, that can be cloned via git, ssh and http.
+  string git_repository_origin = 8;
+  // [OUTPUT_ONLY] The git_repository_deployed_ref will point to the
+  // git reference targeted for deployment.
+  string git_repository_deployed_ref = 9;
+  // The git_repository_ref is git reference desired for deployment.
+  // It can be a commit, a tag or a branch.
+  // If it's a branch, the system will follow that branch's HEAD, and the actual
+  // reference targeted for deployment is exposed in `git_repository_deployed_ref`.
+  // If it's a commit or tag, the `git_repository_deployed_ref` will point to that reference.
+  string git_repository_ref = 10;
 }
 
 // Endpoint for the site
