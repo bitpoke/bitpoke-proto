@@ -65,6 +65,12 @@ message Site {
   // reference targeted for deployment is exposed in `git_repository_deployed_ref`.
   // If it's a commit or tag, the `git_repository_deployed_ref` will point to that reference.
   string git_repository_ref = 10;
+  // [Output only] Site's fully-qualified wp-admin URL
+  string wp_admin_url = 11;
+  // [Output only] Site's admin username used for site bootstrapping
+  string wp_admin_bootstrap_user = 12;
+  // [Output only] Site's admin password used for site bootstrapping
+  string wp_admin_bootstrap_password = 13;
 }
 
 // Endpoint for the site
