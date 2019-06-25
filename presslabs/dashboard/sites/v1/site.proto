@@ -71,12 +71,20 @@ message Site {
   string wp_admin_bootstrap_user = 12;
   // [Output only] Site's admin password used for site bootstrapping
   string wp_admin_bootstrap_password = 13;
+  // List of environment variables
+  repeated EnvVar env_vars = 14;
 }
 
 // Endpoint for the site
 message Endpoint {
   string ip = 1;
   string host = 2;
+}
+
+// EnvVar contains a key and a value for environment variable
+message EnvVar {
+  string name = 1;
+  string value = 2;
 }
 
 // ResourceAllocation describes what the allocated resources for a site are
