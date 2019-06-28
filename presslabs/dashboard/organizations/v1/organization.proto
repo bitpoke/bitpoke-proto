@@ -58,7 +58,7 @@ message CreateOrganizationRequest {
 }
 
 message UpdateOrganizationRequest {
-  // The new definition of the Folder. It must include
+  // The new definition of the organization. It must include
   // a `name` and `display_name` field. The other fields
   // will be ignored.
   Organization organization = 1 [

@@ -127,7 +127,7 @@ message GetSiteRequest {
 }
 
 message UpdateSiteRequest {
-  // The new definition of the Folder. It must include a `name`
+  // The new definition of the site. It must include a `name`
   Site site = 1 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false

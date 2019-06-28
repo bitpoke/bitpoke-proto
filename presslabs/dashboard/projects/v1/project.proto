@@ -70,7 +70,7 @@ message CreateProjectRequest {
 }
 
 message UpdateProjectRequest {
-  // The new definition of the Folder. It must include
+  // The new definition of the project. It must include
   // a `name` , `organization` and `display_name` field.
   // The other fields will be ignored.
   Project project = 1 [
