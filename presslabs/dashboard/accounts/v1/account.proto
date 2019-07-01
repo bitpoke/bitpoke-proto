@@ -13,6 +13,7 @@ option (gogoproto.verbose_equal_all) = true;
 option go_package = "github.com/presslabs/dashboard-go/pkg/account/v1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
 
 // Account represents a collaboration account for an account within the Presslabs
 // dashboard context
@@ -71,4 +72,6 @@ service AccountsService {
   rpc GetAccount(GetAccountRequest) returns (Account);
   // ListAccounts list accounts
   rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
+  // DeleteAccount deletes an account reference from the specified organization
+  rpc DeleteAccount(DeleteAccountRequest) returns (google.protobuf.Empty);
 }
