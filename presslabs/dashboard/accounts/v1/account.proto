@@ -15,8 +15,7 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/account/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 
-// Account represents a collaboration account for an account within the Presslabs
-// dashboard context
+// Account represents a user within the Presslabs dashboard context
 message Account {
   // [Output only] The fully qualified account name in the form iam/accounts/{account_name}.
   // The `account_name` is a valid DNS label (RFC 1123) with maximum
@@ -26,12 +25,12 @@ message Account {
   string email = 2;
   // The unique handle used to identify the account in the SSO provider's database
   string id = 3;
-  // The user's first name
+  // User's first name
   string first_name = 4;
-  // The user's last name
+  // User's last name
   string last_name = 5;
-  // A URL poiting to the user's profile picture
-  string profile_picture = 6;
+  // A URL pointing to the user's profile picture
+  string profile_picture_url = 6;
 }
 
 message GetAccountRequest {
