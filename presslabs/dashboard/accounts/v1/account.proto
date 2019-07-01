@@ -17,8 +17,8 @@ import "google/protobuf/empty.proto";
 
 // Account represents a user within the Presslabs dashboard context
 message Account {
-  // [Output only] The fully qualified account name in the form iam/accounts/{account_name}.
-  // The `account_name` is a valid DNS label (RFC 1123) with maximum
+  // [Output only] Fully qualified account name in the form `iam/accounts/{account_name}`.
+  // `account_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
   // User's email address
@@ -34,18 +34,18 @@ message Account {
 }
 
 message GetAccountRequest {
-  // The resource name of the account to fetch in the form iam/accounts/{account_name}
-  // The `account_name` MUST be a valid DNS label (RFC 1123) with maximum length
+  // Resource name of the account to fetch, in the form `iam/accounts/{account_name}`
+  // `account_name` MUST be a valid DNS label (RFC 1123) with maximum length
   // of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListAccountsRequest {
-  // The parent organization, for example "organization/{organization_name}".
+  // Parent organization, for example `organization/{organization_name}`.
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
-  // The maximum number of items to return.
+  // Maximum number of items to return.
   int32 page_size = 2;
-  // The next_page_token value returned from a previous List request, if any.
+  // Next page's token value returned from a previous List request, if any.
   string page_token = 3;
 }
 
@@ -57,9 +57,9 @@ message ListAccountsResponse {
 }
 
 message DeleteAccountRequest {
-  // The resource name of the account to be revoked (and deleted) in the form
+  // Resource name of the account to be revoked (and deleted) in the form
   // iam/accounts/{account_name}
-  // The `account_name` MUST be a valid DNS label (RFC 1123)
+  // `account_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
