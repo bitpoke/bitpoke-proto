@@ -64,7 +64,6 @@ message DeleteAccountRequest {
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
-
 // AccountsService allows managing accounts
 service AccountsService {
   // GetAccount fetches an account by it's name
