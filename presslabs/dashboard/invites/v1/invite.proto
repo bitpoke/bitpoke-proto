@@ -66,7 +66,7 @@ message CreateInviteRequest {
   ];
 }
 
-message RevokeInviteRequest {
+message DeleteInviteRequest {
   // The resource name of the invite to be revoked (and deleted) in the form
   // iam/invites/{invite_name}
   // The `invite_name` MUST be a valid DNS label (RFC 1123)
@@ -93,8 +93,8 @@ service InvitesService {
   rpc CreateInvite(CreateInviteRequest) returns (Invite);
   // GetInvite fetches an invite by it's name
   rpc GetInvite(GetInviteRequest) returns (Invite);
-  // RevokeInvite revokes an invite by it's name
-  rpc RevokeInvite(RevokeInviteRequest) returns (google.protobuf.Empty);
+  // DeleteInvite revokes an invite by it's name
+  rpc DeleteInvite(DeleteInviteRequest) returns (google.protobuf.Empty);
   // ListInvites list invites
   rpc ListInvites(ListInvitesRequest) returns (ListInvitesResponse);
   // RedeemInvite allows invites to be consumed
