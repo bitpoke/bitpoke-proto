@@ -80,11 +80,8 @@ message RedeemInviteRequest {
   // The `invite_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
-  // If not empty, it will be used as the account's email for which the invite
-  // is consumed. Otherwise the email contained by the invite resource will be used.
-  string email = 2;
   // The redeem token used to identify the invite
-  string redeem_token = 3;
+  string redeem_token = 2;
 }
 
 // InvitesService allows managing invites
