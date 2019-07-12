@@ -25,7 +25,7 @@ message Account {
   string email = 2;
   // A unique handle used to identify the account in the SSO provider's database
   string id = 3;
-  // User's first name
+  // User's full name
   string full_name = 4;
   // A URL pointing to the user's profile picture
   string profile_picture_url = 5;
