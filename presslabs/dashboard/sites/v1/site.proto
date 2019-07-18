@@ -15,6 +15,7 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/site/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
 import "presslabs/dashboard/api/event/v1/event.proto";
 
 // Site represents an site within the presslabs dashboard
@@ -73,6 +74,9 @@ message Site {
   string wp_admin_bootstrap_password = 13;
   // List of environment variables
   repeated EnvVar env_vars = 14;
+  // The time when the site was created.
+  // This field is read-only.
+  google.protobuf.Timestamp created_at = 15;
 }
 
 // Endpoint for the site
