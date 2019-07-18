@@ -27,7 +27,8 @@ message Organization {
   string name = 1 [(gogoproto.casttype) = "Name"];
   // The display_name for the organization
   string display_name = 2;
-  // Timestamp when organization was created
+  // Timestamp when the organization was created.
+  // This field is read-only.
   google.protobuf.Timestamp created_at = 3;
 }
 
