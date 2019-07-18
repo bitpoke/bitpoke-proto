@@ -15,6 +15,7 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/organization/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
 
 // Organization represents an organization within the presslabs dashboard
 // context
@@ -26,6 +27,8 @@ message Organization {
   string name = 1 [(gogoproto.casttype) = "Name"];
   // The display_name for the organization
   string display_name = 2;
+  // Timestamp when organization was created
+  google.protobuf.Timestamp created_at = 3;
 }
 
 message GetOrganizationRequest {
