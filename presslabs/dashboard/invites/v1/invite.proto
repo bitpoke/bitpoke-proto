@@ -34,6 +34,9 @@ message Invite {
   string redeem_token = 4;
   // [Output only] Organization's name, to which the user is invited.
   string organization = 5 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
+  // Timestamp when the invite was created.
+  // This field is read-only.
+  google.protobuf.Timestamp created_at = 6;
 }
 
 message GetInviteRequest {
