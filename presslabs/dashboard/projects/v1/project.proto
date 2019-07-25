@@ -20,7 +20,7 @@ import "google/protobuf/timestamp.proto";
 // Projects represents an project within the presslabs dashboard
 // context
 message Project {
-  // The fully qualified project name in the form project/{project_name}.
+  // The fully qualified project name in the form projects/{project_name}.
   // The `project_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // The name is read-only
@@ -36,7 +36,7 @@ message Project {
 }
 
 message GetProjectRequest {
-  // The resource name of the project to fetch in the form project/{project_name}
+  // The resource name of the project to fetch in the form projects/{project_name}
   // The `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -90,7 +90,7 @@ message UpdateProjectRequest {
 }
 
 message DeleteProjectRequest {
-  // The resource name of the project to delete in the form project/{project_name}
+  // The resource name of the project to delete in the form projects/{project_name}
   // The `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
