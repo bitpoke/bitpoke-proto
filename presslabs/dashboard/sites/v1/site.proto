@@ -35,7 +35,7 @@ message Site {
     ERROR = 3;
   }
   // The fully qualified site name in the form
-  // project/super-awesome/site/{site_name}.
+  // projects/super-awesome/sites/{site_name}.
   // The `site_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // The name is read-only
@@ -112,7 +112,7 @@ message ResourceAllocation {
 }
 
 message CreateSiteRequest {
-  // The parent project, for example "project/{project_name}".
+  // The parent project, for example "projects/{project_name}".
   // The parent is a required parameter
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // The site resource to create
@@ -124,7 +124,7 @@ message CreateSiteRequest {
 
 message GetSiteRequest {
   // The resource name of the site to fetch in the form
-  // project/super-awesome/site/{site_name}.
+  // projects/super-awesome/sites/{site_name}.
   // The `site_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -146,14 +146,14 @@ message UpdateSiteRequest {
 
 message DeleteSiteRequest {
   // The resource name of the site to delete in the form
-  // project/super-awesome/site/{site_name}.
+  // projects/super-awesome/sites/{site_name}.
   // The `site_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListSitesRequest {
-  // The parent project, for example "project/{project_name}".
+  // The parent project, for example "projects/{project_name}".
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // The maximum number of items to return.
   int32 page_size = 2;
@@ -170,7 +170,7 @@ message ListSitesResponse {
 }
 
 message ListSiteEventsRequest {
-  // The parent site to list events for. Eg. project/{project_name}/site/{site_name}
+  // The parent site to list events for. Eg. projects/{project_name}/sites/{site_name}
   string parent = 1;
   // The maximum number of items to return.
   int32 page_size = 2;
