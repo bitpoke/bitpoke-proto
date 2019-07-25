@@ -20,7 +20,7 @@ import "google/protobuf/timestamp.proto";
 // Organization represents an organization within the presslabs dashboard
 // context
 message Organization {
-  // The fully qualified organization name in the form orgs/{organization_name}.
+  // The fully qualified organization name in the form organizations/{organization_name}.
   // The `organization_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // The name is read-only
@@ -33,7 +33,7 @@ message Organization {
 }
 
 message GetOrganizationRequest {
-  // The resource name of the organization to fetch in the form orgs/{organization_name}
+  // The resource name of the organization to fetch in the form organizations/{organization_name}
   // The `organization_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -78,7 +78,7 @@ message UpdateOrganizationRequest {
 }
 
 message DeleteOrganizationRequest {
-  // The resource name of the organization to delete in the form orgs/{organization_name}
+  // The resource name of the organization to delete in the form organizations/{organization_name}
   // The `organization_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
