@@ -78,14 +78,14 @@ message ListSmtpsResponse {
   string next_page_token = 2;
 }
 
-// EnvVarsService allow managing smtps
+// SmtpsService allow managing smtps
 service SmtpsService {
-  // GetSmtps fetches an smtp by it's name
+  // GetSmtp fetches an smtp by it's name
   rpc GetSmtp(GetSmtpRequest) returns (Smtp);
   // UpdateSmtp updates an smtp details
   rpc UpdateSmtp(UpdateSmtpRequest) returns (Smtp);
   // DeleteSmtp deletes an smtp by it's name
   rpc DeleteSmtp(DeleteSmtpRequest) returns (google.protobuf.Empty);
-  // ListSmtp list Smtps
+  // ListSmtps list Smtps
   rpc ListSmtps(ListSmtpsRequest) returns (ListSmtpsResponse);
 }
