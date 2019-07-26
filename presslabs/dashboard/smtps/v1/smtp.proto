@@ -18,30 +18,30 @@ import "google/protobuf/field_mask.proto";
 
 // Smtp contains a host, a port and a tls for smtp variable
 message Smtp {
-  // The fully qualified smtp name in the form
+  // Fully qualified smtp name in the form
   // smpts/{smtp_name}.
-  // The `smtp_name` is a valid DNS label (RFC 1123) with maximum
+  // `smtp_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
-  // The name is read-only
+  // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
-  // The smtp's host
+  // Smtp's host.
   string host = 2;
-  // The smtp's port
+  // Smtp's port.
   string port = 3;
-  // The smtp's tls
+  // Smtp's tls.
   string tls = 4;
 }
 
 message GetSmtpRequest {
-  // The resource name of the smtp to fetch in the form
+  // Resource name of the smtp to fetch in the form
   // smtps/{smtp_name}.
-  // The `smtp_name` MUST be a valid DNS label (RFC 1123)
+  // `smtp_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message UpdateSmtpRequest {
-  // The new definition of the smtp. It must include a `name`
+  // New definition of the smtp. It must include a `name`.
   Smtp smtp = 1 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
@@ -54,19 +54,19 @@ message UpdateSmtpRequest {
 }
 
 message DeleteSmtpRequest {
-  // The resource name of the smtp to delete in the form
+  // Resource name of the smtp to delete in the form
   // smtps/{smtp_name}.
-  // The `smtp_name` MUST be a valid DNS label (RFC 1123)
+  // `smtp_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListSmtpsRequest {
-  // The parent's smtps, for example "site/{site_name}".
+  // Parent's smtps, for example "site/{site_name}".
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/site/v1.Name"];
-  // The maximum number of items to return.
+  // Maximum number of items to return.
   int32 page_size = 2;
-  // The next_page_token value returned from a previous List request, if
+  // Next_page_token value returned from a previous List request, if
   // any.
   string page_token = 3;
 }
