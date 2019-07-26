@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package presslabs.dashboard.smpts.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/presslabs/dashboard-go/pkg/smtp/v1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+
+// Smtp contains a host, a port and a tls for smtp variable
+message Smtp {
+  // The fully qualified smtp name in the form
+  // smpts/{smtp_name}.
+  // The `smtp_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  // The name is read-only
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // The smtp's host
+  string host = 2;
+  // The smtp's port
+  string port = 3;
+  // The smtp's tls
+  string tls = 4;
+}
+
+message GetSmtpRequest {
+  // The resource name of the smtp to fetch in the form
+  // smtps/{smtp_name}.
+  // The `smtp_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message UpdateSmtpRequest {
+  // The new definition of the smtp. It must include a `name`
+  Smtp smtp = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message DeleteSmtpRequest {
+  // The resource name of the smtp to delete in the form
+  // smtps/{smtp_name}.
+  // The `smtp_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message ListSmtpsRequest {
+  // The parent's smtps, for example "site/{site_name}".
+  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/site/v1.Name"];
+  // The maximum number of items to return.
+  int32 page_size = 2;
+  // The next_page_token value returned from a previous List request, if
+  // any.
+  string page_token = 3;
+}
+
+message ListSmtpsResponse {
+  repeated Smtp smtps = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+// EnvVarsService allow managing smtps
+service SmtpsService {
+  // GetSmtps fetches an smtp by it's name
+  rpc GetSmtp(GetSmtpRequest) returns (Smtp);
+  // UpdateSmtp updates an smtp details
+  rpc UpdateSmtp(UpdateSmtpRequest) returns (Smtp);
+  // DeleteSmtp deletes an smtp by it's name
+  rpc DeleteSmtp(DeleteSmtpRequest) returns (google.protobuf.Empty);
+  // ListSmtp list Smtps
+  rpc ListSmtps(ListSmtpsRequest) returns (ListSmtpsResponse);
+}
