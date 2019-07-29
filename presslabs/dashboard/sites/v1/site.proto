@@ -78,7 +78,7 @@ message Site {
   // This field is read-only.
   google.protobuf.Timestamp created_at = 15;
   // SMTP credentials.
-  SMTP smtp = 16;
+  SMTPCredentials smtp = 16;
 }
 
 // Endpoint for the site
@@ -93,9 +93,9 @@ message EnvVar {
   string value = 2;
 }
 
-// SMTP contains a host, a port, a tls, a user name and a user password
+// SMTPCredentials contains a host, a port, a tls, a user name and a user password
 // for smtp variable
-message SMTP {
+message SMTPCredentials {
   // SMTP's host.
   string host = 1;
   // SMTP's port.
