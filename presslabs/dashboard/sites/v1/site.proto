@@ -77,8 +77,8 @@ message Site {
   // Time when the site was created.
   // This field is read-only.
   google.protobuf.Timestamp created_at = 15;
-  // Smtp credentials.
-  Smtp smtp = 16;
+  // SMTP credentials.
+  SMTP smtp = 16;
 }
 
 // Endpoint for the site
@@ -93,20 +93,20 @@ message EnvVar {
   string value = 2;
 }
 
-// Smtp contains a host, a port, a tls, a user name and a user password
+// SMTP contains a host, a port, a tls, a user name and a user password
 // for smtp variable
-message Smtp {
-  // Smtp's host.
+message SMTP {
+  // SMTP's host.
   string host = 1;
-  // Smtp's port.
+  // SMTP's port.
   string port = 2;
   // User's name
   string user_name = 3;
   // User's password
   string user_password = 4;
-  // Smtp's tls.
+  // SMTP's tls.
   string tls = 5;
-  // Smtp's start tls
+  // SMTP's start tls
   string start_tls = 6;
 }
 
@@ -213,8 +213,8 @@ service SitesService {
   rpc GetSite(GetSiteRequest) returns (Site);
   // UpdateSite updates a site details
   rpc UpdateSite(UpdateSiteRequest) returns (Site);
-  // UpdateSmtp updates smtp credentials
-  rpc UpdateSmtp(UpdateSiteRequest) returns (Site);
+  // UpdateSMTP updates smtp credentials
+  rpc UpdateSMTP(UpdateSiteRequest) returns (Site);
   // DeleteSite deletes a site by it's name
   rpc DeleteSite(DeleteSiteRequest) returns (google.protobuf.Empty);
   // ListSites list sites
