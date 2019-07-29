@@ -74,9 +74,11 @@ message Site {
   string wp_admin_bootstrap_password = 13;
   // List of environment variables
   repeated EnvVar env_vars = 14;
-  // The time when the site was created.
+  // Time when the site was created.
   // This field is read-only.
   google.protobuf.Timestamp created_at = 15;
+  // Smtp credentials.
+  Smtp smtp = 16;
 }
 
 // Endpoint for the site
@@ -89,6 +91,23 @@ message Endpoint {
 message EnvVar {
   string name = 1;
   string value = 2;
+}
+
+// Smtp contains a host, a port, a tls, a user name and a user password
+// for smtp variable
+message Smtp {
+  // Smtp's host.
+  string host = 1;
+  // Smtp's port.
+  string port = 2;
+  // User's name
+  string user_name = 3;
+  // User's password
+  string user_password = 4;
+  // Smtp's tls.
+  string tls = 5;
+  // Smtp's start tls
+  string start_tls = 6;
 }
 
 // ResourceAllocation describes what the allocated resources for a site are
@@ -194,6 +213,8 @@ service SitesService {
   rpc GetSite(GetSiteRequest) returns (Site);
   // UpdateSite updates a site details
   rpc UpdateSite(UpdateSiteRequest) returns (Site);
+  // UpdateSmtp updates smtp credentials
+  rpc UpdateSmtp(UpdateSiteRequest) returns (Site);
   // DeleteSite deletes a site by it's name
   rpc DeleteSite(DeleteSiteRequest) returns (google.protobuf.Empty);
   // ListSites list sites
