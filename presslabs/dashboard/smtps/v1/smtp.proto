@@ -19,7 +19,7 @@ import "google/protobuf/field_mask.proto";
 // Smtp contains a host, a port and a tls for smtp variable
 message Smtp {
   // Fully qualified smtp name in the form
-  // smpts/{smtp_name}.
+  // projects/{project_name}/sites/{site_name}/smpts/{smtp_name}.
   // `smtp_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // Name is read-only.
@@ -40,7 +40,7 @@ message Smtp {
 
 message GetSmtpRequest {
   // Resource name of the smtp to fetch in the form
-  // smtps/{smtp_name}.
+  // projects/{project_name}/sites/{site_name}/smtps/{smtp_name}.
   // `smtp_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -61,7 +61,7 @@ message UpdateSmtpRequest {
 
 message DeleteSmtpRequest {
   // Resource name of the smtp to delete in the form
-  // smtps/{smtp_name}.
+  // projects/{project_name}/sites/{site_name}/smtps/{smtp_name}.
   // `smtp_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
