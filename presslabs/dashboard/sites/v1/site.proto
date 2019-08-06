@@ -79,6 +79,10 @@ message Site {
   google.protobuf.Timestamp created_at = 15;
   // SMTP credentials.
   SMTPCredentials smtp = 16;
+  // WordPress resource name. E.g.: `presslabs-com-12fgv`
+  string kubernetes_name = 17;
+  // Project namespace name.
+  string kubernetes_namespace = 18;
 }
 
 // Endpoint for the site
