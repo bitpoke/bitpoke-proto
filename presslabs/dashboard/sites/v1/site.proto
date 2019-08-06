@@ -34,33 +34,33 @@ message Site {
     // can be found in the `statusMessage` field.
     ERROR = 3;
   }
-  // The fully qualified site name in the form
+  // Fully qualified site name in the form
   // projects/super-awesome/sites/{site_name}.
-  // The `site_name` is a valid DNS label (RFC 1123) with maximum
+  // `site_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
-  // The name is read-only
+  // Name is read-only
   string name = 1 [(gogoproto.casttype) = "Name"];
-  // The primary domain for site
-  // The primary domain is a required parameter
+  // Primary domain for site
+  // Primary domain is a required parameter
   string primary_domain = 2;
-  // The wordpress image
+  // Wordpress image
   string wordpress_image = 3;
-  // The site endpoints
+  // Site endpoints
   repeated Endpoint endpoints = 4;
-  // [Output only] The site's allocated resource
+  // [Output only] Site's allocated resource
   repeated ResourceAllocation resources = 7;
-  // [Output only] The current status of this site.
+  // [Output only] Current status of this site.
   Status status = 5;
   // [Output only] Additional information about the current status of this
   // site, if available.
   string status_message = 6;
-  // The git_repository_origin is the source of truth, in regards to the site's code.
+  // Git_repository_origin is the source of truth, in regards to the site's code.
   // For now, it needs to be a public git repository, that can be cloned via git, ssh and http.
   string git_repository_origin = 8;
   // [OUTPUT_ONLY] The git_repository_deployed_ref will point to the
-  // git reference targeted for deployment.
+  // Git reference targeted for deployment.
   string git_repository_deployed_ref = 9;
-  // The git_repository_ref is git reference desired for deployment.
+  // git_repository_ref is git reference desired for deployment.
   // It can be a commit, a tag or a branch.
   // If it's a branch, the system will follow that branch's HEAD, and the actual
   // reference targeted for deployment is exposed in `git_repository_deployed_ref`.
@@ -79,9 +79,9 @@ message Site {
   google.protobuf.Timestamp created_at = 15;
   // SMTP credentials.
   SMTPCredentials smtp = 16;
-  // WordPress resource name. E.g.: `presslabs-com-12fgv`
+  // [Output only] WordPress resource name. E.g.: `presslabs-com-12fgv`
   string kubernetes_name = 17;
-  // Project namespace name.
+  // [Output only] Project namespace name.
   string kubernetes_namespace = 18;
 }
 
@@ -116,7 +116,7 @@ message SMTPCredentials {
 
 // ResourceAllocation describes what the allocated resources for a site are
 message ResourceAllocation {
-  // The type of the resource that is being allocated
+  // Type of the resource that is being allocated
   enum Resource {
     UNSPECIFIED = 0;
     MEMORY_PER_POD = 1;
@@ -126,19 +126,19 @@ message ResourceAllocation {
     PHP_WORKERS_MEMORY = 5;
   }
   Resource resource = 1;
-  // the minimum value allocated
+  // Minimum value allocated
   string requested = 2;
-  // the maximum value that the allocation can grow to
+  // Maximum value that the allocation can grow to
   string limit = 3;
-  // the currently allocated value for the resource
+  // Currently allocated value for the resource
   string current = 4;
 }
 
 message CreateSiteRequest {
-  // The parent project, for example "projects/{project_name}".
-  // The parent is a required parameter
+  // Parent project, for example "projects/{project_name}".
+  // Parent is a required parameter
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
-  // The site resource to create
+  // Site resource to create
   Site site = 2 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
@@ -146,42 +146,53 @@ message CreateSiteRequest {
 }
 
 message GetSiteRequest {
-  // The resource name of the site to fetch in the form
+  // Resource name of the site to fetch in the form
   // projects/super-awesome/sites/{site_name}.
-  // The `site_name` MUST be a valid DNS label (RFC 1123)
+  // `site_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message UpdateSiteRequest {
-  // The new definition of the site. It must include a `name`
+  // New definition of the site. It must include a `name`
   Site site = 1 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
   // Fields to be updated.
-  // Only the `primary_domain` and `wordpress_image` can be updated
+  // Only `primary_domain` and `wordpress_image` can be updated
   google.protobuf.FieldMask update_mask = 2 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
 }
 
+message UpdateEnvVarRequest {
+  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the env vars list.
+  repeated EnvVar env_vars = 2;
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 message DeleteSiteRequest {
-  // The resource name of the site to delete in the form
+  // Resource name of the site to delete in the form
   // projects/super-awesome/sites/{site_name}.
-  // The `site_name` MUST be a valid DNS label (RFC 1123)
+  // `site_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListSitesRequest {
-  // The parent project, for example "projects/{project_name}".
+  // Parent project, for example "projects/{project_name}".
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
-  // The maximum number of items to return.
+  // Maximum number of items to return.
   int32 page_size = 2;
-  // The next_page_token value returned from a previous List request, if
-  // any.
+  // Next_page_token value returned from a previous List request, if any.
   string page_token = 3;
 }
 
@@ -193,12 +204,11 @@ message ListSitesResponse {
 }
 
 message ListSiteEventsRequest {
-  // The parent site to list events for. Eg. projects/{project_name}/sites/{site_name}
+  // Parent site to list events for. Eg. projects/{project_name}/sites/{site_name}
   string parent = 1;
-  // The maximum number of items to return.
+  // Maximum number of items to return.
   int32 page_size = 2;
-  // The next_page_token value returned from a previous List request, if
-  // any.
+  // next_page_token value returned from a previous List request, if any.
   string page_token = 3;
 }
 
@@ -219,6 +229,8 @@ service SitesService {
   rpc UpdateSite(UpdateSiteRequest) returns (Site);
   // UpdateSMTP updates smtp credentials
   rpc UpdateSMTP(UpdateSiteRequest) returns (Site);
+  // UpdateEnvVar updates env vars
+  rpc UpdateEnvVar(UpdateEnvVarRequest) returns (Site);
   // DeleteSite deletes a site by it's name
   rpc DeleteSite(DeleteSiteRequest) returns (google.protobuf.Empty);
   // ListSites list sites
