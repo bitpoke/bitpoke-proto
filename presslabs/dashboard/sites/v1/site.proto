@@ -167,7 +167,7 @@ message UpdateSiteRequest {
   ];
 }
 
-message UpdateEnvVarRequest {
+message UpdateEnvVarsRequest {
   // Parent site, for example projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the env vars list.
@@ -229,8 +229,8 @@ service SitesService {
   rpc UpdateSite(UpdateSiteRequest) returns (Site);
   // UpdateSMTP updates smtp credentials
   rpc UpdateSMTP(UpdateSiteRequest) returns (Site);
-  // UpdateEnvVar updates env vars
-  rpc UpdateEnvVar(UpdateEnvVarRequest) returns (Site);
+  // UpdateEnvVars updates env vars
+  rpc UpdateEnvVars(UpdateEnvVarsRequest) returns (Site);
   // DeleteSite deletes a site by it's name
   rpc DeleteSite(DeleteSiteRequest) returns (google.protobuf.Empty);
   // ListSites list sites
