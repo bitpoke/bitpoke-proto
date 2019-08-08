@@ -78,7 +78,7 @@ message Site {
   // This field is read-only.
   google.protobuf.Timestamp created_at = 15;
   // SMTP credentials.
-  SMTPCredentials smtp = 16;
+  SMTPCredentials smtp_credentials = 16;
   // [Output only] WordPress resource name. E.g.: `presslabs-com-12fgv`
   string kubernetes_name = 17;
   // [Output only] Project namespace name.
@@ -179,6 +179,21 @@ message UpdateEnvVarsRequest {
   ];
 }
 
+message UpdateSMTPCredentialsRequest {
+  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the smtp.
+  SMTPCredentials smtp_credentials = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 message DeleteSiteRequest {
   // Resource name of the site to delete in the form
   // projects/super-awesome/sites/{site_name}.
@@ -227,8 +242,8 @@ service SitesService {
   rpc GetSite(GetSiteRequest) returns (Site);
   // UpdateSite updates a site details
   rpc UpdateSite(UpdateSiteRequest) returns (Site);
-  // UpdateSMTP updates smtp credentials
-  rpc UpdateSMTP(UpdateSiteRequest) returns (Site);
+  // UpdateSMTPCredentials updates smtp credentials
+  rpc UpdateSMTPCredentials(UpdateSMTPCredentialsRequest) returns (Site);
   // UpdateEnvVars updates env vars
   rpc UpdateEnvVars(UpdateEnvVarsRequest) returns (Site);
   // DeleteSite deletes a site by it's name
