@@ -110,7 +110,7 @@ message SMTP {
   string password = 4;
   // SMTP's tls. This provide a way to encrypt communication channel between
   // two machines over the Internet.
-  string use_tls = 5;
+  bool use_tls = 5;
   // SMTP's start tls.
   // This indicates that the client wants to upgrade existing, insecure
   // connection to a secure connection using TLS cryptographic protocol.
