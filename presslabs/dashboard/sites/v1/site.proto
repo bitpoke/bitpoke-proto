@@ -105,13 +105,16 @@ message SMTPCredentials {
   // SMTP's port.
   string port = 2;
   // User's name
-  string user_name = 3;
+  string user = 3;
   // User's password
-  string user_password = 4;
-  // SMTP's tls.
-  string tls = 5;
-  // SMTP's start tls
-  string start_tls = 6;
+  string password = 4;
+  // SMTP's tls. This provide a way to encrypt communication channel between
+  // two machines over the Internet.
+  string use_tls = 5;
+  // SMTP's start tls.
+  // This indicates that the client wants to upgrade existing, insecure
+  // connection to a secure connection using TLS cryptographic protocol.
+  string use_start_tls = 6;
 }
 
 // ResourceAllocation describes what the allocated resources for a site are
