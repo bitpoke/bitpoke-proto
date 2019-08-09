@@ -114,7 +114,7 @@ message SMTP {
   // SMTP's start tls.
   // This indicates that the client wants to upgrade existing, insecure
   // connection to a secure connection using TLS cryptographic protocol.
-  string use_start_tls = 6;
+  bool use_start_tls = 6;
 }
 
 // ResourceAllocation describes what the allocated resources for a site are
