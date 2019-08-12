@@ -103,7 +103,7 @@ message SMTP {
   // SMTP's host.
   string host = 1;
   // SMTP's port.
-  string port = 2;
+  int32 port = 2;
   // User's name
   string user = 3;
   // User's password
