@@ -83,6 +83,8 @@ message Site {
   string kubernetes_name = 17;
   // [Output only] Project namespace name.
   string kubernetes_namespace = 18;
+  // Autoscaler settings
+  Autoscaler autoscaler = 19;
 }
 
 // Endpoint for the site
@@ -117,6 +119,14 @@ message SMTP {
   bool use_start_tls = 6;
 }
 
+// Autoscaler exposes configurations used to dynamically scale the pods.
+// The consumer will be able to control it's range.
+message Autoscaler {
+  int32 min_pods = 1;
+  int32 max_pods = 2;
+  int32 replicas = 3;
+}
+
 // ResourceAllocation describes what the allocated resources for a site are
 message ResourceAllocation {
   // Type of the resource that is being allocated
@@ -124,7 +134,6 @@ message ResourceAllocation {
     UNSPECIFIED = 0;
     MEMORY_PER_POD = 1;
     CPU_PER_POD = 2;
-    PODS = 3;
     PHP_WORKERS = 4;
     PHP_WORKERS_MEMORY = 5;
   }
@@ -197,6 +206,33 @@ message UpdateSiteSMTPRequest {
   ];
 }
 
+message UpdateSiteResourceAllocationsRequest {
+  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the resource allocation list.
+  repeated ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateSiteAutoscalerRequest {
+  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the autoscaler.
+  Autoscaler autoscaler = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 message DeleteSiteRequest {
   // Resource name of the site to delete in the form
   // projects/super-awesome/sites/{site_name}.
@@ -247,6 +283,10 @@ service SitesService {
   rpc UpdateSite(UpdateSiteRequest) returns (Site);
   // UpdateSiteSMTP updates smtp credentials
   rpc UpdateSiteSMTP(UpdateSiteSMTPRequest) returns (Site);
+  // UpdateSiteResourceAllocations updates resource allocation
+  rpc UpdateSiteResourceAllocations(UpdateSiteResourceAllocationsRequest) returns (Site);
+  // UpdateSiteAutoscaler updates autoscaler
+  rpc UpdateSiteAutoscaler(UpdateSiteAutoscalerRequest) returns (Site);
   // UpdateSiteEnvVars updates env vars
   rpc UpdateSiteEnvVars(UpdateSiteEnvVarsRequest) returns (Site);
   // DeleteSite deletes a site by it's name
