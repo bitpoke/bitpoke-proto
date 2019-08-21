@@ -122,8 +122,11 @@ message SMTP {
 // Autoscaler exposes configurations used to dynamically scale the pods.
 // The consumer will be able to control it's range.
 message Autoscaler {
+  // Minimum number of pods, for a given site
   int32 min_pods = 1;
+  // Maximum number of pods, for a given site
   int32 max_pods = 2;
+  // [Output only] Current number of replicas
   int32 replicas = 3;
 }
 
