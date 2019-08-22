@@ -30,6 +30,8 @@ message Organization {
   // Timestamp when the organization was created.
   // This field is read-only.
   google.protobuf.Timestamp created_at = 3;
+  // The icon for organization. Should be an absolute url or a data url
+  string icon_url = 4;
 }
 
 message GetOrganizationRequest {

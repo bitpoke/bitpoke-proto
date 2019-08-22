@@ -33,6 +33,8 @@ message Project {
   // The time when the project was created.
   // This field is read-only.
   google.protobuf.Timestamp created_at = 4;
+  // The icon for project. Should be an absolute url or a data url
+  string icon_url = 5;
 }
 
 message GetProjectRequest {
