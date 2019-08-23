@@ -108,7 +108,7 @@ message SMTP {
   int32 port = 2;
   // User's name
   string user = 3;
-  // User's password
+  // [Write only] User's password
   string password = 4;
   // SMTP's tls. This provide a way to encrypt communication channel between
   // two machines over the Internet.
