@@ -18,8 +18,7 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "presslabs/dashboard/api/event/v1/event.proto";
 
-// Site represents an site within the presslabs dashboard
-// context
+// Site represents an site within the presslabs dashboard context
 message Site {
   // The current status of the site.
   enum Status {
