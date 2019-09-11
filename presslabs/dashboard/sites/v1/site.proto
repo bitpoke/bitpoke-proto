@@ -185,6 +185,10 @@ message CreateSiteRequest {
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
+  BootstrapDetails bootstrap = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message GetSiteRequest {
