@@ -73,7 +73,7 @@ message Site {
   // [Output only] Site's admin password used for site bootstrapping
   string wp_admin_bootstrap_password = 13;
   // List of environment variables
-  repeated EnvVar env_vars = 14;
+  EnvVarList env_vars = 14;
   // Time when the site was created.
   // This field is read-only.
   google.protobuf.Timestamp created_at = 15;
@@ -97,6 +97,11 @@ message Endpoint {
 message EnvVar {
   string name = 1;
   string value = 2;
+}
+
+// EnvVarList the list of environment variables
+message EnvVarList {
+  repeated EnvVar items = 1 [(gogoproto.nullable) = false];
 }
 
 // SMTP contains a host, a port, a tls, a user name and a user password
