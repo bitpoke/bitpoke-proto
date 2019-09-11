@@ -85,12 +85,24 @@ message Site {
   string kubernetes_namespace = 18;
   // Autoscaler settings
   Autoscaler autoscaler = 19;
+  // Service account
+  string service_account = 20;
+  // Storage bucket
+  StorageBucket storage_bucket = 21;
+  // Google Project ID
+  string google_project_id = 22;
 }
 
 // Endpoint for the site
 message Endpoint {
   string ip = 1;
   string host = 2;
+}
+
+// StorageBucket for the site
+message StorageBucket {
+  string name = 1;
+  string prefix = 2;
 }
 
 // EnvVar contains a key and a value for environment variable

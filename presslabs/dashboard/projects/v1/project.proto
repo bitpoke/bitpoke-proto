@@ -35,6 +35,8 @@ message Project {
   google.protobuf.Timestamp created_at = 4;
   // The icon for project. Should be an absolute url or a data url
   string icon_url = 5;
+  // The service account that will be used for the project's sites/mysql by default.
+  string default_service_account = 6;
 }
 
 message GetProjectRequest {
