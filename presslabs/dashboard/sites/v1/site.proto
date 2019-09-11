@@ -91,6 +91,17 @@ message Site {
   StorageBucket storage_bucket = 21;
   // Google Project ID
   string google_project_id = 22;
+  // [Write only] Bootstrap details.
+  BootstrapDetails bootstrap = 23;
+}
+
+// BootstrapDetails for the site
+message BootstrapDetails {
+  string username = 1;
+  string password = 2;
+  string email = 3;
+  string title = 4;
+  string description = 5;
 }
 
 // Endpoint for the site
