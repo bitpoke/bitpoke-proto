@@ -191,7 +191,7 @@ message UpdateSiteEnvVarsRequest {
   // Parent site, for example projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the env vars list.
-  repeated EnvVar env_vars = 2;
+  EnvVarList env_vars = 2;
   // Fields to be updated.
   google.protobuf.FieldMask update_mask = 3 [
     (gogoproto.embed) = true,
