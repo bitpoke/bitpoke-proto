@@ -100,7 +100,6 @@ message BootstrapDetails {
   string password = 2;
   string email = 3;
   string title = 4;
-  string description = 5;
 }
 
 // Endpoint for the site
@@ -185,7 +184,7 @@ message CreateSiteRequest {
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
-  BootstrapDetails bootstrap = 3 [
+  BootstrapDetails bootstrap_details = 3 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
