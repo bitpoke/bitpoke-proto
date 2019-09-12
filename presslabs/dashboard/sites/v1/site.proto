@@ -182,7 +182,8 @@ message CreateSiteRequest {
   ];
   BootstrapDetails bootstrap_details = 3 [
     (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    json_name = "bootstrap_details"
   ];
 }
 
