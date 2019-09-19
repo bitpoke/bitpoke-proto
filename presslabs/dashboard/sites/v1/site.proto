@@ -88,6 +88,14 @@ message Site {
   string google_project_id = 22;
   // [Write only] Bootstrap details.
   BootstrapDetails bootstrap = 23;
+  // Routes contains site domains and paths
+  repeated Route routes = 24 [(gogoproto.nullable) = false];
+}
+
+// Route consists of a site domain and an optional path prefix
+message Route {
+  string domain = 1;
+  string path_prefix = 2;
 }
 
 // BootstrapDetails for the site
@@ -302,6 +310,18 @@ message ListSiteEventsResponse {
   string next_page_token = 2;
 }
 
+message UpdateSiteRoutesRequest {
+  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Routes contains site domains and paths
+  repeated Route routes = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 // SitesService allow managing sites
 service SitesService {
   // CreateSite creates a new site
@@ -324,4 +344,6 @@ service SitesService {
   rpc ListSites(ListSitesRequest) returns (ListSitesResponse);
   // ListSiteEvents list site related events
   rpc ListSiteEvents(ListSiteEventsRequest) returns (ListSiteEventsResponse);
+  // UpdateSiteRoutes updates site routes
+  rpc UpdateSiteRoutes(UpdateSiteRoutesRequest) returns (Site);
 }
