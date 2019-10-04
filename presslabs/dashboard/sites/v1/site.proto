@@ -39,9 +39,6 @@ message Site {
   // length of 48 characters.
   // Name is read-only
   string name = 1 [(gogoproto.casttype) = "Name"];
-  // Primary domain for site
-  // Primary domain is a required parameter
-  string primary_domain = 2;
   // Wordpress image
   string wordpress_image = 3;
   // Site endpoints
@@ -88,7 +85,7 @@ message Site {
   string google_project_id = 22;
   // [Write only] Bootstrap details.
   BootstrapDetails bootstrap = 23;
-  // Routes contains site domains and paths
+  // [Output only] Routes contains site domains and paths
   repeated Route routes = 24 [(gogoproto.nullable) = false];
 }
 
@@ -184,14 +181,12 @@ message CreateSiteRequest {
   // Parent is a required parameter
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // Site resource to create
-  Site site = 2 [
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
+  Site site = 2 [(gogoproto.nullable) = false];
   BootstrapDetails bootstrap_details = 3 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
+  repeated Route routes = 4 [(gogoproto.nullable) = false];
 }
 
 message GetSiteRequest {
@@ -209,7 +204,7 @@ message UpdateSiteRequest {
     (gogoproto.nullable) = false
   ];
   // Fields to be updated.
-  // Only `primary_domain` and `wordpress_image` can be updated
+  // Only `wordpress_image` can be updated
   google.protobuf.FieldMask update_mask = 2 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
