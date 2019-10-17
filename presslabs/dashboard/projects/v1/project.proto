@@ -20,40 +20,42 @@ import "google/protobuf/timestamp.proto";
 // Projects represents an project within the presslabs dashboard
 // context
 message Project {
-  // The fully qualified project name in the form projects/{project_name}.
-  // The `project_name` is a valid DNS label (RFC 1123) with maximum
+  // Fully qualified project name in the form projects/{project_name}.
+  // `project_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
-  // The name is read-only
+  // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
-  // The display_name for the project
+  // display_name for the project
   string display_name = 2;
-  // The organization name. The organization is immutable.
-  // This field is read-only
+  // Organization name. The organization is immutable.
+  // This field is read-only.
   string organization = 3 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
-  // The time when the project was created.
+  // Time when the project was created.
   // This field is read-only.
   google.protobuf.Timestamp created_at = 4;
-  // The icon for project. Should be an absolute url or a data url
+  // Icon for project. Should be an absolute url or a data url
   string icon_url = 5;
-  // The service account that will be used for the project's sites/mysql by default.
+  // Service account that will be used for the project's sites/mysql by default.
   string default_service_account = 6;
+  // [Output only] Number of sites in the project.
+  int32 sites_count = 7;
 }
 
 message GetProjectRequest {
-  // The resource name of the project to fetch in the form projects/{project_name}
-  // The `project_name` MUST be a valid DNS label (RFC 1123)
+  // Resource name of the project to fetch in the form projects/{project_name}
+  // `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListProjectsRequest {
-  // The parent organization, for example "org/{organization_name}".
+  // Parent organization, for example "org/{organization_name}".
   // This parameter overrides the organization passed as metadata.
   // If not specified as metadata, the parent is a required parameter.
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
-  // The maximum number of items to return.
+  // Maximum number of items to return.
   int32 page_size = 2;
-  // The next_page_token value returned from a previous List request, if
+  // next_page_token value returned from a previous List request, if
   // any.
   string page_token = 3;
 }
@@ -66,11 +68,11 @@ message ListProjectsResponse {
 }
 
 message CreateProjectRequest {
-  // The parent organization, for example "org/{organization_name}".
+  // Parent organization, for example "org/{organization_name}".
   // This parameter overrides the organization passed as metadata.
   // If not specified as metadata, the parent is a required parameter.
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
-  // The project resource to create
+  // Project resource to create
   Project project = 3 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
@@ -78,7 +80,7 @@ message CreateProjectRequest {
 }
 
 message UpdateProjectRequest {
-  // The new definition of the project. It must include
+  // New definition of the project. It must include
   // a `name` , `organization` and `display_name` field.
   // The other fields will be ignored.
   Project project = 1 [
@@ -94,8 +96,8 @@ message UpdateProjectRequest {
 }
 
 message DeleteProjectRequest {
-  // The resource name of the project to delete in the form projects/{project_name}
-  // The `project_name` MUST be a valid DNS label (RFC 1123)
+  // Resource name of the project to delete in the form projects/{project_name}
+  // `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
