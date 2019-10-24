@@ -42,11 +42,11 @@ message Site {
   // Wordpress image
   string wordpress_image = 3;
   // Site endpoints
-  repeated Endpoint endpoints = 4;
+  repeated Endpoint endpoints = 4 [deprecated = true];
   // [Output only] Site's allocated resource
   repeated ResourceAllocation resources = 7;
   // [Output only] Current status of this site.
-  Status status = 5;
+  Status status = 5 [deprecated = true];
   // [Output only] Additional information about the current status of this
   // site, if available.
   string status_message = 6;
