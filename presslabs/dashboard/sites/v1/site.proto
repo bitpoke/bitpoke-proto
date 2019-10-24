@@ -87,6 +87,67 @@ message Site {
   BootstrapDetails bootstrap = 23;
   // [Output only] Routes contains site domains and paths
   repeated Route routes = 24 [(gogoproto.nullable) = false];
+  // [Output only] Current status of the site.
+  SiteStatus site_status = 25;
+}
+
+// SiteStatus is information about the current status of this site.
+message SiteStatus {
+  enum Status {
+    // Not set.
+    UNSPECIFIED = 0;
+    // Site is being created.
+    PROVISIONING = 1;
+    // Site is fully usable.
+    RUNNING = 2;
+    // Site is usable, but a component has an error.
+    WARNING = 3;
+    // Site is not running.
+    ERROR = 4;
+  }
+  // Site general (overall) status.
+  Status status = 1;
+  // Conditions for site status.
+  repeated Condition conditions = 2;
+  // Number of desired pods.
+  int32 desired_replicas = 3;
+  // Number of available pods.
+  int32 avaliable_replicas = 4;
+  // Number of unavailable pods.
+  int32 unavailable_replicas = 5;
+  // Number of updated pods.
+  int32 updated_replicas = 6;
+  // Number of current pods.
+  int32 current_replicas = 7;
+  // Site endpoints.
+  repeated Endpoint endpoints = 8;
+}
+
+// Condition for site status.
+message Condition {
+  enum Severity {
+    UNSPECIFIED = 0;
+    OK = 1;
+    WARNING = 2;
+    ERROR = 3;
+  }
+  // Severity of condition.
+  Severity severity = 1;
+  // K8s condition name.
+  string name = 2;
+  // K8s condition status.
+  string status = 3;
+  // Dashboard component name.
+  // E.g.: mysql-operator, memcached, wordpress, wp-cron.
+  string component = 4;
+  // K8s condition reason.
+  // Machine readable message that explain why the status is as is.
+  string reason = 5;
+  // K8s message reason.
+  // Human readable message that explain why the status is as is.
+  string message = 6;
+  // K8s condition last transition time.
+  google.protobuf.Timestamp last_transition_time = 7;
 }
 
 // Route consists of a site domain and an optional path prefix
