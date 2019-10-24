@@ -109,15 +109,19 @@ message SiteStatus {
   Status status = 1;
   // Conditions for site status.
   repeated Condition conditions = 2;
-  // Number of desired pods.
+  // Total number of desired pods.
   int32 desired_replicas = 3;
-  // Number of available pods.
+  // Total number of available pods, either up-to-date
+  // or running on previous configurations.
   int32 avaliable_replicas = 4;
-  // Number of unavailable pods.
+  // Total number of pods that are still required for the deployment
+  // to have 100% available capacity.
+  // They may either be pods that are running but not yet available
+  // or pods that still have not been created.
   int32 unavailable_replicas = 5;
-  // Number of updated pods.
+  // Total number of non-terminated pods that have the latest configuration applied.
   int32 updated_replicas = 6;
-  // Number of current pods.
+  // Total number of non-terminated pods.
   int32 current_replicas = 7;
   // Site endpoints.
   repeated Endpoint endpoints = 8;
@@ -126,9 +130,13 @@ message SiteStatus {
 // Condition for site status.
 message Condition {
   enum Severity {
+    // Not set.
     UNSPECIFIED = 0;
+    // Component is ok.
     OK = 1;
+    // Component has an warning.
     WARNING = 2;
+    // Component has an error.
     ERROR = 3;
   }
   // Severity of condition.
