@@ -275,7 +275,6 @@ message UpdateSiteRequest {
     (gogoproto.nullable) = false
   ];
   // Fields to be updated.
-  // Only `wordpress_image` can be updated
   google.protobuf.FieldMask update_mask = 2 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
