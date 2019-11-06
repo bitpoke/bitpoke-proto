@@ -123,8 +123,10 @@ message SiteStatus {
   int32 updated_replicas = 6;
   // Total number of non-terminated pods.
   int32 current_replicas = 7;
+  // Total number of ready pods targeted by this deployment.
+  int32 ready_replicas = 8;
   // Site endpoints.
-  repeated Endpoint endpoints = 8;
+  repeated Endpoint endpoints = 9;
 }
 
 // Condition for site status.
