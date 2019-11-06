@@ -113,7 +113,7 @@ message SiteStatus {
   int32 desired_replicas = 3;
   // Total number of available pods, either up-to-date
   // or running on previous configurations.
-  int32 avaliable_replicas = 4;
+  int32 available_replicas = 4;
   // Total number of pods that are still required for the deployment
   // to have 100% available capacity.
   // They may either be pods that are running but not yet available
