@@ -20,19 +20,6 @@ import "presslabs/dashboard/api/event/v1/event.proto";
 
 // Site represents a site within the presslabs dashboard context
 message Site {
-  // The current status of the site.
-  enum Status {
-    // Not set.
-    UNSPECIFIED = 0;
-    // The PROVISIONING state indicates the site is being created.
-    PROVISIONING = 1;
-    // The RUNNING state indicates the site has been provisioned and is fully
-    // usable.
-    RUNNING = 2;
-    // The ERROR state indicates the site may be unusable. Details
-    // can be found in the `statusMessage` field.
-    ERROR = 3;
-  }
   // Fully qualified site name in the form
   // projects/super-awesome/sites/{site_name}.
   // `site_name` is a valid DNS label (RFC 1123) with maximum
@@ -44,7 +31,7 @@ message Site {
   // Site endpoints
   repeated Endpoint endpoints = 3 [deprecated = true];
   // [Output only] Current status of the site.
-  SiteStatus site_status = 4;
+  Status status = 4;
   // [Output only] Additional information about the current status of this
   // site, if available.
   string status_message = 5;
@@ -89,8 +76,8 @@ message Site {
   repeated Route routes = 21 [(gogoproto.nullable) = false];
 }
 
-// SiteStatus is information about the current status of this site.
-message SiteStatus {
+// Status is information about the current status of this site.
+message Status {
   enum Status {
     // Not set.
     UNSPECIFIED = 0;
@@ -104,7 +91,7 @@ message SiteStatus {
     ERROR = 4;
   }
   // Site general (overall) status.
-  Status status = 1;
+  Status general_status = 1;
   // Conditions for site status.
   repeated Condition conditions = 2;
   // Total number of desired pods.
