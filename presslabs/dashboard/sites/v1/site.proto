@@ -32,48 +32,45 @@ message Site {
   repeated Endpoint endpoints = 3 [deprecated = true];
   // [Output only] Current status of the site.
   Status status = 4;
-  // [Output only] Additional information about the current status of this
-  // site, if available.
-  string status_message = 5;
   // [Output only] Site's allocated resource
-  repeated ResourceAllocation resources = 6;
+  repeated ResourceAllocation resources = 5;
   // Git_repository_origin is the source of truth, in regards to the site's code.
   // For now, it needs to be a public git repository, that can be cloned via git, ssh and http.
-  string git_repository_origin = 7;
+  string git_repository_origin = 6;
   // [OUTPUT_ONLY] The git_repository_deployed_ref will point to the
   // Git reference targeted for deployment.
-  string git_repository_deployed_ref = 8;
+  string git_repository_deployed_ref = 7;
   // git_repository_ref is git reference desired for deployment.
   // It can be a commit, a tag or a branch.
   // If it's a branch, the system will follow that branch's HEAD, and the actual
   // reference targeted for deployment is exposed in `git_repository_deployed_ref`.
   // If it's a commit or tag, the `git_repository_deployed_ref` will point to that reference.
-  string git_repository_ref = 9;
+  string git_repository_ref = 8;
   // [Output only] Site's fully-qualified wp-admin URL
-  string wp_admin_url = 10;
+  string wp_admin_url = 9;
   // List of environment variables
-  EnvVarList env_vars = 11;
+  EnvVarList env_vars = 10;
   // Time when the site was created.
   // This field is read-only.
-  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp created_at = 11;
   // SMTP credentials.
-  SMTP smtp = 13;
+  SMTP smtp = 12;
   // [Output only] WordPress resource name. E.g.: `presslabs-com-12fgv`
-  string kubernetes_name = 14;
+  string kubernetes_name = 13;
   // [Output only] Project namespace name.
-  string kubernetes_namespace = 15;
+  string kubernetes_namespace = 14;
   // Autoscaler settings
-  Autoscaler autoscaler = 16;
+  Autoscaler autoscaler = 15;
   // Service account
-  string service_account = 17;
+  string service_account = 16;
   // Storage bucket
-  StorageBucket storage_bucket = 18;
+  StorageBucket storage_bucket = 17;
   // Google Project ID
-  string google_project_id = 19;
+  string google_project_id = 18;
   // [Write only] Bootstrap details.
-  BootstrapDetails bootstrap = 20;
+  BootstrapDetails bootstrap = 19;
   // [Output only] Routes contains site domains and paths
-  repeated Route routes = 21 [(gogoproto.nullable) = false];
+  repeated Route routes = 20 [(gogoproto.nullable) = false];
 }
 
 // Status is information about the current status of this site.
