@@ -18,7 +18,7 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "presslabs/dashboard/api/event/v1/event.proto";
 
-// Site represents an site within the presslabs dashboard context
+// Site represents a site within the presslabs dashboard context
 message Site {
   // The current status of the site.
   enum Status {
@@ -136,7 +136,7 @@ message Condition {
     UNSPECIFIED = 0;
     // Component is ok.
     OK = 1;
-    // Component has an warning.
+    // Component has a warning.
     WARNING = 2;
     // Component has an error.
     ERROR = 3;
@@ -391,7 +391,7 @@ message UpdateSiteRoutesRequest {
 service SitesService {
   // CreateSite creates a new site
   rpc CreateSite(CreateSiteRequest) returns (Site);
-  // GetSite fetches an site by it's name
+  // GetSite fetches a site by it's name
   rpc GetSite(GetSiteRequest) returns (Site);
   // UpdateSite updates a site details
   rpc UpdateSite(UpdateSiteRequest) returns (Site);
