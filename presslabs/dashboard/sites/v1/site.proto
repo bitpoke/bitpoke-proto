@@ -91,8 +91,7 @@ message Status {
   repeated Condition conditions = 2;
   // Total number of desired pods.
   int32 desired_replicas = 3;
-  // Total number of available pods, either up-to-date
-  // or running on previous configurations.
+  // Total number of pods ready for at least 0s.
   int32 available_replicas = 4;
   // Total number of pods that are still required for the deployment
   // to have 100% available capacity.
