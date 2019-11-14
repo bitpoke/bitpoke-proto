@@ -73,7 +73,7 @@ message Site {
 
 // Status is information about the current status of this site.
 message Status {
-  enum Status {
+  enum GeneralStatus {
     // Not set.
     UNSPECIFIED = 0;
     // Site is being created.
@@ -86,7 +86,7 @@ message Status {
     ERROR = 4;
   }
   // Site general (overall) status.
-  Status general_status = 1;
+  GeneralStatus general_status = 1;
   // Conditions for site status.
   repeated Condition conditions = 2;
   // Total number of desired pods.
