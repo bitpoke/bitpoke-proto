@@ -39,6 +39,9 @@ message Project {
   string default_service_account = 6;
   // [Output only] Number of sites in the project.
   int32 sites_count = 7;
+  // The frequency at which the MySQL operator will schedule cluster backups
+  // The expected format is the cron format with 5 places (0 0 1 */3 *)
+  string mysql_backups_cron = 8;
 }
 
 message GetProjectRequest {
