@@ -44,6 +44,26 @@ message Project {
   string mysql_backups_cron = 8;
 }
 
+message MySQLBackup {
+  // Fully qualified backup name in the form projects/{project_name}/backups/{backup_name}.
+  // `backup_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  // Name is read-only.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The URL from which the backup can be downloaded
+  string url = 2;
+  // [Output only] The name of the cluster the backup has been performed on
+  string cluster_name = 3;
+  // [Output only] A flag that denotes whether the backup is a recurrent one or not
+  bool is_recurrent = 4;
+  // [Output only] A flag that denotes whether the backup has been completed or not
+  bool is_completed = 5;
+  // [Output only] Time when the backup was requested.
+  google.protobuf.Timestamp requested_at = 6;
+  // [Output only] Time when the backup was completed.
+  google.protobuf.Timestamp completed_at = 7;
+}
+
 message GetProjectRequest {
   // Resource name of the project to fetch in the form projects/{project_name}
   // `project_name` MUST be a valid DNS label (RFC 1123)
