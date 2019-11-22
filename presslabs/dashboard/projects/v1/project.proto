@@ -53,7 +53,7 @@ message MySQLBackup {
   // Fully qualified backup name in the form projects/{project_name}/mysql_backups/{backup_name}.
   // `backup_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
   // Name is read-only.
-  string name = 1 [(gogoproto.casttype) = "BackupName"];
+  string name = 1 [(gogoproto.casttype) = "MySQLBackupName"];
   // [Output only] The URL from which the backup can be downloaded
   string url = 2;
   // [Output only] The name of the cluster the backup has been performed on
