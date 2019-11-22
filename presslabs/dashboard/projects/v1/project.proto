@@ -51,7 +51,7 @@ message MySQLBackup {
   // `backup_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // Name is read-only.
-  string name = 1 [(gogoproto.casttype) = "Name"];
+  string name = 1 [(gogoproto.casttype) = "BackupName"];
   // [Output only] The URL from which the backup can be downloaded
   string url = 2;
   // [Output only] The name of the cluster the backup has been performed on
