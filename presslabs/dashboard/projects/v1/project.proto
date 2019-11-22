@@ -62,6 +62,8 @@ message MySQLBackup {
   string cluster_name = 3;
   // [Output only] A flag that denotes whether the backup is a recurrent one or not
   bool is_recurrent = 4;
+  // [Output only] A flag that denotes whether the backup has been completed or not
+  bool is_completed = 5;
   // [Output only] Time when the backup was requested.
   google.protobuf.Timestamp requested_at = 6;
   // [Output only] Time when the backup was completed.
