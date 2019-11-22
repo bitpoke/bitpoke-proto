@@ -42,6 +42,8 @@ message Project {
   // The frequency at which the MySQL operator will schedule cluster backups
   // The expected format is the cron format with 6 places (0 0 0 1 */3 *)
   string mysql_backups_cron = 8;
+  // The number of MySQL backups the server should retain before deletion
+  uint32 mysql_backups_retain_count = 9;
 }
 
 message MySQLBackup {
