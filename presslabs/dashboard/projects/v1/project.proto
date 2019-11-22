@@ -90,6 +90,22 @@ message ListProjectsResponse {
   string next_page_token = 2;
 }
 
+message ListProjectBackupsRequest {
+  // Parent project to list backups for. Eg. projects/{project_name}
+  string parent = 1;
+  // Maximum number of items to return.
+  int32 page_size = 2;
+  // next_page_token value returned from a previous List request, if any.
+  string page_token = 3;
+}
+
+message ListProjectBackupsResponse {
+  repeated MySQLBackup mysql_backups = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
 message CreateProjectRequest {
   // Parent organization, for example "org/{organization_name}".
   // This parameter overrides the organization passed as metadata.
