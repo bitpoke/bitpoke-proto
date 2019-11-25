@@ -62,12 +62,23 @@ message MySQLBackup {
   string cluster_name = 3;
   // [Output only] A flag that denotes whether the backup is a recurrent one or not
   bool is_recurrent = 4;
-  // [Output only] A flag that denotes whether the backup has been completed or not
-  bool is_completed = 5;
+  // [Output only] The status of the backup
+  BackupStatus status = 5;
   // [Output only] Time when the backup was requested.
   google.protobuf.Timestamp requested_at = 6;
   // [Output only] Time when the backup was completed.
   google.protobuf.Timestamp completed_at = 7;
+}
+
+enum BackupStatus {
+  // Not set.
+  UNSPECIFIED = 0;
+  // The backup process has started.
+  STARTED = 1;
+  // The backup process has completed successfully.
+  COMPLETED = 2;
+  // The backup process has failed.
+  FAILED = 3;
 }
 
 message GetProjectRequest {
@@ -99,7 +110,7 @@ message ListProjectsResponse {
 // ListProjectBackupsRequest enables requesting a list of backups for a given site
 message ListProjectBackupsRequest {
   // Parent project to list backups for. Eg. projects/{project_name}
-  string parent = 1;
+  string parent = 1 [(gogoproto.casttype) = "Name"];
   // Maximum number of items to return.
   int32 page_size = 2;
   // next_page_token value returned from a previous List request, if any.
@@ -161,4 +172,6 @@ service ProjectsService {
   rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty);
   // ListProjects list projects
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+  // ListProjectBackups list project backups
+  rpc ListProjectBackups(ListProjectBackupsRequest) returns (ListProjectBackupsResponse);
 }
