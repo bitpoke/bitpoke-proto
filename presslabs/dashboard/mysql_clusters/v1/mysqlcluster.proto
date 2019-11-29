@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+package presslabs.dashboard.mysqlclusters.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+message MySQLCluster {
+  // Fully qualified backup name in the form projects/{project_name}/mysql_clusters/{cluster_name}.
+  // `cluster_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
+  // Name is read-only.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The URL from which the backup can be downloaded
+  // The frequency at which the MySQL operator will schedule cluster backups
+  // The expected format is the cron format with 6 places (0 0 0 1 */3 *)
+  string backups_cron = 2;
+  // The number of MySQL backups the server should retain before deletion
+  int32 backups_retain_count = 3;
+}
+
+// MySQLBackup represents the instance of a mysql cluster backup
+message MySQLBackup {
+  // Fully qualified backup name in the form {fq_cluster_name}/mysql_backups/{backup_name}.
+  // `backup_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
+  // Name is read-only.
+  string name = 1;
+  // [Output only] The URL from which the backup can be downloaded
+  string url = 2;
+  // [Output only] A flag that denotes whether the backup is a recurrent one or not
+  bool is_recurrent = 3;
+  // [Output only] The status of the backup
+  BackupStatus status = 4;
+  // [Output only] Time when the backup was requested.
+  google.protobuf.Timestamp requested_at = 5;
+  // [Output only] Time when the backup was completed.
+  google.protobuf.Timestamp completed_at = 6;
+}
+
+enum BackupStatus {
+  // Not set.
+  UNSPECIFIED = 0;
+  // The backup process has started.
+  STARTED = 1;
+  // The backup process has completed successfully.
+  COMPLETED = 2;
+  // The backup process has failed.
+  FAILED = 3;
+}
+
+message GetMySQLClusterRequest {
+  // Resource name of the MySQL cluster to fetch in the form
+  // projects/{project_name}/mysql_cluster/{mysql_cluster_name}.
+  // `project_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message UpdateMySQLClusterRequest {
+  // New definition of the MySQL cluster. It must include a `name`
+  MySQLCluster mysql_cluster = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// ListMySQLClusterBackupsRequest enables requesting a list of backups for a given site
+message ListMySQLClusterBackupsRequest {
+  // Parent cluster to list backups for.
+  // e.g. projects/{project_name}/mysql_cluster/{mysql_cluster_name}
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Maximum number of items to return.
+  int32 page_size = 2;
+  // next_page_token value returned from a previous List request, if any.
+  string page_token = 3;
+}
+
+// ListMySQLClusterBackupsResponse is a list response for a backups list request
+message ListMySQLClusterBackupsResponse {
+  repeated MySQLBackup mysql_backups = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+// MySQLClusterService allow managing mysql clusters
+service MySQLClusterService {
+  // GetMySQLCluster fetches a MySQL cluster by it's name
+  rpc GetMySQLCluster(GetMySQLClusterRequest) returns (MySQLCluster);
+  // UpdateMySQLCluster updates a MySQL cluster
+  rpc UpdateMySQLCluster(UpdateMySQLClusterRequest) returns (MySQLCluster);
+  // ListMySQLClusterBackups list mysql cluster backups
+  rpc ListMySQLClusterBackups(ListMySQLClusterBackupsRequest) returns (ListMySQLClusterBackupsResponse);
+}
