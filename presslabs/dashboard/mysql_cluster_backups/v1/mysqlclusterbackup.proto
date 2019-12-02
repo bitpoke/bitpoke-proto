@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package presslabs.dashboard.mysqlclusters.v1;
+package presslabs.dashboard.mysqlclusterbackups.v1;
 
 option (gogoproto.equal_all) = true; // Required for test generation
 option (gogoproto.gostring_all) = true;
