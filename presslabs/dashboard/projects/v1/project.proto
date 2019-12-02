@@ -40,7 +40,7 @@ message Project {
   // [Output only] Number of sites in the project.
   int32 sites_count = 7;
   // The name of the default MySQL Cluster to be used across the project
-  // Output only field (at least for now)
+  // [Output only] (at least for now)
   string default_mysql_cluster_name = 8;
 }
 
