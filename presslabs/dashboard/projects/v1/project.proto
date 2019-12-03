@@ -41,7 +41,7 @@ message Project {
   int32 sites_count = 7;
   // The name of the default MySQL Cluster to be used across the project
   // [Output only] (at least for now)
-  string default_mysql_cluster_name = 8;
+  string mysql_cluster_name = 8;
 }
 
 message GetProjectRequest {
