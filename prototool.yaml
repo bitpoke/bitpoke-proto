@@ -1,7 +1,9 @@
+excludes:
+    - vendor
 protoc:
   version: 3.6.1
   includes:
-    - ../vendor
+    - vendor
 lint:
   # we are using Google API Design guide so we need to enable/disable some
   # linting options accordingly
