@@ -216,6 +216,10 @@ message ResourceAllocation {
     CPU_PER_POD = 2;
     PHP_WORKERS = 4;
     PHP_WORKERS_MEMORY = 5;
+    // CPU for Memcached StatefulSet
+    MEMCACHED_CPU = 6;
+    // Memory for Memcached StatefulSet
+    MEMCACHED_MEMORY = 7;
   }
   Resource resource = 1;
   // Minimum value allocated
