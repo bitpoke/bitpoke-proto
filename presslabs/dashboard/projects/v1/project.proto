@@ -17,7 +17,7 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
-// Projects represents an project within the presslabs dashboard
+// Project represents a project within the presslabs dashboard
 // context
 message Project {
   // Fully qualified project name in the form projects/{project_name}.
@@ -25,7 +25,7 @@ message Project {
   // length of 48 characters.
   // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
-  // display_name for the project
+  // Display name for the project.
   string display_name = 2;
   // Organization name. The organization is immutable.
   // This field is read-only.
@@ -33,14 +33,14 @@ message Project {
   // Time when the project was created.
   // This field is read-only.
   google.protobuf.Timestamp created_at = 4;
-  // Icon for project. Should be an absolute url or a data url
+  // Icon for project. Should be an absolute url or a data url.
   string icon_url = 5;
   // Service account that will be used for the project's sites/mysql by default.
   string default_service_account = 6;
   // [Output only] Number of sites in the project.
   int32 sites_count = 7;
-  // The name of the default MySQL Cluster to be used across the project
-  // [Output only] (at least for now)
+  // The name of the default MySQL Cluster to be used across the project.
+  // [Output only] (at least for now).
   string mysql_cluster_name = 8;
 }
 
@@ -52,7 +52,7 @@ message GetProjectRequest {
 }
 
 message ListProjectsRequest {
-  // Parent organization, for example "org/{organization_name}".
+  // Parent organization, for example "organizations/{organization_name}".
   // This parameter overrides the organization passed as metadata.
   // If not specified as metadata, the parent is a required parameter.
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
@@ -71,7 +71,7 @@ message ListProjectsResponse {
 }
 
 message CreateProjectRequest {
-  // Parent organization, for example "org/{organization_name}".
+  // Parent organization, for example "organizations/{organization_name}".
   // This parameter overrides the organization passed as metadata.
   // If not specified as metadata, the parent is a required parameter.
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
@@ -83,15 +83,12 @@ message CreateProjectRequest {
 }
 
 message UpdateProjectRequest {
-  // New definition of the project. It must include
-  // a `name` , `organization` and `display_name` field.
-  // The other fields will be ignored.
+  // New definition of the project.
   Project project = 1 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
   // Fields to be updated.
-  // Only the `display_name` can be updated.
   google.protobuf.FieldMask update_mask = 2 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
@@ -109,11 +106,11 @@ message DeleteProjectRequest {
 service ProjectsService {
   // CreateProject creates a new project
   rpc CreateProject(CreateProjectRequest) returns (Project);
-  // GetProject fetches an project by it's name
+  // GetProject fetches a project by it's name
   rpc GetProject(GetProjectRequest) returns (Project);
-  // UpdateProject updates an project details
+  // UpdateProject updates a project details
   rpc UpdateProject(UpdateProjectRequest) returns (Project);
-  // DeleteProject deletes an project by it's name
+  // DeleteProject deletes a project by it's name
   rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty);
   // ListProjects list projects
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
