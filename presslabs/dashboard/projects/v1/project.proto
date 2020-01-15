@@ -43,33 +43,29 @@ message Project {
   // [Output only] (at least for now).
   string mysql_cluster_name = 8;
   // Resource quotas
-  repeated ResourceQuotas resource_quotas = 9;
+  ResourceQuotas resource_quotas = 9;
 }
 
 // ResourceQuotas describes what the allocated resources for a project
 message ResourceQuotas {
-  enum Resource {
-    UNSPECIFIED = 0;
-    // Across all pods in a non-terminal state,
-    // the sum of memory limit cannot exceed this value.
-    MEMORY_GB = 1;
-    // Across all pods in a non-terminal state,
-    // the sum of CPU limit cannot exceed this value.
-    CPU = 2;
-    // Total number of pods in a non-terminal state that can exist in the project.
-    PODS = 3;
-    // Total number of sites that can exist in the project.
-    SITES = 4;
-  }
-  Resource resource = 1;
+  // Across all pods in a non-terminal state,
+  // the sum of CPU limit cannot exceed this value.
+  Resource cpu = 1;
+  // Across all pods in a non-terminal state,
+  // the sum of memory limit cannot exceed this value.
+  Resource memory = 2;
+  // Total number of pods in a non-terminal state that can exist in the project.
+  Resource pods = 3;
+  // Total number of sites that can exist in the project.
+  Resource sites = 4;
+}
+
+// Resource describe used and limit resources
+message Resource {
   // [READ ONLY] Current observed total usage of the resource in the namespace
-  int32 used = 2;
+  string used = 1;
   // Enforced hard limits for each named resource
-  int32 limit = 3;
-  // [READ ONLY] Used unit.
-  // "" (empty) for sites count, CPU and pods count.
-  // "GB" for memory.
-  string unit = 4;
+  string limit = 2;
 }
 
 message GetProjectRequest {
@@ -126,8 +122,8 @@ message UpdateProjectRequest {
 message UpdateResourceQuotasRequest {
   // Parent project, for example projects/{project_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
-  // New definition of the resource quotas list.
-  repeated ResourceQuotas resource_quotas = 2 [(gogoproto.nullable) = false];
+  // New definition of the resource quotas.
+  ResourceQuotas resource_quotas = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
   google.protobuf.FieldMask update_mask = 3 [
     (gogoproto.embed) = true,
