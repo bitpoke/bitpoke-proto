@@ -44,6 +44,8 @@ message Project {
   string mysql_cluster_name = 8;
   // Resource quotas
   ResourceQuotas resource_quotas = 9;
+  // [Output Only] Google Service Account email.
+  string google_service_account_email = 10;
 }
 
 // ResourceQuotas describes what the allocated resources for a project
