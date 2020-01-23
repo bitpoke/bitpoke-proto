@@ -69,6 +69,8 @@ message Site {
   BootstrapDetails bootstrap = 18;
   // [Output only] Routes contains site domains and paths
   repeated Route routes = 19 [(gogoproto.nullable) = false];
+  // PodScheduling specifies the way site pods are going to be scheduled
+  PodScheduling pod_scheduling = 20;
 }
 
 // Status is information about the current status of this site.
@@ -205,6 +207,20 @@ message Autoscaler {
   int32 max_replicas = 2;
   // [Output only] Current number of replicas
   int32 replicas = 3;
+}
+
+// PodScheduling specifies the way site pods are going to be scheduled
+message PodScheduling {
+  // NodeAffinityPreset allows setting a preset for node affinity. UNSPECIFIED and CUSTOM are
+  // read-only.
+  enum NodeAffinityPreset {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    NEVER_PREEMPTIBLE = 2;
+    PREFER_PREEMPTIBLE = 3;
+    ALWAYS_PREEMPTIBLE = 4;
+  }
+  NodeAffinityPreset node_affinity_preset = 1;
 }
 
 // ResourceAllocation describes what the allocated resources for a site are
@@ -370,6 +386,18 @@ message UpdateSiteRoutesRequest {
   ];
 }
 
+message UpdateSitePodSchedulingRequest {
+  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the pod scheduling field.
+  PodScheduling pod_scheduling = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 // SitesService allow managing sites
 service SitesService {
   // CreateSite creates a new site
@@ -394,4 +422,6 @@ service SitesService {
   rpc ListSiteEvents(ListSiteEventsRequest) returns (ListSiteEventsResponse);
   // UpdateSiteRoutes updates site routes
   rpc UpdateSiteRoutes(UpdateSiteRoutesRequest) returns (Site);
+  // UpdateSitePodScheduling updates site pod scheduling
+  rpc UpdateSitePodScheduling(UpdateSitePodSchedulingRequest) returns (Site);
 }
