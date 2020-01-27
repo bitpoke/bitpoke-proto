@@ -26,6 +26,46 @@ message MySQLCluster {
   string backups_cron = 2;
   // The number of MySQL backups the server should retain before deletion
   int32 backups_retain_count = 3;
+  // MySQL Cluster resource allocation
+  ResourceAllocation resources = 4;
+  // MySQL Cluster scaling
+  Scaling scaling = 5;
+  // MySQL Cluster status
+  Status status = 6;
+}
+
+// ResourceAllocation for MySQL Cluster
+message ResourceAllocation {
+  // 1 CPU is equal to a virtual CPU (core/thread). Fractional values may be used.
+  // Example values for CPU resource allocations: "100m" (10% of 1 CPU), "2" (2 CPUs).
+  // The guaranteed available amount of CPU per pod
+  string requested_cpu_per_pod = 1;
+  // Hard upper bound of CPU per pod.
+  // If exceeded, the CPU will be throttled to match this limit.
+  string limit_cpu_per_pod = 2;
+  // Example values for memory resource allocations: "50Mi" (50 mebibytes)
+  // The guaranteed amount of memory per pod. After exceeding this value,
+  // processes in pods may be killed in low memory situations.
+  string requested_memory_per_pod = 3;
+  // Processes in pods are killed after exceeding this value, to match this limit.
+  string limit_memory_per_pod = 4;
+  // Example values storage size resource allocations: "8Gi" (8 gibibytes).
+  // The desired amount of storage.
+  string desired_storage_size_per_pod = 5;
+  // [Create only] The class of the storage used (e.g fast, ssd).
+  string storage_class = 6;
+}
+
+// Scaling for MySQL Cluster
+message Scaling {
+  // The requested number of pods.
+  int32 requested_number_of_pods = 1;
+}
+
+// Status for MySQL Cluster
+message Status {
+  // [Read only] The number of pods that are up and running.
+  int32 ready_pods = 1;
 }
 
 message GetMySQLClusterRequest {
