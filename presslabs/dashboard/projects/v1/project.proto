@@ -119,7 +119,7 @@ message UpdateProjectRequest {
   ];
 }
 
-message UpdateResourceQuotasRequest {
+message UpdateProjectResourceQuotasRequest {
   // Parent project, for example projects/{project_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the resource quotas.
@@ -146,8 +146,8 @@ service ProjectsService {
   rpc GetProject(GetProjectRequest) returns (Project);
   // UpdateProject updates a project details
   rpc UpdateProject(UpdateProjectRequest) returns (Project);
-  // UpdateResourceQuotas updates resource quotas details
-  rpc UpdateResourceQuotas(UpdateResourceQuotasRequest) returns (Project);
+  // UpdateProjectResourceQuotas updates resource quotas details
+  rpc UpdateProjectResourceQuotas(UpdateProjectResourceQuotasRequest) returns (Project);
   // DeleteProject deletes a project by it's name
   rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty);
   // ListProjects list projects
