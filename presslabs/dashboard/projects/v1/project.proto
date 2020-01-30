@@ -46,6 +46,10 @@ message Project {
   ResourceQuotas resource_quotas = 9;
   // [Output Only] Google Service Account email.
   string google_service_account_email = 10;
+  // Bootstrap MySQL Cluster resource allocation sets the default resources for
+  // default MySQL cluster created in this project.
+  // [Create only]
+  BootstrapMySQLClusterResourceAllocation bootstrap_mysql_cluster_resources = 11;
 }
 
 // ResourceQuotas describes what the allocated resources for a project
@@ -68,6 +72,15 @@ message Resource {
   string used = 1;
   // Enforced hard limits for each named resource
   string limit = 2;
+}
+
+// BootstrapMySQLClusterResourceAllocation describes what the allocated resources
+// for a MySQL Cluster are
+message BootstrapMySQLClusterResourceAllocation {
+  // The desired amount of storage
+  string desired_storage_size_per_pod = 1;
+  // The class of the storage used (e.g fast, ssd)
+  string storage_class = 2;
 }
 
 message GetProjectRequest {
