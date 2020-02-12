@@ -70,7 +70,7 @@ message Site {
   // [Output only] Routes contains site domains and paths
   repeated Route routes = 19 [(gogoproto.nullable) = false];
   // PodScheduling specifies the way site pods are going to be scheduled
-  PodScheduling pod_scheduling = 20;
+  PodScheduling pod_scheduling = 20 [(gogoproto.nullable) = false];
 }
 
 // Status is information about the current status of this site.
@@ -386,18 +386,6 @@ message UpdateSiteRoutesRequest {
   ];
 }
 
-message UpdateSitePodSchedulingRequest {
-  // Parent site, for example projects/{project_name}/sites/{site_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
-  // New definition of the pod scheduling field.
-  PodScheduling pod_scheduling = 2 [(gogoproto.nullable) = false];
-  // Fields to be updated.
-  google.protobuf.FieldMask update_mask = 3 [
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
-}
-
 // SitesService allow managing sites
 service SitesService {
   // CreateSite creates a new site
@@ -422,6 +410,4 @@ service SitesService {
   rpc ListSiteEvents(ListSiteEventsRequest) returns (ListSiteEventsResponse);
   // UpdateSiteRoutes updates site routes
   rpc UpdateSiteRoutes(UpdateSiteRoutesRequest) returns (Site);
-  // UpdateSitePodScheduling updates site pod scheduling
-  rpc UpdateSitePodScheduling(UpdateSitePodSchedulingRequest) returns (Site);
 }
