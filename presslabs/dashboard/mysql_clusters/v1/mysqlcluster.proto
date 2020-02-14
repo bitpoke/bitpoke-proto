@@ -36,24 +36,26 @@ message MySQLCluster {
 
 // ResourceAllocation for MySQL Cluster
 message ResourceAllocation {
+  // The amount of cpu per pod.
   // 1 CPU is equal to a virtual CPU (core/thread). Fractional values may be used.
   // Example values for CPU resource allocations: "100m" (10% of 1 CPU), "2" (2 CPUs).
-  // The guaranteed available amount of CPU per pod
-  string requested_cpu_per_pod = 1;
-  // Hard upper bound of CPU per pod.
-  // If exceeded, the CPU will be throttled to match this limit.
-  string limit_cpu_per_pod = 2;
+  Resource cpu_per_pod = 1;
+  // The amount of memory per pod.
   // Example values for memory resource allocations: "50Mi" (50 mebibytes)
-  // The guaranteed amount of memory per pod. After exceeding this value,
-  // processes in pods may be killed in low memory situations.
-  string requested_memory_per_pod = 3;
-  // Processes in pods are killed after exceeding this value, to match this limit.
-  string limit_memory_per_pod = 4;
-  // Example values storage size resource allocations: "8Gi" (8 gibibytes).
+  Resource memory_per_pod = 2;
   // The desired amount of storage.
-  string desired_storage_size_per_pod = 5;
+  // Example values storage size resource allocations: "8Gi" (8 gibibytes).
+  string desired_storage_size_per_pod = 3;
   // [Create only] The class of the storage used (e.g fast, ssd).
-  string storage_class = 6;
+  string storage_class = 4;
+}
+
+// Resource describe requested and limit resources
+message Resource {
+  // Enforced hard limits for each named resource
+  string limit = 1;
+  // Enforced hard requests for each named resource
+  string requested = 2;
 }
 
 // Scaling for MySQL Cluster
