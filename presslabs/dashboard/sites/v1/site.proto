@@ -31,7 +31,7 @@ message Site {
   // [Output only] Current status of the site.
   Status status = 3;
   // [Output only] Site's allocated resource
-  repeated ResourceAllocation resources = 4;
+  ResourceAllocation resources = 4;
   // Git_repository_origin is the source of truth, in regards to the site's code.
   // For now, it needs to be a public git repository, that can be cloned via git, ssh and http.
   string git_repository_origin = 5;
@@ -225,25 +225,20 @@ message PodScheduling {
 
 // ResourceAllocation describes what the allocated resources for a site are
 message ResourceAllocation {
-  // Type of the resource that is being allocated
-  enum Resource {
-    UNSPECIFIED = 0;
-    MEMORY_PER_POD = 1;
-    CPU_PER_POD = 2;
-    PHP_WORKERS = 4;
-    PHP_WORKERS_MEMORY = 5;
-    // CPU for Memcached StatefulSet
-    MEMCACHED_CPU = 6;
-    // Memory for Memcached StatefulSet
-    MEMCACHED_MEMORY = 7;
-  }
-  Resource resource = 1;
-  // Minimum value allocated
+  Resource memory_per_pod = 1;
+  Resource cpu_per_pod = 2;
+  Resource php_workers = 3;
+  Resource php_workers_memory = 4;
+  Resource memcached_cpu = 5;
+  Resource memcached_memory = 6;
+}
+
+// Resource describe used and limit resources
+message Resource {
+  // Enforced hard limits for each named resource
+  string limit = 1;
+  // Enforced request limits for each named resource
   string requested = 2;
-  // Maximum value that the allocation can grow to
-  string limit = 3;
-  // Currently allocated value for the resource
-  string current = 4;
 }
 
 message CreateSiteRequest {
@@ -311,7 +306,7 @@ message UpdateSiteResourceAllocationsRequest {
   // Parent site, for example projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the resource allocation list.
-  repeated ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
   google.protobuf.FieldMask update_mask = 3 [
     (gogoproto.embed) = true,
