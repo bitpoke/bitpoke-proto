@@ -27,9 +27,9 @@ message MySQLCluster {
   // The number of MySQL backups the server should retain before deletion
   int32 backups_retain_count = 3;
   // MySQL Cluster resource allocation
-  ResourceAllocation resources = 4;
+  ResourceAllocation resources = 4 [(gogoproto.nullable) = false];
   // MySQL Cluster scaling
-  Scaling scaling = 5;
+  Scaling scaling = 5 [(gogoproto.nullable) = false];
   // MySQL Cluster status
   Status status = 6;
 }
@@ -39,10 +39,10 @@ message ResourceAllocation {
   // The amount of cpu per pod.
   // 1 CPU is equal to a virtual CPU (core/thread). Fractional values may be used.
   // Example values for CPU resource allocations: "100m" (10% of 1 CPU), "2" (2 CPUs).
-  Resource cpu_per_pod = 1;
+  Resource cpu_per_pod = 1 [(gogoproto.nullable) = false];
   // The amount of memory per pod.
   // Example values for memory resource allocations: "50Mi" (50 mebibytes)
-  Resource memory_per_pod = 2;
+  Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
   // The desired amount of storage.
   // Example values storage size resource allocations: "8Gi" (8 gibibytes).
   string desired_storage_size_per_pod = 3;
