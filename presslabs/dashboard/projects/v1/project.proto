@@ -43,27 +43,27 @@ message Project {
   // [Output only] (at least for now).
   string mysql_cluster_name = 8;
   // Resource quotas
-  ResourceQuotas resource_quotas = 9;
+  ResourceQuotas resource_quotas = 9 [(gogoproto.nullable) = false];
   // [Output Only] Google Service Account email.
   string google_service_account_email = 10;
   // Bootstrap MySQL Cluster resource allocation sets the default resources for
   // default MySQL cluster created in this project.
   // [Create only]
-  BootstrapMySQLClusterResourceAllocation bootstrap_mysql_cluster_resources = 11;
+  BootstrapMySQLClusterResourceAllocation bootstrap_mysql_cluster_resources = 11 [(gogoproto.nullable) = false];
 }
 
 // ResourceQuotas describes what the allocated resources for a project
 message ResourceQuotas {
   // Across all pods in a non-terminal state,
   // the sum of CPU limit cannot exceed this value.
-  Resource cpu = 1;
+  Resource cpu = 1 [(gogoproto.nullable) = false];
   // Across all pods in a non-terminal state,
   // the sum of memory limit cannot exceed this value.
-  Resource memory = 2;
+  Resource memory = 2 [(gogoproto.nullable) = false];
   // Total number of pods in a non-terminal state that can exist in the project.
-  Resource pods = 3;
+  Resource pods = 3 [(gogoproto.nullable) = false];
   // Total number of sites that can exist in the project.
-  Resource sites = 4;
+  Resource sites = 4 [(gogoproto.nullable) = false];
 }
 
 // Resource describe used and limit resources
