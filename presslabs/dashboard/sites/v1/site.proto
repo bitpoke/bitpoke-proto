@@ -33,7 +33,7 @@ message Site {
   // [Output only] Site's allocated resource
   SiteResourceAllocation site_resources = 4;
   // [Output only] Memcached's allocated resource
-  MemcachedResourceAllocation memcached_resources = 5;
+  MemcachedResourceAllocation memcached_resources = 5 [(gogoproto.nullable) = false];
   // Git_repository_origin is the source of truth, in regards to the site's code.
   // For now, it needs to be a public git repository, that can be cloned via git, ssh and http.
   string git_repository_origin = 6;
@@ -235,8 +235,8 @@ message SiteResourceAllocation {
 
 // MemcachedResourceAllocation describes what the allocated resources for a memcached are
 message MemcachedResourceAllocation {
-  Resource memory = 1;
-  Resource cpu = 2;
+  Resource memory = 1 [(gogoproto.nullable) = false];
+  Resource cpu = 2 [(gogoproto.nullable) = false];
   int32 desired_replicas = 3;
 }
 
