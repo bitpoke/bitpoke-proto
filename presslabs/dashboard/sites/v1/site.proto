@@ -31,7 +31,7 @@ message Site {
   // [Output only] Current status of the site.
   Status status = 3;
   // [Output only] Site's allocated resource
-  SiteResourceAllocation site_resources = 4;
+  ResourceAllocation resources = 4 [(gogoproto.nullable) = false];
   // [Output only] Memcached's allocated resource
   MemcachedResourceAllocation memcached_resources = 5 [(gogoproto.nullable) = false];
   // Git_repository_origin is the source of truth, in regards to the site's code.
@@ -225,12 +225,12 @@ message PodScheduling {
   NodeAffinityPreset node_affinity_preset = 1;
 }
 
-// SiteResourceAllocation describes what the allocated resources for a site are
-message SiteResourceAllocation {
-  Resource memory_per_pod = 1;
-  Resource cpu_per_pod = 2;
-  Resource php_workers = 3;
-  Resource php_workers_memory = 4;
+// ResourceAllocation describes what the allocated resources for a site are
+message ResourceAllocation {
+  Resource memory_per_pod = 1 [(gogoproto.nullable) = false];
+  Resource cpu_per_pod = 2 [(gogoproto.nullable) = false];
+  Resource php_workers = 3 [(gogoproto.nullable) = false];
+  Resource php_workers_memory = 4 [(gogoproto.nullable) = false];
 }
 
 // MemcachedResourceAllocation describes what the allocated resources for a memcached are
@@ -313,7 +313,7 @@ message UpdateSiteResourcesRequest {
   // Parent site, for example projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the site resource allocation list.
-  SiteResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
   google.protobuf.FieldMask update_mask = 3 [
     (gogoproto.embed) = true,
