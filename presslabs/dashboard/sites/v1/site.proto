@@ -325,7 +325,7 @@ message UpdateSiteMemcachedResourcesRequest {
   // Parent site, for example projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the memcahced resource allocation list.
-  MemcachedResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  MemcachedResourceAllocation memcached_resources = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
   google.protobuf.FieldMask update_mask = 3 [
     (gogoproto.embed) = true,
