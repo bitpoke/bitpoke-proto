@@ -49,26 +49,26 @@ message Site {
   // [Output only] Site's fully-qualified wp-admin URL
   string wp_admin_url = 9;
   // List of environment variables
-  EnvVarList env_vars = 10;
+  EnvVarList env_vars = 10 [(gogoproto.nullable) = false];
   // Time when the site was created.
   // This field is read-only.
   google.protobuf.Timestamp created_at = 11;
   // SMTP credentials.
-  SMTP smtp = 12;
+  SMTP smtp = 12 [(gogoproto.nullable) = false];
   // [Output only] WordPress resource name. E.g.: `presslabs-com-12fgv`
   string kubernetes_name = 13;
   // [Output only] Project namespace name.
   string kubernetes_namespace = 14;
   // Autoscaler settings
-  Autoscaler autoscaler = 15;
+  Autoscaler autoscaler = 15 [(gogoproto.nullable) = false];
   // Service account
   string service_account = 16;
   // Storage bucket
-  StorageBucket storage_bucket = 17;
+  StorageBucket storage_bucket = 17 [(gogoproto.nullable) = false];
   // Google Project ID
   string google_project_id = 18;
   // [Write only] Bootstrap details.
-  BootstrapDetails bootstrap = 19;
+  BootstrapDetails bootstrap = 19 [(gogoproto.nullable) = false];
   // [Output only] Routes contains site domains and paths
   repeated Route routes = 20 [(gogoproto.nullable) = false];
   // PodScheduling specifies the way site pods are going to be scheduled
@@ -286,7 +286,7 @@ message UpdateSiteEnvVarsRequest {
   // Parent site, for example projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the env vars list.
-  EnvVarList env_vars = 2;
+  EnvVarList env_vars = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
   google.protobuf.FieldMask update_mask = 3 [
     (gogoproto.embed) = true,
