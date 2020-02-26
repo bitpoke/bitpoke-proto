@@ -31,7 +31,7 @@ message MySQLCluster {
   // MySQL Cluster scaling
   Scaling scaling = 5 [(gogoproto.nullable) = false];
   // MySQL Cluster status
-  Status status = 6;
+  Status status = 6 [(gogoproto.nullable) = false];
 }
 
 // ResourceAllocation for MySQL Cluster
@@ -72,7 +72,7 @@ message Status {
 
 message GetMySQLClusterRequest {
   // Resource name of the MySQL cluster to fetch in the form
-  // projects/{project_name}/mysql_cluster/{mysql_cluster_name}.
+  // projects/{project_name}/mysql_clusters/{mysql_cluster_name}.
   // `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -91,10 +91,24 @@ message UpdateMySQLClusterRequest {
   ];
 }
 
+message UpdateMySQLClusterResourcesRequest {
+  // Parent site, for example projects/{project_name}/mysql_clusters/{mysql_cluster_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the site resource allocation list.
+  ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 // MySQLClusterService allow managing mysql clusters
 service MySQLClusterService {
   // GetMySQLCluster fetches a MySQL cluster by it's name
   rpc GetMySQLCluster(GetMySQLClusterRequest) returns (MySQLCluster);
   // UpdateMySQLCluster updates a MySQL cluster
   rpc UpdateMySQLCluster(UpdateMySQLClusterRequest) returns (MySQLCluster);
+  // UpdateMySQLClusterResources updates MySQL Cluster resource allocation
+  rpc UpdateMySQLClusterResources(UpdateMySQLClusterResourcesRequest) returns (MySQLCluster);
 }
