@@ -28,10 +28,8 @@ message MySQLCluster {
   int32 backups_retain_count = 3;
   // MySQL Cluster resource allocation
   ResourceAllocation resources = 4 [(gogoproto.nullable) = false];
-  // MySQL Cluster scaling
-  Scaling scaling = 5 [(gogoproto.nullable) = false];
   // MySQL Cluster status
-  Status status = 6 [(gogoproto.nullable) = false];
+  Status status = 5 [(gogoproto.nullable) = false];
 }
 
 // ResourceAllocation for MySQL Cluster
@@ -48,6 +46,8 @@ message ResourceAllocation {
   string desired_storage_size_per_pod = 3;
   // [Create only] The class of the storage used (e.g fast, ssd).
   string storage_class = 4;
+  // The requested number of pods.
+  int32 desired_replicas = 5;
 }
 
 // Resource describe requested and limit resources
@@ -56,12 +56,6 @@ message Resource {
   string limit = 1;
   // Enforced hard requests for each named resource
   string requested = 2;
-}
-
-// Scaling for MySQL Cluster
-message Scaling {
-  // The requested number of pods.
-  int32 requested_number_of_pods = 1;
 }
 
 // Status for MySQL Cluster
