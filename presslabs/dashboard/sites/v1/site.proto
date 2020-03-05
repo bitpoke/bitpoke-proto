@@ -30,9 +30,9 @@ message Site {
   string wordpress_image = 2;
   // [Output only] Current status of the site.
   Status status = 3;
-  // [Output only] Site's allocated resource
+  // Site's allocated resource
   ResourceAllocation resources = 4 [(gogoproto.nullable) = false];
-  // [Output only] Memcached's allocated resource
+  // Memcached's allocated resource
   MemcachedResourceAllocation memcached_resources = 5 [(gogoproto.nullable) = false];
   // Git_repository_origin is the source of truth, in regards to the site's code.
   // For now, it needs to be a public git repository, that can be cloned via git, ssh and http.
@@ -59,8 +59,6 @@ message Site {
   string kubernetes_name = 13;
   // [Output only] Project namespace name.
   string kubernetes_namespace = 14;
-  // Autoscaler settings
-  Autoscaler autoscaler = 15 [(gogoproto.nullable) = false];
   // Service account
   string service_account = 16;
   // Storage bucket
@@ -231,6 +229,7 @@ message ResourceAllocation {
   Resource cpu_per_pod = 2 [(gogoproto.nullable) = false];
   Resource php_workers = 3 [(gogoproto.nullable) = false];
   Resource php_workers_memory = 4 [(gogoproto.nullable) = false];
+  Autoscaler autoscaler = 5 [(gogoproto.nullable) = false];
 }
 
 // MemcachedResourceAllocation describes what the allocated resources for a memcached are
@@ -333,21 +332,6 @@ message UpdateSiteMemcachedResourcesRequest {
   ];
 }
 
-message UpdateSiteAutoscalerRequest {
-  // Parent site, for example projects/{project_name}/sites/{site_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
-  // New definition of the autoscaler.
-  Autoscaler autoscaler = 2 [
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
-  // Fields to be updated.
-  google.protobuf.FieldMask update_mask = 3 [
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
-}
-
 message DeleteSiteRequest {
   // Resource name of the site to delete in the form
   // projects/super-awesome/sites/{site_name}.
@@ -414,8 +398,6 @@ service SitesService {
   rpc UpdateSiteResources(UpdateSiteResourcesRequest) returns (Site);
   // UpdateSiteMemcachedResources updates resource allocation
   rpc UpdateSiteMemcachedResources(UpdateSiteMemcachedResourcesRequest) returns (Site);
-  // UpdateSiteAutoscaler updates autoscaler
-  rpc UpdateSiteAutoscaler(UpdateSiteAutoscalerRequest) returns (Site);
   // UpdateSiteEnvVars updates env vars
   rpc UpdateSiteEnvVars(UpdateSiteEnvVarsRequest) returns (Site);
   // DeleteSite deletes a site by it's name
