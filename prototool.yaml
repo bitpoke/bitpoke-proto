@@ -32,6 +32,7 @@ generate:
     extra_modifiers:
       # out staging/vendor duality fucks up code generations, so we need to manually fix it
       presslabs/dashboard/api/event/v1/event.proto: github.com/presslabs/dashboard-go/pkg/api/event/v1
+      presslabs/dashboard/affinity/v1/affinity.proto: github.com/presslabs/dashboard-go/pkg/affinity/v1beta1
   plugins:
     - name: gogo
       type: gogo

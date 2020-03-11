@@ -16,6 +16,7 @@ import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
+import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/api/event/v1/event.proto";
 
 // Site represents a site within the presslabs dashboard context
@@ -70,7 +71,11 @@ message Site {
   // [Output only] Routes contains site domains and paths
   repeated Route routes = 20 [(gogoproto.nullable) = false];
   // PodScheduling specifies the way site pods are going to be scheduled
-  PodScheduling pod_scheduling = 21 [(gogoproto.nullable) = false];
+  PodScheduling pod_scheduling = 21 [
+    (gogoproto.nullable) = false,
+    deprecated = true
+  ];
+  presslabs.dashboard.affinity.v1.Affinity affinity = 22;
 }
 
 // Status is information about the current status of this site.
