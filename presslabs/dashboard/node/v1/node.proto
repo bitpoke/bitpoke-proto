@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package presslabs.dashboard.nodes.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.goproto_sizecache_all) = false;
+option (gogoproto.goproto_unkeyed_all) = false;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/presslabs/dashboard-go/pkg/node/v1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// Affinity is a group of affinity scheduling rules.
+message Node {
+  // Fully qualified node name in the form
+  // nodes/{node_name}.
+  // `node_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 63 characters.
+  // Name is read-only
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // Status contains various information about the node.
+  Status status = 2 [(gogoproto.nullable) = false];
+  // An enumeration of the node's labels.
+  map<string, string> labels = 3;
+  // An enumeration of the node's taints.
+  repeated Taint taints = 4 [(gogoproto.nullable) = false];
+  // Unschedulable controls node schedulability of new pods. By default, node is schedulable.
+  bool unschedulable = 5;
+}
+
+// Taint causes the node to have the "effect" on any pod that does not
+// tolerate the Taint.
+message Taint {
+  enum Effect {
+    // Not set.
+    UNSPECIFIED = 0;
+    // Do not allow new pods to schedule onto the node unless they tolerate the taint,
+    // but allow all pods submitted to Kubelet without going through the scheduler
+    // to start, and allow all already-running pods to continue running.
+    // Enforced by the scheduler.
+    NO_SCHEDULE = 1;
+    // Like TaintEffectNoSchedule, but the scheduler tries not to schedule
+    // new pods onto the node, rather than prohibiting new pods from scheduling
+    // onto the node entirely. Enforced by the scheduler.
+    PREFER_NO_SCHEDULE = 2;
+    // Evict any already-running pods that do not tolerate the taint.
+    // Currently enforced by NodeController.
+    NO_EXECUTE = 3;
+  }
+  // Required. The taint key to be applied to a node.
+  string key = 1;
+  // The taint value corresponding to the taint key.
+  // +optional
+  string value = 2;
+  // Required. The effect of the taint on pods that do not tolerate the taint.
+  Effect effect = 3;
+  // TimeAdded represents the time at which the taint was added.
+  // It is only written for NoExecute taints.
+  // +optional
+  google.protobuf.Timestamp time_added = 7;
+}
+
+enum ConditionSeverity {
+  // Not set.
+  UNSPECIFIED_SEVERITY = 0;
+  // The condition signals an OK status.
+  OK = 1;
+  // The condition signals a warning.
+  WARNING = 2;
+  // The condition signals an error.
+  ERROR = 3;
+}
+
+enum ConditionKind {
+  // Not set.
+  UNSPECIFIED_KIND = 0;
+  // True if the node is healthy and ready to accept pods, False if the node is not healthy and is not accepting pods, and Unknown if the node controller has not heard from the node in the last node-monitor-grace-period (default is 40 seconds)
+  READY = 1;
+  // True if pressure exists on the node memory – that is, if the node memory is low; otherwise False
+  MEMORY_PRESSURE = 2;
+  // True if pressure exists on the processes – that is, if there are too many processes on the node; otherwise False
+  PID_PRESSURE = 3;
+  // True if pressure exists on the disk size – that is, if the disk capacity is low; otherwise False
+  DISK_PRESSURE = 4;
+  // True if the network for the node is not correctly configured, otherwise False
+  NETWORK_UNAVAILABLE = 5;
+}
+
+// Condition for node status.
+message Condition {
+  // Severity of the condition.
+  ConditionSeverity severity = 1;
+  // Kind of the condition.
+  ConditionKind kind = 2;
+  // K8s condition status.
+  string status = 3 [(gogoproto.casttype) = "k8s.io/api/core/v1.ConditionStatus"];
+  // K8s condition reason.
+  // Machine readable message that explain why the status is as is.
+  string reason = 4;
+  // K8s message reason.
+  // Human readable message that explain why the status is as is.
+  string message = 5;
+  // K8s condition last transition time.
+  google.protobuf.Timestamp last_transition_time = 6;
+}
+
+// Status contains information about the current status of a node.
+message Status {
+  // Capacity represents the total resources of a node.
+  map<string, string> capacity = 1 [(gogoproto.nullable) = false];
+  // Allocatable represents the resources of a node that are available for scheduling.
+  map<string, string> allocatable = 2 [(gogoproto.nullable) = false];
+  // Conditions is an array of current observed node conditions.
+  repeated Condition conditions = 3 [(gogoproto.nullable) = false];
+}
+
+message GetNodeRequest {
+  // Resource name of the node to fetch in the form
+  // nodes/{node_name}.
+  // `node_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 63 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message ListNodesRequest {
+  // Maximum number of items to return.
+  int32 page_size = 1;
+  // Next_page_token value returned from a previous List request, if any.
+  string page_token = 2;
+}
+
+message ListNodesResponse {
+  repeated Node nodes = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+// NodesService allow managing nodes
+service NodesService {
+  // GetNode fetches a node by it's name
+  rpc GetNode(GetNodeRequest) returns (Node);
+  // ListNodes list nodes
+  rpc ListNodes(ListNodesRequest) returns (ListNodesResponse);
+}
