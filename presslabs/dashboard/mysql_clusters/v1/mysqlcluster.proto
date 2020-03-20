@@ -14,6 +14,7 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/field_mask.proto";
+import "presslabs/dashboard/affinity/v1/affinity.proto";
 
 message MySQLCluster {
   // Fully qualified backup name in the form projects/{project_name}/mysql_clusters/{cluster_name}.
@@ -30,6 +31,8 @@ message MySQLCluster {
   ResourceAllocation resources = 4 [(gogoproto.nullable) = false];
   // MySQL Cluster status
   Status status = 5 [(gogoproto.nullable) = false];
+  // MySQL Cluster's Affinity
+  presslabs.dashboard.affinity.v1.Affinity affinity = 6;
 }
 
 // ResourceAllocation for MySQL Cluster
@@ -97,6 +100,18 @@ message UpdateMySQLClusterResourcesRequest {
   ];
 }
 
+message UpdateMySQLClusterAffinityRequest {
+  // Parent site, for example projects/{project_name}/mysql_clusters/{mysql_cluster_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the memcahced affinity.
+  presslabs.dashboard.affinity.v1.Affinity affinity = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 // MySQLClusterService allow managing mysql clusters
 service MySQLClusterService {
   // GetMySQLCluster fetches a MySQL cluster by it's name
@@ -105,4 +120,6 @@ service MySQLClusterService {
   rpc UpdateMySQLCluster(UpdateMySQLClusterRequest) returns (MySQLCluster);
   // UpdateMySQLClusterResources updates MySQL Cluster resource allocation
   rpc UpdateMySQLClusterResources(UpdateMySQLClusterResourcesRequest) returns (MySQLCluster);
+  // UpdateMySQLClusterAffinity updates the MySQL Cluster's Affinity
+  rpc UpdateMySQLClusterAffinity(UpdateMySQLClusterAffinityRequest) returns (MySQLCluster);
 }
