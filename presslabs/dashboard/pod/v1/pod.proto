@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+package presslabs.dashboard.pod.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.goproto_sizecache_all) = false;
+option (gogoproto.goproto_unkeyed_all) = false;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/presslabs/dashboard-go/pkg/pod/v1beta1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// Pod is a collection of containers that can run on a host. This resource is created
+// by clients and scheduled onto hosts.
+message Pod {
+  // Fully qualified pod name in the form
+  // projects/super-awesome/pods/{pod_name}
+  // `pod_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 63 characters.
+  // Name is read-only
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // The fully qualified name of the pod's parent. Only populated for known resources such as:
+  // wordpress, memcached and mysql
+  string parent = 2;
+  // The pod status
+  PodStatus status = 3;
+  // Node name is a request to schedule this pod onto a specific node. If it is non-empty,
+  // the scheduler simply schedules this pod onto that node, assuming that it fits resource
+  // requirements.
+  string node_name = 4;
+}
+
+// PodStatus represents information about the status of a pod. Status may trail the actual
+// state of a system, especially if the node that hosts the pod cannot contact the control
+// plane.
+message PodStatus {
+  enum PodPhase {
+    // PodUnknown means that for some reason the state of the pod could not be obtained, typically due
+    // to an error in communicating with the host of the pod.
+    // Not set.
+    UNKNOWN = 0;
+    // PodPending means the pod has been accepted by the system, but one or more of the containers
+    // has not been started. This includes time before being bound to a node, as well as time spent
+    // pulling images onto the host.
+    PENDING = 1;
+    // PodRunning means the pod has been bound to a node and all of the containers have been started.
+    // At least one container is still running or is in the process of being restarted.
+    RUNNING = 2;
+    // PodSucceeded means that all containers in the pod have voluntarily terminated
+    // with a container exit code of 0, and the system is not going to restart any of these containers.
+    SUCCEEDED = 3;
+    // PodFailed means that all containers in the pod have terminated, and at least one container has
+    // terminated in a failure (exited with a non-zero exit code or was stopped by the system).
+    FAILED = 4;
+  }
+  PodPhase phase = 1;
+  repeated ContainerStatus container_statuses = 2;
+  repeated Condition conditions = 3;
+}
+
+// ContainerStatus contains details for the current status of the container.
+message ContainerStatus {
+  enum ContainerState {
+    // Not set
+    UNSPECIFIED = 0;
+    RUNNING = 1;
+    WAITING = 2;
+    TERMINATED = 3;
+  }
+  // Name of the container specified as a DNS_LABEL.
+  // Each container in a pod must have a unique name (DNS_LABEL).
+  // Cannot be updated.
+  string name = 1;
+  // Docker image name.
+  // More info: https://kubernetes.io/docs/concepts/containers/images
+  // This field is optional to allow higher level config management to default or override
+  // container images in workload controllers like Deployments and StatefulSets.
+  // +optional
+  string image = 2;
+  // ImageID of the container's image.
+  string image_id = 3;
+  // The state of the container
+  ContainerState container_state = 4;
+  // Time at which the container was last (re-)started
+  google.protobuf.Timestamp started_at = 5;
+  // Time at which the container last terminated
+  google.protobuf.Timestamp finished_at = 6;
+  // (brief) reason the container is not yet running or has been terminated.
+  string reason = 7;
+  // Message regarding why the container is not yet running or regarding the last termination of the container.
+  string message = 8;
+  // Exit status from the last termination of the container
+  int32 exit_code = 9;
+  // The number of times the container has been restarted, currently based on
+  // the number of dead containers that have not yet been removed.
+  int32 restart_count = 10;
+  // Specifies whether the container has passed its readiness probe.
+  bool ready = 11;
+  // Specifies whether the container has passed its startup probe.
+  bool started = 12;
+}
+
+enum ConditionSeverity {
+  // Not set.
+  UNSPECIFIED_SEVERITY = 0;
+  // The condition signals an OK status.
+  OK = 1;
+  // The condition signals a warning.
+  WARNING = 2;
+  // The condition signals an error.
+  ERROR = 3;
+}
+
+enum ConditionKind {
+  // Not set.
+  UNSPECIFIED_KIND = 0;
+  // ContainersReady indicates whether all containers in the pod are ready.
+  CONTAINERS_READY = 1;
+  // PodInitialized means that all init containers in the pod have started successfully.
+  POD_INITIALIZED = 2;
+  // PodReady means the pod is able to service requests and should be added to the
+  // load balancing pools of all matching services.
+  POD_READY = 3;
+  // PodScheduled represents status of the scheduling process for this pod.
+  POD_SCHEDULED = 4;
+}
+
+// Condition for Pod status.
+message Condition {
+  // Severity of the condition.
+  ConditionSeverity severity = 1;
+  // Kind of the condition.
+  ConditionKind kind = 2;
+  // K8s condition status.
+  string status = 3 [(gogoproto.casttype) = "k8s.io/api/core/v1.ConditionStatus"];
+  // K8s condition reason.
+  // Machine readable message that explain why the status is as is.
+  string reason = 4;
+  // K8s message reason.
+  // Human readable message that explain why the status is as is.
+  string message = 5;
+  // Last time the condition transitioned from one status to another.
+  google.protobuf.Timestamp last_transition_time = 6;
+  // Last time we probed the condition.
+  google.protobuf.Timestamp last_probe_time = 7;
+}
