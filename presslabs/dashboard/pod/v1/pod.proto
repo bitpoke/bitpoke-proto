@@ -22,20 +22,26 @@ import "google/protobuf/timestamp.proto";
 // by clients and scheduled onto hosts.
 message Pod {
   // Fully qualified pod name in the form
-  // projects/super-awesome/pods/{pod_name}
+  // pods/super-awesome/pods/{pod_name}
   // `pod_name` is a valid DNS label (RFC 1123) with maximum
   // length of 63 characters.
-  // Name is read-only
+  // This field is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
   // The fully qualified name of the pod's parent. Only populated for known resources such as:
-  // wordpress, memcached and mysql
-  string parent = 2;
+  // wordpress, memcached and mysql cluster.
+  // This field is read-only.
+  string parent = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/resource/v1.Name"];
+  // The organization the node is part of, taking the form of "organizations/{organization_name}".
+  // This field is read-only.
+  string organization = 3 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // The pod status
-  PodStatus status = 3;
+  // This field is read-only.
+  PodStatus status = 4 [(gogoproto.nullable) = false];
   // Node name is a request to schedule this pod onto a specific node. If it is non-empty,
   // the scheduler simply schedules this pod onto that node, assuming that it fits resource
   // requirements.
-  string node_name = 4;
+  // This field is read-only.
+  string node_name = 5 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/node/v1.Name"];
 }
 
 // PodStatus represents information about the status of a pod. Status may trail the actual
@@ -62,8 +68,8 @@ message PodStatus {
     FAILED = 4;
   }
   PodPhase phase = 1;
-  repeated ContainerStatus container_statuses = 2;
-  repeated Condition conditions = 3;
+  repeated ContainerStatus container_statuses = 2 [(gogoproto.nullable) = false];
+  repeated Condition conditions = 3 [(gogoproto.nullable) = false];
 }
 
 // ContainerStatus contains details for the current status of the container.
@@ -151,4 +157,29 @@ message Condition {
   google.protobuf.Timestamp last_transition_time = 6;
   // Last time we probed the condition.
   google.protobuf.Timestamp last_probe_time = 7;
+}
+
+message ListPodsRequest {
+  // The pod's parent resource. The only resources accepted for this field are:
+  // wordpress, memcached and mysql cluster.
+  // Optional.
+  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/resource/v1.Name"];
+  // Maximum number of items to return.
+  int32 page_size = 2;
+  // next_page_token value returned from a previous List request, if
+  // any.
+  string page_token = 3;
+}
+
+message ListPodsResponse {
+  repeated Pod pods = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+// PodsService allow managing pods
+service PodsService {
+  // ListPods lists pods
+  rpc ListPods(ListPodsRequest) returns (ListPodsResponse);
 }
