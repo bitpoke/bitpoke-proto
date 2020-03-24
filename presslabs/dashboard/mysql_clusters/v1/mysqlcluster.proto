@@ -100,18 +100,6 @@ message UpdateMySQLClusterResourcesRequest {
   ];
 }
 
-message UpdateMySQLClusterAffinityRequest {
-  // Parent site, for example projects/{project_name}/mysql_clusters/{mysql_cluster_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
-  // New definition of the memcahced affinity.
-  presslabs.dashboard.affinity.v1.Affinity affinity = 2 [(gogoproto.nullable) = false];
-  // Fields to be updated.
-  google.protobuf.FieldMask update_mask = 3 [
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
-}
-
 // MySQLClusterService allow managing mysql clusters
 service MySQLClusterService {
   // GetMySQLCluster fetches a MySQL cluster by it's name
@@ -120,6 +108,4 @@ service MySQLClusterService {
   rpc UpdateMySQLCluster(UpdateMySQLClusterRequest) returns (MySQLCluster);
   // UpdateMySQLClusterResources updates MySQL Cluster resource allocation
   rpc UpdateMySQLClusterResources(UpdateMySQLClusterResourcesRequest) returns (MySQLCluster);
-  // UpdateMySQLClusterAffinity updates the MySQL Cluster's Affinity
-  rpc UpdateMySQLClusterAffinity(UpdateMySQLClusterAffinityRequest) returns (MySQLCluster);
 }

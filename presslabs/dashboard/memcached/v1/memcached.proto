@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package presslabs.dashboard.memcached.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/presslabs/dashboard-go/pkg/memcached/v1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/field_mask.proto";
+import "presslabs/dashboard/affinity/v1/affinity.proto";
+
+message Memcached {
+  // Fully qualified backup name in the form projects/{project_name}/memcached/{memcached_name}.
+  // `memcached_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
+  // Name is read-only.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // Memcached resource allocation
+  ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  // Memcached's Affinity
+  presslabs.dashboard.affinity.v1.Affinity affinity = 3;
+}
+
+// ResourceAllocation for Memcached
+message ResourceAllocation {
+  Resource memory = 1 [(gogoproto.nullable) = false];
+  Resource cpu = 2 [(gogoproto.nullable) = false];
+  int32 desired_replicas = 3;
+}
+
+// Resource describe requested and limit resources
+message Resource {
+  // Enforced hard limits for each named resource
+  string limit = 1;
+  // Enforced hard requests for each named resource
+  string requested = 2;
+}
+
+message GetMemcachedRequest {
+  // Resource name of the Memcached to fetch in the form
+  // projects/{project_name}/memcached/{memcached_name}.
+  // `project_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message UpdateMemcachedRequest {
+  // New definition of the Memcached. It must include a `name`
+  Memcached memcached = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateMemcachedResourcesRequest {
+  // Parent site, for example projects/{project_name}/memcached/{memcached_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the site resource allocation list.
+  ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MemcachedService allow managing memcached
+service MemcachedService {
+  // GetMemcached fetches a Memcached by it's name
+  rpc GetMemcached(GetMemcachedRequest) returns (Memcached);
+  // UpdateMemcachedResources updates Memcached resource allocation
+  rpc UpdateMemcachedResources(UpdateMemcachedResourcesRequest) returns (Memcached);
+  // UpdateMemcached updates the Memcached's Affinity
+  rpc UpdateMemcached(UpdateMemcachedRequest) returns (Memcached);
+}

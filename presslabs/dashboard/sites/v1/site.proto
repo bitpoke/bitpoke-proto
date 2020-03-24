@@ -33,8 +33,6 @@ message Site {
   Status status = 3;
   // Site's allocated resource
   ResourceAllocation resources = 4 [(gogoproto.nullable) = false];
-  // Memcached's allocated resource
-  MemcachedResourceAllocation memcached_resources = 5 [(gogoproto.nullable) = false];
   // Git_repository_origin is the source of truth, in regards to the site's code.
   // For now, it needs to be a public git repository, that can be cloned via git, ssh and http.
   string git_repository_origin = 6;
@@ -77,8 +75,6 @@ message Site {
   ];
   // The site's Affinity
   presslabs.dashboard.affinity.v1.Affinity affinity = 22;
-  // The site's memcached Affinity
-  presslabs.dashboard.affinity.v1.Affinity memcached_affinity = 23;
 }
 
 // Status is information about the current status of this site.
@@ -240,13 +236,6 @@ message ResourceAllocation {
   Autoscaler autoscaler = 5 [(gogoproto.nullable) = false];
 }
 
-// MemcachedResourceAllocation describes what the allocated resources for a memcached are
-message MemcachedResourceAllocation {
-  Resource memory = 1 [(gogoproto.nullable) = false];
-  Resource cpu = 2 [(gogoproto.nullable) = false];
-  int32 desired_replicas = 3;
-}
-
 // Resource describe used and limit resources
 message Resource {
   // Enforced hard limits for each named resource
@@ -328,30 +317,6 @@ message UpdateSiteResourcesRequest {
   ];
 }
 
-message UpdateSiteMemcachedResourcesRequest {
-  // Parent site, for example projects/{project_name}/sites/{site_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
-  // New definition of the memcahced resource allocation list.
-  MemcachedResourceAllocation memcached_resources = 2 [(gogoproto.nullable) = false];
-  // Fields to be updated.
-  google.protobuf.FieldMask update_mask = 3 [
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
-}
-
-message UpdateSiteMemcachedAffinityRequest {
-  // Parent site, for example projects/{project_name}/sites/{site_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
-  // New definition of the memcahced affinity.
-  presslabs.dashboard.affinity.v1.Affinity memcached_affinity = 2 [(gogoproto.nullable) = false];
-  // Fields to be updated.
-  google.protobuf.FieldMask update_mask = 3 [
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
-}
-
 message DeleteSiteRequest {
   // Resource name of the site to delete in the form
   // projects/super-awesome/sites/{site_name}.
@@ -416,10 +381,6 @@ service SitesService {
   rpc UpdateSiteSMTP(UpdateSiteSMTPRequest) returns (Site);
   // UpdateSiteResources updates resource allocation
   rpc UpdateSiteResources(UpdateSiteResourcesRequest) returns (Site);
-  // UpdateSiteMemcachedResources updates resource allocation
-  rpc UpdateSiteMemcachedResources(UpdateSiteMemcachedResourcesRequest) returns (Site);
-  // UpdateSiteMemcachedAffinity updates resource allocation
-  rpc UpdateSiteMemcachedAffinity(UpdateSiteMemcachedAffinityRequest) returns (Site);
   // UpdateSiteEnvVars updates env vars
   rpc UpdateSiteEnvVars(UpdateSiteEnvVarsRequest) returns (Site);
   // DeleteSite deletes a site by it's name
