@@ -75,6 +75,9 @@ message Site {
   ];
   // The site's Affinity
   presslabs.dashboard.affinity.v1.Affinity affinity = 22;
+  // The site's Memcached resource name
+  // This field is read-only, for now.
+  string memcached = 23 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/memcached/v1.Name"];
 }
 
 // Status is information about the current status of this site.
