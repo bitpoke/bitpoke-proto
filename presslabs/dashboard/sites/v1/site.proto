@@ -18,6 +18,7 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/api/event/v1/event.proto";
+import "presslabs/dashboard/conditions/v1/condition.proto";
 
 // Site represents a site within the presslabs dashboard context
 message Site {
@@ -97,7 +98,7 @@ message Status {
   // Site general (overall) status.
   GeneralStatus general_status = 1;
   // Conditions for site status.
-  repeated Condition conditions = 2;
+  repeated presslabs.dashboard.conditions.v1.Condition conditions = 2 [(gogoproto.nullable) = false];
   // Total number of desired pods.
   int32 desired_replicas = 3;
   // Total number of pods ready for at least 0s.
@@ -115,37 +116,6 @@ message Status {
   int32 ready_replicas = 8;
   // Site endpoints.
   repeated Endpoint endpoints = 9;
-}
-
-// Condition for site status.
-message Condition {
-  enum Severity {
-    // Not set.
-    UNSPECIFIED = 0;
-    // Component is ok.
-    OK = 1;
-    // Component has a warning.
-    WARNING = 2;
-    // Component has an error.
-    ERROR = 3;
-  }
-  // Severity of condition.
-  Severity severity = 1;
-  // K8s condition name.
-  string name = 2;
-  // K8s condition status.
-  string status = 3;
-  // Dashboard component name.
-  // E.g.: mysql-operator, memcached, wordpress, wp-cron.
-  string component = 4;
-  // K8s condition reason.
-  // Machine readable message that explain why the status is as is.
-  string reason = 5;
-  // K8s message reason.
-  // Human readable message that explain why the status is as is.
-  string message = 6;
-  // K8s condition last transition time.
-  google.protobuf.Timestamp last_transition_time = 7;
 }
 
 // Route consists of a site domain and an optional path prefix
