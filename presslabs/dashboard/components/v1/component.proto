@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package presslabs.dashboard.components.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/presslabs/dashboard-go/pkg/component/v1beta1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "presslabs/dashboard/conditions/v1/condition.proto";
+
+// DasboardStatus contains dashboard componets status
+message DashboardStatus {
+  ApplicationStatus stack = 1 [(gogoproto.nullable) = false];
+}
+
+// ApplicationStatus is the status for an application
+message ApplicationStatus {
+  repeated ComponentStatus components = 1 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.conditions.v1.Condition conditions = 2 [(gogoproto.nullable) = false];
+}
+
+// ComponentStatus is the status for the dashboard component
+message ComponentStatus {
+  enum Status {
+    // Not set.
+    UNSPECIFIED = 0;
+    // Component status is unknown.
+    UNKNOWN = 1;
+    // component status is ready.
+    READY = 2;
+    // Component status is in prorgess.
+    IN_PROGRESS = 3;
+  }
+  // K8s resource name.
+  string name = 1;
+  // K8s resource namespace.
+  string namespace = 2;
+  // The resource kind.
+  string kind = 3;
+  // The link for more information about the component status.
+  string link = 4;
+  // The component status.
+  Status status = 5;
+}
+
+message GetDashboardStatusRequest {}
+
+// ComponentsService allow managing dashboard components
+service ComponentsService {
+  // GetDashboardStatus fetches a dashboard installer
+  rpc GetDashboardStatus(GetDashboardStatusRequest) returns (DashboardStatus);
+}
