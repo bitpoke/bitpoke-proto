@@ -37,11 +37,11 @@ message Pod {
   // The pod status
   // This field is read-only.
   PodStatus status = 4 [(gogoproto.nullable) = false];
-  // Node name is a request to schedule this pod onto a specific node. If it is non-empty,
+  // Node is a request to schedule this pod onto a specific node. If it is non-empty,
   // the scheduler simply schedules this pod onto that node, assuming that it fits resource
   // requirements.
   // This field is read-only.
-  string node_name = 5 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/node/v1.Name"];
+  string node = 5 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/node/v1.Name"];
 }
 
 // PodStatus represents information about the status of a pod. Status may trail the actual
