@@ -17,6 +17,7 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/pod/v1beta1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
+import "presslabs/dashboard/conditions/v1/condition.proto";
 
 // Pod is a collection of containers that can run on a host. This resource is created
 // by clients and scheduled onto hosts.
@@ -69,7 +70,7 @@ message PodStatus {
   }
   PodPhase phase = 1;
   repeated ContainerStatus container_statuses = 2 [(gogoproto.nullable) = false];
-  repeated Condition conditions = 3 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.conditions.v1.Condition conditions = 3 [(gogoproto.nullable) = false];
 }
 
 // ContainerStatus contains details for the current status of the container.
@@ -112,51 +113,6 @@ message ContainerStatus {
   bool ready = 11;
   // Specifies whether the container has passed its startup probe.
   bool started = 12;
-}
-
-enum ConditionSeverity {
-  // Not set.
-  UNSPECIFIED_SEVERITY = 0;
-  // The condition signals an OK status.
-  OK = 1;
-  // The condition signals a warning.
-  WARNING = 2;
-  // The condition signals an error.
-  ERROR = 3;
-}
-
-enum ConditionKind {
-  // Not set.
-  UNSPECIFIED_KIND = 0;
-  // ContainersReady indicates whether all containers in the pod are ready.
-  CONTAINERS_READY = 1;
-  // PodInitialized means that all init containers in the pod have started successfully.
-  POD_INITIALIZED = 2;
-  // PodReady means the pod is able to service requests and should be added to the
-  // load balancing pools of all matching services.
-  POD_READY = 3;
-  // PodScheduled represents status of the scheduling process for this pod.
-  POD_SCHEDULED = 4;
-}
-
-// Condition for Pod status.
-message Condition {
-  // Severity of the condition.
-  ConditionSeverity severity = 1;
-  // Kind of the condition.
-  ConditionKind kind = 2;
-  // K8s condition status.
-  string status = 3 [(gogoproto.casttype) = "k8s.io/api/core/v1.ConditionStatus"];
-  // K8s condition reason.
-  // Machine readable message that explain why the status is as is.
-  string reason = 4;
-  // K8s message reason.
-  // Human readable message that explain why the status is as is.
-  string message = 5;
-  // Last time the condition transitioned from one status to another.
-  google.protobuf.Timestamp last_transition_time = 6;
-  // Last time we probed the condition.
-  google.protobuf.Timestamp last_probe_time = 7;
 }
 
 message ListPodsRequest {
