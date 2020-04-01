@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package presslabs.dashboard.pings.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/presslabs/dashboard-go/pkg/ping/v1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// AuthenticatedPing carries the information that a user has authenticated successfully
+// The token must be validated against the OIDC credentials
+message AuthenticatedPing {
+  // True means token was refreshed; False means the token is brand new (new login).
+  bool refreshed = 1;
+  // The timestamp when the user has authenticated
+  google.protobuf.Timestamp authenticated_at = 2;
+}
+
+message PingReceivedResponse {
+  // Whether the backend has successfully handled the ping request
+  // Frontend clients may consider resending the ping request if handled is false
+  bool handled = 1;
+}
+
+// PingService allows receiving pings from users regarding certain events that have occurred
+// Unless otherwise stated, the authenticity of the pings must be validated or otherwise must not
+// be operated with
+service PingsService {
+  // SendAuthenticatedPing sends an AuthenticatedPing
+  rpc SendAuthenticatedPing(AuthenticatedPing) returns (PingReceivedResponse);
+}
