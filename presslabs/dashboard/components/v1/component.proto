@@ -19,7 +19,8 @@ import "presslabs/dashboard/conditions/v1/condition.proto";
 // DasboardStatus contains dashboard components status
 message DashboardStatus {
   ApplicationStatus stack = 1 [(gogoproto.nullable) = false];
-  AuthStatus auth = 2 [(gogoproto.nullable) = false];
+  ApplicationStatus dashboard = 2 [(gogoproto.nullable) = false];
+  AuthStatus auth = 3 [(gogoproto.nullable) = false];
 }
 
 // ApplicationStatus is the status for an application
