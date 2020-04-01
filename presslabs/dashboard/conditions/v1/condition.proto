@@ -35,7 +35,7 @@ message Condition {
   // K8s condition name.
   string name = 2;
   // K8s condition status.
-  string status = 3;
+  string status = 3 [(gogoproto.casttype) = "k8s.io/api/core/v1.ConditionStatus"];
   // Dashboard component name.
   // E.g.: mysql-operator, memcached, wordpress, wp-cron.
   string component = 4;
