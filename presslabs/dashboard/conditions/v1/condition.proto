@@ -46,7 +46,9 @@ message Condition {
   // Human readable message that explain why the status is as is.
   string message = 6;
   // K8s condition last transition time.
+  // +optional
   google.protobuf.Timestamp last_transition_time = 7;
   // Last probe time.
+  // +optional
   google.protobuf.Timestamp last_probe_time = 8;
 }
