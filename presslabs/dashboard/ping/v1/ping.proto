@@ -30,7 +30,7 @@ message PingReceivedResponse {
   bool handled = 1;
 }
 
-// PingService allows receiving pings from users regarding certain events that have occurred
+// PingsService allows receiving pings from users regarding certain events that have occurred
 // Unless otherwise stated, the authenticity of the pings must be validated or otherwise must not
 // be operated with
 service PingsService {

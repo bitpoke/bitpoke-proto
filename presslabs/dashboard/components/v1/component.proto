@@ -12,8 +12,8 @@ option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.verbose_equal_all) = true;
 option go_package = "github.com/presslabs/dashboard-go/pkg/component/v1";
 
-import "google/protobuf/empty.proto";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
 import "presslabs/dashboard/conditions/v1/condition.proto";
 
 // DasboardStatus contains dashboard components status
@@ -54,8 +54,8 @@ message ComponentStatus {
 
 // AuthStatus is the status for the authentication system
 message AuthStatus {
-    string oidc_issuer = 1;
-    repeated presslabs.dashboard.conditions.v1.Condition conditions = 2 [(gogoproto.nullable) = false];
+  string oidc_issuer = 1;
+  repeated presslabs.dashboard.conditions.v1.Condition conditions = 2 [(gogoproto.nullable) = false];
 }
 
 message UpdateAuthConfigurationRequest {
@@ -72,7 +72,6 @@ message AuthConfiguration {
 service ComponentsService {
   // GetDashboardStatus fetches a dashboard installer
   rpc GetDashboardStatus(google.protobuf.Empty) returns (DashboardStatus);
-
   // GetAuthConfiguration fetches the dashboard auth configuration
   rpc GetAuthConfiguration(google.protobuf.Empty) returns (AuthConfiguration);
   // UpdateAuthConfiguration updates the dashboard auth configuration
