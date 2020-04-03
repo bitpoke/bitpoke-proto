@@ -63,6 +63,12 @@ message DeleteAccountBindingRequest {
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
+message PingReceivedResponse {
+  // Whether the backend has successfully handled the ping request
+  // Frontend clients may consider resending the ping request if handled is false
+  bool handled = 1;
+}
+
 // AccountBindingsService allows managing accounts
 service AccountBindingsService {
   // GetAccountBinding fetches an account binding by it's name
@@ -71,4 +77,6 @@ service AccountBindingsService {
   rpc ListAccountBindings(ListAccountBindingsRequest) returns (ListAccountBindingsResponse);
   // DeleteAccountBinding deletes an account reference from the specified organization
   rpc DeleteAccountBinding(DeleteAccountBindingRequest) returns (google.protobuf.Empty);
+  // SendAuthenticatedPing announces an authentication successful event
+  rpc SendAuthenticatedPing(google.protobuf.Empty) returns (PingReceivedResponse);
 }
