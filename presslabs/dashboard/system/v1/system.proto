@@ -22,6 +22,7 @@ message SystemStatus {
   ApplicationStatus dashboard = 2 [(gogoproto.nullable) = false];
   ApplicationStatus config_connector = 3 [(gogoproto.nullable) = false];
   AuthStatus auth = 4 [(gogoproto.nullable) = false];
+  CRDStatus crd = 5 [(gogoproto.nullable) = false];
 }
 
 // ApplicationStatus is the status for an application
@@ -68,6 +69,26 @@ message AuthConfiguration {
   string oidc_issuer = 1;
   string oidc_client_secret = 2;
   string oidc_client_id = 3;
+}
+
+// CRDStatus is the status of CRDs used directly by the dashboard
+message CRDStatus {
+  // A list of CRD names that were not found
+  repeated string not_found = 1;
+  // A list of CRDs that were found, but had a version not within the expected bounds
+  repeated CRD mismatching_versions = 2 [(gogoproto.nullable) = false];
+}
+
+// CRD contains data about a Kubernetes Custom Resource Definition
+message CRD {
+  // The CRD name
+  string name = 1;
+  // The CRD versions
+  string versions = 2;
+  // The lower bound of the accepted versions
+  string lower_version_bound = 3;
+  // The upper bound of the accepted versions
+  string upper_version_bound = 4;
 }
 
 // SystemStatusesService allow managing system components
