@@ -83,8 +83,8 @@ message CRDStatus {
 message CRD {
   // The CRD name
   string name = 1;
-  // The CRD versions
-  string versions = 2;
+  // The version the resource belongs in
+  string version = 2;
   // The lower bound of the accepted versions
   string lower_version_bound = 3;
   // The upper bound of the accepted versions
