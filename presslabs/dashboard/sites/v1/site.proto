@@ -69,11 +69,6 @@ message Site {
   BootstrapDetails bootstrap = 19 [(gogoproto.nullable) = false];
   // [Output only] Routes contains site domains and paths
   repeated Route routes = 20 [(gogoproto.nullable) = false];
-  // PodScheduling specifies the way site pods are going to be scheduled
-  PodScheduling pod_scheduling = 21 [
-    (gogoproto.nullable) = false,
-    deprecated = true
-  ];
   // The site's Affinity
   presslabs.dashboard.affinity.v1.Affinity affinity = 22;
   // The site's Memcached resource name
@@ -184,20 +179,6 @@ message Autoscaler {
   int32 max_replicas = 2;
   // [Output only] Current number of replicas
   int32 replicas = 3;
-}
-
-// PodScheduling specifies the way site pods are going to be scheduled
-message PodScheduling {
-  // NodeAffinityPreset allows setting a preset for node affinity. UNSPECIFIED and CUSTOM are
-  // read-only.
-  enum NodeAffinityPreset {
-    UNSPECIFIED = 0;
-    CUSTOM = 1;
-    NEVER_PREEMPTIBLE = 2;
-    PREFER_PREEMPTIBLE = 3;
-    ALWAYS_PREEMPTIBLE = 4;
-  }
-  NodeAffinityPreset node_affinity_preset = 1;
 }
 
 // ResourceAllocation describes what the allocated resources for a site are
