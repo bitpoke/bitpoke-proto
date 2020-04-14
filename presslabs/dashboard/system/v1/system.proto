@@ -71,6 +71,17 @@ message AuthConfiguration {
   string oidc_client_id = 3;
 }
 
+message UpdateLetsEncryptConfigurationRequest {
+  LetsEncryptConfiguration configuration = 1 [(gogoproto.nullable) = false];
+}
+
+message LetsEncryptConfiguration {
+  // The email for this account.
+  string email = 1;
+  // The ACME server URL.
+  string server = 2;
+}
+
 // CRDStatus is the status of CRDs used directly by the dashboard
 message CRDStatus {
   // A list of CRD names that were not found
@@ -99,4 +110,8 @@ service SystemStatusesService {
   rpc GetAuthConfiguration(google.protobuf.Empty) returns (AuthConfiguration);
   // UpdateAuthConfiguration updates the dashboard auth configuration
   rpc UpdateAuthConfiguration(UpdateAuthConfigurationRequest) returns (AuthConfiguration);
+  // GetLetsEncryptConfiguration fetches the LetsEncrypt configuration
+  rpc GetLetsEncryptConfiguration(google.protobuf.Empty) returns (LetsEncryptConfiguration);
+  // UpdateLetsEncryptConfiguration updates the LetsEncrypt configuration
+  rpc UpdateLetsEncryptConfiguration(UpdateLetsEncryptConfigurationRequest) returns (LetsEncryptConfiguration);
 }
