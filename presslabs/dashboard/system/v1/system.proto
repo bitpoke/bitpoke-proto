@@ -13,6 +13,7 @@ option (gogoproto.verbose_equal_all) = true;
 option go_package = "github.com/presslabs/dashboard-go/pkg/system/v1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/empty.proto";
 import "presslabs/dashboard/conditions/v1/condition.proto";
 
@@ -73,6 +74,11 @@ message AuthConfiguration {
 
 message UpdateLetsEncryptConfigurationRequest {
   LetsEncryptConfiguration configuration = 1 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message LetsEncryptConfiguration {
