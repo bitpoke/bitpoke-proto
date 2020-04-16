@@ -89,6 +89,13 @@ message LetsEncryptConfiguration {
   string server = 2;
 }
 
+message ConfigConnectorConfiguration {
+  // The google cloud shell link to install the google config connector.
+  string install_link = 1;
+  // The google cloud shell link to upgrade the google config connector.
+  string upgrade_link = 2;
+}
+
 // CRDStatus is the status of CRDs used directly by the dashboard
 message CRDStatus {
   // A list of CRD names that were not found
@@ -121,4 +128,6 @@ service SystemStatusesService {
   rpc GetLetsEncryptConfiguration(google.protobuf.Empty) returns (LetsEncryptConfiguration);
   // UpdateLetsEncryptConfiguration updates the LetsEncrypt configuration
   rpc UpdateLetsEncryptConfiguration(UpdateLetsEncryptConfigurationRequest) returns (LetsEncryptConfiguration);
+  // GetConfigConnectorConfiguration fetches the config connector configuration
+  rpc GetConfigConnectorConfiguration(google.protobuf.Empty) returns (ConfigConnectorConfiguration);
 }
