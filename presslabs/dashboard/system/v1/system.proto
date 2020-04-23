@@ -83,7 +83,6 @@ message UpdateLetsEncryptConfigurationRequest {
 
 message LetsEncryptConfiguration {
   // The email for this account.
-  // +optional
   string email = 1;
   // The ACME server URL.
   string server = 2;
