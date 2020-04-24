@@ -115,6 +115,20 @@ message CRD {
   string upper_version_bound = 4;
 }
 
+message AdminUsers {
+  // admin emails
+  repeated string emails = 1;
+}
+
+message UpdateAdminUsersRequest {
+  AdminUsers admin_users = 1 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 // SystemStatusesService allow managing system components
 service SystemStatusesService {
   // GetSystemStatus fetches a dashboard installer
@@ -129,4 +143,8 @@ service SystemStatusesService {
   rpc UpdateLetsEncryptConfiguration(UpdateLetsEncryptConfigurationRequest) returns (LetsEncryptConfiguration);
   // GetConfigConnectorConfiguration fetches the config connector configuration
   rpc GetConfigConnectorConfiguration(google.protobuf.Empty) returns (ConfigConnectorConfiguration);
+  // GetAdminUsers fetches the admin users
+  rpc GetAdminUsers(google.protobuf.Empty) returns (AdminUsers);
+  // UpdateAdminUsers updates the admin users
+  rpc UpdateAdminUsers(UpdateAdminUsersRequest) returns (AdminUsers);
 }
