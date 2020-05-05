@@ -113,6 +113,7 @@ message CRD {
   string upper_version_bound = 4;
 }
 
+// AdminUser is an admin user
 message AdminUser {
   string email = 1;
 }
