@@ -99,6 +99,7 @@ message CRDStatus {
   repeated string not_found = 1;
   // A list of CRDs that were found, but had a version not within the expected bounds
   repeated CRD mismatching_versions = 2 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.conditions.v1.Condition conditions = 3 [(gogoproto.nullable) = false];
 }
 
 // CRD contains data about a Kubernetes Custom Resource Definition
