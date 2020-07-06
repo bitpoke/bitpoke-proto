@@ -74,8 +74,8 @@ message Site {
   // The site's Memcached resource name
   // This field is read-only, for now.
   string memcached = 23 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/memcached/v1.Name"];
-  // Stack page cache
-  StackPageCache stack_page_cache = 24 [(gogoproto.nullable) = false];
+  // Page cache
+  PageCache page_cache = 24 [(gogoproto.nullable) = false];
 }
 
 // Status is information about the current status of this site.
@@ -200,8 +200,8 @@ message Resource {
   string requested = 2;
 }
 
-// StackPageCache is the configuration of the stack page cache
-message StackPageCache {
+// PageCache is the configuration of the page cache
+message PageCache {
   enum Backend {
     // not set
     UNSPECIFIED = 0;
@@ -210,7 +210,7 @@ message StackPageCache {
     REDIS = 3;
     MEMCACHED = 4;
   }
-  // Backend for stack page cache. E.g.: memcached, redis, etc.
+  // Backend for page cache. E.g.: memcached, redis, etc.
   Backend backend = 1;
   // Host path for redis backend. E.g.: localhost:15123.
   string redis_host_path = 2;
@@ -274,11 +274,11 @@ message UpdateSiteEnvVarsRequest {
   ];
 }
 
-message UpdateSiteStackPageCacheRequest {
+message UpdateSitePageCacheRequest {
   // Parent site, for example projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
-  // New definition of the stack page cache.
-  StackPageCache stack_page_cache = 2 [(gogoproto.nullable) = false];
+  // New definition of the page cache.
+  PageCache page_cache = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
   google.protobuf.FieldMask update_mask = 3 [
     (gogoproto.embed) = true,
@@ -379,8 +379,8 @@ service SitesService {
   rpc UpdateSiteResources(UpdateSiteResourcesRequest) returns (Site);
   // UpdateSiteEnvVars updates env vars
   rpc UpdateSiteEnvVars(UpdateSiteEnvVarsRequest) returns (Site);
-  // UpdateSiteStackPageCache updates stack page cache
-  rpc UpdateSiteStackPageCache(UpdateSiteStackPageCacheRequest) returns (Site);
+  // UpdateSitePageCache updates stack page cache
+  rpc UpdateSitePageCache(UpdateSitePageCacheRequest) returns (Site);
   // DeleteSite deletes a site by it's name
   rpc DeleteSite(DeleteSiteRequest) returns (google.protobuf.Empty);
   // ListSites list sites
