@@ -225,7 +225,7 @@ message PageCache {
   // Response_cache_control can be on (true) or off (false).
   bool response_cache_control = 6;
   // Expiration time period for page cache.
-  int32 expire_seconds = 7;
+  int64 expire_seconds = 7;
 }
 
 message CreateSiteRequest {
