@@ -210,22 +210,26 @@ message PageCache {
     REDIS = 3;
     MEMCACHED = 4;
   }
-  // Backend for page cache. E.g.: memcached, redis, etc.
+  // Backend for stack page cache. E.g.: memcached, redis, etc.
   Backend backend = 1;
-  // Host path for redis backend. E.g.: localhost:15123.
-  string redis_host_path = 2;
-  // Host path for memcached backend. E.g.: localhost:15123.
-  string memcached_host_path = 3;
+  // Host for redis backend. E.g.: localhost.
+  string redis_host = 2;
+  // Port for redis backend. E.g.: 6379.
+  string redis_port = 3;
+  // Host for memcached backend. E.g.: localhost.
+  string memcached_host = 4;
+  // Port for memcached backend. E.g.: 11211.
+  string memcached_port = 5;
   // Prefix of the key.
-  string key_prefix = 4;
+  string key_prefix = 6;
   // store_statuses controls what responses to store to the cache according to their status code.
   // Responses with statuses not present in this list will not be cached.
   // Leave empty to store all statuses.
-  repeated string store_statuses = 5;
+  repeated string store_statuses = 7;
   // Response_cache_control can be on (true) or off (false).
-  bool response_cache_control = 6;
+  bool response_cache_control = 8;
   // Expiration time period for page cache.
-  int64 expire_seconds = 7;
+  int64 expire_seconds = 9;
 }
 
 message CreateSiteRequest {
