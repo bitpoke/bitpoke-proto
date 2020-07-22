@@ -205,31 +205,32 @@ message PageCache {
   enum Backend {
     // not set
     UNSPECIFIED = 0;
-    OFF = 1;
-    CUSTOM = 2;
-    REDIS = 3;
-    MEMCACHED = 4;
+    CUSTOM = 1;
+    REDIS = 2;
+    MEMCACHED = 3;
   }
+  // Enable is true when tha site page cache is enable
+  bool enable = 1;
   // Backend for stack page cache. E.g.: memcached, redis, etc.
-  Backend backend = 1;
+  Backend backend = 2;
   // Host for redis backend. E.g.: localhost.
-  string redis_host = 2;
+  string redis_host = 3;
   // Port for redis backend. E.g.: 6379.
-  string redis_port = 3;
+  string redis_port = 4;
   // Host for memcached backend. E.g.: localhost.
-  string memcached_host = 4;
+  string memcached_host = 5;
   // Port for memcached backend. E.g.: 11211.
-  string memcached_port = 5;
+  string memcached_port = 6;
   // Prefix of the key.
-  string key_prefix = 6;
+  string key_prefix = 7;
   // store_statuses controls what responses to store to the cache according to their status code.
   // Responses with statuses not present in this list will not be cached.
   // Leave empty to store all statuses.
-  repeated string store_statuses = 7;
+  repeated string store_statuses = 8;
   // Response_cache_control can be on (true) or off (false).
-  bool response_cache_control = 8;
+  bool response_cache_control = 9;
   // Expiration time period for page cache.
-  int64 expire_seconds = 9;
+  int64 expire_seconds = 10;
 }
 
 message CreateSiteRequest {
