@@ -209,8 +209,8 @@ message PageCache {
     REDIS = 2;
     MEMCACHED = 3;
   }
-  // Enable is true when tha site page cache is enable
-  bool enable = 1;
+  // Enabled is true when tha site page cache is enable
+  bool enabled = 1;
   // Backend for stack page cache. E.g.: memcached, redis, etc.
   Backend backend = 2;
   // Host for redis backend. E.g.: localhost.
