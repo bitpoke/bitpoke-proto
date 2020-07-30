@@ -226,7 +226,7 @@ message PageCache {
   // store_statuses controls what responses to store to the cache according to their status code.
   // Responses with statuses not present in this list will not be cached.
   // Leave empty to store all statuses.
-  repeated string store_statuses = 8;
+  repeated int32 store_statuses = 8;
   // Response_cache_control can be on (true) or off (false).
   bool response_cache_control = 9;
   // Expiration time period for page cache.
