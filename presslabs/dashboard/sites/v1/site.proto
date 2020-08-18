@@ -181,6 +181,10 @@ message Autoscaler {
   int32 max_replicas = 2;
   // [Output only] Current number of replicas
   int32 replicas = 3;
+  // targetAverageUtilization is the target value of the average of the
+  // resource metric across all relevant pods, represented as a percentage of
+  // the requested value of the resource for the pods.
+  int32 target_average_utilization = 4;
 }
 
 // ResourceAllocation describes what the allocated resources for a site are
