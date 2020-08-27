@@ -189,11 +189,13 @@ message Autoscaler {
 
 // ResourceAllocation describes what the allocated resources for a site are
 message ResourceAllocation {
-  Resource memory_per_pod = 1 [(gogoproto.nullable) = false];
-  Resource cpu_per_pod = 2 [(gogoproto.nullable) = false];
-  Resource php_workers = 3 [(gogoproto.nullable) = false];
-  Resource php_workers_memory = 4 [(gogoproto.nullable) = false];
-  Autoscaler autoscaler = 5 [(gogoproto.nullable) = false];
+  // Set replicas on 0 for a given site, overriding the below settings
+  bool paused = 1;
+  Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
+  Resource cpu_per_pod = 3 [(gogoproto.nullable) = false];
+  Resource php_workers = 4 [(gogoproto.nullable) = false];
+  Resource php_workers_memory = 5 [(gogoproto.nullable) = false];
+  Autoscaler autoscaler = 6 [(gogoproto.nullable) = false];
 }
 
 // Resource describe used and limit resources
