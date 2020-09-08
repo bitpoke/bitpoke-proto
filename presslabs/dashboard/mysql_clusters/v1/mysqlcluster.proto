@@ -15,6 +15,7 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/field_mask.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
+import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 message MySQLCluster {
   // Fully qualified backup name in the form projects/{project_name}/mysql_clusters/{cluster_name}.
@@ -33,6 +34,8 @@ message MySQLCluster {
   Status status = 5 [(gogoproto.nullable) = false];
   // MySQL Cluster's Affinity
   presslabs.dashboard.affinity.v1.Affinity affinity = 6;
+  // MySQL Cluster's Tolerations
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 7 [(gogoproto.nullable) = false];
 }
 
 // ResourceAllocation for MySQL Cluster

@@ -19,6 +19,7 @@ import "google/protobuf/timestamp.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/api/event/v1/event.proto";
 import "presslabs/dashboard/conditions/v1/condition.proto";
+import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 // Site represents a site within the presslabs dashboard context
 message Site {
@@ -71,13 +72,15 @@ message Site {
   repeated Route routes = 20 [(gogoproto.nullable) = false];
   // The site's Affinity
   presslabs.dashboard.affinity.v1.Affinity affinity = 22;
+  // The site's Tolerations
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 23 [(gogoproto.nullable) = false];
   // The site's Memcached resource name
   // This field is read-only, for now.
-  string memcached = 23 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/memcached/v1.Name"];
+  string memcached = 24 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/memcached/v1.Name"];
   // Page cache
-  PageCache page_cache = 24 [(gogoproto.nullable) = false];
+  PageCache page_cache = 25 [(gogoproto.nullable) = false];
   // Enable the Memcached
-  bool memcached_enabled = 25;
+  bool memcached_enabled = 26;
 }
 
 // Status is information about the current status of this site.

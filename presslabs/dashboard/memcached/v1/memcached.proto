@@ -15,6 +15,7 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/memcached/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/field_mask.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
+import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 message Memcached {
   // Fully qualified backup name in the form projects/{project_name}/memcached/{memcached_name}.
@@ -25,6 +26,8 @@ message Memcached {
   ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
   // Memcached's Affinity
   presslabs.dashboard.affinity.v1.Affinity affinity = 3;
+  // Memcached's Tolerations
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 4 [(gogoproto.nullable) = false];
 }
 
 // ResourceAllocation for Memcached
