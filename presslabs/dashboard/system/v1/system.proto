@@ -15,7 +15,9 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/system/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
+import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/conditions/v1/condition.proto";
+import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 // SystemStatus contains system components status
 message SystemStatus {
@@ -139,6 +141,22 @@ message UpdateAdminUsersRequest {
   ];
 }
 
+message SchedulingConfiguration {
+  // System's Affinity
+  presslabs.dashboard.affinity.v1.Affinity affinity = 1;
+  // System's Tolerations
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 2 [(gogoproto.nullable) = false];
+}
+
+message UpdateSchedulingConfigurationRequest {
+  SchedulingConfiguration scheduling_configuration = 1 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 // SystemStatusesService allow managing system components
 service SystemStatusesService {
   // GetSystemStatus fetches a dashboard installer
@@ -157,4 +175,28 @@ service SystemStatusesService {
   rpc GetAdminUsers(google.protobuf.Empty) returns (AdminUsersResponse);
   // UpdateAdminUsers updates the admin users
   rpc UpdateAdminUsers(UpdateAdminUsersRequest) returns (AdminUsersResponse);
+  // GetNginxControllerSchedulingConfiguration fetches the nginx controllers's scheduling configuration
+  rpc GetNginxControllerSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
+  // UpdateNginxControllerSchedulingConfiguration updates nginx controller's scheduling configuration
+  rpc UpdateNginxControllerSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
+  // GetPrometheusOperatorSchedulingConfiguration fetches the prometheus operator's scheduling configuration
+  rpc GetPrometheusOperatorSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
+  // UpdatePrometheusOperatorSchedulingConfiguration updates prometheus operator's scheduling configuration
+  rpc UpdatePrometheusOperatorSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
+  // GetWordpressOperatorSchedulingConfiguration fetches the wordpress operator's scheduling configuration
+  rpc GetWordpressOperatorSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
+  // UpdateWordpressOperatorSchedulingConfiguration updates wordpress operator's cscheduling onfiguration
+  rpc UpdateWordpressOperatorSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
+  // GetMySQLOperatorSchedulingConfiguration fetches the mysql operator's scheduling configuration
+  rpc GetMySQLOperatorSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
+  // UpdateMySQLOperatorSchedulingConfiguration updates mysql operator's scheduling configuration
+  rpc UpdateMySQLOperatorSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
+  // GetDashboardControllerSchedulingConfiguration fetches the dashboard controller's scheduling configuration
+  rpc GetDashboardControllerSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
+  // UpdateDashboardControllerSchedulingConfiguration updates dashboard controller's scheduling configuration
+  rpc UpdateDashboardControllerSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
+  // GetDashboardAPIServerSchedulingConfiguration fetches the dashboard apiserver's scheduling configuration
+  rpc GetDashboardAPIServerSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
+  // UpdateDashboardAPIServerSchedulingConfiguration updates dashboard apiserver's scheduling configuration
+  rpc UpdateDashboardAPIServerSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
 }
