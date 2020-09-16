@@ -279,7 +279,7 @@ message UpdateSiteRequest {
 }
 
 message UpdateSiteEnvVarsRequest {
-  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  // Parent site, for example organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the env vars list.
   EnvVarList env_vars = 2 [(gogoproto.nullable) = false];
@@ -291,7 +291,7 @@ message UpdateSiteEnvVarsRequest {
 }
 
 message UpdateSitePageCacheRequest {
-  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  // Parent site, for example organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the page cache.
   PageCache page_cache = 2 [(gogoproto.nullable) = false];
@@ -303,7 +303,7 @@ message UpdateSitePageCacheRequest {
 }
 
 message UpdateSiteSMTPRequest {
-  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  // Parent site, for example organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the smtp.
   SMTP smtp = 2 [
@@ -318,7 +318,7 @@ message UpdateSiteSMTPRequest {
 }
 
 message UpdateSiteResourcesRequest {
-  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  // Parent site, for example organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the site resource allocation list.
   ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
@@ -340,10 +340,13 @@ message DeleteSiteRequest {
 message ListSitesRequest {
   // Parent project, for example "projects/{project_name}".
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
+  // Organization field can be used to list all the sites from an organization.
+  // Required if Parent is empty.
+  string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
-  int32 page_size = 2;
+  int32 page_size = 3;
   // Next_page_token value returned from a previous List request, if any.
-  string page_token = 3;
+  string page_token = 4;
 }
 
 message ListSitesResponse {
@@ -370,7 +373,7 @@ message ListSiteEventsResponse {
 }
 
 message UpdateSiteRoutesRequest {
-  // Parent site, for example projects/{project_name}/sites/{site_name}.
+  // Parent site, for example organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // Routes contains site domains and paths
   repeated Route routes = 2 [(gogoproto.nullable) = false];

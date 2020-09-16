@@ -19,7 +19,7 @@ import "google/protobuf/timestamp.proto";
 // Invite represents a collaboration invite for an account within the Presslabs
 // dashboard context
 message Invite {
-  // [Output only] The fully qualified invite name in the form iam/invites/{invite_name}.
+  // [Output only] The fully qualified invite name in the form organizations/{organization_name}/iam/invites/{invite_name}.
   // The `invite_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -40,17 +40,19 @@ message Invite {
 }
 
 message GetInviteRequest {
-  // The resource name of the invite to fetch in the form iam/invites/{invite_name}
+  // The resource name of the invite to fetch in the form organizations/{organization_name}/iam/invites/{invite_name}
   // The `invite_name` MUST be a valid DNS label (RFC 1123) with maximum length
   // of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListInvitesRequest {
+  // Parent organization, for example "organizations/{organization_name}".
+  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // The maximum number of items to return.
-  int32 page_size = 1;
+  int32 page_size = 2;
   // The next_page_token value returned from a previous List request, if any.
-  string page_token = 2;
+  string page_token = 3;
 }
 
 message ListInvitesResponse {
@@ -61,6 +63,10 @@ message ListInvitesResponse {
 }
 
 message CreateInviteRequest {
+  // Parent organization, for example "organizations/{organization_name}".
+  // This parameter overrides the organization passed as metadata.
+  // If not specified as metadata, the parent is a required parameter.
+  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // The invite resource to create
   Invite invite = 2 [
     (gogoproto.embed) = true,
@@ -70,7 +76,7 @@ message CreateInviteRequest {
 
 message DeleteInviteRequest {
   // The resource name of the invite to be revoked (and deleted) in the form
-  // iam/invites/{invite_name}
+  // organizations/{organization_name}/iam/invites/{invite_name}
   // The `invite_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -78,7 +84,7 @@ message DeleteInviteRequest {
 
 message RedeemInviteRequest {
   // The resource name of the invite to be redeemed (and deleted) in the form
-  // iam/invites/{invite_name}
+  // organizations/{organization_name}/iam/invites/{invite_name}
   // The `invite_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];

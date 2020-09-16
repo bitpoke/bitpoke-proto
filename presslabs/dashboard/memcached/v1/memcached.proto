@@ -67,7 +67,7 @@ message UpdateMemcachedRequest {
 }
 
 message UpdateMemcachedResourcesRequest {
-  // Parent site, for example projects/{project_name}/memcached/{memcached_name}.
+  // Parent site, for example organizations/{organization_name}/projects/{project_name}/memcached/{memcached_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the site resource allocation list.
   ResourceAllocation resources = 2 [(gogoproto.nullable) = false];

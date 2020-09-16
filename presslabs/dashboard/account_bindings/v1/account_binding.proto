@@ -18,7 +18,7 @@ import "google/protobuf/timestamp.proto";
 
 // AccountBinding represents a user within the Presslabs dashboard context
 message AccountBinding {
-  // [Output only] Fully qualified account binding name in the form `iam/account-bindings/{account_binding_name}`.
+  // [Output only] Fully qualified account binding name in the form `organizations/{organization_name}/iam/account-bindings/{account_binding_name}`.
   // `account_binding_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -33,7 +33,7 @@ message AccountBinding {
 }
 
 message GetAccountBindingRequest {
-  // Resource name of the account binding to fetch, in the form `iam/account-bindings/{account_binding_name}`
+  // Resource name of the account binding to fetch, in the form `organizations/{organization_name}/iam/account-bindings/{account_binding_name}`
   // `account_binding_name` MUST be a valid DNS label (RFC 1123) with maximum length
   // of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -57,7 +57,7 @@ message ListAccountBindingsResponse {
 
 message DeleteAccountBindingRequest {
   // Resource name of the account binding to be revoked (and deleted) in the form
-  // iam/account-bindings/{account_binding_name}
+  // organizations/{organization_name}/iam/account-bindings/{account_binding_name}
   // `account_binding_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];

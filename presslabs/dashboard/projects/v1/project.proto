@@ -92,8 +92,6 @@ message GetProjectRequest {
 
 message ListProjectsRequest {
   // Parent organization, for example "organizations/{organization_name}".
-  // This parameter overrides the organization passed as metadata.
-  // If not specified as metadata, the parent is a required parameter.
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
   int32 page_size = 2;
@@ -115,7 +113,7 @@ message CreateProjectRequest {
   // If not specified as metadata, the parent is a required parameter.
   string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Project resource to create
-  Project project = 3 [
+  Project project = 2 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];

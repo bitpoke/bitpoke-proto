@@ -92,7 +92,7 @@ message UpdateMySQLClusterRequest {
 }
 
 message UpdateMySQLClusterResourcesRequest {
-  // Parent site, for example projects/{project_name}/mysql_clusters/{mysql_cluster_name}.
+  // Parent site, for example organizations/{organization_name}/projects/{project_name}/mysql_clusters/{mysql_cluster_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the site resource allocation list.
   ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
