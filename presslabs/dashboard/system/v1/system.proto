@@ -43,7 +43,7 @@ message ComponentStatus {
     UNKNOWN = 1;
     // component status is ready.
     READY = 2;
-    // Component status is in prorgess.
+    // Component status is in progress.
     IN_PROGRESS = 3;
   }
   // K8s resource name.
@@ -141,17 +141,40 @@ message UpdateAdminUsersRequest {
   ];
 }
 
-message SchedulingConfiguration {
+message ComponentScheduling {
+  // Kubernetes resource name.
+  // Name is read only.
+  string name = 1;
+  // Kubernetes resource namespace.
+  // Namespace is read only
+  string namespace = 2;
+  // Kubernetes resource kind.
+  // Kind is read only.
+  string kind = 3;
   // System's Affinity
-  presslabs.dashboard.affinity.v1.Affinity affinity = 1;
+  presslabs.dashboard.affinity.v1.Affinity affinity = 4;
   // System's Tolerations
-  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 2 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 5 [(gogoproto.nullable) = false];
 }
 
-message UpdateSchedulingConfigurationRequest {
-  SchedulingConfiguration scheduling_configuration = 1 [(gogoproto.nullable) = false];
+message GetComponentSchedulingRequest {
+  // Kubernetes resource name.
+  // Name is read only.
+  string name = 1;
+  // Kubernetes resource namespace.
+  // Namespace is read only
+  string namespace = 2;
+  // Kubernetes resource kind.
+  // Kind is read only.
+  string kind = 3;
+}
+
+message UpdateComponentSchedulingRequest {
+  // New definition of the component scheduling.
+  // It must include a `name`, a `namespace` and a `kind`.
+  ComponentScheduling component_scheduling = 4 [(gogoproto.nullable) = false];
   // Fields to be updated.
-  google.protobuf.FieldMask update_mask = 2 [
+  google.protobuf.FieldMask update_mask = 5 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
@@ -175,28 +198,8 @@ service SystemStatusesService {
   rpc GetAdminUsers(google.protobuf.Empty) returns (AdminUsersResponse);
   // UpdateAdminUsers updates the admin users
   rpc UpdateAdminUsers(UpdateAdminUsersRequest) returns (AdminUsersResponse);
-  // GetNginxControllerSchedulingConfiguration fetches the nginx controllers's scheduling configuration
-  rpc GetNginxControllerSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
-  // UpdateNginxControllerSchedulingConfiguration updates nginx controller's scheduling configuration
-  rpc UpdateNginxControllerSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
-  // GetPrometheusOperatorSchedulingConfiguration fetches the prometheus operator's scheduling configuration
-  rpc GetPrometheusOperatorSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
-  // UpdatePrometheusOperatorSchedulingConfiguration updates prometheus operator's scheduling configuration
-  rpc UpdatePrometheusOperatorSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
-  // GetWordpressOperatorSchedulingConfiguration fetches the wordpress operator's scheduling configuration
-  rpc GetWordpressOperatorSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
-  // UpdateWordpressOperatorSchedulingConfiguration updates wordpress operator's cscheduling onfiguration
-  rpc UpdateWordpressOperatorSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
-  // GetMySQLOperatorSchedulingConfiguration fetches the mysql operator's scheduling configuration
-  rpc GetMySQLOperatorSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
-  // UpdateMySQLOperatorSchedulingConfiguration updates mysql operator's scheduling configuration
-  rpc UpdateMySQLOperatorSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
-  // GetDashboardControllerSchedulingConfiguration fetches the dashboard controller's scheduling configuration
-  rpc GetDashboardControllerSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
-  // UpdateDashboardControllerSchedulingConfiguration updates dashboard controller's scheduling configuration
-  rpc UpdateDashboardControllerSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
-  // GetDashboardAPIServerSchedulingConfiguration fetches the dashboard apiserver's scheduling configuration
-  rpc GetDashboardAPIServerSchedulingConfiguration(google.protobuf.Empty) returns (SchedulingConfiguration);
-  // UpdateDashboardAPIServerSchedulingConfiguration updates dashboard apiserver's scheduling configuration
-  rpc UpdateDashboardAPIServerSchedulingConfiguration(UpdateSchedulingConfigurationRequest) returns (SchedulingConfiguration);
+  // GetComponentScheduling fetches the nginx controllers's scheduling configuration
+  rpc GetComponentScheduling(GetComponentSchedulingRequest) returns (ComponentScheduling);
+  // UpdateComponentScheduling updates nginx controller's scheduling configuration
+  rpc UpdateComponentScheduling(UpdateComponentSchedulingRequest) returns (ComponentScheduling);
 }
