@@ -47,9 +47,9 @@ message ComponentStatus {
     IN_PROGRESS = 3;
   }
   // K8s resource name.
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "ComponentName"];
   // K8s resource namespace.
-  string namespace = 2;
+  string namespace = 2 [(gogoproto.casttype) = "ComponentNamespace"];
   // The resource kind.
   string kind = 3;
   // The link for more information about the component status.
@@ -144,10 +144,10 @@ message UpdateAdminUsersRequest {
 message ComponentScheduling {
   // Kubernetes resource name.
   // Name is read only.
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "ComponentName"];
   // Kubernetes resource namespace.
   // Namespace is read only
-  string namespace = 2;
+  string namespace = 2 [(gogoproto.casttype) = "ComponentNamespace"];
   // Kubernetes resource kind.
   // Kind is read only.
   string kind = 3;
@@ -160,10 +160,10 @@ message ComponentScheduling {
 message GetComponentSchedulingRequest {
   // Kubernetes resource name.
   // Name is read only.
-  string name = 1;
+  string name = 1 [(gogoproto.casttype) = "ComponentName"];
   // Kubernetes resource namespace.
   // Namespace is read only
-  string namespace = 2;
+  string namespace = 2 [(gogoproto.casttype) = "ComponentNamespace"];
   // Kubernetes resource kind.
   // Kind is read only.
   string kind = 3;
