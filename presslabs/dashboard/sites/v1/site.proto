@@ -79,8 +79,6 @@ message Site {
   string memcached = 24 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/memcached/v1.Name"];
   // Page cache
   PageCache page_cache = 25 [(gogoproto.nullable) = false];
-  // Enable the Memcached
-  bool memcached_enabled = 26;
 }
 
 // Status is information about the current status of this site.

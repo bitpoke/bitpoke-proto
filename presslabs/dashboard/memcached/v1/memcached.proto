@@ -32,9 +32,10 @@ message Memcached {
 
 // ResourceAllocation for Memcached
 message ResourceAllocation {
-  Resource memory = 1 [(gogoproto.nullable) = false];
-  Resource cpu = 2 [(gogoproto.nullable) = false];
-  int32 desired_replicas = 3;
+  bool paused = 1;
+  Resource memory = 2 [(gogoproto.nullable) = false];
+  Resource cpu = 3 [(gogoproto.nullable) = false];
+  int32 desired_replicas = 4;
 }
 
 // Resource describe requested and limit resources
