@@ -234,14 +234,19 @@ message PageCache {
   string memcached_port = 6;
   // Prefix of the key.
   string key_prefix = 7;
+  // Query params that will be included in the page cache key
+  repeated string key_included_query_params = 8;
+  // Query params that will be discarded from the page cache key; the request uri that reaches the
+  // backend remains unaltered
+  repeated string key_discarded_query_params = 9;
   // store_statuses controls what responses to store to the cache according to their status code.
   // Responses with statuses not present in this list will not be cached.
   // Leave empty to store all statuses.
-  repeated int32 store_statuses = 8;
+  repeated int32 store_statuses = 10;
   // Response_cache_control can be on (true) or off (false).
-  bool response_cache_control = 9;
+  bool response_cache_control = 11;
   // Expiration time period for page cache.
-  uint64 expire_seconds = 10;
+  uint64 expire_seconds = 12;
 }
 
 message CreateSiteRequest {
