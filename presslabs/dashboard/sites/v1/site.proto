@@ -90,10 +90,12 @@ message Status {
     PROVISIONING = 1;
     // Site is fully usable.
     RUNNING = 2;
+    // Site is paused.
+    PAUSED = 3;
     // Site is usable, but a component has an error.
-    WARNING = 3;
+    WARNING = 4;
     // Site is not running.
-    ERROR = 4;
+    ERROR = 5;
   }
   // Site general (overall) status.
   GeneralStatus general_status = 1;
