@@ -32,6 +32,8 @@ message SystemStatus {
 message ApplicationStatus {
   repeated ComponentStatus components = 1 [(gogoproto.nullable) = false];
   repeated presslabs.dashboard.conditions.v1.Condition conditions = 2 [(gogoproto.nullable) = false];
+  // Link for more information about the component status.
+  string link = 3;
 }
 
 // ComponentStatus is the status for the dashboard component
