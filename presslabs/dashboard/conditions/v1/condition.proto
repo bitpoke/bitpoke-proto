@@ -25,10 +25,12 @@ message Condition {
     UNSPECIFIED = 0;
     // Component is ok.
     OK = 1;
+    // Neutral condition. It's like an info, not bad and not good.
+    NEUTRAL = 2;
     // Component has a warning.
-    WARNING = 2;
+    WARNING = 3;
     // Component has an error.
-    ERROR = 3;
+    ERROR = 4;
   }
   // Severity of condition.
   Severity severity = 1;
