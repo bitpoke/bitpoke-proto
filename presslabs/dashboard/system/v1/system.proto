@@ -36,6 +36,17 @@ message ApplicationStatus {
   string link = 3;
 }
 
+message Component {
+  // K8s resource name.
+  string name = 1 [(gogoproto.casttype) = "ComponentName"];
+  // K8s resource namespace.
+  string namespace = 2 [(gogoproto.casttype) = "ComponentNamespace"];
+  // The resource kind.
+  string kind = 3;
+  // The link for more information about the component status.
+  string link = 4;
+}
+
 // ComponentStatus is the status for the dashboard component
 message ComponentStatus {
   enum Status {
@@ -48,16 +59,10 @@ message ComponentStatus {
     // Component status is in progress.
     IN_PROGRESS = 3;
   }
-  // K8s resource name.
-  string name = 1 [(gogoproto.casttype) = "ComponentName"];
-  // K8s resource namespace.
-  string namespace = 2 [(gogoproto.casttype) = "ComponentNamespace"];
-  // The resource kind.
-  string kind = 3;
-  // The link for more information about the component status.
-  string link = 4;
+  // K8s component.
+  Component component = 1;
   // The component status.
-  Status status = 5;
+  Status status = 2;
 }
 
 // AuthStatus is the status for the authentication system
@@ -144,15 +149,8 @@ message UpdateAdminUsersRequest {
 }
 
 message ComponentScheduling {
-  // Kubernetes resource name.
-  // Name is read only.
-  string name = 1 [(gogoproto.casttype) = "ComponentName"];
-  // Kubernetes resource namespace.
-  // Namespace is read only
-  string namespace = 2 [(gogoproto.casttype) = "ComponentNamespace"];
-  // Kubernetes resource kind.
-  // Kind is read only.
-  string kind = 3;
+  // K8s component to which the scheduling rules apply.
+  Component component = 1;
   // System's Affinity
   presslabs.dashboard.affinity.v1.Affinity affinity = 4;
   // System's Tolerations
@@ -160,20 +158,12 @@ message ComponentScheduling {
 }
 
 message GetComponentSchedulingRequest {
-  // Kubernetes resource name.
-  // Name is read only.
-  string name = 1 [(gogoproto.casttype) = "ComponentName"];
-  // Kubernetes resource namespace.
-  // Namespace is read only
-  string namespace = 2 [(gogoproto.casttype) = "ComponentNamespace"];
-  // Kubernetes resource kind.
-  // Kind is read only.
-  string kind = 3;
+  // K8s component to fetch rules for.
+  Component component = 1;
 }
 
 message UpdateComponentSchedulingRequest {
-  // New definition of the component scheduling.
-  // It must include a `name`, a `namespace` and a `kind`.
+  // Component scheduling settings.
   ComponentScheduling component_scheduling = 4 [(gogoproto.nullable) = false];
   // Fields to be updated.
   google.protobuf.FieldMask update_mask = 5 [
