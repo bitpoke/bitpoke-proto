@@ -36,6 +36,7 @@ message ApplicationStatus {
   string link = 3;
 }
 
+// Component contains a name, a namespace, a kind and a link
 message Component {
   // K8s resource name.
   string name = 1 [(gogoproto.casttype) = "ComponentName"];
@@ -60,7 +61,7 @@ message ComponentStatus {
     IN_PROGRESS = 3;
   }
   // K8s component.
-  Component component = 1;
+  Component component = 1 [(gogoproto.nullable) = false];
   // The component status.
   Status status = 2;
 }
@@ -150,7 +151,7 @@ message UpdateAdminUsersRequest {
 
 message ComponentScheduling {
   // K8s component to which the scheduling rules apply.
-  Component component = 1;
+  Component component = 1 [(gogoproto.nullable) = false];
   // System's Affinity
   presslabs.dashboard.affinity.v1.Affinity affinity = 4;
   // System's Tolerations
@@ -159,7 +160,7 @@ message ComponentScheduling {
 
 message GetComponentSchedulingRequest {
   // K8s component to fetch rules for.
-  Component component = 1;
+  Component component = 1 [(gogoproto.nullable) = false];
 }
 
 message UpdateComponentSchedulingRequest {
