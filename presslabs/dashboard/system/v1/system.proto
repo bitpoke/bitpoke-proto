@@ -153,9 +153,9 @@ message ComponentScheduling {
   // K8s component to which the scheduling rules apply.
   Component component = 1 [(gogoproto.nullable) = false];
   // System's Affinity
-  presslabs.dashboard.affinity.v1.Affinity affinity = 4;
+  presslabs.dashboard.affinity.v1.Affinity affinity = 2;
   // System's Tolerations
-  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 5 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 3 [(gogoproto.nullable) = false];
 }
 
 message GetComponentSchedulingRequest {
@@ -165,12 +165,26 @@ message GetComponentSchedulingRequest {
 
 message UpdateComponentSchedulingRequest {
   // Component scheduling settings.
-  ComponentScheduling component_scheduling = 4 [(gogoproto.nullable) = false];
+  ComponentScheduling component_scheduling = 1 [(gogoproto.nullable) = false];
   // Fields to be updated.
-  google.protobuf.FieldMask update_mask = 5 [
+  google.protobuf.FieldMask update_mask = 2 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
+}
+
+message ListComponentsSchedulingRequest {
+  // Maximum number of items to return.
+  int32 page_size = 1;
+  // Next_page_token value returned from a previous List request, if any.
+  string page_token = 2;
+}
+
+message ListComponentsSchedulingResponse {
+  repeated ComponentScheduling components_scheduling = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
 }
 
 // SystemStatusesService allow managing system components
@@ -191,8 +205,10 @@ service SystemStatusesService {
   rpc GetAdminUsers(google.protobuf.Empty) returns (AdminUsersResponse);
   // UpdateAdminUsers updates the admin users
   rpc UpdateAdminUsers(UpdateAdminUsersRequest) returns (AdminUsersResponse);
-  // GetComponentScheduling fetches the nginx controllers's scheduling configuration
+  // GetComponentScheduling fetches the component's scheduling configuration
   rpc GetComponentScheduling(GetComponentSchedulingRequest) returns (ComponentScheduling);
-  // UpdateComponentScheduling updates nginx controller's scheduling configuration
+  // UpdateComponentScheduling updates component's scheduling configuration
   rpc UpdateComponentScheduling(UpdateComponentSchedulingRequest) returns (ComponentScheduling);
+  // ListComponentsScheduling lists component's scheduling configurations
+  rpc ListComponentsScheduling(ListComponentsSchedulingRequest) returns (ListComponentsSchedulingResponse);
 }
