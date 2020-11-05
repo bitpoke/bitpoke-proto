@@ -173,15 +173,15 @@ message UpdateComponentSchedulingRequest {
   ];
 }
 
-message ListComponentsSchedulingRequest {
+message ListComponentSchedulingsRequest {
   // Maximum number of items to return.
   int32 page_size = 1;
   // Next_page_token value returned from a previous List request, if any.
   string page_token = 2;
 }
 
-message ListComponentsSchedulingResponse {
-  repeated ComponentScheduling components_scheduling = 1 [(gogoproto.nullable) = false];
+message ListComponentSchedulingsResponse {
+  repeated ComponentScheduling component_schedulings = 1 [(gogoproto.nullable) = false];
   // Token to retrieve the next page of results, or empty if there are no
   // more results in the list.
   string next_page_token = 2;
@@ -209,6 +209,6 @@ service SystemStatusesService {
   rpc GetComponentScheduling(GetComponentSchedulingRequest) returns (ComponentScheduling);
   // UpdateComponentScheduling updates component's scheduling configuration
   rpc UpdateComponentScheduling(UpdateComponentSchedulingRequest) returns (ComponentScheduling);
-  // ListComponentsScheduling lists component's scheduling configurations
-  rpc ListComponentsScheduling(ListComponentsSchedulingRequest) returns (ListComponentsSchedulingResponse);
+  // ListComponentSchedulings lists component's scheduling configurations
+  rpc ListComponentSchedulings(ListComponentSchedulingsRequest) returns (ListComponentSchedulingsResponse);
 }
