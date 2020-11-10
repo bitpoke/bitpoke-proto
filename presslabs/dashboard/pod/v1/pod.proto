@@ -116,15 +116,14 @@ message ContainerStatus {
 }
 
 message ListPodsRequest {
+  // Parent organizations, for example "organizations/{organization_name}".
+  repeated string organizations = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
+  // Parent projects, for example "organizations/{organization_name}/projects/{organization_name}".
+  repeated string projects = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // The pod's parent resource. The only resources accepted for this field are:
   // wordpress, memcached and mysql cluster.
   // Optional.
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/resource/v1.Name"];
-  // Maximum number of items to return.
-  int32 page_size = 2;
-  // next_page_token value returned from a previous List request, if
-  // any.
-  string page_token = 3;
+  repeated string parents = 3 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/resource/v1.Name"];
 }
 
 message ListPodsResponse {
