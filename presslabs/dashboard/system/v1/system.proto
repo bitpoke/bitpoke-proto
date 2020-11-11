@@ -46,6 +46,8 @@ message Component {
   string kind = 3;
   // The link for more information about the component status.
   string link = 4;
+  // The application.
+  string application = 5;
 }
 
 // ComponentStatus is the status for the dashboard component
