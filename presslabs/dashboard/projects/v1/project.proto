@@ -50,6 +50,8 @@ message Project {
   // default MySQL cluster created in this project.
   // [Create only]
   BootstrapMySQLClusterResourceAllocation bootstrap_mysql_cluster_resources = 11 [(gogoproto.nullable) = false];
+  // Prometheus settings
+  Prometheus prometheus = 12 [(gogoproto.nullable) = false];
 }
 
 // ResourceQuotas describes what the allocated resources for a project
@@ -81,6 +83,14 @@ message BootstrapMySQLClusterResourceAllocation {
   string desired_storage_size_per_pod = 1;
   // The class of the storage used (e.g fast, ssd)
   string storage_class = 2;
+}
+
+// Prometheus describes prometheus settings
+message Prometheus {
+  bool enabled = 1;
+  int32 storage_size = 2;
+  string storage_class = 3;
+  bool google_monitoring_enabled = 4;
 }
 
 message GetProjectRequest {
@@ -144,6 +154,18 @@ message UpdateProjectResourceQuotasRequest {
   ];
 }
 
+message UpdateProjectPrometheusRequest {
+  // Parent project, for example projects/{project_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the prometheus details.
+  Prometheus prometheus = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 message DeleteProjectRequest {
   // Resource name of the project to delete in the form projects/{project_name}
   // `project_name` MUST be a valid DNS label (RFC 1123)
@@ -161,6 +183,8 @@ service ProjectsService {
   rpc UpdateProject(UpdateProjectRequest) returns (Project);
   // UpdateProjectResourceQuotas updates resource quotas details
   rpc UpdateProjectResourceQuotas(UpdateProjectResourceQuotasRequest) returns (Project);
+  // UpdateProjectPrometheus updates prometheus settings
+  rpc UpdateProjectPrometheus(UpdateProjectPrometheusRequest) returns (Project);
   // DeleteProject deletes a project by it's name
   rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty);
   // ListProjects list projects
