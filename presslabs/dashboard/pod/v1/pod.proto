@@ -124,6 +124,7 @@ message ListPodsRequest {
   // wordpress, memcached and mysql cluster.
   // Optional.
   repeated string parents = 3 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/resource/v1.Name"];
+  repeated string nodes = 4;
 }
 
 message ListPodsResponse {
