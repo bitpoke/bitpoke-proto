@@ -17,7 +17,9 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/pod/v1beta1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
+import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/conditions/v1/condition.proto";
+import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 // Pod is a collection of containers that can run on a host. This resource is created
 // by clients and scheduled onto hosts.
@@ -43,6 +45,12 @@ message Pod {
   // requirements.
   // This field is read-only.
   string node = 5 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/node/v1.Name"];
+  // An enumeration of the pod's labels.
+  map<string, string> labels = 6;
+  // The pod's Affinity
+  presslabs.dashboard.affinity.v1.Affinity affinity = 7;
+  // The pod's Tolerations
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 8 [(gogoproto.nullable) = false];
 }
 
 // PodStatus represents information about the status of a pod. Status may trail the actual
@@ -71,6 +79,9 @@ message PodStatus {
   PodPhase phase = 1;
   repeated ContainerStatus container_statuses = 2 [(gogoproto.nullable) = false];
   repeated presslabs.dashboard.conditions.v1.Condition conditions = 3 [(gogoproto.nullable) = false];
+  // Time at which the object was acknowledged by the Kubelet. This is before the Kubelet pulled the
+  // container image(s) for the pod.
+  google.protobuf.Timestamp started_at = 4;
 }
 
 // ContainerStatus contains details for the current status of the container.
