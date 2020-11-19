@@ -16,6 +16,7 @@ option (gogoproto.verbose_equal_all) = true;
 option go_package = "github.com/presslabs/dashboard-go/pkg/pod/v1beta1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/conditions/v1/condition.proto";
@@ -25,7 +26,7 @@ import "presslabs/dashboard/toleration/v1/toleration.proto";
 // by clients and scheduled onto hosts.
 message Pod {
   // Fully qualified pod name in the form
-  // pods/super-awesome/pods/{pod_name}
+  // organizations/{org_name}/projects/{proj_name}/pods/{pod_name}
   // `pod_name` is a valid DNS label (RFC 1123) with maximum
   // length of 63 characters.
   // This field is read-only.
@@ -135,7 +136,7 @@ message ListPodsRequest {
   // wordpress, memcached and mysql cluster.
   // Optional.
   repeated string parents = 3 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/resource/v1.Name"];
-  repeated string nodes = 4;
+  repeated string nodes = 4 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/node/v1.Name"];
 }
 
 message ListPodsResponse {
@@ -145,8 +146,18 @@ message ListPodsResponse {
   string next_page_token = 2;
 }
 
+message DeletePodRequest {
+  // Resource name of the pod to delete in the form
+  // organizations/{org_name}/projects/{proj_name}/pods/{pod_name}.
+  // `pod_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
 // PodsService allow managing pods
 service PodsService {
   // ListPods lists pods
   rpc ListPods(ListPodsRequest) returns (ListPodsResponse);
+  // DeletePod deletes a pod by it's name
+  rpc DeletePod(DeletePodRequest) returns (google.protobuf.Empty);
 }
