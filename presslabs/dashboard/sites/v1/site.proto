@@ -77,8 +77,11 @@ message Site {
   // The site's Memcached resource name
   // This field is read-only, for now.
   string memcached = 24 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/memcached/v1.Name"];
+  // The site's MysqlCluster resource name
+  // This field is read-only, for now.
+  string mysql_cluster = 25 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1.Name"];
   // Page cache
-  PageCache page_cache = 25 [(gogoproto.nullable) = false];
+  PageCache page_cache = 26 [(gogoproto.nullable) = false];
 }
 
 // Status is information about the current status of this site.
