@@ -50,8 +50,6 @@ message Project {
   // default MySQL cluster created in this project.
   // [Create only]
   BootstrapMySQLClusterResourceAllocation bootstrap_mysql_cluster_resources = 11 [(gogoproto.nullable) = false];
-  // Prometheus settings
-  PrometheusSettings prometheus_settings = 12 [(gogoproto.nullable) = false];
 }
 
 // ResourceQuotas describes what the allocated resources for a project
@@ -83,14 +81,6 @@ message BootstrapMySQLClusterResourceAllocation {
   string desired_storage_size_per_pod = 1;
   // The class of the storage used (e.g fast, ssd)
   string storage_class = 2;
-}
-
-// PrometheusSettings describes prometheus settings
-message PrometheusSettings {
-  bool enabled = 1;
-  string storage_size = 2;
-  string storage_class = 3;
-  bool google_monitoring_enabled = 4;
 }
 
 message GetProjectRequest {

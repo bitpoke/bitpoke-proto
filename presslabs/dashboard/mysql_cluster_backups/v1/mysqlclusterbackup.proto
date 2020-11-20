@@ -17,11 +17,12 @@ import "google/protobuf/timestamp.proto";
 
 // MySQLClusterBackup represents the instance of a mysql cluster backup
 message MySQLClusterBackup {
-  // Fully qualified backup name of the form `projects/{project_name}/mysql-cluster-backups/{backup_name}``.
+  // Fully qualified backup name of the form
+  // `organizations/{organization_name}/projects/{project_name}/mysql-cluster-backups/{backup_name}``.
   // `backup_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
   // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
-  // [Output only] `cluster_name` is of form `projects/{project_name}/mysql-cluster/{mysql_cluster_name}`.
+  // [Output only] `cluster_name` is of form `organizations/{organization_name}/projects/{project_name}/mysql-cluster/{mysql_cluster_name}`.
   string cluster_name = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1.Name"];
   // [Output only] The URL from which the backup can be downloaded
   string url = 3;

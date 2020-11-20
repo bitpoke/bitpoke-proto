@@ -18,7 +18,8 @@ import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 message MySQLCluster {
-  // Fully qualified backup name in the form projects/{project_name}/mysql_clusters/{cluster_name}.
+  // Fully qualified backup name in the form
+  // organizations/{organization_name}/projects/{project_name}/mysql_clusters/{cluster_name}.
   // `cluster_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
   // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -72,7 +73,7 @@ message Status {
 
 message GetMySQLClusterRequest {
   // Resource name of the MySQL cluster to fetch in the form
-  // projects/{project_name}/mysql_clusters/{mysql_cluster_name}.
+  // organizations/{organization_name}/projects/{project_name}/mysql_clusters/{mysql_cluster_name}.
   // `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];

@@ -24,7 +24,7 @@ import "presslabs/dashboard/toleration/v1/toleration.proto";
 // Site represents a site within the presslabs dashboard context
 message Site {
   // Fully qualified site name in the form
-  // projects/super-awesome/sites/{site_name}.
+  // organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
   // `site_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // Name is read-only
@@ -267,7 +267,7 @@ message CreateSiteRequest {
 
 message GetSiteRequest {
   // Resource name of the site to fetch in the form
-  // projects/super-awesome/sites/{site_name}.
+  // organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
   // `site_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -339,7 +339,7 @@ message UpdateSiteResourcesRequest {
 
 message DeleteSiteRequest {
   // Resource name of the site to delete in the form
-  // projects/super-awesome/sites/{site_name}.
+  // organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
   // `site_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];

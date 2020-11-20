@@ -18,7 +18,8 @@ import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 message Memcached {
-  // Fully qualified backup name in the form projects/{project_name}/memcached/{memcached_name}.
+  // Fully qualified backup name in the form
+  // organizations/{organization_name}/projects/{project_name}/memcached/{memcached_name}.
   // `memcached_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
   // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -48,7 +49,7 @@ message Resource {
 
 message GetMemcachedRequest {
   // Resource name of the Memcached to fetch in the form
-  // projects/{project_name}/memcached/{memcached_name}.
+  // organizations/{organization_name}/projects/{project_name}/memcached/{memcached_name}.
   // `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
