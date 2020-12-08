@@ -18,7 +18,7 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/api/event/v1/event.proto";
-import "presslabs/dashboard/conditions/v1/condition.proto";
+import "presslabs/dashboard/statuses/v1/status.proto";
 import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 // Site represents a site within the presslabs dashboard context
@@ -86,41 +86,24 @@ message Site {
 
 // Status is information about the current status of this site.
 message Status {
-  enum GeneralStatus {
-    // Not set.
-    UNSPECIFIED = 0;
-    // Site is being created.
-    PROVISIONING = 1;
-    // Site is fully usable.
-    RUNNING = 2;
-    // Site is paused.
-    PAUSED = 3;
-    // Site is usable, but a component has an error.
-    WARNING = 4;
-    // Site is not running.
-    ERROR = 5;
-  }
-  // Site general (overall) status.
-  GeneralStatus general_status = 1;
-  // Conditions for site status.
-  repeated presslabs.dashboard.conditions.v1.Condition conditions = 2 [(gogoproto.nullable) = false];
+  presslabs.dashboard.statuses.v1.ComponentStatus component_status = 1 [(gogoproto.nullable) = false];
   // Total number of desired pods.
-  int32 desired_replicas = 3;
+  int32 desired_replicas = 2;
   // Total number of pods ready for at least 0s.
-  int32 available_replicas = 4;
+  int32 available_replicas = 3;
   // Total number of pods that are still required for the deployment
   // to have 100% available capacity.
   // They may either be pods that are running but not yet available
   // or pods that still have not been created.
-  int32 unavailable_replicas = 5;
+  int32 unavailable_replicas = 4;
   // Total number of non-terminated pods that have the latest configuration applied.
-  int32 updated_replicas = 6;
+  int32 updated_replicas = 5;
   // Total number of non-terminated pods.
-  int32 current_replicas = 7;
+  int32 current_replicas = 6;
   // Total number of ready pods targeted by this deployment.
-  int32 ready_replicas = 8;
+  int32 ready_replicas = 7;
   // Site endpoints.
-  repeated Endpoint endpoints = 9;
+  repeated Endpoint endpoints = 8;
 }
 
 // Route consists of a site domain and an optional path prefix

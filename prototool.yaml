@@ -35,6 +35,7 @@ generate:
       presslabs/dashboard/affinity/v1/affinity.proto: github.com/presslabs/dashboard-go/pkg/affinity/v1beta1
       presslabs/dashboard/toleration/v1/toleration.proto: github.com/presslabs/dashboard-go/pkg/toleration/v1beta1
       presslabs/dashboard/conditions/v1/condition.proto: github.com/presslabs/dashboard-go/pkg/condition/v1beta1
+      presslabs/dashboard/statuses/v1/status.proto: github.com/presslabs/dashboard-go/pkg/status/v1beta1
   plugins:
     - name: gogo
       type: gogo
