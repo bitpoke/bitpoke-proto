@@ -15,7 +15,6 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/field_mask.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
-import "presslabs/dashboard/statuses/v1/status.proto";
 import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 message MySQLCluster {
@@ -68,10 +67,8 @@ message Resource {
 
 // Status for MySQL Cluster
 message Status {
-  // Status for mysql cluster component
-  presslabs.dashboard.statuses.v1.ComponentStatus component_status = 1 [(gogoproto.nullable) = false];
   // [Read only] The number of pods that are up and running.
-  int32 ready_pods = 2;
+  int32 ready_pods = 1;
 }
 
 message GetMySQLClusterRequest {
