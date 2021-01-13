@@ -59,6 +59,25 @@ message GetPrometheusRequest {
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
+message ListPrometheusesRequest {
+  // Parent project, for example "projects/{project_name}".
+  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
+  // Organization field can be used to list all the prometheuses from an organization.
+  // Required if Parent is empty.
+  string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
+  // Maximum number of items to return.
+  int32 page_size = 3;
+  // Next_page_token value returned from a previous List request, if any.
+  string page_token = 4;
+}
+
+message ListPrometheusesResponse {
+  repeated Prometheus prometheuses = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
 message UpdatePrometheusRequest {
   // New definition of the Prometheus. It must include a `name`
   Prometheus prometheus = 1 [
@@ -76,6 +95,8 @@ message UpdatePrometheusRequest {
 service PrometheusService {
   // GetPrometheus fetches a Prometheus by it's name
   rpc GetPrometheus(GetPrometheusRequest) returns (Prometheus);
+  // ListPrometheuses lists Prometheuses
+  rpc ListPrometheuses(ListPrometheusesRequest) returns (ListPrometheusesResponse);
   // UpdatePrometheus updates the Prometheus's Affinity
   rpc UpdatePrometheus(UpdatePrometheusRequest) returns (Prometheus);
 }

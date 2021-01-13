@@ -55,6 +55,25 @@ message GetMemcachedRequest {
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
+message ListMemcachedsRequest {
+  // Parent project, for example "projects/{project_name}".
+  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
+  // Organization field can be used to list all the memcacheds from an organization.
+  // Required if Parent is empty.
+  string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
+  // Maximum number of items to return.
+  int32 page_size = 3;
+  // Next_page_token value returned from a previous List request, if any.
+  string page_token = 4;
+}
+
+message ListMemcachedsResponse {
+  repeated Memcached memcacheds = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
 message UpdateMemcachedRequest {
   // New definition of the Memcached. It must include a `name`
   Memcached memcached = 1 [
@@ -71,7 +90,7 @@ message UpdateMemcachedRequest {
 message UpdateMemcachedResourcesRequest {
   // Parent memcached, for example organizations/{organization_name}/projects/{project_name}/memcacheds/{memcached_name}.
   string parent = 1 [(gogoproto.casttype) = "Name"];
-  // New definition of the site resource allocation list.
+  // New definition of the memcached resource allocation list.
   ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
   google.protobuf.FieldMask update_mask = 3 [
@@ -84,6 +103,8 @@ message UpdateMemcachedResourcesRequest {
 service MemcachedService {
   // GetMemcached fetches a Memcached by it's name
   rpc GetMemcached(GetMemcachedRequest) returns (Memcached);
+  // ListMemcacheds lists Memcacheds
+  rpc ListMemcacheds(ListMemcachedsRequest) returns (ListMemcachedsResponse);
   // UpdateMemcachedResources updates Memcached resource allocation
   rpc UpdateMemcachedResources(UpdateMemcachedResourcesRequest) returns (Memcached);
   // UpdateMemcached updates the Memcached's Affinity
