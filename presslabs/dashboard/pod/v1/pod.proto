@@ -16,10 +16,10 @@ option (gogoproto.verbose_equal_all) = true;
 option go_package = "github.com/presslabs/dashboard-go/pkg/pod/v1beta1";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
-import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/conditions/v1/condition.proto";
+import "presslabs/dashboard/operation/v1/operation.proto";
 import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 // Pod is a collection of containers that can run on a host. This resource is created
@@ -58,7 +58,7 @@ message Pod {
 // state of a system, especially if the node that hosts the pod cannot contact the control
 // plane.
 message PodStatus {
-  enum PodPhase {
+  enum GeneralStatus {
     // PodUnknown means that for some reason the state of the pod could not be obtained, typically due
     // to an error in communicating with the host of the pod.
     // Not set.
@@ -76,9 +76,16 @@ message PodStatus {
     // PodFailed means that all containers in the pod have terminated, and at least one container has
     // terminated in a failure (exited with a non-zero exit code or was stopped by the system).
     FAILED = 4;
+    // Evicted means that the pod was evicted by Kubelet.
+    EVICTED = 5;
+    // Terminating means that the pod has a deletion timestamp and will be deleted soon.
+    TERMINATING = 6;
   }
-  PodPhase phase = 1;
+  // Pod general (overall) status.
+  GeneralStatus general_status = 1;
+  // Pod's containers statuses
   repeated ContainerStatus container_statuses = 2 [(gogoproto.nullable) = false];
+  // Pod's conditions
   repeated presslabs.dashboard.conditions.v1.Condition conditions = 3 [(gogoproto.nullable) = false];
   // Time at which the object was acknowledged by the Kubelet. This is before the Kubelet pulled the
   // container image(s) for the pod.
@@ -159,5 +166,5 @@ service PodsService {
   // ListPods lists pods
   rpc ListPods(ListPodsRequest) returns (ListPodsResponse);
   // DeletePod deletes a pod by it's name
-  rpc DeletePod(DeletePodRequest) returns (google.protobuf.Empty);
+  rpc DeletePod(DeletePodRequest) returns (presslabs.dashboard.operation.v1.OperationResponse);
 }
