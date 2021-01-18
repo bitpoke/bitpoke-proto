@@ -25,7 +25,7 @@ message Project {
   // length of 48 characters.
   // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
-  // Display name for the project.
+  // [Output only] Display name for the project.
   string display_name = 2;
   // Organization name. The organization is immutable.
   // This field is read-only.

@@ -22,18 +22,20 @@ message MySQLClusterBackup {
   // `backup_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
   // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the mysql cluster backup
+  string display_name = 2;
   // [Output only] `cluster_name` is of form `organizations/{organization_name}/projects/{project_name}/mysql-cluster/{mysql_cluster_name}`.
-  string cluster_name = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1.Name"];
+  string cluster_name = 3 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1.Name"];
   // [Output only] The URL from which the backup can be downloaded
-  string url = 3;
+  string url = 4;
   // [Output only] A flag that denotes whether the backup is a recurrent one or not
-  bool is_recurrent = 4;
+  bool is_recurrent = 5;
   // [Output only] The status of the backup
-  Status status = 5;
+  Status status = 6;
   // [Output only] Time when the backup was requested.
-  google.protobuf.Timestamp requested_at = 6;
+  google.protobuf.Timestamp requested_at = 7;
   // [Output only] Time when the backup was completed.
-  google.protobuf.Timestamp completed_at = 7;
+  google.protobuf.Timestamp completed_at = 8;
 }
 
 enum Status {

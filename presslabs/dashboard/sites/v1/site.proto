@@ -29,12 +29,14 @@ message Site {
   // length of 48 characters.
   // Name is read-only
   string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the site
+  string display_name = 2;
   // Wordpress image
-  string wordpress_image = 2;
+  string wordpress_image = 3;
   // [Output only] Current status of the site.
-  Status status = 3;
+  Status status = 4;
   // Site's allocated resource
-  ResourceAllocation resources = 4 [(gogoproto.nullable) = false];
+  ResourceAllocation resources = 5 [(gogoproto.nullable) = false];
   // Git_repository_origin is the source of truth, in regards to the site's code.
   // For now, it needs to be a public git repository, that can be cloned via git, ssh and http.
   string git_repository_origin = 6;

@@ -31,27 +31,29 @@ message Pod {
   // length of 63 characters.
   // This field is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the pod
+  string display_name = 2;
   // The fully qualified name of the pod's parent. Only populated for known resources such as:
   // wordpress, memcached and mysql cluster.
   // This field is read-only.
-  string parent = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/resource/v1.Name"];
+  string parent = 3 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/resource/v1.Name"];
   // The organization the node is part of, taking the form of "organizations/{organization_name}".
   // This field is read-only.
-  string organization = 3 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
+  string organization = 4 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // The pod status
   // This field is read-only.
-  PodStatus status = 4 [(gogoproto.nullable) = false];
+  PodStatus status = 5 [(gogoproto.nullable) = false];
   // Node is a request to schedule this pod onto a specific node. If it is non-empty,
   // the scheduler simply schedules this pod onto that node, assuming that it fits resource
   // requirements.
   // This field is read-only.
-  string node = 5 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/node/v1.Name"];
+  string node = 6 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/node/v1.Name"];
   // An enumeration of the pod's labels.
-  map<string, string> labels = 6;
+  map<string, string> labels = 7;
   // The pod's Affinity
-  presslabs.dashboard.affinity.v1.Affinity affinity = 7;
+  presslabs.dashboard.affinity.v1.Affinity affinity = 8;
   // The pod's Tolerations
-  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 8 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 9 [(gogoproto.nullable) = false];
 }
 
 // PodStatus represents information about the status of a pod. Status may trail the actual

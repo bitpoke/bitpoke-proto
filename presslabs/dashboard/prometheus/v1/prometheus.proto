@@ -23,14 +23,16 @@ message Prometheus {
   // `prometheus_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
   // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the prometheus
+  string display_name = 2;
   // Prometheus to google monitoring enabled
-  bool google_monitoring_enabled = 2;
+  bool google_monitoring_enabled = 3;
   // Prometheus resource allocation
-  ResourceAllocation resources = 3 [(gogoproto.nullable) = false];
+  ResourceAllocation resources = 4 [(gogoproto.nullable) = false];
   // Prometheus's Affinity
-  presslabs.dashboard.affinity.v1.Affinity affinity = 4;
+  presslabs.dashboard.affinity.v1.Affinity affinity = 5;
   // Prometheus's Tolerations
-  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 5 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 6 [(gogoproto.nullable) = false];
 }
 
 // ResourceAllocation for Prometheus

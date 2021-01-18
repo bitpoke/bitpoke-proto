@@ -23,20 +23,22 @@ message Invite {
   // The `invite_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the invite
+  string display_name = 2;
   // The account email for which the invite is intended
   // It is currently not a hard constraint, so that the invite can be consumed
   // on accounts with a different email address.
-  string email = 2;
+  string email = 3;
   // [Output only] The time after which the invite can no longer be consumed
-  google.protobuf.Timestamp valid_before = 3;
+  google.protobuf.Timestamp valid_before = 4;
   // [Output only] A secret token that is used to identify the invite
   // It is usually used as part of an invite URL.
-  string redeem_token = 4;
+  string redeem_token = 5;
   // [Output only] Organization's name, to which the user is invited.
-  string organization = 5 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
+  string organization = 6 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Timestamp when the invite was created.
   // This field is read-only.
-  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp created_at = 7;
 }
 
 message GetInviteRequest {

@@ -23,12 +23,14 @@ message Memcached {
   // `memcached_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
   // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the memcached
+  string display_name = 2;
   // Memcached resource allocation
-  ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  ResourceAllocation resources = 3 [(gogoproto.nullable) = false];
   // Memcached's Affinity
-  presslabs.dashboard.affinity.v1.Affinity affinity = 3;
+  presslabs.dashboard.affinity.v1.Affinity affinity = 4;
   // Memcached's Tolerations
-  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 4 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 5 [(gogoproto.nullable) = false];
 }
 
 // ResourceAllocation for Memcached

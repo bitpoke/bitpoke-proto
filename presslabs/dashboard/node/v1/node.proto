@@ -27,14 +27,16 @@ message Node {
   // length of 63 characters.
   // Name is read-only
   string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the node
+  string display_name = 2;
   // Status contains various information about the node.
-  Status status = 2 [(gogoproto.nullable) = false];
+  Status status = 3 [(gogoproto.nullable) = false];
   // An enumeration of the node's labels.
-  map<string, string> labels = 3;
+  map<string, string> labels = 4;
   // An enumeration of the node's taints.
-  repeated Taint taints = 4 [(gogoproto.nullable) = false];
+  repeated Taint taints = 5 [(gogoproto.nullable) = false];
   // Unschedulable controls node schedulability of new pods. By default, node is schedulable.
-  bool unschedulable = 5;
+  bool unschedulable = 6;
 }
 
 // Taint causes the node to have the "effect" on any pod that does not
