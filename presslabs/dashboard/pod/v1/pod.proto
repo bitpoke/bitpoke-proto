@@ -82,6 +82,9 @@ message PodStatus {
     EVICTED = 5;
     // Terminating means that the pod has a deletion timestamp and will be deleted soon.
     TERMINATING = 6;
+    // Warning means that the pod is running but some pod conditions have a negative status
+    // (e.g. ContainersReady is false)
+    WARNING = 7;
   }
   // Pod general (overall) status.
   GeneralStatus general_status = 1;
