@@ -31,6 +31,8 @@ message Memcached {
   presslabs.dashboard.affinity.v1.Affinity affinity = 4;
   // Memcached's Tolerations
   repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 5 [(gogoproto.nullable) = false];
+  // An URL to Memcached's logs
+  string logs_url = 6;
 }
 
 // ResourceAllocation for Memcached

@@ -86,6 +86,8 @@ message Site {
   PageCache page_cache = 26 [(gogoproto.nullable) = false];
   // [Output only] An URL to the site's metrics dashboard
   string metrics_url = 27;
+  // [Output only] An URL to the site's logs
+  string logs_url = 28;
 }
 
 // Status is information about the current status of this site.

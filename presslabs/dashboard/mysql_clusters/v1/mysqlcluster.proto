@@ -39,6 +39,8 @@ message MySQLCluster {
   presslabs.dashboard.affinity.v1.Affinity affinity = 7;
   // MySQL Cluster's Tolerations
   repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 8 [(gogoproto.nullable) = false];
+  // An URL to MySQLCluster's logs
+  string logs_url = 9;
 }
 
 // ResourceAllocation for MySQL Cluster

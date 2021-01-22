@@ -54,6 +54,8 @@ message Pod {
   presslabs.dashboard.affinity.v1.Affinity affinity = 8;
   // The pod's Tolerations
   repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 9 [(gogoproto.nullable) = false];
+  // URL to Pod's logs
+  string logs_url = 10;
 }
 
 // PodStatus represents information about the status of a pod. Status may trail the actual
