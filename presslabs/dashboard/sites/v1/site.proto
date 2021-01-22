@@ -84,6 +84,8 @@ message Site {
   string mysql_cluster = 25 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1.Name"];
   // Page cache
   PageCache page_cache = 26 [(gogoproto.nullable) = false];
+  // [Output only] An URL to the site's metrics dashboard
+  string metrics_url = 27;
 }
 
 // Status is information about the current status of this site.
