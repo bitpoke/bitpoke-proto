@@ -33,6 +33,8 @@ message Memcached {
   repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 5 [(gogoproto.nullable) = false];
   // An URL to Memcached's logs
   string logs_url = 6;
+  // [Output only] An URL to the site's metrics dashboard
+  string metrics_url = 7;
 }
 
 // ResourceAllocation for Memcached

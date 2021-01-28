@@ -41,6 +41,8 @@ message MySQLCluster {
   repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 8 [(gogoproto.nullable) = false];
   // An URL to MySQLCluster's logs
   string logs_url = 9;
+  // [Output only] An URL to the mysql cluster's metrics dashboard
+  string metrics_url = 10;
 }
 
 // ResourceAllocation for MySQL Cluster
