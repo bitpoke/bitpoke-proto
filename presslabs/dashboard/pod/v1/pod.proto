@@ -104,9 +104,18 @@ message ContainerStatus {
   enum ContainerState {
     // Not set
     UNSPECIFIED = 0;
+    // Running means the container is running and has passed it's readiness probe
     RUNNING = 1;
-    WAITING = 2;
-    TERMINATED = 3;
+    // Probing means the container is still being tested by the initial readiness probe
+    PROBING = 2;
+    // Starting means the container has not been started yet;
+    // e.g. image pulling, container starting/restarting etc.)
+    STARTING = 3;
+    // Terminated means the container has been terminated by kubelet
+    TERMINATED = 4;
+    // FAILED means the container has encountered a problem;
+    // e.g The container is running but it has not passed it's readiness probe
+    FAILED = 5;
   }
   // Name of the container specified as a DNS_LABEL.
   // Each container in a pod must have a unique name (DNS_LABEL).
