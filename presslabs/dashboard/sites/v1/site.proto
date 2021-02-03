@@ -212,7 +212,7 @@ message ResourceAllocation {
   Autoscaler autoscaler = 6 [(gogoproto.nullable) = false];
 }
 
-// Resource describe used and limit resources
+// Resource describe requested and limit resources
 message Resource {
   // Enforced hard limits for each named resource
   string limit = 1;

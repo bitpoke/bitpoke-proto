@@ -77,8 +77,30 @@ message Status {
   map<string, string> capacity = 1 [(gogoproto.nullable) = false];
   // Allocatable represents the resources of a node that are available for scheduling.
   map<string, string> allocatable = 2 [(gogoproto.nullable) = false];
+  // Requested represents the resources of a node that have been requested by the workloads scheduled there.
+  map<string, string> requested = 3 [(gogoproto.nullable) = false];
   // Conditions is an array of current observed node conditions.
-  repeated presslabs.dashboard.conditions.v1.Condition conditions = 3 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.conditions.v1.Condition conditions = 4 [(gogoproto.nullable) = false];
+}
+
+// Resource describe requested, limit and used resources
+message Resource {
+  // The hard limit value of the resource
+  string limit = 1;
+  // The requested value of the resource
+  string requested = 2;
+  // The (average) used value of the resource
+  string used = 3;
+  // The interval in seconds on which the used value has been averaged (usually 30s)
+  int64 used_window = 4;
+  // The timestamp when the metrics was calculated (usually refreshes every 30s or so)
+  google.protobuf.Timestamp used_timestamp = 5;
+}
+
+// NodeMetrics contains metrics regarding the Node
+message NodeMetrics {
+  Resource cpu = 1 [(gogoproto.nullable) = false];
+  Resource memory = 2 [(gogoproto.nullable) = false];
 }
 
 message GetNodeRequest {
@@ -103,10 +125,28 @@ message ListNodesResponse {
   string next_page_token = 2;
 }
 
+message ListNodesMetricsRequest {
+  // Maximum number of items to return.
+  int32 page_size = 1;
+  // Next_page_token value returned from a previous List request, if any.
+  string page_token = 2;
+  // A list of nodes for which to return said metrics
+  repeated string nodes = 3 [(gogoproto.casttype) = "Name"];
+}
+
+message ListNodesMetricsResponse {
+  repeated NodeMetrics metrics = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
 // NodesService allow managing nodes
 service NodesService {
   // GetNode fetches a node by it's name
   rpc GetNode(GetNodeRequest) returns (Node);
   // ListNodes list nodes
   rpc ListNodes(ListNodesRequest) returns (ListNodesResponse);
+  // ListNodesMetrics list node metrics
+  rpc ListNodesMetrics(ListNodesMetricsRequest) returns (ListNodesMetricsResponse);
 }
