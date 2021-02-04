@@ -77,8 +77,6 @@ message Status {
   map<string, string> capacity = 1 [(gogoproto.nullable) = false];
   // Allocatable represents the resources of a node that are available for scheduling.
   map<string, string> allocatable = 2 [(gogoproto.nullable) = false];
-  // Requested represents the resources of a node that have been requested by the workloads scheduled there.
-  map<string, string> requested = 3 [(gogoproto.nullable) = false];
   // Conditions is an array of current observed node conditions.
   repeated presslabs.dashboard.conditions.v1.Condition conditions = 4 [(gogoproto.nullable) = false];
 }
@@ -99,8 +97,9 @@ message Resource {
 
 // NodeMetrics contains metrics regarding the Node
 message NodeMetrics {
-  Resource cpu = 1 [(gogoproto.nullable) = false];
-  Resource memory = 2 [(gogoproto.nullable) = false];
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  Resource cpu = 2 [(gogoproto.nullable) = false];
+  Resource memory = 3 [(gogoproto.nullable) = false];
 }
 
 message GetNodeRequest {
