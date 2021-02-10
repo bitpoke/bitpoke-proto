@@ -111,11 +111,14 @@ message ContainerStatus {
     // Starting means the container has not been started yet;
     // e.g. image pulling, container starting/restarting etc.)
     STARTING = 3;
+    // Terminating means the container is being terminated by kubelet
+    TERMINATING = 4;
     // Terminated means the container has been terminated by kubelet
-    TERMINATED = 4;
-    // FAILED means the container has encountered a problem;
-    // e.g The container is running but it has not passed it's readiness probe
-    FAILED = 5;
+    TERMINATED = 5;
+    // FAILED means the container has encountered a problem causing the pod to no longer be exposed by it's service;
+    // e.g The container is running but it has not passed it's readiness probe.
+    // e.g The container terminated with an exit code > 0.
+    FAILED = 6;
   }
   // Name of the container specified as a DNS_LABEL.
   // Each container in a pod must have a unique name (DNS_LABEL).
