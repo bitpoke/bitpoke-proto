@@ -93,12 +93,26 @@ message UpdatePrometheusRequest {
   ];
 }
 
+message UpdatePrometheusResourcesRequest {
+  // Parent prometheus, for example organizations/{organization_name}/projects/{project_name}/prometheuses/{prometheus_name}.
+  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the promeheus resource allocation list.
+  ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
 // PrometheusService allow managing prometheus
 service PrometheusService {
   // GetPrometheus fetches a Prometheus by it's name
   rpc GetPrometheus(GetPrometheusRequest) returns (Prometheus);
   // ListPrometheuses lists Prometheuses
   rpc ListPrometheuses(ListPrometheusesRequest) returns (ListPrometheusesResponse);
-  // UpdatePrometheus updates the Prometheus's Affinity
+  // UpdatePrometheus updates the Prometheus
   rpc UpdatePrometheus(UpdatePrometheusRequest) returns (Prometheus);
+  // UpdatePrometheusResources updates Prometheus resource allocation
+  rpc UpdatePrometheusResources(UpdatePrometheusResourcesRequest) returns (Prometheus);
 }
