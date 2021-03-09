@@ -41,15 +41,18 @@ message Project {
   int32 sites_count = 7;
   // The name of the default MySQL Cluster to be used across the project.
   // [Output only] (at least for now).
-  string mysql_cluster_name = 8;
+  string mysql_cluster = 8;
+  // The name of the default Prometheus to be used across the project.
+  // [Output only] (at least for now).
+  string prometheus = 9;
   // Resource quotas
-  ResourceQuotas resource_quotas = 9 [(gogoproto.nullable) = false];
+  ResourceQuotas resource_quotas = 10 [(gogoproto.nullable) = false];
   // [Output Only] Google Service Account email.
-  string google_service_account_email = 10;
+  string google_service_account_email = 11;
   // Bootstrap MySQL Cluster resource allocation sets the default resources for
   // default MySQL cluster created in this project.
   // [Create only]
-  BootstrapMySQLClusterResourceAllocation bootstrap_mysql_cluster_resources = 11 [(gogoproto.nullable) = false];
+  BootstrapMySQLClusterResourceAllocation bootstrap_mysql_cluster_resources = 12 [(gogoproto.nullable) = false];
 }
 
 // ResourceQuotas describes what the allocated resources for a project

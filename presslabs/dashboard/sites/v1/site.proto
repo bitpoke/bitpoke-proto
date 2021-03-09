@@ -82,12 +82,15 @@ message Site {
   // The site's MysqlCluster resource name
   // This field is read-only, for now.
   string mysql_cluster = 25 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1.Name"];
+  // The site's Prometheus resource name
+  // This field is read-only, for now.
+  string prometheus = 26 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/prometheus/v1.Name"];
   // Page cache
-  PageCache page_cache = 26 [(gogoproto.nullable) = false];
+  PageCache page_cache = 27 [(gogoproto.nullable) = false];
   // [Output only] An URL to the site's metrics dashboard
-  string metrics_url = 27;
+  string metrics_url = 28;
   // [Output only] An URL to the site's logs
-  string logs_url = 28;
+  string logs_url = 29;
 }
 
 // Status is information about the current status of this site.
