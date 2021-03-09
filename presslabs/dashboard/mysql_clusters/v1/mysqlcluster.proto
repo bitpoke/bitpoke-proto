@@ -56,7 +56,7 @@ message ResourceAllocation {
   Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
   // The desired amount of storage.
   // Example values storage size resource allocations: "8Gi" (8 gibibytes).
-  string desired_storage_size_per_pod = 3;
+  string desired_storage_size = 3;
   // [Create only] The class of the storage used (e.g fast, ssd).
   string storage_class = 4;
   // The requested number of pods.

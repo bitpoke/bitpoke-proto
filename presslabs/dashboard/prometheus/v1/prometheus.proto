@@ -38,8 +38,8 @@ message Prometheus {
 // ResourceAllocation for Prometheus
 message ResourceAllocation {
   bool enabled = 1;
-  Resource memory = 2 [(gogoproto.nullable) = false];
-  Resource cpu = 3 [(gogoproto.nullable) = false];
+  Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
+  Resource cpu_per_pod = 3 [(gogoproto.nullable) = false];
   int32 desired_replicas = 4;
   string storage_size = 5;
   string storage_class = 6;
