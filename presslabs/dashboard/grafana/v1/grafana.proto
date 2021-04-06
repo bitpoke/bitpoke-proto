@@ -15,6 +15,7 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/grafana/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/field_mask.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
+import "presslabs/dashboard/statuses/v1/status.proto";
 import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 message Grafana {
@@ -32,6 +33,8 @@ message Grafana {
   // Grafana's Tolerations
   repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 6 [(gogoproto.nullable) = false];
   string logs_url = 7;
+  // Status for Grafana
+  Status status = 8 [(gogoproto.nullable) = false];
 }
 
 // ResourceAllocation for Grafana
@@ -48,6 +51,12 @@ message Resource {
   string limit = 1;
   // Enforced hard requests for each named resource
   string requested = 2;
+}
+
+// Status for Grafana
+message Status {
+  // Status for grafana component
+  presslabs.dashboard.statuses.v1.ComponentStatus component_status = 1 [(gogoproto.nullable) = false];
 }
 
 message GetGrafanaRequest {
