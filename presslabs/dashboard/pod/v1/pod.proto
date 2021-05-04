@@ -40,22 +40,25 @@ message Pod {
   // The organization the node is part of, taking the form of "organizations/{organization_name}".
   // This field is read-only.
   string organization = 4 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
+  // The project the node is part of, taking the form of "organizations/{organization_name}/projects/{project_name}".
+  // This field is read-only.
+  string project = 5 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // The pod status
   // This field is read-only.
-  PodStatus status = 5 [(gogoproto.nullable) = false];
+  PodStatus status = 6 [(gogoproto.nullable) = false];
   // Node is a request to schedule this pod onto a specific node. If it is non-empty,
   // the scheduler simply schedules this pod onto that node, assuming that it fits resource
   // requirements.
   // This field is read-only.
-  string node = 6 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/node/v1.Name"];
+  string node = 7 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/node/v1.Name"];
   // An enumeration of the pod's labels.
-  map<string, string> labels = 7;
+  map<string, string> labels = 8;
   // The pod's Affinity
-  presslabs.dashboard.affinity.v1.Affinity affinity = 8;
+  presslabs.dashboard.affinity.v1.Affinity affinity = 9;
   // The pod's Tolerations
-  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 9 [(gogoproto.nullable) = false];
+  repeated presslabs.dashboard.toleration.v1.Toleration tolerations = 10 [(gogoproto.nullable) = false];
   // URL to Pod's logs
-  string logs_url = 10;
+  string logs_url = 11;
 }
 
 // PodStatus represents information about the status of a pod. Status may trail the actual
