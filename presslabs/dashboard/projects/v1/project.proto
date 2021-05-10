@@ -45,14 +45,17 @@ message Project {
   // The name of the default Prometheus to be used across the project.
   // [Output only] (at least for now).
   string prometheus = 9;
+  // The name of the default Grafana to be used across the project.
+  // [Output only] (at least for now).
+  string grafana = 10;
   // Resource quotas
-  ResourceQuotas resource_quotas = 10 [(gogoproto.nullable) = false];
+  ResourceQuotas resource_quotas = 11 [(gogoproto.nullable) = false];
   // [Output Only] Google Service Account email.
-  string google_service_account_email = 11;
+  string google_service_account_email = 12;
   // Bootstrap MySQL Cluster resource allocation sets the default resources for
   // default MySQL cluster created in this project.
   // [Create only]
-  BootstrapMySQLClusterResourceAllocation bootstrap_mysql_cluster_resources = 12 [(gogoproto.nullable) = false];
+  BootstrapMySQLClusterResourceAllocation bootstrap_mysql_cluster_resources = 13 [(gogoproto.nullable) = false];
 }
 
 // ResourceQuotas describes what the allocated resources for a project
