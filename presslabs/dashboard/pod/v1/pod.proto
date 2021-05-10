@@ -18,8 +18,8 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/pod/v1beta1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
-import "presslabs/dashboard/conditions/v1/condition.proto";
 import "presslabs/dashboard/operation/v1/operation.proto";
+import "presslabs/dashboard/statuses/v1/status.proto";
 import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 // Pod is a collection of containers that can run on a host. This resource is created
@@ -45,7 +45,7 @@ message Pod {
   string project = 5 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // The pod status
   // This field is read-only.
-  PodStatus status = 6 [(gogoproto.nullable) = false];
+  Status status = 6 [(gogoproto.nullable) = false];
   // Node is a request to schedule this pod onto a specific node. If it is non-empty,
   // the scheduler simply schedules this pod onto that node, assuming that it fits resource
   // requirements.
@@ -61,45 +61,17 @@ message Pod {
   string logs_url = 11;
 }
 
-// PodStatus represents information about the status of a pod. Status may trail the actual
+// Status represents information about the status of a pod. Status may trail the actual
 // state of a system, especially if the node that hosts the pod cannot contact the control
 // plane.
-message PodStatus {
-  enum GeneralStatus {
-    // PodUnknown means that for some reason the state of the pod could not be obtained, typically due
-    // to an error in communicating with the host of the pod.
-    // Not set.
-    UNKNOWN = 0;
-    // PodPending means the pod has been accepted by the system, but one or more of the containers
-    // has not been started. This includes time before being bound to a node, as well as time spent
-    // pulling images onto the host.
-    PENDING = 1;
-    // PodRunning means the pod has been bound to a node and all of the containers have been started.
-    // At least one container is still running or is in the process of being restarted.
-    RUNNING = 2;
-    // PodSucceeded means that all containers in the pod have voluntarily terminated
-    // with a container exit code of 0, and the system is not going to restart any of these containers.
-    SUCCEEDED = 3;
-    // PodFailed means that all containers in the pod have terminated, and at least one container has
-    // terminated in a failure (exited with a non-zero exit code or was stopped by the system).
-    FAILED = 4;
-    // Evicted means that the pod was evicted by Kubelet.
-    EVICTED = 5;
-    // Terminating means that the pod has a deletion timestamp and will be deleted soon.
-    TERMINATING = 6;
-    // Warning means that the pod is running but some pod conditions have a negative status
-    // (e.g. ContainersReady is false)
-    WARNING = 7;
-  }
-  // Pod general (overall) status.
-  GeneralStatus general_status = 1;
+message Status {
+  // Status for prometheus component
+  presslabs.dashboard.statuses.v1.ComponentStatus component_status = 1 [(gogoproto.nullable) = false];
   // Pod's containers statuses
   repeated ContainerStatus container_statuses = 2 [(gogoproto.nullable) = false];
-  // Pod's conditions
-  repeated presslabs.dashboard.conditions.v1.Condition conditions = 3 [(gogoproto.nullable) = false];
   // Time at which the object was acknowledged by the Kubelet. This is before the Kubelet pulled the
   // container image(s) for the pod.
-  google.protobuf.Timestamp started_at = 4;
+  google.protobuf.Timestamp started_at = 3;
 }
 
 // ContainerStatus contains details for the current status of the container.

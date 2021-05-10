@@ -33,6 +33,20 @@ message ComponentStatus {
     WARNING = 4;
     // Component is not running.
     ERROR = 5;
+    // Pending means the component has been accepted by the system, but one or more of the containers
+    // has not been started. This includes time before being bound to a node, as well as time spent
+    // pulling images onto the host.
+    PENDING = 6;
+    // Succeeded means that all containers in the component have voluntarily terminated
+    // with a container exit code of 0, and the system is not going to restart any of these containers.
+    SUCCEEDED = 7;
+    // Failed means that all containers in the component have terminated, and at least one container has
+    // terminated in a failure (exited with a non-zero exit code or was stopped by the system).
+    FAILED = 8;
+    // Evicted means that the component was evicted by Kubelet.
+    EVICTED = 9;
+    // Terminating means that the component has a deletion timestamp and will be deleted soon.
+    TERMINATING = 10;
   }
   // General (overall) status.
   GeneralStatus general_status = 1;
