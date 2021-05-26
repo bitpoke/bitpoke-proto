@@ -89,10 +89,10 @@ message GetMySQLClusterRequest {
 }
 
 message ListMySQLClustersRequest {
-  // Parent project, for example "projects/{project_name}".
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
+  // Project name, for example "organization/{organization_name}/projects/{project_name}".
+  string project = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // Organization field can be used to list all the MySQLClusters from an organization.
-  // Required if Parent is empty.
+  // Required if Project is empty.
   string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
   int32 page_size = 3;
@@ -121,8 +121,9 @@ message UpdateMySQLClusterRequest {
 }
 
 message UpdateMySQLClusterResourcesRequest {
-  // Parent site, for example organizations/{organization_name}/projects/{project_name}/mysql_clusters/{mysql_cluster_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // MySQL Cluster name,
+  // for example "organizations/{organization_name}/projects/{project_name}/mysql_clusters/{mysql_cluster_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the site resource allocation list.
   ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.

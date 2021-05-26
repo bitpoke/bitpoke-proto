@@ -70,10 +70,11 @@ message GetMemcachedRequest {
 }
 
 message ListMemcachedsRequest {
-  // Parent project, for example "projects/{project_name}".
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
-  // Organization field can be used to list all the memcacheds from an organization.
-  // Required if Parent is empty.
+  // Project name, for example "organizations/{organization_name}/projects/{project_name}".
+  string project = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
+  // Organization field can be used to list all the memcacheds from an organization,
+  // for example "projects/{project_name}".
+  // Required if project is empty.
   string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
   int32 page_size = 3;
@@ -102,8 +103,8 @@ message UpdateMemcachedRequest {
 }
 
 message UpdateMemcachedResourcesRequest {
-  // Parent memcached, for example organizations/{organization_name}/projects/{project_name}/memcacheds/{memcached_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Memcached name, for example organizations/{organization_name}/projects/{project_name}/memcacheds/{memcached_name}.
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the memcached resource allocation list.
   ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.

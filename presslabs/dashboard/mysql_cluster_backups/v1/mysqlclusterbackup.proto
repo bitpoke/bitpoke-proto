@@ -52,8 +52,8 @@ enum Status {
 // ListMySQLClusterBackupsRequest enables requesting a list of mysql cluster backups for a given project
 message ListMySQLClusterBackupsRequest {
   // Parent cluster to list backups for.
-  // e.g. projects/{project_name}
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
+  // e.g. `organization/{organization_name}/projects/{project_name}`
+  string project = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // Maximum number of items to return.
   int32 page_size = 2;
   // next_page_token value returned from a previous List request, if any.

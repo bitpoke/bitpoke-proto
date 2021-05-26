@@ -24,7 +24,7 @@ import "presslabs/dashboard/toleration/v1/toleration.proto";
 // Site represents a site within the presslabs dashboard context
 message Site {
   // Fully qualified site name in the form
-  // organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
   // `site_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // Name is read-only
@@ -91,6 +91,9 @@ message Site {
   string metrics_url = 28;
   // [Output only] An URL to the site's logs
   string logs_url = 29;
+  // Project name, for example
+  // "organizations/{organization_name}/projects/{project_name}".
+  string project = 30 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
 }
 
 // Status is information about the current status of this site.
@@ -245,21 +248,16 @@ message PageCache {
 }
 
 message CreateSiteRequest {
-  // Parent project, for example "projects/{project_name}".
-  // Parent is a required parameter
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // Site resource to create
-  Site site = 2 [(gogoproto.nullable) = false];
-  BootstrapDetails bootstrap_details = 3 [
+  Site site = 1 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
-  repeated Route routes = 4 [(gogoproto.nullable) = false];
 }
 
 message GetSiteRequest {
   // Resource name of the site to fetch in the form
-  // organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
   // `site_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -279,8 +277,9 @@ message UpdateSiteRequest {
 }
 
 message UpdateSiteEnvVarsRequest {
-  // Parent site, for example organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Site name, for example
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the env vars list.
   EnvVarList env_vars = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
@@ -291,8 +290,9 @@ message UpdateSiteEnvVarsRequest {
 }
 
 message UpdateSitePageCacheRequest {
-  // Parent site, for example organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Site name, for example
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the page cache.
   PageCache page_cache = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
@@ -303,8 +303,9 @@ message UpdateSitePageCacheRequest {
 }
 
 message UpdateSiteSMTPRequest {
-  // Parent site, for example organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Site name, for example
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the smtp.
   SMTP smtp = 2 [
     (gogoproto.embed) = true,
@@ -318,8 +319,9 @@ message UpdateSiteSMTPRequest {
 }
 
 message UpdateSiteResourcesRequest {
-  // Parent site, for example organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Site name, for example
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the site resource allocation list.
   ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
@@ -331,17 +333,18 @@ message UpdateSiteResourcesRequest {
 
 message DeleteSiteRequest {
   // Resource name of the site to delete in the form
-  // organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
   // `site_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListSitesRequest {
-  // Parent project, for example "projects/{project_name}".
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
+  // Project name, for example
+  // "organizations/{organization_name}/projects/{project_name}".
+  string project = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // Organization field can be used to list all the sites from an organization.
-  // Required if Parent is empty.
+  // Required if Project is empty.
   string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
   int32 page_size = 3;
@@ -357,8 +360,9 @@ message ListSitesResponse {
 }
 
 message ListSiteEventsRequest {
-  // Parent site to list events for. Eg. projects/{project_name}/sites/{site_name}
-  string parent = 1;
+  // Site to list events for.
+  // Eg. "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1;
   // Maximum number of items to return.
   int32 page_size = 2;
   // next_page_token value returned from a previous List request, if any.
@@ -373,8 +377,9 @@ message ListSiteEventsResponse {
 }
 
 message UpdateSiteRoutesRequest {
-  // Parent site, for example organizations/{organization_name}/projects/{project_name}/sites/{site_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Site name, for example
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // Routes contains site domains and paths
   repeated Route routes = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.

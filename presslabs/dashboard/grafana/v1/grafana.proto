@@ -19,7 +19,7 @@ import "presslabs/dashboard/statuses/v1/status.proto";
 import "presslabs/dashboard/toleration/v1/toleration.proto";
 
 message Grafana {
-  // Fully qualified backup name in the form
+  // Fully qualified Grafana name in the form
   // organizations/{organization_name}/projects/{project_name}/grafanas/{grafana_name}.
   // `grafana_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
   // Name is read-only.
@@ -60,18 +60,17 @@ message Status {
 }
 
 message GetGrafanaRequest {
-  // Resource name of the Grafana to fetch in the form
-  // organizations/{organization_name}/projects/{project_name}/grafana/{grafana_name}.
-  // `proetheus_name` MUST be a valid DNS label (RFC 1123)
-  // with maximum length of 48 characters.
+  // Fully qualified Grafana name in the form
+  // organizations/{organization_name}/projects/{project_name}/grafanas/{grafana_name}.
+  // `grafana_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListGrafanasRequest {
-  // Parent project, for example "projects/{project_name}".
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
+  // Project name, for example "organizations/{organization_name}/projects/{project_name}".
+  string project = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // Organization field can be used to list all the grafanas from an organization.
-  // Required if Parent is empty.
+  // Required if Project is empty.
   string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
   int32 page_size = 3;
@@ -100,8 +99,10 @@ message UpdateGrafanaRequest {
 }
 
 message UpdateGrafanaResourcesRequest {
-  // Parent grafana, for example organizations/{organization_name}/projects/{project_name}/grafanas/{grafana_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Fully qualified Grafana name in the form
+  // organizations/{organization_name}/projects/{project_name}/grafanas/{grafana_name}.
+  // `grafana_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the grafana resource allocation list.
   ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.

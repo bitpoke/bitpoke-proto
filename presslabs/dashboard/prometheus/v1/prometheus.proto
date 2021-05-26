@@ -71,10 +71,11 @@ message GetPrometheusRequest {
 }
 
 message ListPrometheusesRequest {
-  // Parent project, for example "projects/{project_name}".
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
+  // Project name, for example
+  // "organizations/{organization_name}/projects/{project_name}".
+  string project = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // Organization field can be used to list all the prometheuses from an organization.
-  // Required if Parent is empty.
+  // Required if Project is empty.
   string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
   int32 page_size = 3;
@@ -103,8 +104,9 @@ message UpdatePrometheusRequest {
 }
 
 message UpdatePrometheusResourcesRequest {
-  // Parent prometheus, for example organizations/{organization_name}/projects/{project_name}/prometheuses/{prometheus_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Prometheus name, for example
+  // "organizations/{organization_name}/projects/{project_name}/prometheuses/{prometheus_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the promeheus resource allocation list.
   ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.

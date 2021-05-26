@@ -57,7 +57,7 @@ message ListOrganizationsResponse {
 
 message CreateOrganizationRequest {
   // The organization resource to create
-  Organization organization = 2 [
+  Organization organization = 1 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];

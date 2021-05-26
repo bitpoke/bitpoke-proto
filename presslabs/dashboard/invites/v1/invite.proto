@@ -34,7 +34,7 @@ message Invite {
   // [Output only] A secret token that is used to identify the invite
   // It is usually used as part of an invite URL.
   string redeem_token = 5;
-  // [Output only] Organization's name, to which the user is invited.
+  // Organization's name, to which the user is invited.
   string organization = 6 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Timestamp when the invite was created.
   // This field is read-only.
@@ -50,7 +50,8 @@ message GetInviteRequest {
 
 message ListInvitesRequest {
   // Parent organization, for example "organizations/{organization_name}".
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
+  // Required.
+  string organization = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // The maximum number of items to return.
   int32 page_size = 2;
   // The next_page_token value returned from a previous List request, if any.
@@ -65,12 +66,8 @@ message ListInvitesResponse {
 }
 
 message CreateInviteRequest {
-  // Parent organization, for example "organizations/{organization_name}".
-  // This parameter overrides the organization passed as metadata.
-  // If not specified as metadata, the parent is a required parameter.
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // The invite resource to create
-  Invite invite = 2 [
+  Invite invite = 1 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];

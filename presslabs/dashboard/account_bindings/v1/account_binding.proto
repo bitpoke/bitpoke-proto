@@ -18,7 +18,8 @@ import "google/protobuf/timestamp.proto";
 
 // AccountBinding represents a user within the Presslabs dashboard context
 message AccountBinding {
-  // [Output only] Fully qualified account binding name in the form `organizations/{organization_name}/iam/account-bindings/{account_binding_name}`.
+  // [Output only] Fully qualified account binding name in the form
+  // `organizations/{organization_name}/iam/account-bindings/{account_binding_name}`.
   // `account_binding_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
@@ -35,15 +36,16 @@ message AccountBinding {
 }
 
 message GetAccountBindingRequest {
-  // Resource name of the account binding to fetch, in the form `organizations/{organization_name}/iam/account-bindings/{account_binding_name}`
-  // `account_binding_name` MUST be a valid DNS label (RFC 1123) with maximum length
-  // of 48 characters.
+  // Fully qualified account binding name in the form
+  // `organizations/{organization_name}/iam/account-bindings/{account_binding_name}`.
+  // `account_binding_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListAccountBindingsRequest {
   // Parent organization, for example `organization/{organization_name}`.
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
+  string organization = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
   int32 page_size = 2;
   // Next page's token value returned from a previous List request, if any.
@@ -58,10 +60,10 @@ message ListAccountBindingsResponse {
 }
 
 message DeleteAccountBindingRequest {
-  // Resource name of the account binding to be revoked (and deleted) in the form
-  // organizations/{organization_name}/iam/account-bindings/{account_binding_name}
-  // `account_binding_name` MUST be a valid DNS label (RFC 1123)
-  // with maximum length of 48 characters.
+  // Fully qualified account binding name in the form
+  // `organizations/{organization_name}/iam/account-bindings/{account_binding_name}`.
+  // `account_binding_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 

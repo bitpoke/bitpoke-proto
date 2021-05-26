@@ -20,7 +20,8 @@ import "google/protobuf/timestamp.proto";
 // Project represents a project within the presslabs dashboard
 // context
 message Project {
-  // Fully qualified project name in the form projects/{project_name}.
+  // Fully qualified project name in the form
+  // "organization/{organization_name}/projects/{project_name}".
   // `project_name` is a valid DNS label (RFC 1123) with maximum
   // length of 48 characters.
   // Name is read-only.
@@ -90,15 +91,16 @@ message BootstrapMySQLClusterResourceAllocation {
 }
 
 message GetProjectRequest {
-  // Resource name of the project to fetch in the form projects/{project_name}
+  // Resource name of the project to fetch in the form
+  // "organization/{organization_name}/projects/{project_name}"
   // `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
 }
 
 message ListProjectsRequest {
-  // Parent organization, for example "organizations/{organization_name}".
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
+  // Organization name, for example "organizations/{organization_name}".
+  string organization = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
   int32 page_size = 2;
   // next_page_token value returned from a previous List request, if
@@ -114,12 +116,8 @@ message ListProjectsResponse {
 }
 
 message CreateProjectRequest {
-  // Parent organization, for example "organizations/{organization_name}".
-  // This parameter overrides the organization passed as metadata.
-  // If not specified as metadata, the parent is a required parameter.
-  string parent = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Project resource to create
-  Project project = 2 [
+  Project project = 1 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false
   ];
@@ -139,8 +137,8 @@ message UpdateProjectRequest {
 }
 
 message UpdateProjectResourceQuotasRequest {
-  // Parent project, for example projects/{project_name}.
-  string parent = 1 [(gogoproto.casttype) = "Name"];
+  // Project name, for example "organization/{organization_name}/projects/{project_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
   // New definition of the resource quotas.
   ResourceQuotas resource_quotas = 2 [(gogoproto.nullable) = false];
   // Fields to be updated.
@@ -151,7 +149,8 @@ message UpdateProjectResourceQuotasRequest {
 }
 
 message DeleteProjectRequest {
-  // Resource name of the project to delete in the form projects/{project_name}
+  // Resource name of the project to delete in the form
+  // "organization/{organization_name}/projects/{project_name}".
   // `project_name` MUST be a valid DNS label (RFC 1123)
   // with maximum length of 48 characters.
   string name = 1 [(gogoproto.casttype) = "Name"];
