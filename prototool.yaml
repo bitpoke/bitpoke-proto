@@ -37,6 +37,7 @@ generate:
       presslabs/dashboard/conditions/v1/condition.proto: github.com/presslabs/dashboard-go/pkg/condition/v1beta1
       presslabs/dashboard/operation/v1/operation.proto: github.com/presslabs/dashboard-go/pkg/operation/v1beta1
       presslabs/dashboard/statuses/v1/status.proto: github.com/presslabs/dashboard-go/pkg/status/v1beta1
+      presslabs/dashboard/resources/v1/resource.proto: github.com/presslabs/dashboard-go/pkg/resource/v1beta1
   plugins:
     - name: gogo
       type: gogo

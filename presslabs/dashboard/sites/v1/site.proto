@@ -18,6 +18,7 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
 import "presslabs/dashboard/api/event/v1/event.proto";
+import "presslabs/dashboard/resources/v1/resource.proto";
 import "presslabs/dashboard/statuses/v1/status.proto";
 import "presslabs/dashboard/toleration/v1/toleration.proto";
 
@@ -194,19 +195,16 @@ message Autoscaler {
 message ResourceAllocation {
   // Set replicas on 0 for a given site, overriding the below settings
   bool paused = 1;
-  Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
-  Resource cpu_per_pod = 3 [(gogoproto.nullable) = false];
-  Resource php_workers = 4 [(gogoproto.nullable) = false];
-  Resource php_workers_memory = 5 [(gogoproto.nullable) = false];
+  // The amount of cpu per pod.
+  // 1 CPU is equal to a virtual CPU (core/thread). Fractional values may be used.
+  // Example values for CPU resource allocations: "100m" (10% of 1 CPU), "2" (2 CPUs).
+  presslabs.dashboard.resources.v1.Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
+  // The amount of memory per pod.
+  // Example values for memory resource allocations: "50Mi" (50 mebibytes)
+  presslabs.dashboard.resources.v1.Resource cpu_per_pod = 3 [(gogoproto.nullable) = false];
+  presslabs.dashboard.resources.v1.Resource php_workers = 4 [(gogoproto.nullable) = false];
+  presslabs.dashboard.resources.v1.Resource php_workers_memory = 5 [(gogoproto.nullable) = false];
   Autoscaler autoscaler = 6 [(gogoproto.nullable) = false];
-}
-
-// Resource describe requested and limit resources
-message Resource {
-  // Enforced hard limits for each named resource
-  string limit = 1;
-  // Enforced request limits for each named resource
-  string requested = 2;
 }
 
 // PageCache is the configuration of the page cache

@@ -15,6 +15,7 @@ option go_package = "github.com/presslabs/dashboard-go/pkg/mysqlcluster/v1";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/field_mask.proto";
 import "presslabs/dashboard/affinity/v1/affinity.proto";
+import "presslabs/dashboard/resources/v1/resource.proto";
 import "presslabs/dashboard/statuses/v1/status.proto";
 import "presslabs/dashboard/toleration/v1/toleration.proto";
 
@@ -48,13 +49,13 @@ message MySQLCluster {
 
 // ResourceAllocation for MySQL Cluster
 message ResourceAllocation {
+  // The amount of memory per pod.
+  // Example values for memory resource allocations: "50Mi" (50 mebibytes)
+  presslabs.dashboard.resources.v1.Resource cpu_per_pod = 1 [(gogoproto.nullable) = false];
   // The amount of cpu per pod.
   // 1 CPU is equal to a virtual CPU (core/thread). Fractional values may be used.
   // Example values for CPU resource allocations: "100m" (10% of 1 CPU), "2" (2 CPUs).
-  Resource cpu_per_pod = 1 [(gogoproto.nullable) = false];
-  // The amount of memory per pod.
-  // Example values for memory resource allocations: "50Mi" (50 mebibytes)
-  Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
+  presslabs.dashboard.resources.v1.Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
   // The desired amount of storage.
   // Example values storage size resource allocations: "8Gi" (8 gibibytes).
   string desired_storage_size = 3;
@@ -62,14 +63,6 @@ message ResourceAllocation {
   string storage_class = 4;
   // The requested number of pods.
   int32 desired_replicas = 5;
-}
-
-// Resource describe requested and limit resources
-message Resource {
-  // Enforced hard limits for each named resource
-  string limit = 1;
-  // Enforced hard requests for each named resource
-  string requested = 2;
 }
 
 // Status for MySQL Cluster
