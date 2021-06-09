@@ -50,7 +50,7 @@ message ResourceAllocation {
   // Example values for memory resource allocations: "50Mi" (50 mebibytes)
   presslabs.dashboard.resources.v1.Resource cpu_per_pod = 3 [(gogoproto.nullable) = false];
   int32 desired_replicas = 4;
-  string storage_size = 5;
+  presslabs.dashboard.resources.v1.Resource storage_size = 5 [(gogoproto.nullable) = false];
   string storage_class = 6;
 }
 

@@ -58,7 +58,7 @@ message ResourceAllocation {
   presslabs.dashboard.resources.v1.Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
   // The desired amount of storage.
   // Example values storage size resource allocations: "8Gi" (8 gibibytes).
-  string desired_storage_size = 3;
+  presslabs.dashboard.resources.v1.Resource desired_storage_size = 3 [(gogoproto.nullable) = false];
   // [Create only] The class of the storage used (e.g fast, ssd).
   string storage_class = 4;
   // The requested number of pods.

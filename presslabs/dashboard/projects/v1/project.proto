@@ -16,6 +16,7 @@ import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
+import "presslabs/dashboard/resources/v1/resource.proto";
 
 // Project represents a project within the presslabs dashboard
 // context
@@ -85,7 +86,7 @@ message Resource {
 // for a MySQL Cluster are
 message BootstrapMySQLClusterResourceAllocation {
   // The desired amount of storage
-  string desired_storage_size_per_pod = 1;
+  presslabs.dashboard.resources.v1.Resource desired_storage_size_per_pod = 1 [(gogoproto.nullable) = false];
   // The class of the storage used (e.g fast, ssd)
   string storage_class = 2;
 }
