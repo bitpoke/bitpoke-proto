@@ -71,7 +71,7 @@ message ListMemcachedsRequest {
   // Project name, for example "organizations/{organization_name}/projects/{project_name}".
   string project = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
   // Organization field can be used to list all the memcacheds from an organization,
-  // for example "projects/{project_name}".
+  // for example "organizations/{organization_name}/projects/{project_name}".
   // Required if project is empty.
   string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.

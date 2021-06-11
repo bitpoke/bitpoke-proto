@@ -54,10 +54,14 @@ message ListMySQLClusterBackupsRequest {
   // Parent cluster to list backups for.
   // e.g. `organization/{organization_name}/projects/{project_name}`
   string project = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
+  // Organization field can be used to list all the mysql cluster backups from an organization,
+  // for example "organizations/{organization_name}/projects/{project_name}".
+  // Required if Project is empty.
+  string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
-  int32 page_size = 2;
+  int32 page_size = 3;
   // next_page_token value returned from a previous List request, if any.
-  string page_token = 3;
+  string page_token = 4;
 }
 
 // ListMySQLClusterBackupsResponse is a list response for a backups list request

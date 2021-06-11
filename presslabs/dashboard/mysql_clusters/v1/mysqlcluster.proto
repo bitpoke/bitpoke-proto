@@ -84,7 +84,8 @@ message GetMySQLClusterRequest {
 message ListMySQLClustersRequest {
   // Project name, for example "organization/{organization_name}/projects/{project_name}".
   string project = 1 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/project/v1.Name"];
-  // Organization field can be used to list all the MySQLClusters from an organization.
+  // Organization field can be used to list all the mysql clusters from an organization,
+  // for example "organizations/{organization_name}/projects/{project_name}".
   // Required if Project is empty.
   string organization = 2 [(gogoproto.casttype) = "github.com/presslabs/dashboard-go/pkg/organization/v1.Name"];
   // Maximum number of items to return.
