@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package bitpoke.accountbindings.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/bitpoke/bitpoke-go/pkg/account_binding/v1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// AccountBinding represents a user within the Presslabs dashboard context
+message AccountBinding {
+  // [Output only] Fully qualified account binding name in the form
+  // `organizations/{organization_name}/iam/account-bindings/{account_binding_name}`.
+  // `account_binding_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the account binding
+  string display_name = 2;
+  // User's email address
+  string email = 3;
+  // User's full name
+  string full_name = 4;
+  // A URL pointing to the user's profile picture
+  string profile_picture_url = 5;
+  // [Output only] The time when the AccountBinding was created
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message GetAccountBindingRequest {
+  // Fully qualified account binding name in the form
+  // `organizations/{organization_name}/iam/account-bindings/{account_binding_name}`.
+  // `account_binding_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message ListAccountBindingsRequest {
+  // Parent organization, for example `organization/{organization_name}`.
+  string organization = 1 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // Maximum number of items to return.
+  int32 page_size = 2;
+  // Next page's token value returned from a previous List request, if any.
+  string page_token = 3;
+}
+
+message ListAccountBindingsResponse {
+  repeated AccountBinding account_bindings = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message DeleteAccountBindingRequest {
+  // Fully qualified account binding name in the form
+  // `organizations/{organization_name}/iam/account-bindings/{account_binding_name}`.
+  // `account_binding_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message PingReceivedResponse {
+  // Whether the backend has successfully handled the ping request
+  // Frontend clients may consider resending the ping request if handled is false
+  bool handled = 1;
+}
+
+// AccountBindingsService allows managing accounts
+service AccountBindingsService {
+  // GetAccountBinding fetches an account binding by it's name
+  rpc GetAccountBinding(GetAccountBindingRequest) returns (AccountBinding);
+  // ListAccountBindings list accounts
+  rpc ListAccountBindings(ListAccountBindingsRequest) returns (ListAccountBindingsResponse);
+  // DeleteAccountBinding deletes an account reference from the specified organization
+  rpc DeleteAccountBinding(DeleteAccountBindingRequest) returns (google.protobuf.Empty);
+  // SendAuthenticatedPing announces an authentication successful event
+  rpc SendAuthenticatedPing(google.protobuf.Empty) returns (PingReceivedResponse);
+}

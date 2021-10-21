@@ -28,16 +28,16 @@ lint:
 # Code generation directives.
 generate:
   go_options:
-    import_path: github.com/presslabs/dashboard-go
+    import_path: github.com/bitpoke/bitpoke-go
     extra_modifiers:
-      # out staging/vendor duality fucks up code generations, so we need to manually fix it
-      presslabs/dashboard/api/event/v1/event.proto: github.com/presslabs/dashboard-go/pkg/api/event/v1
-      presslabs/dashboard/affinity/v1/affinity.proto: github.com/presslabs/dashboard-go/pkg/affinity/v1beta1
-      presslabs/dashboard/toleration/v1/toleration.proto: github.com/presslabs/dashboard-go/pkg/toleration/v1beta1
-      presslabs/dashboard/conditions/v1/condition.proto: github.com/presslabs/dashboard-go/pkg/condition/v1beta1
-      presslabs/dashboard/operation/v1/operation.proto: github.com/presslabs/dashboard-go/pkg/operation/v1beta1
-      presslabs/dashboard/statuses/v1/status.proto: github.com/presslabs/dashboard-go/pkg/status/v1beta1
-      presslabs/dashboard/resources/v1/resource.proto: github.com/presslabs/dashboard-go/pkg/resource/v1beta1
+      # our staging/vendor duality fucks up code generations, so we need to manually fix it
+      bitpoke/api/event/v1/event.proto: github.com/bitpoke/bitpoke-go/pkg/api/event/v1
+      bitpoke/affinity/v1/affinity.proto: github.com/bitpoke/bitpoke-go/pkg/affinity/v1beta1
+      bitpoke/toleration/v1/toleration.proto: github.com/bitpoke/bitpoke-go/pkg/toleration/v1beta1
+      bitpoke/conditions/v1/condition.proto: github.com/bitpoke/bitpoke-go/pkg/condition/v1beta1
+      bitpoke/operation/v1/operation.proto: github.com/bitpoke/bitpoke-go/pkg/operation/v1beta1
+      bitpoke/statuses/v1/status.proto: github.com/bitpoke/bitpoke-go/pkg/status/v1beta1
+      bitpoke/resources/v1/resource.proto: github.com/bitpoke/bitpoke-go/pkg/resource/v1beta1
   plugins:
     - name: gogo
       type: gogo

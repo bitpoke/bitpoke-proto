@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package bitpoke.invites.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/bitpoke/bitpoke-go/pkg/invite/v1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// Invite represents a collaboration invite for an account within the Presslabs
+// dashboard context
+message Invite {
+  // [Output only] The fully qualified invite name in the form organizations/{organization_name}/iam/invites/{invite_name}.
+  // The `invite_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the invite
+  string display_name = 2;
+  // The account email for which the invite is intended
+  // It is currently not a hard constraint, so that the invite can be consumed
+  // on accounts with a different email address.
+  string email = 3;
+  // [Output only] The time after which the invite can no longer be consumed
+  google.protobuf.Timestamp valid_before = 4;
+  // [Output only] A secret token that is used to identify the invite
+  // It is usually used as part of an invite URL.
+  string redeem_token = 5;
+  // Organization's name, to which the user is invited.
+  string organization = 6 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // Timestamp when the invite was created.
+  // This field is read-only.
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message GetInviteRequest {
+  // The resource name of the invite to fetch in the form organizations/{organization_name}/iam/invites/{invite_name}
+  // The `invite_name` MUST be a valid DNS label (RFC 1123) with maximum length
+  // of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message ListInvitesRequest {
+  // Parent organization, for example "organizations/{organization_name}".
+  // Required.
+  string organization = 1 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // The maximum number of items to return.
+  int32 page_size = 2;
+  // The next_page_token value returned from a previous List request, if any.
+  string page_token = 3;
+}
+
+message ListInvitesResponse {
+  repeated Invite invites = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message CreateInviteRequest {
+  // The invite resource to create
+  Invite invite = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message DeleteInviteRequest {
+  // The resource name of the invite to be revoked (and deleted) in the form
+  // organizations/{organization_name}/iam/invites/{invite_name}
+  // The `invite_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message RedeemInviteRequest {
+  // The resource name of the invite to be redeemed (and deleted) in the form
+  // organizations/{organization_name}/iam/invites/{invite_name}
+  // The `invite_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // The redeem token used to identify the invite
+  string redeem_token = 2;
+}
+
+// InvitesService allows managing invites
+service InvitesService {
+  // CreateInvite creates a new invite
+  rpc CreateInvite(CreateInviteRequest) returns (Invite);
+  // GetInvite fetches an invite by it's name
+  rpc GetInvite(GetInviteRequest) returns (Invite);
+  // DeleteInvite revokes an invite by it's name
+  rpc DeleteInvite(DeleteInviteRequest) returns (google.protobuf.Empty);
+  // ListInvites list invites
+  rpc ListInvites(ListInvitesRequest) returns (ListInvitesResponse);
+  // RedeemInvite allows invites to be consumed
+  rpc RedeemInvite(RedeemInviteRequest) returns (google.protobuf.Empty);
+}

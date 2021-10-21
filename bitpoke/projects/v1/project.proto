@@ -1,0 +1,174 @@
+syntax = "proto3";
+
+package bitpoke.projects.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/bitpoke/bitpoke-go/pkg/project/v1";
+
+import "bitpoke/resources/v1/resource.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// Project represents a project within the bitpoke app
+// context
+message Project {
+  // Fully qualified project name in the form
+  // "organization/{organization_name}/projects/{project_name}".
+  // `project_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  // Name is read-only.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] Display name for the project.
+  string display_name = 2;
+  // Organization name. The organization is immutable.
+  // This field is read-only.
+  string organization = 3 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // Time when the project was created.
+  // This field is read-only.
+  google.protobuf.Timestamp created_at = 4;
+  // Icon for project. Should be an absolute url or a data url.
+  string icon_url = 5;
+  // Service account that will be used for the project's sites/mysql by default.
+  string default_service_account = 6;
+  // [Output only] Number of sites in the project.
+  int32 sites_count = 7;
+  // The name of the default MySQL Cluster to be used across the project.
+  // [Output only] (at least for now).
+  string mysql_cluster = 8;
+  // The name of the default Prometheus to be used across the project.
+  // [Output only] (at least for now).
+  string prometheus = 9;
+  // The name of the default Grafana to be used across the project.
+  // [Output only] (at least for now).
+  string grafana = 10;
+  // Resource quotas
+  ResourceQuotas resource_quotas = 11 [(gogoproto.nullable) = false];
+  // [Output Only] Google Service Account email.
+  string google_service_account_email = 12;
+  // Bootstrap MySQL Cluster resource allocation sets the default resources for
+  // default MySQL cluster created in this project.
+  // [Create only]
+  BootstrapMySQLClusterResourceAllocation bootstrap_mysql_cluster_resources = 13 [(gogoproto.nullable) = false];
+}
+
+// ResourceQuotas describes what the allocated resources for a project
+message ResourceQuotas {
+  // Across all pods in a non-terminal state,
+  // the sum of CPU limit cannot exceed this value.
+  Resource cpu = 1 [(gogoproto.nullable) = false];
+  // Across all pods in a non-terminal state,
+  // the sum of memory limit cannot exceed this value.
+  Resource memory = 2 [(gogoproto.nullable) = false];
+  // Total number of pods in a non-terminal state that can exist in the project.
+  Resource pods = 3 [(gogoproto.nullable) = false];
+  // Total number of sites that can exist in the project.
+  Resource sites = 4 [(gogoproto.nullable) = false];
+}
+
+// Resource describe used and limit resources
+message Resource {
+  // [READ ONLY] Current observed total usage of the resource in the namespace
+  string used = 1;
+  // Enforced hard limits for each named resource
+  string limit = 2;
+}
+
+// BootstrapMySQLClusterResourceAllocation describes what the allocated resources
+// for a MySQL Cluster are
+message BootstrapMySQLClusterResourceAllocation {
+  // The desired amount of storage
+  bitpoke.resources.v1.Resource desired_storage_size_per_pod = 1 [(gogoproto.nullable) = false];
+  // The class of the storage used (e.g fast, ssd)
+  string storage_class = 2;
+}
+
+message GetProjectRequest {
+  // Resource name of the project to fetch in the form
+  // "organization/{organization_name}/projects/{project_name}"
+  // `project_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message ListProjectsRequest {
+  // Organization name, for example "organizations/{organization_name}".
+  string organization = 1 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // Maximum number of items to return.
+  int32 page_size = 2;
+  // next_page_token value returned from a previous List request, if
+  // any.
+  string page_token = 3;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message CreateProjectRequest {
+  // Project resource to create
+  Project project = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateProjectRequest {
+  // New definition of the project.
+  Project project = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateProjectResourceQuotasRequest {
+  // Project name, for example "organization/{organization_name}/projects/{project_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the resource quotas.
+  ResourceQuotas resource_quotas = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message DeleteProjectRequest {
+  // Resource name of the project to delete in the form
+  // "organization/{organization_name}/projects/{project_name}".
+  // `project_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+// ProjectsService allow managing projects
+service ProjectsService {
+  // CreateProject creates a new project
+  rpc CreateProject(CreateProjectRequest) returns (Project);
+  // GetProject fetches a project by it's name
+  rpc GetProject(GetProjectRequest) returns (Project);
+  // UpdateProject updates a project details
+  rpc UpdateProject(UpdateProjectRequest) returns (Project);
+  // UpdateProjectResourceQuotas updates resource quotas details
+  rpc UpdateProjectResourceQuotas(UpdateProjectResourceQuotasRequest) returns (Project);
+  // DeleteProject deletes a project by it's name
+  rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty);
+  // ListProjects list projects
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+}

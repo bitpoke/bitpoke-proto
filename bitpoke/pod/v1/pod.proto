@@ -1,0 +1,164 @@
+syntax = "proto3";
+
+package bitpoke.pod.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.goproto_sizecache_all) = false;
+option (gogoproto.goproto_unkeyed_all) = false;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/bitpoke/bitpoke-go/pkg/pod/v1beta1";
+
+import "bitpoke/affinity/v1/affinity.proto";
+import "bitpoke/operation/v1/operation.proto";
+import "bitpoke/statuses/v1/status.proto";
+import "bitpoke/toleration/v1/toleration.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// Pod is a collection of containers that can run on a host. This resource is created
+// by clients and scheduled onto hosts.
+message Pod {
+  // Fully qualified pod name in the form
+  // organizations/{org_name}/projects/{proj_name}/pods/{pod_name}
+  // `pod_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 63 characters.
+  // This field is read-only.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the pod
+  string display_name = 2;
+  // The fully qualified name of the pod's parent. Only populated for known resources such as:
+  // wordpress, memcached and mysql cluster.
+  // This field is read-only.
+  string parent = 3 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/resource/v1.Name"];
+  // The organization the node is part of, taking the form of "organizations/{organization_name}".
+  // This field is read-only.
+  string organization = 4 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // The project the node is part of, taking the form of "organizations/{organization_name}/projects/{project_name}".
+  // This field is read-only.
+  string project = 5 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/project/v1.Name"];
+  // The pod status
+  // This field is read-only.
+  Status status = 6 [(gogoproto.nullable) = false];
+  // Node is a request to schedule this pod onto a specific node. If it is non-empty,
+  // the scheduler simply schedules this pod onto that node, assuming that it fits resource
+  // requirements.
+  // This field is read-only.
+  string node = 7 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/node/v1.Name"];
+  // An enumeration of the pod's labels.
+  map<string, string> labels = 8;
+  // The pod's Affinity
+  bitpoke.affinity.v1.Affinity affinity = 9;
+  // The pod's Tolerations
+  repeated bitpoke.toleration.v1.Toleration tolerations = 10 [(gogoproto.nullable) = false];
+  // URL to Pod's logs
+  string logs_url = 11;
+}
+
+// Status represents information about the status of a pod. Status may trail the actual
+// state of a system, especially if the node that hosts the pod cannot contact the control
+// plane.
+message Status {
+  // Status for prometheus component
+  bitpoke.statuses.v1.ComponentStatus component_status = 1 [(gogoproto.nullable) = false];
+  // Pod's containers statuses
+  repeated ContainerStatus container_statuses = 2 [(gogoproto.nullable) = false];
+  // Time at which the object was acknowledged by the Kubelet. This is before the Kubelet pulled the
+  // container image(s) for the pod.
+  google.protobuf.Timestamp started_at = 3;
+}
+
+// ContainerStatus contains details for the current status of the container.
+message ContainerStatus {
+  enum ContainerState {
+    // Not set
+    UNSPECIFIED = 0;
+    // Running means the container is running and has passed it's readiness probe
+    RUNNING = 1;
+    // Probing means the container is still being tested by the initial readiness probe
+    PROBING = 2;
+    // Starting means the container has not been started yet;
+    // e.g. image pulling, container starting/restarting etc.)
+    STARTING = 3;
+    // Terminating means the container is being terminated by kubelet
+    TERMINATING = 4;
+    // Terminated means the container has been terminated by kubelet
+    TERMINATED = 5;
+    // FAILED means the container has encountered a problem causing the pod to no longer be exposed by it's service;
+    // e.g The container is running but it has not passed it's readiness probe.
+    // e.g The container terminated with an exit code > 0.
+    FAILED = 6;
+  }
+  // Name of the container specified as a DNS_LABEL.
+  // Each container in a pod must have a unique name (DNS_LABEL).
+  // Cannot be updated.
+  string name = 1;
+  // Docker image name.
+  // More info: https://kubernetes.io/docs/concepts/containers/images
+  // This field is optional to allow higher level config management to default or override
+  // container images in workload controllers like Deployments and StatefulSets.
+  // +optional
+  string image = 2;
+  // ImageID of the container's image.
+  string image_id = 3;
+  // The state of the container
+  ContainerState container_state = 4;
+  // Time at which the container was last (re-)started
+  google.protobuf.Timestamp started_at = 5;
+  // Time at which the container last terminated
+  google.protobuf.Timestamp finished_at = 6;
+  // (brief) reason the container is not yet running or has been terminated.
+  string reason = 7;
+  // Message regarding why the container is not yet running or regarding the last termination of the container.
+  string message = 8;
+  // Exit status from the last termination of the container
+  int32 exit_code = 9;
+  // The number of times the container has been restarted, currently based on
+  // the number of dead containers that have not yet been removed.
+  int32 restart_count = 10;
+  // Specifies whether the container has passed its readiness probe.
+  bool ready = 11;
+  // Specifies whether the container has passed its startup probe.
+  bool started = 12;
+}
+
+message ListPodsRequest {
+  // Parent organizations, for example "organizations/{organization_name}".
+  repeated string organizations = 1 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // Parent projects, for example "organizations/{organization_name}/projects/{project_name}".
+  repeated string projects = 2 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/project/v1.Name"];
+  // The pod's parent resource. The only resources accepted for this field are:
+  // wordpress, memcached and mysql cluster.
+  // Optional.
+  repeated string parents = 3 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/resource/v1.Name"];
+  repeated string nodes = 4 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/node/v1.Name"];
+}
+
+message ListPodsResponse {
+  repeated Pod pods = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message DeletePodRequest {
+  // Resource name of the pod to delete in the form
+  // organizations/{org_name}/projects/{proj_name}/pods/{pod_name}.
+  // `pod_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+// PodsService allow managing pods
+service PodsService {
+  // ListPods lists pods
+  rpc ListPods(ListPodsRequest) returns (ListPodsResponse);
+  // DeletePod deletes a pod by it's name
+  rpc DeletePod(DeletePodRequest) returns (bitpoke.operation.v1.OperationResponse);
+}

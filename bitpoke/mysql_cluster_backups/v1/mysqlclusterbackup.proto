@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package bitpoke.mysqlclusterbackups.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/bitpoke/bitpoke-go/pkg/mysqlclusterbackup/v1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// MySQLClusterBackup represents the instance of a mysql cluster backup
+message MySQLClusterBackup {
+  // Fully qualified backup name of the form
+  // `organizations/{organization_name}/projects/{project_name}/mysql-cluster-backups/{backup_name}``.
+  // `backup_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
+  // Name is read-only.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the mysql cluster backup
+  string display_name = 2;
+  // [Output only] `cluster_name` is of form `organizations/{organization_name}/projects/{project_name}/mysql-cluster/{mysql_cluster_name}`.
+  string cluster_name = 3 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/mysqlcluster/v1.Name"];
+  // [Output only] The URL from which the backup can be downloaded
+  string url = 4;
+  // [Output only] A flag that denotes whether the backup is a recurrent one or not
+  bool is_recurrent = 5;
+  // [Output only] The status of the backup
+  Status status = 6;
+  // [Output only] Time when the backup was requested.
+  google.protobuf.Timestamp requested_at = 7;
+  // [Output only] Time when the backup was completed.
+  google.protobuf.Timestamp completed_at = 8;
+}
+
+enum Status {
+  // Not set.
+  UNSPECIFIED = 0;
+  // The backup process has started.
+  STARTED = 1;
+  // The backup process has completed successfully.
+  COMPLETED = 2;
+  // The backup process has failed.
+  FAILED = 3;
+}
+
+// ListMySQLClusterBackupsRequest enables requesting a list of mysql cluster backups for a given project
+message ListMySQLClusterBackupsRequest {
+  // Parent cluster to list backups for.
+  // e.g. `organization/{organization_name}/projects/{project_name}`
+  string project = 1 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/project/v1.Name"];
+  // Organization field can be used to list all the mysql cluster backups from an organization,
+  // for example "organizations/{organization_name}/projects/{project_name}".
+  // Required if Project is empty.
+  string organization = 2 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // Maximum number of items to return.
+  int32 page_size = 3;
+  // next_page_token value returned from a previous List request, if any.
+  string page_token = 4;
+}
+
+// ListMySQLClusterBackupsResponse is a list response for a backups list request
+message ListMySQLClusterBackupsResponse {
+  repeated MySQLClusterBackup mysql_cluster_backups = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+// MySQLClusterBackupService allow managing mysql cluster backups
+service MySQLClusterBackupService {
+  // ListMySQLClusterBackups list mysql cluster backups
+  rpc ListMySQLClusterBackups(ListMySQLClusterBackupsRequest) returns (ListMySQLClusterBackupsResponse);
+}

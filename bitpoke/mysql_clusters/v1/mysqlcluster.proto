@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package bitpoke.mysqlclusters.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/bitpoke/bitpoke-go/pkg/mysqlcluster/v1";
+
+import "bitpoke/affinity/v1/affinity.proto";
+import "bitpoke/resources/v1/resource.proto";
+import "bitpoke/statuses/v1/status.proto";
+import "bitpoke/toleration/v1/toleration.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/field_mask.proto";
+
+message MySQLCluster {
+  // Fully qualified backup name in the form
+  // organizations/{organization_name}/projects/{project_name}/mysql_clusters/{cluster_name}.
+  // `cluster_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
+  // Name is read-only.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the mysql cluster
+  string display_name = 2;
+  // [Output only] The URL from which the backup can be downloaded
+  // The frequency at which the MySQL operator will schedule cluster backups
+  // The expected format is the cron format with 6 places (0 0 0 1 */3 *)
+  string backups_cron = 3;
+  // The number of MySQL backups the server should retain before deletion
+  int32 backups_retain_count = 4;
+  // MySQL Cluster resource allocation
+  ResourceAllocation resources = 5 [(gogoproto.nullable) = false];
+  // MySQL Cluster status
+  Status status = 6 [(gogoproto.nullable) = false];
+  // MySQL Cluster's Affinity
+  bitpoke.affinity.v1.Affinity affinity = 7;
+  // MySQL Cluster's Tolerations
+  repeated bitpoke.toleration.v1.Toleration tolerations = 8 [(gogoproto.nullable) = false];
+  // An URL to MySQLCluster's logs
+  string logs_url = 9;
+  // [Output only] An URL to the mysql cluster's metrics dashboard
+  string metrics_url = 10;
+}
+
+// ResourceAllocation for MySQL Cluster
+message ResourceAllocation {
+  // The amount of memory per pod.
+  // Example values for memory resource allocations: "50Mi" (50 mebibytes)
+  bitpoke.resources.v1.Resource cpu_per_pod = 1 [(gogoproto.nullable) = false];
+  // The amount of cpu per pod.
+  // 1 CPU is equal to a virtual CPU (core/thread). Fractional values may be used.
+  // Example values for CPU resource allocations: "100m" (10% of 1 CPU), "2" (2 CPUs).
+  bitpoke.resources.v1.Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
+  // The desired amount of storage.
+  // Example values storage size resource allocations: "8Gi" (8 gibibytes).
+  bitpoke.resources.v1.Resource desired_storage_size = 3 [(gogoproto.nullable) = false];
+  // [Create only] The class of the storage used (e.g fast, ssd).
+  string storage_class = 4;
+  // The requested number of pods.
+  int32 desired_replicas = 5;
+}
+
+// Status for MySQL Cluster
+message Status {
+  // Status for mysql cluster component
+  bitpoke.statuses.v1.ComponentStatus component_status = 1 [(gogoproto.nullable) = false];
+  // [Read only] The number of pods that are up and running.
+  int32 ready_pods = 2;
+}
+
+message GetMySQLClusterRequest {
+  // Resource name of the MySQL cluster to fetch in the form
+  // organizations/{organization_name}/projects/{project_name}/mysql_clusters/{mysql_cluster_name}.
+  // `project_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message ListMySQLClustersRequest {
+  // Project name, for example "organization/{organization_name}/projects/{project_name}".
+  string project = 1 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/project/v1.Name"];
+  // Organization field can be used to list all the mysql clusters from an organization,
+  // for example "organizations/{organization_name}/projects/{project_name}".
+  // Required if Project is empty.
+  string organization = 2 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // Maximum number of items to return.
+  int32 page_size = 3;
+  // Next_page_token value returned from a previous List request, if any.
+  string page_token = 4;
+}
+
+message ListMySQLClustersResponse {
+  repeated MySQLCluster mysql_clusters = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message UpdateMySQLClusterRequest {
+  // New definition of the MySQL cluster. It must include a `name`
+  MySQLCluster mysql_cluster = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateMySQLClusterResourcesRequest {
+  // MySQL Cluster name,
+  // for example "organizations/{organization_name}/projects/{project_name}/mysql_clusters/{mysql_cluster_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the site resource allocation list.
+  ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MySQLClusterService allow managing mysql clusters
+service MySQLClusterService {
+  // GetMySQLCluster fetches a MySQL cluster by it's name
+  rpc GetMySQLCluster(GetMySQLClusterRequest) returns (MySQLCluster);
+  // ListMySQLClusters lists MySQLCluster
+  rpc ListMySQLClusters(ListMySQLClustersRequest) returns (ListMySQLClustersResponse);
+  // UpdateMySQLCluster updates a MySQL cluster
+  rpc UpdateMySQLCluster(UpdateMySQLClusterRequest) returns (MySQLCluster);
+  // UpdateMySQLClusterResources updates MySQL Cluster resource allocation
+  rpc UpdateMySQLClusterResources(UpdateMySQLClusterResourcesRequest) returns (MySQLCluster);
+}

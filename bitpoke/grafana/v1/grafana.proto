@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package bitpoke.grafana.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/bitpoke/bitpoke-go/pkg/grafana/v1";
+
+import "bitpoke/affinity/v1/affinity.proto";
+import "bitpoke/resources/v1/resource.proto";
+import "bitpoke/statuses/v1/status.proto";
+import "bitpoke/toleration/v1/toleration.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/field_mask.proto";
+
+message Grafana {
+  // Fully qualified Grafana name in the form
+  // organizations/{organization_name}/projects/{project_name}/grafanas/{grafana_name}.
+  // `grafana_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
+  // Name is read-only.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the grafana
+  string display_name = 2;
+  // Grafana resource allocation
+  ResourceAllocation resources = 4 [(gogoproto.nullable) = false];
+  // Grafana's Affinity
+  bitpoke.affinity.v1.Affinity affinity = 5;
+  // Grafana's Tolerations
+  repeated bitpoke.toleration.v1.Toleration tolerations = 6 [(gogoproto.nullable) = false];
+  string logs_url = 7;
+  // Status for Grafana
+  Status status = 8 [(gogoproto.nullable) = false];
+}
+
+// ResourceAllocation for Grafana
+message ResourceAllocation {
+  bool enabled = 1;
+  // The amount of cpu per pod.
+  // 1 CPU is equal to a virtual CPU (core/thread). Fractional values may be used.
+  // Example values for CPU resource allocations: "100m" (10% of 1 CPU), "2" (2 CPUs).
+  bitpoke.resources.v1.Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
+  // The amount of memory per pod.
+  // Example values for memory resource allocations: "50Mi" (50 mebibytes)
+  bitpoke.resources.v1.Resource cpu_per_pod = 3 [(gogoproto.nullable) = false];
+  int32 desired_replicas = 4;
+}
+
+// Status for Grafana
+message Status {
+  // Status for grafana component
+  bitpoke.statuses.v1.ComponentStatus component_status = 1 [(gogoproto.nullable) = false];
+}
+
+message GetGrafanaRequest {
+  // Fully qualified Grafana name in the form
+  // organizations/{organization_name}/projects/{project_name}/grafanas/{grafana_name}.
+  // `grafana_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message ListGrafanasRequest {
+  // Project name, for example "organizations/{organization_name}/projects/{project_name}".
+  string project = 1 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/project/v1.Name"];
+  // Organization field can be used to list all the grafanas from an organization,
+  // for example "organizations/{organization_name}/projects/{project_name}".
+  // Required if Project is empty.
+  string organization = 2 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // Maximum number of items to return.
+  int32 page_size = 3;
+  // Next_page_token value returned from a previous List request, if any.
+  string page_token = 4;
+}
+
+message ListGrafanasResponse {
+  repeated Grafana grafanas = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message UpdateGrafanaRequest {
+  // New definition of the Grafana. It must include a `name`
+  Grafana grafana = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateGrafanaResourcesRequest {
+  // Fully qualified Grafana name in the form
+  // organizations/{organization_name}/projects/{project_name}/grafanas/{grafana_name}.
+  // `grafana_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the grafana resource allocation list.
+  ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// GrafanaService allow managing grafana
+service GrafanaService {
+  // GetGrafana fetches a Grafana by it's name
+  rpc GetGrafana(GetGrafanaRequest) returns (Grafana);
+  // ListGrafanas lists Grafanas
+  rpc ListGrafanas(ListGrafanasRequest) returns (ListGrafanasResponse);
+  // UpdateGrafana updates the Grafana's Affinity
+  rpc UpdateGrafana(UpdateGrafanaRequest) returns (Grafana);
+  // UpdateGrafanaResources updates Grafana resource allocation
+  rpc UpdateGrafanaResources(UpdateGrafanaResourcesRequest) returns (Grafana);
+}

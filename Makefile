@@ -1,9 +1,9 @@
 include ../build/makelib/common.mk
 
 ifeq ($(CI),true)
-PUBLISH_REPO := https://github.com/presslabs/dashboard-proto.git
+PUBLISH_REPO := https://github.com/bitpoke/bitpoke-proto.git
 else
-PUBLISH_REPO := git@github.com:presslabs/dashboard-proto.git
+PUBLISH_REPO := git@github.com:bitpoke/bitpoke-proto.git
 endif
 
 PUBLISH_BRANCH ?= $(BRANCH_NAME)

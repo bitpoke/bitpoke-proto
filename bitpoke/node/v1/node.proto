@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package bitpoke.nodes.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.goproto_sizecache_all) = false;
+option (gogoproto.goproto_unkeyed_all) = false;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/bitpoke/bitpoke-go/pkg/node/v1";
+
+import "bitpoke/statuses/v1/status.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// Affinity is a group of affinity scheduling rules.
+message Node {
+  // Fully qualified node name in the form
+  // nodes/{node_name}.
+  // `node_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 63 characters.
+  // Name is read-only
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the node
+  string display_name = 2;
+  // Status contains various information about the node.
+  Status status = 3 [(gogoproto.nullable) = false];
+  // An enumeration of the node's labels.
+  map<string, string> labels = 4;
+  // An enumeration of the node's taints.
+  repeated Taint taints = 5 [(gogoproto.nullable) = false];
+  // Unschedulable controls node schedulability of new pods. By default, node is schedulable.
+  bool unschedulable = 6;
+}
+
+// Taint causes the node to have the "effect" on any pod that does not
+// tolerate the Taint.
+message Taint {
+  enum Effect {
+    // Not set.
+    UNSPECIFIED = 0;
+    // Do not allow new pods to schedule onto the node unless they tolerate the taint,
+    // but allow all pods submitted to Kubelet without going through the scheduler
+    // to start, and allow all already-running pods to continue running.
+    // Enforced by the scheduler.
+    NO_SCHEDULE = 1;
+    // Like TaintEffectNoSchedule, but the scheduler tries not to schedule
+    // new pods onto the node, rather than prohibiting new pods from scheduling
+    // onto the node entirely. Enforced by the scheduler.
+    PREFER_NO_SCHEDULE = 2;
+    // Evict any already-running pods that do not tolerate the taint.
+    // Currently enforced by NodeController.
+    NO_EXECUTE = 3;
+  }
+  // Required. The taint key to be applied to a node.
+  string key = 1;
+  // The taint value corresponding to the taint key.
+  // +optional
+  string value = 2;
+  // Required. The effect of the taint on pods that do not tolerate the taint.
+  Effect effect = 3;
+  // TimeAdded represents the time at which the taint was added.
+  // It is only written for NoExecute taints.
+  // +optional
+  google.protobuf.Timestamp time_added = 7;
+}
+
+// Status contains information about the current status of a node.
+message Status {
+  // Status for Node component
+  bitpoke.statuses.v1.ComponentStatus component_status = 1 [(gogoproto.nullable) = false];
+  // Capacity represents the total resources of a node.
+  map<string, string> capacity = 2 [(gogoproto.nullable) = false];
+  // Allocatable represents the resources of a node that are available for scheduling.
+  map<string, string> allocatable = 3 [(gogoproto.nullable) = false];
+  // Allocatable represents the resources of a node that are available for scheduling.
+  map<string, string> requested = 4 [(gogoproto.nullable) = false];
+  // Allocatable represents the resources of a node that are available for scheduling.
+  map<string, string> limit = 5 [(gogoproto.nullable) = false];
+  // Allocatable represents the resources of a node that are available for scheduling.
+  map<string, string> used = 6 [(gogoproto.nullable) = false];
+  // The interval in seconds on which the used value has been averaged (usually 30s)
+  int64 used_window = 7;
+  // The timestamp when the metrics was calculated (usually refreshes every 30s or so)
+  google.protobuf.Timestamp used_timestamp = 8;
+}
+
+// Resource describe requested, limit and used resources
+message Resource {
+  // The hard limit value of the resource
+  string limit = 1;
+  // The requested value of the resource
+  string requested = 2;
+  // The (average) used value of the resource
+  string used = 3;
+  // The interval in seconds on which the used value has been averaged (usually 30s)
+  int64 used_window = 4;
+  // The timestamp when the metrics was calculated (usually refreshes every 30s or so)
+  google.protobuf.Timestamp used_timestamp = 5;
+}
+
+message GetNodeRequest {
+  // Resource name of the node to fetch in the form
+  // nodes/{node_name}.
+  // `node_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 63 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message ListNodesRequest {
+  // Maximum number of items to return.
+  int32 page_size = 1;
+  // Next_page_token value returned from a previous List request, if any.
+  string page_token = 2;
+}
+
+message ListNodesResponse {
+  repeated Node nodes = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+// NodesService allow managing nodes
+service NodesService {
+  // GetNode fetches a node by it's name
+  rpc GetNode(GetNodeRequest) returns (Node);
+  // ListNodes list nodes
+  rpc ListNodes(ListNodesRequest) returns (ListNodesResponse);
+}

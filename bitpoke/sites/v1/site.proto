@@ -1,0 +1,415 @@
+syntax = "proto3";
+
+package bitpoke.sites.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/bitpoke/bitpoke-go/pkg/site/v1";
+
+import "bitpoke/affinity/v1/affinity.proto";
+import "bitpoke/api/event/v1/event.proto";
+import "bitpoke/resources/v1/resource.proto";
+import "bitpoke/statuses/v1/status.proto";
+import "bitpoke/toleration/v1/toleration.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// Site represents a site within the bitpoke app context
+message Site {
+  // Fully qualified site name in the form
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  // `site_name` is a valid DNS label (RFC 1123) with maximum
+  // length of 48 characters.
+  // Name is read-only
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // [Output only] The display name for the site
+  string display_name = 2;
+  // Wordpress image
+  string wordpress_image = 3;
+  // [Output only] Current status of the site.
+  Status status = 4;
+  // Site's allocated resource
+  ResourceAllocation resources = 5 [(gogoproto.nullable) = false];
+  // Git_repository_origin is the source of truth, in regards to the site's code.
+  // For now, it needs to be a public git repository, that can be cloned via git, ssh and http.
+  string git_repository_origin = 6;
+  // [OUTPUT_ONLY] The git_repository_deployed_ref will point to the
+  // Git reference targeted for deployment.
+  string git_repository_deployed_ref = 7;
+  // git_repository_ref is git reference desired for deployment.
+  // It can be a commit, a tag or a branch.
+  // If it's a branch, the system will follow that branch's HEAD, and the actual
+  // reference targeted for deployment is exposed in `git_repository_deployed_ref`.
+  // If it's a commit or tag, the `git_repository_deployed_ref` will point to that reference.
+  string git_repository_ref = 8;
+  // [Output only] Site's fully-qualified wp-admin URL
+  string wp_admin_url = 9;
+  // List of environment variables
+  EnvVarList env_vars = 10 [(gogoproto.nullable) = false];
+  // Time when the site was created.
+  // This field is read-only.
+  google.protobuf.Timestamp created_at = 11;
+  // SMTP credentials.
+  SMTP smtp = 12 [(gogoproto.nullable) = false];
+  // [Output only] WordPress resource name. E.g.: `bitpoke-io-12fgv`
+  string kubernetes_name = 13;
+  // [Output only] Project namespace name.
+  string kubernetes_namespace = 14;
+  // Service account
+  string service_account = 16;
+  // Storage bucket
+  StorageBucket storage_bucket = 17 [(gogoproto.nullable) = false];
+  // Google Project ID
+  string google_project_id = 18;
+  // [Write only] Bootstrap details.
+  BootstrapDetails bootstrap = 19 [(gogoproto.nullable) = false];
+  // [Output only] Routes contains site domains and paths
+  repeated Route routes = 20 [(gogoproto.nullable) = false];
+  // The site's Affinity
+  bitpoke.affinity.v1.Affinity affinity = 22;
+  // The site's Tolerations
+  repeated bitpoke.toleration.v1.Toleration tolerations = 23 [(gogoproto.nullable) = false];
+  // The site's Memcached resource name
+  // This field is read-only, for now.
+  string memcached = 24 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/memcached/v1.Name"];
+  // The site's MysqlCluster resource name
+  // This field is read-only, for now.
+  string mysql_cluster = 25 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/mysqlcluster/v1.Name"];
+  // The site's Prometheus resource name
+  // This field is read-only, for now.
+  string prometheus = 26 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/prometheus/v1.Name"];
+  // Page cache
+  PageCache page_cache = 27 [(gogoproto.nullable) = false];
+  // [Output only] An URL to the site's metrics dashboard
+  string metrics_url = 28;
+  // [Output only] An URL to the site's logs
+  string logs_url = 29;
+  // Project name, for example
+  // "organizations/{organization_name}/projects/{project_name}".
+  string project = 30 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/project/v1.Name"];
+}
+
+// Status is information about the current status of this site.
+message Status {
+  bitpoke.statuses.v1.ComponentStatus component_status = 1 [(gogoproto.nullable) = false];
+  // Total number of desired pods.
+  int32 desired_replicas = 2;
+  // Total number of pods ready for at least 0s.
+  int32 available_replicas = 3;
+  // Total number of pods that are still required for the deployment
+  // to have 100% available capacity.
+  // They may either be pods that are running but not yet available
+  // or pods that still have not been created.
+  int32 unavailable_replicas = 4;
+  // Total number of non-terminated pods that have the latest configuration applied.
+  int32 updated_replicas = 5;
+  // Total number of non-terminated pods.
+  int32 current_replicas = 6;
+  // Total number of ready pods targeted by this deployment.
+  int32 ready_replicas = 7;
+  // Site endpoints.
+  repeated Endpoint endpoints = 8;
+}
+
+// Route consists of a site domain and an optional path prefix
+message Route {
+  string domain = 1;
+  string path_prefix = 2;
+}
+
+// BootstrapDetails for the site
+message BootstrapDetails {
+  string username = 1;
+  string password = 2;
+  string email = 3;
+  string title = 4;
+}
+
+// Endpoint for the site
+message Endpoint {
+  string ip = 1;
+  string host = 2;
+}
+
+// StorageBucket for the site
+message StorageBucket {
+  string name = 1;
+  string prefix = 2;
+}
+
+// EnvVar contains a key and a value for environment variable
+message EnvVar {
+  string name = 1;
+  string value = 2;
+}
+
+// EnvVarList the list of environment variables
+message EnvVarList {
+  repeated EnvVar items = 1 [(gogoproto.nullable) = false];
+}
+
+// SMTP contains a host, a port, a tls, a user name and a user password
+// for smtp variable
+message SMTP {
+  // SMTP's host.
+  string host = 1;
+  // SMTP's port.
+  int32 port = 2;
+  // User's name
+  string user = 3;
+  // [Write only] User's password
+  string password = 4;
+  // SMTP's tls. This provide a way to encrypt communication channel between
+  // two machines over the Internet.
+  bool use_tls = 5;
+  // SMTP's start tls.
+  // This indicates that the client wants to upgrade existing, insecure
+  // connection to a secure connection using TLS cryptographic protocol.
+  bool use_start_tls = 6;
+}
+
+// Autoscaler exposes configurations used to dynamically scale the pods.
+// The consumer will be able to control it's range.
+message Autoscaler {
+  // Minimum number of replicas, for a given site
+  int32 min_replicas = 1;
+  // Maximum number of replicas, for a given site
+  int32 max_replicas = 2;
+  // [Output only] Current number of replicas
+  int32 replicas = 3;
+  // targetAverageUtilization is the target value of the average of the
+  // resource metric across all relevant pods, represented as a percentage of
+  // the requested value of the resource for the pods.
+  int32 target_cpu_average_utilization = 4;
+}
+
+// ResourceAllocation describes what the allocated resources for a site are
+message ResourceAllocation {
+  // Set replicas on 0 for a given site, overriding the below settings
+  bool paused = 1;
+  // The amount of cpu per pod.
+  // 1 CPU is equal to a virtual CPU (core/thread). Fractional values may be used.
+  // Example values for CPU resource allocations: "100m" (10% of 1 CPU), "2" (2 CPUs).
+  bitpoke.resources.v1.Resource memory_per_pod = 2 [(gogoproto.nullable) = false];
+  // The amount of memory per pod.
+  // Example values for memory resource allocations: "50Mi" (50 mebibytes)
+  bitpoke.resources.v1.Resource cpu_per_pod = 3 [(gogoproto.nullable) = false];
+  bitpoke.resources.v1.Resource php_workers = 4 [(gogoproto.nullable) = false];
+  bitpoke.resources.v1.Resource php_workers_memory = 5 [(gogoproto.nullable) = false];
+  Autoscaler autoscaler = 6 [(gogoproto.nullable) = false];
+}
+
+// PageCache is the configuration of the page cache
+message PageCache {
+  enum Backend {
+    // not set
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    REDIS = 2;
+    MEMCACHED = 3;
+  }
+  // Enabled is true when tha site page cache is enable
+  bool enabled = 1;
+  // Backend for stack page cache. E.g.: memcached, redis, etc.
+  Backend backend = 2;
+  // Host for redis backend. E.g.: localhost.
+  string redis_host = 3;
+  // Port for redis backend. E.g.: 6379.
+  string redis_port = 4;
+  // Host for memcached backend. E.g.: localhost.
+  string memcached_host = 5;
+  // Port for memcached backend. E.g.: 11211.
+  string memcached_port = 6;
+  // Prefix of the key.
+  string key_prefix = 7;
+  // Query params that will be included in the page cache key
+  repeated string key_included_query_params = 8;
+  // Query params that will be discarded from the page cache key; the request uri that reaches the
+  // backend remains unaltered
+  repeated string key_discarded_query_params = 9;
+  // store_statuses controls what responses to store to the cache according to their status code.
+  // Responses with statuses not present in this list will not be cached.
+  // Leave empty to store all statuses.
+  repeated int32 store_statuses = 10;
+  // Response_cache_control can be on (true) or off (false).
+  bool response_cache_control = 11;
+  // Expiration time period for page cache.
+  uint64 expire_seconds = 12;
+}
+
+message CreateSiteRequest {
+  // Site resource to create
+  Site site = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message GetSiteRequest {
+  // Resource name of the site to fetch in the form
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  // `site_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message UpdateSiteRequest {
+  // New definition of the site. It must include a `name`
+  Site site = 1 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateSiteEnvVarsRequest {
+  // Site name, for example
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the env vars list.
+  EnvVarList env_vars = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateSitePageCacheRequest {
+  // Site name, for example
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the page cache.
+  PageCache page_cache = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateSiteSMTPRequest {
+  // Site name, for example
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the smtp.
+  SMTP smtp = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message UpdateSiteResourcesRequest {
+  // Site name, for example
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // New definition of the site resource allocation list.
+  ResourceAllocation resources = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message DeleteSiteRequest {
+  // Resource name of the site to delete in the form
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  // `site_name` MUST be a valid DNS label (RFC 1123)
+  // with maximum length of 48 characters.
+  string name = 1 [(gogoproto.casttype) = "Name"];
+}
+
+message ListSitesRequest {
+  // Project name, for example
+  // "organizations/{organization_name}/projects/{project_name}".
+  string project = 1 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/project/v1.Name"];
+  // Organization field can be used to list all the sites from an organization,
+  // for example "organizations/{organization_name}/projects/{project_name}".
+  // Required if Project is empty.
+  string organization = 2 [(gogoproto.casttype) = "github.com/bitpoke/bitpoke-go/pkg/organization/v1.Name"];
+  // Maximum number of items to return.
+  int32 page_size = 3;
+  // Next_page_token value returned from a previous List request, if any.
+  string page_token = 4;
+}
+
+message ListSitesResponse {
+  repeated Site sites = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message ListSiteEventsRequest {
+  // Site to list events for.
+  // Eg. "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1;
+  // Maximum number of items to return.
+  int32 page_size = 2;
+  // next_page_token value returned from a previous List request, if any.
+  string page_token = 3;
+}
+
+message ListSiteEventsResponse {
+  repeated bitpoke.api.event.v1.Event events = 1 [(gogoproto.nullable) = false];
+  // Token to retrieve the next page of results, or empty if there are no
+  // more results in the list.
+  string next_page_token = 2;
+}
+
+message UpdateSiteRoutesRequest {
+  // Site name, for example
+  // "organizations/{organization_name}/projects/{project_name}/sites/{site_name}".
+  string name = 1 [(gogoproto.casttype) = "Name"];
+  // Routes contains site domains and paths
+  repeated Route routes = 2 [(gogoproto.nullable) = false];
+  // Fields to be updated.
+  google.protobuf.FieldMask update_mask = 3 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// SitesService allow managing sites
+service SitesService {
+  // CreateSite creates a new site
+  rpc CreateSite(CreateSiteRequest) returns (Site);
+  // GetSite fetches a site by it's name
+  rpc GetSite(GetSiteRequest) returns (Site);
+  // UpdateSite updates a site details
+  rpc UpdateSite(UpdateSiteRequest) returns (Site);
+  // UpdateSiteSMTP updates smtp credentials
+  rpc UpdateSiteSMTP(UpdateSiteSMTPRequest) returns (Site);
+  // UpdateSiteResources updates resource allocation
+  rpc UpdateSiteResources(UpdateSiteResourcesRequest) returns (Site);
+  // UpdateSiteEnvVars updates env vars
+  rpc UpdateSiteEnvVars(UpdateSiteEnvVarsRequest) returns (Site);
+  // UpdateSitePageCache updates stack page cache
+  rpc UpdateSitePageCache(UpdateSitePageCacheRequest) returns (Site);
+  // DeleteSite deletes a site by it's name
+  rpc DeleteSite(DeleteSiteRequest) returns (google.protobuf.Empty);
+  // ListSites list sites
+  rpc ListSites(ListSitesRequest) returns (ListSitesResponse);
+  // ListSiteEvents list site related events
+  rpc ListSiteEvents(ListSiteEventsRequest) returns (ListSiteEventsResponse);
+  // UpdateSiteRoutes updates site routes
+  rpc UpdateSiteRoutes(UpdateSiteRoutesRequest) returns (Site);
+}

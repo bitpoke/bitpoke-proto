@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package bitpoke.operation.v1;
+
+option (gogoproto.equal_all) = true; // Required for test generation
+option (gogoproto.goproto_sizecache_all) = false;
+option (gogoproto.goproto_unkeyed_all) = false;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true; // Required for test generation
+option (gogoproto.protosizer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+option go_package = "github.com/bitpoke/bitpoke-go/pkg/operation/v1beta1";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+// OperationResponse contains information for an operation invocation
+message OperationResponse {
+  bool finished = 1;
+}
