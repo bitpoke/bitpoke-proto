@@ -18,7 +18,7 @@ import "google/protobuf/timestamp.proto";
 // MySQLClusterBackup represents the instance of a mysql cluster backup
 message MySQLClusterBackup {
   // Fully qualified backup name of the form
-  // `organizations/{organization_name}/projects/{project_name}/mysql-cluster-backups/{backup_name}``.
+  // `organizations/{organization_name}/projects/{project_name}/mysql-cluster-backups/{backup_name}`.
   // `backup_name` is a valid DNS label (RFC 1123) with maximum length of 48 characters.
   // Name is read-only.
   string name = 1 [(gogoproto.casttype) = "Name"];
